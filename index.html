@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>chanschu.com</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy-deep:    #080f1e;
+      --navy-mid:     #0d1a30;
+      --navy-light:   #132240;
+      --navy-border:  #1e3358;
+      --gold:         #c9a84c;
+      --gold-light:   #e2c375;
+      --gold-dim:     #8a6e2f;
+      --text-bright:  #eef2f8;
+      --text-mid:     #9aaec8;
+      --text-dim:     #4d6080;
+      --accent:       #3a7bd5;
+      --radius:       6px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--navy-deep);
+      color: var(--text-bright);
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── NOISE TEXTURE ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* ── LAYOUT ── */
+    .page { position: relative; z-index: 1; }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 60px;
+      border-bottom: 1px solid var(--navy-border);
+      background: rgba(8,15,30,0.85);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      color: var(--text-bright);
+    }
+    .logo span { color: var(--gold); }
+
+    nav { display: flex; gap: 36px; }
+    nav a {
+      color: var(--text-mid);
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--gold-light); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 120px 60px 100px;
+      max-width: 900px;
+    }
+
+    .hero-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(42px, 6vw, 72px);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--text-bright);
+      margin-bottom: 28px;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero p {
+      color: var(--text-mid);
+      font-size: 13px;
+      max-width: 480px;
+      line-height: 1.9;
+    }
+
+    /* ── DIVIDER ── */
+    .rule {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, var(--navy-border), transparent);
+      margin: 0 60px;
+      width: calc(100% - 120px);
+    }
+
+    /* ── TOOLS SECTION ── */
+    .tools {
+      padding: 80px 60px 100px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 60px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: var(--navy-border);
+      border: 1px solid var(--navy-border);
+    }
+
+    /* ── CALCULATOR CARD ── */
+    .calc-card {
+      background: var(--navy-mid);
+      padding: 48px;
+      transition: background 0.3s;
+    }
+    .calc-card:hover { background: var(--navy-light); }
+
+    .calc-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 36px;
+    }
+
+    .calc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--text-bright);
+    }
+    .calc-title small {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    .calc-icon {
+      width: 36px; height: 36px;
+      border: 1px solid var(--navy-border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      color: var(--gold);
+    }
+
+    /* ── FORM ELEMENTS ── */
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+    .input-wrap .prefix {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--gold-dim);
+      font-size: 13px;
+    }
+
+    input[type="number"], input[type="text"], select {
+      width: 100%;
+      background: var(--navy-deep);
+      border: 1px solid var(--navy-border);
+      color: var(--text-bright);
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      padding: 12px 14px 12px 30px;
+      outline: none;
+      border-radius: var(--radius);
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input:focus, select:focus { border-color: var(--gold-dim); }
+
+    input.no-prefix { padding-left: 14px; }
+
+    .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ── BUTTON ── */
+    .btn {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--gold-dim);
+      color: var(--gold-light);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+      border-radius: var(--radius);
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn:hover {
+      background: var(--gold-dim);
+      color: var(--navy-deep);
+    }
+
+    /* ── RESULT BOX ── */
+    .result-box {
+      margin-top: 28px;
+      border-top: 1px solid var(--navy-border);
+      padding-top: 24px;
+      display: none;
+    }
+    .result-box.visible { display: block; }
+
+    .result-primary {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 300;
+      color: var(--gold-light);
+      margin-bottom: 4px;
+    }
+    .result-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+
+    .result-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .result-item {
+      background: var(--navy-deep);
+      border: 1px solid var(--navy-border);
+      padding: 14px;
+      border-radius: var(--radius);
+    }
+    .result-item .r-val {
+      font-size: 16px;
+      color: var(--text-bright);
+      margin-bottom: 2px;
+    }
+    .result-item .r-key {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--navy-border);
+      padding: 32px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-dim);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+    }
+    footer .gold { color: var(--gold-dim); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 820px) {
+      header { padding: 20px 24px; }
+      nav { gap: 20px; }
+      .hero { padding: 60px 24px 60px; }
+      .tools { padding: 48px 24px 60px; }
+      .rule { margin: 0 24px; width: calc(100% - 48px); }
+      .tools-grid { grid-template-columns: 1fr; }
+      .calc-card { padding: 32px 24px; }
+      .fields-row { grid-template-columns: 1fr; }
+      footer { padding: 24px; flex-direction: column; gap: 8px; text-align: center; }
+    }
+
+    /* ── FADE IN ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero { animation: fadeUp 0.7s ease both; }
+    .tools { animation: fadeUp 0.7s 0.15s ease both; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">chan<span>schu</span>.com</div>
+    <nav>
+      <a href="#tools">Tools</a>
+      <a href="#loan">Loan</a>
+      <a href="#retirement">Retirement</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-eyebrow">Private tools &amp; utilities</p>
+    <h1>Built for those<br/>who <em>know</em> where<br/>they're going.</h1>
+    <p>A curated set of financial tools and applications — crafted for clients and collaborators. Simple by design. Precise by necessity.</p>
+  </section>
+
+  <div class="rule"></div>
+
+  <!-- TOOLS -->
+  <section class="tools" id="tools">
+    <p class="section-label">Calculators</p>
+
+    <div class="tools-grid">
+
+      <!-- ── LOAN CALCULATOR ── -->
+      <div class="calc-card" id="loan">
+        <div class="calc-header">
+          <div class="calc-title">
+            Loan Calculator
+            <small>Monthly payment estimator</small>
+          </div>
+          <div class="calc-icon">&#37;</div>
+        </div>
+
+        <div class="field">
+          <label>Loan Amount</label>
+          <div class="input-wrap">
+            <span class="prefix">$</span>
+            <input type="number" id="l-amount" placeholder="250,000" value="" />
+          </div>
+        </div>
+
+        <div class="fields-row">
+          <div class="field">
+            <label>Annual Rate (%)</label>
+            <div class="input-wrap">
+              <span class="prefix">%</span>
+              <input type="number" id="l-rate" placeholder="6.5" step="0.01" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Term (years)</label>
+            <div class="input-wrap">
+              <span class="prefix">#</span>
+              <input type="number" id="l-term" placeholder="30" />
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" onclick="calcLoan()">Calculate Payment</button>
+
+        <div class="result-box" id="loan-result">
+          <div class="result-primary" id="l-monthly">—</div>
+          <div class="result-label">Monthly Payment</div>
+          <div class="result-breakdown">
+            <div class="result-item">
+              <div class="r-val" id="l-total">—</div>
+              <div class="r-key">Total Paid</div>
+            </div>
+            <div class="result-item">
+              <div class="r-val" id="l-interest">—</div>
+              <div class="r-key">Total Interest</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RETIREMENT CALCULATOR ── -->
+      <div class="calc-card" id="retirement">
+        <div class="calc-header">
+          <div class="calc-title">
+            Retirement Calculator
+            <small>Future nest egg projector</small>
+          </div>
+          <div class="calc-icon">&#9651;</div>
+        </div>
+
+        <div class="fields-row">
+          <div class="field">
+            <label>Current Age</label>
+            <div class="input-wrap">
+              <span class="prefix">#</span>
+              <input type="number" id="r-age" placeholder="35" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Retirement Age</label>
+            <div class="input-wrap">
+              <span class="prefix">#</span>
+              <input type="number" id="r-retire" placeholder="65" />
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Current Savings</label>
+          <div class="input-wrap">
+            <span class="prefix">$</span>
+            <input type="number" id="r-savings" placeholder="50,000" />
+          </div>
+        </div>
+
+        <div class="fields-row">
+          <div class="field">
+            <label>Monthly Contribution</label>
+            <div class="input-wrap">
+              <span class="prefix">$</span>
+              <input type="number" id="r-contrib" placeholder="500" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Annual Return (%)</label>
+            <div class="input-wrap">
+              <span class="prefix">%</span>
+              <input type="number" id="r-return" placeholder="7" step="0.1" />
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" onclick="calcRetirement()">Project Balance</button>
+
+        <div class="result-box" id="ret-result">
+          <div class="result-primary" id="r-total">—</div>
+          <div class="result-label">Projected Nest Egg</div>
+          <div class="result-breakdown">
+            <div class="result-item">
+              <div class="r-val" id="r-contributed">—</div>
+              <div class="r-key">Total Contributed</div>
+            </div>
+            <div class="result-item">
+              <div class="r-val" id="r-growth">—</div>
+              <div class="r-key">Investment Growth</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="gold">chanschu.com</span>
+    <span>&copy; <script>document.write(new Date().getFullYear())</script> &mdash; All rights reserved</span>
+  </footer>
+
+</div>
+
+<script>
+  const fmt = (n) => '$' + Math.round(n).toLocaleString('en-US');
+
+  function calcLoan() {
+    const P = parseFloat(document.getElementById('l-amount').value);
+    const r = parseFloat(document.getElementById('l-rate').value) / 100 / 12;
+    const n = parseFloat(document.getElementById('l-term').value) * 12;
+
+    if (!P || !r || !n || P <= 0 || r <= 0 || n <= 0) {
+      alert('Please fill in all loan fields with valid values.'); return;
+    }
+
+    const monthly = P * (r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
+    const total   = monthly * n;
+    const interest = total - P;
+
+    document.getElementById('l-monthly').textContent  = fmt(monthly);
+    document.getElementById('l-total').textContent    = fmt(total);
+    document.getElementById('l-interest').textContent = fmt(interest);
+    document.getElementById('loan-result').classList.add('visible');
+  }
+
+  function calcRetirement() {
+    const currentAge = parseFloat(document.getElementById('r-age').value);
+    const retireAge  = parseFloat(document.getElementById('r-retire').value);
+    const savings    = parseFloat(document.getElementById('r-savings').value) || 0;
+    const monthly    = parseFloat(document.getElementById('r-contrib').value) || 0;
+    const annualRate = parseFloat(document.getElementById('r-return').value);
+
+    if (!currentAge || !retireAge || !annualRate || retireAge <= currentAge) {
+      alert('Please fill in all fields. Retirement age must be greater than current age.'); return;
+    }
+
+    const years      = retireAge - currentAge;
+    const months     = years * 12;
+    const mr         = annualRate / 100 / 12;
+
+    // Future value of lump sum
+    const fvSavings  = savings * Math.pow(1 + mr, months);
+    // Future value of annuity (monthly contributions)
+    const fvContrib  = monthly * (Math.pow(1 + mr, months) - 1) / mr;
+    const total      = fvSavings + fvContrib;
+    const contributed = savings + (monthly * months);
+    const growth     = total - contributed;
+
+    document.getElementById('r-total').textContent       = fmt(total);
+    document.getElementById('r-contributed').textContent = fmt(contributed);
+    document.getElementById('r-growth').textContent      = fmt(growth);
+    document.getElementById('ret-result').classList.add('visible');
+  }
+
+  // Allow Enter key
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const active = document.activeElement;
+    if (!active) return;
+    const card = active.closest('.calc-card');
+    if (!card) return;
+    if (card.id === 'loan') calcLoan();
+    if (card.id === 'retirement') calcRetirement();
+  });
+</script>
+</body>
+</html>
