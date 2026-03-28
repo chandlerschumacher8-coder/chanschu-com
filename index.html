@@ -78,6 +78,89 @@
     }
     nav a:hover { color: var(--gold-light); }
 
+    /* ── BUSINESS CARDS ── */
+    .biz-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: var(--navy-border);
+      border: 1px solid var(--navy-border);
+    }
+    .biz-card {
+      background: var(--navy-mid);
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: background 0.3s;
+    }
+    .biz-card:hover { background: var(--navy-light); }
+    .biz-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .biz-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--text-bright);
+      line-height: 1.2;
+    }
+    .biz-location {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    .biz-tag {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      border: 1px solid var(--navy-border);
+      padding: 4px 8px;
+      white-space: nowrap;
+      border-radius: 3px;
+    }
+    .biz-desc {
+      font-size: 12px;
+      color: var(--text-mid);
+      line-height: 1.8;
+      flex: 1;
+    }
+    .biz-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .biz-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-mid);
+      border: 1px solid var(--navy-border);
+      padding: 8px 12px;
+      text-decoration: none;
+      border-radius: var(--radius);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .biz-btn:hover { color: var(--text-bright); border-color: var(--text-dim); }
+    .biz-btn-review { color: var(--gold-dim); border-color: var(--gold-dim); }
+    .biz-btn-review:hover { background: var(--gold-dim); color: var(--navy-deep); border-color: var(--gold-dim); }
+    .btn-icon { font-style: normal; font-size: 12px; }
+    @media (max-width: 900px) {
+      .biz-grid { grid-template-columns: 1fr; }
+      .biz-card { padding: 28px 24px; }
+    }
+
     /* ── HERO ── */
     .hero {
       padding: 120px 60px 100px;
@@ -336,6 +419,7 @@
       <a href="#tools">Tools</a>
       <a href="#loan">Loan</a>
       <a href="#retirement">Retirement</a>
+      <a href="#businesses">Businesses</a>
     </nav>
   </header>
 
@@ -474,6 +558,88 @@
               <div class="r-key">Investment Growth</div>
             </div>
           </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- BUSINESSES SECTION -->
+  <div class="rule"></div>
+  <section class="tools" id="businesses" style="padding-bottom: 60px;">
+    <p class="section-label">Our Businesses</p>
+
+    <div class="biz-grid">
+
+      <!-- DC APPLIANCE -->
+      <div class="biz-card">
+        <div class="biz-top">
+          <div>
+            <div class="biz-name">DC Appliance</div>
+            <div class="biz-location">Dodge City, KS</div>
+          </div>
+          <div class="biz-tag">Appliances &amp; Furniture</div>
+        </div>
+        <p class="biz-desc">More than just appliances — TVs, mattresses, BBQ, and more. Your local one-stop shop for home needs.</p>
+        <div class="biz-links">
+          <a class="biz-btn" href="https://www.dodgecityappliance.com" target="_blank">
+            <span class="btn-icon">&#127758;</span> Visit Website
+          </a>
+          <a class="biz-btn" href="https://www.facebook.com/DodgeCityAppliance/" target="_blank">
+            <span class="btn-icon">f</span> Facebook
+          </a>
+          <a class="biz-btn biz-btn-review" href="https://g.page/r/PLACEHOLDER-DC-APPLIANCE/review" target="_blank">
+            <span class="btn-icon">&#9733;</span> Google Review
+          </a>
+        </div>
+      </div>
+
+      <!-- DOGHOUSE LIQUOR -->
+      <div class="biz-card">
+        <div class="biz-top">
+          <div>
+            <div class="biz-name">Doghouse Liquor</div>
+            <div class="biz-location">Hays, KS</div>
+          </div>
+          <div class="biz-tag">Beer, Wine &amp; Spirits</div>
+        </div>
+        <p class="biz-desc">Premier destination for bourbon, wine, and craft beer in Hays. Loyalty rewards, friendly staff, great selection.</p>
+        <div class="biz-links">
+          <a class="biz-btn" href="https://www.facebook.com/p/Doghouse-Liquor-100083091443102/" target="_blank">
+            <span class="btn-icon">f</span> Facebook
+          </a>
+          <a class="biz-btn" href="https://www.instagram.com/doghouseliquor/" target="_blank">
+            <span class="btn-icon">&#9752;</span> Instagram
+          </a>
+          <a class="biz-btn biz-btn-review" href="https://g.page/r/PLACEHOLDER-DOGHOUSE/review" target="_blank">
+            <span class="btn-icon">&#9733;</span> Google Review
+          </a>
+        </div>
+      </div>
+
+      <!-- THE INSURANCE GUYS -->
+      <div class="biz-card">
+        <div class="biz-top">
+          <div>
+            <div class="biz-name">The Insurance Guys</div>
+            <div class="biz-location">Kansas</div>
+          </div>
+          <div class="biz-tag">Independent Insurance</div>
+        </div>
+        <p class="biz-desc">Independent brokers specializing in home, auto, business, life, and health insurance across Kansas since 2005.</p>
+        <div class="biz-links">
+          <a class="biz-btn" href="https://www.tigks.com" target="_blank">
+            <span class="btn-icon">&#127758;</span> Visit Website
+          </a>
+          <a class="biz-btn" href="https://www.facebook.com/insuranceguysofkansas/" target="_blank">
+            <span class="btn-icon">f</span> Facebook
+          </a>
+          <a class="biz-btn" href="https://www.instagram.com/theinsuranceguysks/" target="_blank">
+            <span class="btn-icon">&#9752;</span> Instagram
+          </a>
+          <a class="biz-btn biz-btn-review" href="https://g.page/r/PLACEHOLDER-TIG/review" target="_blank">
+            <span class="btn-icon">&#9733;</span> Google Review
+          </a>
         </div>
       </div>
 
