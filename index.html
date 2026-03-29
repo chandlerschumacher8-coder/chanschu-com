@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>chanschu.com</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     :root{--navy-deep:#080f1e;--navy-mid:#0d1a30;--navy-light:#132240;--navy-border:#1e3358;--gold:#c9a84c;--gold-light:#e2c375;--gold-dim:#8a6e2f;--text-bright:#eef2f8;--text-mid:#9aaec8;--text-dim:#4d6080;--radius:6px;}
@@ -12,14 +13,12 @@
     body{background:var(--navy-deep);color:var(--text-bright);font-family:'DM Mono',monospace;font-size:14px;line-height:1.7;min-height:100vh;}
     body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.4;pointer-events:none;}
     .page{position:relative;z-index:1;}
-    /* HEADER */
     header{display:flex;align-items:center;justify-content:space-between;padding:22px 60px;border-bottom:1px solid var(--navy-border);background:rgba(8,15,30,0.92);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;}
     .logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.12em;color:var(--text-bright);text-decoration:none;}
     .logo span{color:var(--gold);}
     nav{display:flex;gap:28px;align-items:center;flex-wrap:wrap;}
     nav a{color:var(--text-mid);text-decoration:none;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:color 0.2s;padding:4px 0;}
     nav a:hover{color:var(--gold-light);}
-    /* HERO */
     .hero{padding:110px 60px 90px;max-width:860px;animation:fadeUp 0.7s ease both;}
     .hero-eyebrow{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:24px;}
     .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(40px,6vw,68px);font-weight:300;line-height:1.1;color:var(--text-bright);margin-bottom:28px;}
@@ -31,11 +30,9 @@
     .hero-btn-primary:hover{background:var(--gold);}
     .hero-btn-secondary{border:1px solid var(--navy-border);color:var(--text-mid);}
     .hero-btn-secondary:hover{border-color:var(--text-dim);color:var(--text-bright);}
-    /* LAYOUT */
     .rule{height:1px;background:linear-gradient(to right,var(--navy-border),transparent);margin:0 60px;}
     .section{padding:70px 60px 90px;animation:fadeUp 0.7s 0.1s ease both;}
     .section-label{font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:48px;}
-    /* NAV CARDS */
     .cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);}
     .site-card{background:var(--navy-mid);padding:36px 28px;text-decoration:none;display:flex;flex-direction:column;gap:14px;transition:background 0.25s;}
     .site-card:hover{background:var(--navy-light);}
@@ -43,7 +40,6 @@
     .card-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text-bright);}
     .card-desc{font-size:11px;color:var(--text-mid);line-height:1.8;flex:1;}
     .card-link{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-top:8px;}
-    /* BUSINESS CARDS WITH REVIEWS */
     .biz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);}
     .biz-card{background:var(--navy-mid);padding:36px;display:flex;flex-direction:column;gap:0;transition:background 0.3s;}
     .biz-card:hover{background:var(--navy-light);}
@@ -52,14 +48,11 @@
     .biz-location{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;}
     .biz-tag{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);border:1px solid var(--navy-border);padding:4px 8px;white-space:nowrap;border-radius:3px;align-self:flex-start;}
     .biz-desc{font-size:12px;color:var(--text-mid);line-height:1.8;margin-bottom:20px;}
-    /* SOCIAL LINKS */
-    .biz-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
+    .biz-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
     .biz-btn{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-mid);border:1px solid var(--navy-border);padding:7px 12px;text-decoration:none;border-radius:var(--radius);transition:all 0.2s;}
     .biz-btn:hover{color:var(--text-bright);border-color:var(--text-dim);}
-    /* REVIEW WIDGET */
-    .review-widget{border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;background:var(--navy-deep);}
+    .review-widget{border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;background:var(--navy-deep);margin-bottom:24px;}
     .review-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--navy-border);}
-    .review-score{display:flex;align-items:center;gap:10px;}
     .review-number{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--text-bright);}
     .review-stars{color:var(--gold);font-size:13px;letter-spacing:2px;}
     .review-count{font-size:10px;color:var(--text-dim);letter-spacing:0.1em;margin-top:2px;}
@@ -73,15 +66,6 @@
     .review-footer{padding:10px 20px;text-align:center;border-top:1px solid var(--navy-border);}
     .review-footer a{font-size:10px;color:var(--text-dim);text-decoration:none;letter-spacing:0.1em;}
     .review-footer a:hover{color:var(--gold-dim);}
-    /* FOOTER */
-    footer{border-top:1px solid var(--navy-border);padding:28px 60px;display:flex;justify-content:space-between;align-items:center;color:var(--text-dim);font-size:10px;letter-spacing:0.15em;}
-    footer .gold{color:var(--gold-dim);}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
-    @media(max-width:1000px){.biz-grid{grid-template-columns:1fr;}}
-    @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.hero{padding:60px 24px 60px;}.rule{margin:0 24px;}.section{padding:48px 24px 60px;}.cards-grid{grid-template-columns:1fr 1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}} @media(max-width:480px){nav a{font-size:10px;}header{flex-wrap:wrap;gap:12px;}}
-    @media(max-width:560px){.cards-grid{grid-template-columns:1fr;}.review-cards{grid-template-columns:1fr;}.review-header{flex-direction:column;gap:12px;align-items:flex-start;}.write-review-btn{width:100%;text-align:center;}}
-
-    /* CONTACT INFO */
     .contact-info{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
     .contact-row{display:flex;align-items:flex-start;gap:10px;font-size:11px;color:var(--text-mid);text-decoration:none;transition:color 0.2s;line-height:1.6;}
     .contact-row:not(.no-link):hover{color:var(--gold-light);}
@@ -92,16 +76,23 @@
     .call-btn:hover{background:rgba(82,183,136,0.22);border-color:#52b788;}
     .email-btn{background:transparent;border:1px solid var(--navy-border);color:var(--text-mid);}
     .email-btn:hover{border-color:var(--text-dim);color:var(--text-bright);}
-    /* CONTACT FORM */
     .contact-form-wrap{border-top:1px solid var(--navy-border);padding-top:20px;display:flex;flex-direction:column;gap:10px;}
     .form-label{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:4px;}
     .form-input{width:100%;background:var(--navy-deep);border:1px solid var(--navy-border);color:var(--text-bright);font-family:'DM Mono',monospace;font-size:12px;padding:11px 14px;outline:none;border-radius:var(--radius);transition:border-color 0.2s;resize:vertical;}
     .form-input:focus{border-color:var(--gold-dim);}
     .form-textarea{min-height:80px;}
     .form-submit{width:100%;background:transparent;border:1px solid var(--gold-dim);color:var(--gold-light);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;padding:13px;cursor:pointer;border-radius:var(--radius);transition:all 0.2s;}
-    .form-submit:hover{background:var(--gold-dim);color:var(--navy-deep);}
+    .form-submit:hover:not(:disabled){background:var(--gold-dim);color:var(--navy-deep);}
+    .form-submit:disabled{opacity:0.5;cursor:not-allowed;}
     .form-success{display:none;font-size:11px;color:#52b788;text-align:center;padding:8px;border:1px solid rgba(82,183,136,0.3);border-radius:var(--radius);background:rgba(82,183,136,0.08);}
     .form-success.visible{display:block;}
+    footer{border-top:1px solid var(--navy-border);padding:28px 60px;display:flex;justify-content:space-between;align-items:center;color:var(--text-dim);font-size:10px;letter-spacing:0.15em;}
+    footer .gold{color:var(--gold-dim);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+    @media(max-width:1000px){.biz-grid{grid-template-columns:1fr;}}
+    @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.hero{padding:60px 24px 60px;}.rule{margin:0 24px;}.section{padding:48px 24px 60px;}.cards-grid{grid-template-columns:1fr 1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
+    @media(max-width:560px){.cards-grid{grid-template-columns:1fr;}.review-cards{grid-template-columns:1fr;}.review-header{flex-direction:column;gap:12px;align-items:flex-start;}.write-review-btn{width:100%;text-align:center;}}
+    @media(max-width:480px){nav a{font-size:10px;}header{flex-wrap:wrap;gap:12px;}}
   </style>
 </head>
 <body>
@@ -132,46 +123,21 @@
   <section class="section">
     <p class="section-label">What's Here</p>
     <div class="cards-grid">
-      <a href="tools.html" class="site-card">
-        <div class="card-icon">⚙️</div>
-        <div class="card-title">Tools</div>
-        <div class="card-desc">Loan &amp; retirement calculators, QR code creator, and barcode generator.</div>
-        <div class="card-link">Open Tools →</div>
-      </a>
-      <a href="goodnews.html" class="site-card">
-        <div class="card-icon">🌅</div>
-        <div class="card-title">Good News</div>
-        <div class="card-desc">Positive, uplifting stories from local communities to around the world.</div>
-        <div class="card-link">Read News →</div>
-      </a>
-      <a href="fitness.html" class="site-card">
-        <div class="card-icon">💪</div>
-        <div class="card-title">Fitness</div>
-        <div class="card-desc">Structured workout programs for every level — beginner to advanced.</div>
-        <div class="card-link">Get Moving →</div>
-      </a>
-      <a href="#businesses" class="site-card">
-        <div class="card-icon">🏪</div>
-        <div class="card-title">Businesses</div>
-        <div class="card-desc">DC Appliance, Doghouse Liquor, and The Insurance Guys.</div>
-        <div class="card-link">See Businesses →</div>
-      </a>
+      <a href="tools.html" class="site-card"><div class="card-icon">⚙️</div><div class="card-title">Tools</div><div class="card-desc">Loan &amp; retirement calculators, QR code creator, and barcode generator.</div><div class="card-link">Open Tools →</div></a>
+      <a href="goodnews.html" class="site-card"><div class="card-icon">🌅</div><div class="card-title">Good News</div><div class="card-desc">Positive, uplifting stories from local communities to around the world.</div><div class="card-link">Read News →</div></a>
+      <a href="fitness.html" class="site-card"><div class="card-icon">💪</div><div class="card-title">Fitness</div><div class="card-desc">Structured workout programs for every level — beginner to advanced.</div><div class="card-link">Get Moving →</div></a>
+      <a href="#businesses" class="site-card"><div class="card-icon">🏪</div><div class="card-title">Businesses</div><div class="card-desc">DC Appliance, Doghouse Liquor, and The Insurance Guys.</div><div class="card-link">See Businesses →</div></a>
     </div>
   </section>
 
   <div class="rule"></div>
 
-  <!-- BUSINESSES WITH REVIEW WIDGETS -->
   <section class="section" id="businesses">
     <p class="section-label">Our Businesses</p>
     <div class="biz-grid">
 
-      <!-- DC APPLIANCE -->
       <div class="biz-card">
-        <div class="biz-top">
-          <div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div>
-          <div class="biz-tag">Appliances &amp; Furniture</div>
-        </div>
+        <div class="biz-top"><div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div><div class="biz-tag">Appliances &amp; Furniture</div></div>
         <p class="biz-desc">More than just appliances — TVs, Tempurpedic mattresses, Traeger grills and more. Your local one-stop shop for home needs.</p>
         <div class="biz-links">
           <a class="biz-btn" href="https://www.dodgecityappliance.com" target="_blank">🌐 Website</a>
@@ -179,41 +145,19 @@
         </div>
         <div class="review-widget">
           <div class="review-header">
-            <div class="review-score">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span class="review-number">4.9</span>
-                  <span class="review-stars">★★★★★</span>
-                </div>
-                <div class="review-count">236+ Google reviews</div>
-              </div>
-            </div>
+            <div><div style="display:flex;align-items:center;gap:8px;"><span class="review-number">4.9</span><span class="review-stars">★★★★★</span></div><div class="review-count">236+ Google reviews</div></div>
             <a class="write-review-btn" href="https://g.page/r/CYNnKIyyF1AwEBM/review" target="_blank">★ Write a Review</a>
           </div>
           <div class="review-cards">
-            <div class="review-item">
-              <div class="review-item-stars">★★★★★</div>
-              <div class="review-item-text">"Excellent service and people. Any appliance we need we will be getting from them."</div>
-              <div class="review-item-author">Google Review</div>
-            </div>
-            <div class="review-item">
-              <div class="review-item-stars">★★★★★</div>
-              <div class="review-item-text">"Great friendly service! Love our local store. All the top brands and a great delivery team!"</div>
-              <div class="review-item-author">Google Review</div>
-            </div>
+            <div class="review-item"><div class="review-item-stars">★★★★★</div><div class="review-item-text">"Excellent service and people. Any appliance we need we will be getting from them."</div><div class="review-item-author">Google Review</div></div>
+            <div class="review-item"><div class="review-item-stars">★★★★★</div><div class="review-item-text">"Great friendly service! Love our local store. All the top brands and a great delivery team!"</div><div class="review-item-author">Google Review</div></div>
           </div>
-          <div class="review-footer">
-            <a href="https://www.google.com/maps/search/DC+Appliance+Dodge+City+KS" target="_blank">View all reviews on Google →</a>
-          </div>
+          <div class="review-footer"><a href="https://www.google.com/maps/search/DC+Appliance+Dodge+City+KS" target="_blank">View all reviews on Google →</a></div>
         </div>
       </div>
 
-      <!-- DOGHOUSE LIQUOR -->
       <div class="biz-card">
-        <div class="biz-top">
-          <div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div>
-          <div class="biz-tag">Beer, Wine &amp; Spirits</div>
-        </div>
+        <div class="biz-top"><div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div><div class="biz-tag">Beer, Wine &amp; Spirits</div></div>
         <p class="biz-desc">Premier destination for bourbon, wine, and craft beer. Loyalty rewards, barrel picks, and a welcoming local atmosphere.</p>
         <div class="biz-links">
           <a class="biz-btn" href="https://www.facebook.com/p/Doghouse-Liquor-100083091443102/" target="_blank">f Facebook</a>
@@ -221,41 +165,19 @@
         </div>
         <div class="review-widget">
           <div class="review-header">
-            <div class="review-score">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span class="review-number">4.8</span>
-                  <span class="review-stars">★★★★★</span>
-                </div>
-                <div class="review-count">Google reviews</div>
-              </div>
-            </div>
+            <div><div style="display:flex;align-items:center;gap:8px;"><span class="review-number">4.8</span><span class="review-stars">★★★★★</span></div><div class="review-count">Google reviews</div></div>
             <a class="write-review-btn" href="https://g.page/r/CR0qC6xPMpxbEBM/review" target="_blank">★ Write a Review</a>
           </div>
           <div class="review-cards">
-            <div class="review-item">
-              <div class="review-item-stars">★★★★★</div>
-              <div class="review-item-text">"Great selection of bourbons and wines. Staff is always friendly and knowledgeable."</div>
-              <div class="review-item-author">Google Review</div>
-            </div>
-            <div class="review-item">
-              <div class="review-item-stars">★★★★★</div>
-              <div class="review-item-text">"Best liquor store in Hays. Love the rewards program — always finding something new."</div>
-              <div class="review-item-author">Google Review</div>
-            </div>
+            <div class="review-item"><div class="review-item-stars">★★★★★</div><div class="review-item-text">"Great selection of bourbons and wines. Staff is always friendly and knowledgeable."</div><div class="review-item-author">Google Review</div></div>
+            <div class="review-item"><div class="review-item-stars">★★★★★</div><div class="review-item-text">"Best liquor store in Hays. Love the rewards program — always finding something new."</div><div class="review-item-author">Google Review</div></div>
           </div>
-          <div class="review-footer">
-            <a href="https://www.google.com/maps/search/Doghouse+Liquor+Hays+KS" target="_blank">View all reviews on Google →</a>
-          </div>
+          <div class="review-footer"><a href="https://www.google.com/maps/search/Doghouse+Liquor+Hays+KS" target="_blank">View all reviews on Google →</a></div>
         </div>
       </div>
 
-      <!-- THE INSURANCE GUYS -->
       <div class="biz-card">
-        <div class="biz-top">
-          <div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Kansas</div></div>
-          <div class="biz-tag">Independent Insurance</div>
-        </div>
+        <div class="biz-top"><div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Hays, KS</div></div><div class="biz-tag">Independent Insurance</div></div>
         <p class="biz-desc">Independent brokers for home, auto, business, life, and health insurance. Serving Kansas since 2005 across 9+ locations.</p>
         <div class="biz-links">
           <a class="biz-btn" href="https://www.tigks.com" target="_blank">🌐 Website</a>
@@ -264,32 +186,14 @@
         </div>
         <div class="review-widget">
           <div class="review-header">
-            <div class="review-score">
-              <div>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <span class="review-number">5.0</span>
-                  <span class="review-stars">★★★★★</span>
-                </div>
-                <div class="review-count">695+ Google reviews</div>
-              </div>
-            </div>
+            <div><div style="display:flex;align-items:center;gap:8px;"><span class="review-number">5.0</span><span class="review-stars">★★★★★</span></div><div class="review-count">695+ Google reviews</div></div>
             <a class="write-review-btn" href="https://g.page/r/CX1nqd2PHkOOEAE/review" target="_blank">★ Write a Review</a>
           </div>
           <div class="review-cards">
-            <div class="review-item">
-              <div class="review-item-stars">★★★★★</div>
-              <div class="review-item-text">"Love this team! Everyone is so helpful and friendly. I refer all my friends and family."</div>
-              <div class="review-item-author">Google Review</div>
-            </div>
-            <div class="review-item">
-              <div class="review-item-stars">★★★★★</div>
-              <div class="review-item-text">"My agent is very helpful and knowledgeable. Always looking out for my best interest."</div>
-              <div class="review-item-author">Google Review</div>
-            </div>
+            <div class="review-item"><div class="review-item-stars">★★★★★</div><div class="review-item-text">"Love this team! Everyone is so helpful and friendly. I refer all my friends and family."</div><div class="review-item-author">Google Review</div></div>
+            <div class="review-item"><div class="review-item-stars">★★★★★</div><div class="review-item-text">"My agent is very helpful and knowledgeable. Always looking out for my best interest."</div><div class="review-item-author">Google Review</div></div>
           </div>
-          <div class="review-footer">
-            <a href="https://www.google.com/maps/search/The+Insurance+Guys+Kansas" target="_blank">View all reviews on Google →</a>
-          </div>
+          <div class="review-footer"><a href="https://www.google.com/maps/search/The+Insurance+Guys+Hays+KS" target="_blank">View all reviews on Google →</a></div>
         </div>
       </div>
 
@@ -298,121 +202,75 @@
 
   <div class="rule"></div>
 
-  <!-- CONTACT SECTION -->
   <section class="section" id="contact">
     <p class="section-label">Contact Our Businesses</p>
     <div class="biz-grid">
 
-      <!-- DC APPLIANCE CONTACT -->
+      <!-- DC APPLIANCE -->
       <div class="biz-card">
-        <div class="biz-top">
-          <div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div>
-          <div class="biz-tag">Appliances &amp; Furniture</div>
-        </div>
+        <div class="biz-top"><div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div><div class="biz-tag">Appliances &amp; Furniture</div></div>
         <div class="contact-info">
-          <a class="contact-row" href="tel:+16203716417">
-            <span class="contact-icon">📞</span>
-            <span>(620) 371-6417</span>
-          </a>
-          <a class="contact-row" href="mailto:dodgecityappliance@gmail.com">
-            <span class="contact-icon">✉️</span>
-            <span>dodgecityappliance@gmail.com</span>
-          </a>
-          <div class="contact-row no-link">
-            <span class="contact-icon">📍</span>
-            <span>2610 Central Ave Suite B<br/>Dodge City, KS 67801</span>
-          </div>
-          <div class="contact-row no-link">
-            <span class="contact-icon">🕐</span>
-            <span>Mon–Fri 9am–7pm<br/>Sat 9am–5pm &nbsp;·&nbsp; Sun Closed</span>
-          </div>
+          <a class="contact-row" href="tel:+16203716417"><span class="contact-icon">📞</span><span>(620) 371-6417</span></a>
+          <a class="contact-row" href="/cdn-cgi/l/email-protection#2c4843484b494f4558554d5c5c40454d424f496c4b414d4540024f4341"><span class="contact-icon">✉️</span><span><span class="__cf_email__" data-cfemail="62060d060507010b161b0312120e0b030c010722050f030b0e4c010d0f">[email&#160;protected]</span></span></a>
+          <div class="contact-row no-link"><span class="contact-icon">📍</span><span>2610 Central Ave Suite B<br/>Dodge City, KS 67801</span></div>
+          <div class="contact-row no-link"><span class="contact-icon">🕐</span><span>Mon–Fri 9am–7pm<br/>Sat 9am–5pm &nbsp;·&nbsp; Sun Closed</span></div>
         </div>
         <div class="contact-btns">
           <a class="call-btn" href="tel:+16203716417">📞 Call Now</a>
-          <a class="email-btn" href="mailto:dodgecityappliance@gmail.com">✉️ Email</a>
+          <a class="email-btn" href="/cdn-cgi/l/email-protection#9ffbf0fbf8fafcf6ebe6feefeff3f6fef1fcfadff8f2fef6f3b1fcf0f2">✉️ Email</a>
         </div>
         <div class="contact-form-wrap">
           <div class="form-label">Send a Message</div>
           <input type="text" class="form-input" placeholder="Your Name" id="dc-name" />
           <input type="text" class="form-input" placeholder="Your Phone or Email" id="dc-contact" />
           <textarea class="form-input form-textarea" placeholder="How can we help you?" id="dc-message" rows="3"></textarea>
-          <button class="form-submit" onclick="sendForm('dc','DC Appliance','dodgecityappliance@gmail.com')">Send Message</button>
+          <button class="form-submit" data-label="Send Message" onclick="sendForm('dc','DC Appliance','dodgecityappliance@gmail.com','service_gx9g5vj',this)">Send Message</button>
           <div class="form-success" id="dc-success">✓ Message sent! We'll be in touch soon.</div>
         </div>
       </div>
 
-      <!-- DOGHOUSE LIQUOR CONTACT -->
+      <!-- DOGHOUSE LIQUOR -->
       <div class="biz-card">
-        <div class="biz-top">
-          <div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div>
-          <div class="biz-tag">Beer, Wine &amp; Spirits</div>
-        </div>
+        <div class="biz-top"><div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div><div class="biz-tag">Beer, Wine &amp; Spirits</div></div>
         <div class="contact-info">
-          <a class="contact-row" href="tel:+17856214030">
-            <span class="contact-icon">📞</span>
-            <span>(785) 621-4030</span>
-          </a>
-          <a class="contact-row" href="mailto:doghouseliquorstore@gmail.com">
-            <span class="contact-icon">✉️</span>
-            <span>doghouseliquorstore@gmail.com</span>
-          </a>
-          <div class="contact-row no-link">
-            <span class="contact-icon">📍</span>
-            <span>2522 Vine St<br/>Hays, KS 67601</span>
-          </div>
-          <div class="contact-row no-link">
-            <span class="contact-icon">🕐</span>
-            <span>Mon–Sat 9am–11pm<br/>Sun Noon–6pm</span>
-          </div>
+          <a class="contact-row" href="tel:+17856214030"><span class="contact-icon">📞</span><span>(785) 621-4030</span></a>
+          <a class="contact-row" href="/cdn-cgi/l/email-protection#d0b4bfb7b8bfa5a3b5bcb9a1a5bfa2a3a4bfa2b590b7bdb1b9bcfeb3bfbd"><span class="contact-icon">✉️</span><span><span class="__cf_email__" data-cfemail="43272c242b2c3630262f2a32362c3130372c312603242e222a2f6d202c2e">[email&#160;protected]</span></span></a>
+          <div class="contact-row no-link"><span class="contact-icon">📍</span><span>2522 Vine St<br/>Hays, KS 67601</span></div>
+          <div class="contact-row no-link"><span class="contact-icon">🕐</span><span>Mon–Sat 9am–11pm<br/>Sun Noon–6pm</span></div>
         </div>
         <div class="contact-btns">
           <a class="call-btn" href="tel:+17856214030">📞 Call Now</a>
-          <a class="email-btn" href="mailto:doghouseliquorstore@gmail.com">✉️ Email</a>
+          <a class="email-btn" href="/cdn-cgi/l/email-protection#3d59525a5552484e5851544c48524f4e49524f587d5a505c5451135e5250">✉️ Email</a>
         </div>
         <div class="contact-form-wrap">
           <div class="form-label">Send a Message</div>
           <input type="text" class="form-input" placeholder="Your Name" id="dh-name" />
           <input type="text" class="form-input" placeholder="Your Phone or Email" id="dh-contact" />
           <textarea class="form-input form-textarea" placeholder="What are you looking for?" id="dh-message" rows="3"></textarea>
-          <button class="form-submit" onclick="sendForm('dh','Doghouse Liquor','doghouseliquorstore@gmail.com')">Send Message</button>
+          <button class="form-submit" data-label="Send Message" onclick="sendForm('dh','Doghouse Liquor','doghouseliquorstore@gmail.com','service_5hv6wnk',this)">Send Message</button>
           <div class="form-success" id="dh-success">✓ Message sent! We'll be in touch soon.</div>
         </div>
       </div>
 
-      <!-- THE INSURANCE GUYS CONTACT -->
+      <!-- THE INSURANCE GUYS -->
       <div class="biz-card">
-        <div class="biz-top">
-          <div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Hays, KS</div></div>
-          <div class="biz-tag">Independent Insurance</div>
-        </div>
+        <div class="biz-top"><div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Hays, KS</div></div><div class="biz-tag">Independent Insurance</div></div>
         <div class="contact-info">
-          <a class="contact-row" href="tel:+17852610315">
-            <span class="contact-icon">📞</span>
-            <span>(785) 261-0315</span>
-          </a>
-          <a class="contact-row" href="mailto:chandler@tigks.com">
-            <span class="contact-icon">✉️</span>
-            <span>chandler@tigks.com</span>
-          </a>
-          <div class="contact-row no-link">
-            <span class="contact-icon">📍</span>
-            <span>1204 Vine St<br/>Hays, KS 67601</span>
-          </div>
-          <div class="contact-row no-link">
-            <span class="contact-icon">🕐</span>
-            <span>Mon–Fri 8:30am–5pm<br/>Sat–Sun Closed</span>
-          </div>
+          <a class="contact-row" href="tel:+17852610315"><span class="contact-icon">📞</span><span>(785) 261-0315</span></a>
+          <a class="contact-row" href="/cdn-cgi/l/email-protection#4f2c272e212b232a3d0f3b2628243c612c2022"><span class="contact-icon">✉️</span><span><span class="__cf_email__" data-cfemail="0d6e656c636961687f4d79646a667e236e6260">[email&#160;protected]</span></span></a>
+          <div class="contact-row no-link"><span class="contact-icon">📍</span><span>1204 Vine St<br/>Hays, KS 67601</span></div>
+          <div class="contact-row no-link"><span class="contact-icon">🕐</span><span>Mon–Fri 8:30am–5pm<br/>Sat–Sun Closed</span></div>
         </div>
         <div class="contact-btns">
           <a class="call-btn" href="tel:+17852610315">📞 Call Now</a>
-          <a class="email-btn" href="mailto:chandler@tigks.com">✉️ Email</a>
+          <a class="email-btn" href="/cdn-cgi/l/email-protection#284b4049464c444d5a685c414f435b064b4745">✉️ Email</a>
         </div>
         <div class="contact-form-wrap">
           <div class="form-label">Request a Quote</div>
           <input type="text" class="form-input" placeholder="Your Name" id="tig-name" />
           <input type="text" class="form-input" placeholder="Your Phone or Email" id="tig-contact" />
           <textarea class="form-input form-textarea" placeholder="What type of insurance do you need?" id="tig-message" rows="3"></textarea>
-          <button class="form-submit" onclick="sendForm('tig','The Insurance Guys','chandler@tigks.com')">Request a Quote</button>
+          <button class="form-submit" data-label="Request a Quote" onclick="sendForm('tig','The Insurance Guys','chandler@tigks.com','service_blb2ybo',this)">Request a Quote</button>
           <div class="form-success" id="tig-success">✓ Request sent! An agent will follow up shortly.</div>
         </div>
       </div>
@@ -422,34 +280,29 @@
 
   <footer>
     <span class="gold">chanschu.com</span>
-    <span>&copy; <script>document.write(new Date().getFullYear())</script> &mdash; All rights reserved</span>
+    <span>&copy; <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>document.write(new Date().getFullYear())</script> &mdash; All rights reserved</span>
   </footer>
 </div>
+
 <script>
-  function sendForm(prefix, bizName, email) {
+  emailjs.init('8rsxIaKLiiRqq5Yo0');
+
+  function sendForm(prefix, bizName, toEmail, serviceId, btn) {
     const name    = document.getElementById(prefix+'-name').value.trim();
     const contact = document.getElementById(prefix+'-contact').value.trim();
     const message = document.getElementById(prefix+'-message').value.trim();
+
     if (!name || !contact || !message) {
       alert('Please fill in all fields before sending.');
       return;
     }
-    // Open mailto with pre-filled content
-    const subject = encodeURIComponent('Website Inquiry — ' + bizName);
-    const body    = encodeURIComponent(
-      'Name: ' + name + '\n' +
-      'Contact: ' + contact + '\n\n' +
-      'Message:\n' + message
-    );
-    window.open('mailto:' + email + '?subject=' + subject + '&body=' + body);
-    // Show success
-    document.getElementById(prefix+'-name').value = '';
-    document.getElementById(prefix+'-contact').value = '';
-    document.getElementById(prefix+'-message').value = '';
-    const s = document.getElementById(prefix+'-success');
-    s.classList.add('visible');
-    setTimeout(() => s.classList.remove('visible'), 5000);
-  }
-</script>
-</body>
-</html>
+
+    const label = btn.dataset.label || 'Send Message';
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+
+    emailjs.send(serviceId, 'template_p3hleri', {
+      from_name:    name,
+      from_contact: contact,
+      business:     bizName,
+      to_ema
