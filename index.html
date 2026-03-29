@@ -70,12 +70,8 @@
     .contact-row{display:flex;align-items:flex-start;gap:10px;font-size:11px;color:var(--text-mid);text-decoration:none;transition:color 0.2s;line-height:1.6;}
     .contact-row:not(.no-link):hover{color:var(--gold-light);}
     .contact-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
-    .contact-btns{display:flex;gap:8px;margin-bottom:20px;}
-    .call-btn,.email-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:10px 8px;border-radius:var(--radius);text-decoration:none;transition:all 0.2s;text-align:center;}
-    .call-btn{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.3);color:#52b788;}
+    .call-btn{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 16px;border-radius:var(--radius);text-decoration:none;transition:all 0.2s;background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.3);color:#52b788;white-space:nowrap;}
     .call-btn:hover{background:rgba(82,183,136,0.22);border-color:#52b788;}
-    .email-btn{background:transparent;border:1px solid var(--navy-border);color:var(--text-mid);}
-    .email-btn:hover{border-color:var(--text-dim);color:var(--text-bright);}
     .contact-form-wrap{border-top:1px solid var(--navy-border);padding-top:20px;display:flex;flex-direction:column;gap:10px;}
     .form-label{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:4px;}
     .form-input{width:100%;background:var(--navy-deep);border:1px solid var(--navy-border);color:var(--text-bright);font-family:'DM Mono',monospace;font-size:12px;padding:11px 14px;outline:none;border-radius:var(--radius);transition:border-color 0.2s;resize:vertical;}
@@ -208,16 +204,12 @@
 
       <!-- DC APPLIANCE -->
       <div class="biz-card">
-        <div class="biz-top"><div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div><div class="biz-tag">Appliances &amp; Furniture</div></div>
+        <div class="biz-top"><div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div><a class="call-btn" href="tel:+16203716417">📞 Call Now</a></div>
         <div class="contact-info">
           <a class="contact-row" href="tel:+16203716417"><span class="contact-icon">📞</span><span>(620) 371-6417</span></a>
           <a class="contact-row" href="/cdn-cgi/l/email-protection#2c4843484b494f4558554d5c5c40454d424f496c4b414d4540024f4341"><span class="contact-icon">✉️</span><span><span class="__cf_email__" data-cfemail="62060d060507010b161b0312120e0b030c010722050f030b0e4c010d0f">[email&#160;protected]</span></span></a>
           <div class="contact-row no-link"><span class="contact-icon">📍</span><span>2610 Central Ave Suite B<br/>Dodge City, KS 67801</span></div>
           <div class="contact-row no-link"><span class="contact-icon">🕐</span><span>Mon–Fri 9am–7pm<br/>Sat 9am–5pm &nbsp;·&nbsp; Sun Closed</span></div>
-        </div>
-        <div class="contact-btns">
-          <a class="call-btn" href="tel:+16203716417">📞 Call Now</a>
-          <a class="email-btn" href="/cdn-cgi/l/email-protection#9ffbf0fbf8fafcf6ebe6feefeff3f6fef1fcfadff8f2fef6f3b1fcf0f2">✉️ Email</a>
         </div>
         <div class="contact-form-wrap">
           <div class="form-label">Send a Message</div>
@@ -231,16 +223,12 @@
 
       <!-- DOGHOUSE LIQUOR -->
       <div class="biz-card">
-        <div class="biz-top"><div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div><div class="biz-tag">Beer, Wine &amp; Spirits</div></div>
+        <div class="biz-top"><div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div><a class="call-btn" href="tel:+17856214030">📞 Call Now</a></div>
         <div class="contact-info">
           <a class="contact-row" href="tel:+17856214030"><span class="contact-icon">📞</span><span>(785) 621-4030</span></a>
           <a class="contact-row" href="/cdn-cgi/l/email-protection#d0b4bfb7b8bfa5a3b5bcb9a1a5bfa2a3a4bfa2b590b7bdb1b9bcfeb3bfbd"><span class="contact-icon">✉️</span><span><span class="__cf_email__" data-cfemail="43272c242b2c3630262f2a32362c3130372c312603242e222a2f6d202c2e">[email&#160;protected]</span></span></a>
           <div class="contact-row no-link"><span class="contact-icon">📍</span><span>2522 Vine St<br/>Hays, KS 67601</span></div>
           <div class="contact-row no-link"><span class="contact-icon">🕐</span><span>Mon–Sat 9am–11pm<br/>Sun Noon–6pm</span></div>
-        </div>
-        <div class="contact-btns">
-          <a class="call-btn" href="tel:+17856214030">📞 Call Now</a>
-          <a class="email-btn" href="/cdn-cgi/l/email-protection#3d59525a5552484e5851544c48524f4e49524f587d5a505c5451135e5250">✉️ Email</a>
         </div>
         <div class="contact-form-wrap">
           <div class="form-label">Send a Message</div>
@@ -254,16 +242,12 @@
 
       <!-- THE INSURANCE GUYS -->
       <div class="biz-card">
-        <div class="biz-top"><div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Hays, KS</div></div><div class="biz-tag">Independent Insurance</div></div>
+        <div class="biz-top"><div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Hays, KS</div></div><a class="call-btn" href="tel:+17852610315">📞 Call Now</a></div>
         <div class="contact-info">
           <a class="contact-row" href="tel:+17852610315"><span class="contact-icon">📞</span><span>(785) 261-0315</span></a>
           <a class="contact-row" href="/cdn-cgi/l/email-protection#4f2c272e212b232a3d0f3b2628243c612c2022"><span class="contact-icon">✉️</span><span><span class="__cf_email__" data-cfemail="0d6e656c636961687f4d79646a667e236e6260">[email&#160;protected]</span></span></a>
           <div class="contact-row no-link"><span class="contact-icon">📍</span><span>1204 Vine St<br/>Hays, KS 67601</span></div>
           <div class="contact-row no-link"><span class="contact-icon">🕐</span><span>Mon–Fri 8:30am–5pm<br/>Sat–Sun Closed</span></div>
-        </div>
-        <div class="contact-btns">
-          <a class="call-btn" href="tel:+17852610315">📞 Call Now</a>
-          <a class="email-btn" href="/cdn-cgi/l/email-protection#284b4049464c444d5a685c414f435b064b4745">✉️ Email</a>
         </div>
         <div class="contact-form-wrap">
           <div class="form-label">Request a Quote</div>
