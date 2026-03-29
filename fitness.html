@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fitness — chanschu.com</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--navy-deep:#080f1e;--navy-mid:#0d1a30;--navy-light:#132240;--navy-border:#1e3358;--gold:#c9a84c;--gold-light:#e2c375;--gold-dim:#8a6e2f;--text-bright:#eef2f8;--text-mid:#9aaec8;--text-dim:#4d6080;--radius:6px;--green:#2d6a4f;--green-light:#52b788;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--navy-deep);color:var(--text-bright);font-family:'DM Mono',monospace;font-size:14px;line-height:1.7;min-height:100vh;}
+    body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.4;pointer-events:none;}
+    .page{position:relative;z-index:1;}
+    header{display:flex;align-items:center;justify-content:space-between;padding:22px 60px;border-bottom:1px solid var(--navy-border);background:rgba(8,15,30,0.92);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;}
+    .logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.12em;color:var(--text-bright);text-decoration:none;}
+    .logo span{color:var(--gold);}
+    nav{display:flex;gap:28px;align-items:center;flex-wrap:wrap;}
+    nav a{color:var(--text-mid);text-decoration:none;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:color 0.2s;}
+    nav a:hover,nav a.active{color:var(--gold-light);}
+    .page-hero{padding:70px 60px 50px;}
+    .page-hero .eyebrow{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:16px;}
+    .page-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,5vw,54px);font-weight:300;color:var(--text-bright);}
+    .page-hero p{color:var(--text-mid);font-size:12px;margin-top:12px;max-width:520px;line-height:1.9;}
+    .rule{height:1px;background:linear-gradient(to right,var(--navy-border),transparent);margin:0 60px;}
+    .section{padding:60px 60px 80px;}
+    .section-label{font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:40px;}
+
+    /* LEVEL SELECTOR */
+    .level-tabs{display:flex;gap:8px;margin-bottom:48px;}
+    .level-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:10px 20px;border:1px solid var(--navy-border);background:transparent;color:var(--text-dim);cursor:pointer;border-radius:var(--radius);transition:all 0.2s;}
+    .level-btn:hover{color:var(--text-mid);border-color:var(--text-dim);}
+    .level-btn.active{border-color:var(--gold-dim);color:var(--gold-light);background:rgba(138,110,47,0.08);}
+
+    /* PROGRAM OVERVIEW */
+    .program-header{background:var(--navy-mid);border:1px solid var(--navy-border);padding:36px;margin-bottom:2px;}
+    .program-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--text-bright);margin-bottom:8px;}
+    .program-meta{display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;}
+    .meta-item{font-size:11px;color:var(--text-mid);}
+    .meta-item strong{color:var(--gold-dim);display:block;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2px;}
+
+    /* WEEK SCHEDULE */
+    .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);margin-bottom:48px;}
+    .day-card{background:var(--navy-mid);padding:20px 16px;min-height:140px;transition:background 0.25s;cursor:pointer;}
+    .day-card:hover{background:var(--navy-light);}
+    .day-card.rest{opacity:0.5;}
+    .day-card.active-day{background:var(--navy-light);border-bottom:2px solid var(--gold-dim);}
+    .day-name{font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+    .day-focus{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-bright);line-height:1.3;margin-bottom:8px;}
+    .day-tag{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:3px;display:inline-block;margin-top:4px;}
+    .tag-push{background:rgba(58,123,213,0.15);color:#6fa3e0;border:1px solid rgba(58,123,213,0.25);}
+    .tag-pull{background:rgba(138,110,47,0.15);color:var(--gold-dim);border:1px solid rgba(138,110,47,0.25);}
+    .tag-legs{background:rgba(45,106,79,0.2);color:var(--green-light);border:1px solid rgba(45,106,79,0.3);}
+    .tag-cardio{background:rgba(180,80,80,0.15);color:#e08080;border:1px solid rgba(180,80,80,0.25);}
+    .tag-rest{background:rgba(77,96,128,0.15);color:var(--text-dim);border:1px solid var(--navy-border);}
+    .tag-full{background:rgba(130,60,180,0.15);color:#b080d8;border:1px solid rgba(130,60,180,0.25);}
+
+    /* WORKOUT DETAIL */
+    .workout-detail{background:var(--navy-mid);border:1px solid var(--navy-border);padding:36px;display:none;}
+    .workout-detail.visible{display:block;}
+    .detail-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--text-bright);margin-bottom:6px;}
+    .detail-sub{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:28px;}
+    .exercise-list{display:flex;flex-direction:column;gap:2px;}
+    .exercise-row{display:grid;grid-template-columns:1fr auto auto auto;gap:16px;align-items:center;background:var(--navy-deep);border:1px solid var(--navy-border);padding:14px 20px;border-radius:var(--radius);}
+    .exercise-row:hover{border-color:var(--navy-light);}
+    .ex-name{font-size:13px;color:var(--text-bright);}
+    .ex-note{font-size:10px;color:var(--text-dim);margin-top:2px;}
+    .ex-stat{font-size:11px;color:var(--text-mid);text-align:center;}
+    .ex-stat strong{display:block;font-size:14px;color:var(--gold-light);}
+    .ex-stat span{font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);}
+    .complete-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:6px 14px;border:1px solid var(--navy-border);background:transparent;color:var(--text-dim);cursor:pointer;border-radius:var(--radius);transition:all 0.2s;white-space:nowrap;}
+    .complete-btn.done{border-color:var(--green-light);color:var(--green-light);background:rgba(45,106,79,0.1);}
+    .complete-btn:hover:not(.done){color:var(--text-mid);border-color:var(--text-dim);}
+
+    /* TIPS */
+    .tips-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);}
+    .tip-card{background:var(--navy-mid);padding:28px;}
+    .tip-icon{font-size:20px;margin-bottom:12px;}
+    .tip-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text-bright);margin-bottom:8px;}
+    .tip-text{font-size:11px;color:var(--text-mid);line-height:1.9;}
+
+    footer{border-top:1px solid var(--navy-border);padding:28px 60px;display:flex;justify-content:space-between;align-items:center;color:var(--text-dim);font-size:10px;letter-spacing:0.15em;}
+    footer .gold{color:var(--gold-dim);}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+    .page-hero,.section{animation:fadeUp 0.6s ease both;}
+    @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.page-hero{padding:48px 24px 36px;}.rule{margin:0 24px;}.section{padding:40px 24px 60px;}.week-grid{grid-template-columns:repeat(3,1fr);}.exercise-row{grid-template-columns:1fr;}.tips-grid{grid-template-columns:1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
+  </style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <a href="index.html" class="logo">chan<span>schu</span>.com</a>
+    <nav>
+      <a href="tools.html">Tools</a>
+      <a href="goodnews.html">Good News</a>
+      <a href="fitness.html" class="active">Fitness</a>
+      <a href="index.html#businesses">Businesses</a>
+    </nav>
+  </header>
+
+  <div class="page-hero">
+    <p class="eyebrow">Workout Programs</p>
+    <h1>Fitness</h1>
+    <p>Structured weekly programs for every level. Pick your level, follow the plan, track your workouts.</p>
+  </div>
+
+  <div class="rule"></div>
+
+  <section class="section">
+    <p class="section-label">Choose Your Level</p>
+
+    <div class="level-tabs">
+      <button class="level-btn active" onclick="setLevel('beginner', this)">Beginner</button>
+      <button class="level-btn" onclick="setLevel('intermediate', this)">Intermediate</button>
+      <button class="level-btn" onclick="setLevel('advanced', this)">Advanced</button>
+    </div>
+
+    <div id="program-container"></div>
+
+    <div id="workout-detail" class="workout-detail"></div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section class="section">
+    <p class="section-label">Principles</p>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-icon">💧</div>
+        <div class="tip-title">Hydration</div>
+        <div class="tip-text">Drink at least half your body weight in ounces of water daily. During intense workouts, add 8oz per 20 minutes of activity.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">😴</div>
+        <div class="tip-title">Recovery</div>
+        <div class="tip-text">Muscles grow during rest, not during the workout. Aim for 7–9 hours of sleep and honor your rest days as much as your training days.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🥩</div>
+        <div class="tip-title">Nutrition</div>
+        <div class="tip-text">Target 0.7–1g of protein per pound of bodyweight daily. Eat whole foods, prioritize protein at each meal, and don't skip breakfast.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">📈</div>
+        <div class="tip-title">Progressive Overload</div>
+        <div class="tip-text">Add a small amount of weight or reps each week. Even 2.5lbs per session adds up to 130lbs of progress in a year.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🧘</div>
+        <div class="tip-title">Warm Up</div>
+        <div class="tip-text">Spend 5–10 minutes warming up before every session. Dynamic stretches, light cardio, and mobility work prevent injury and improve performance.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">📓</div>
+        <div class="tip-title">Track Everything</div>
+        <div class="tip-text">Log your weights, reps, and how you felt. What gets measured gets improved. Consistency in tracking leads to consistency in results.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="gold">chanschu.com</span>
+    <span>&copy; <script>document.write(new Date().getFullYear())</script> &mdash; All rights reserved</span>
+  </footer>
+</div>
+
+<script>
+const PROGRAMS = {
+  beginner: {
+    title: 'Foundation Builder',
+    description: '3 days/week full-body training. Perfect for building the habit and learning movement patterns.',
+    duration: '8 Weeks', frequency: '3x / Week', goal: 'Build Habit & Foundation', equipment: 'Minimal',
+    days: [
+      { name: 'Mon', focus: 'Full Body A', tag: 'full', tagClass: 'tag-full',
+        exercises: [
+          { name: 'Bodyweight Squat', note: 'Focus on depth and form', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Push-Up (or Knee Push-Up)', note: 'Chest to floor, full range', sets: 3, reps: '8–12', rest: '60s' },
+          { name: 'Dumbbell Row', note: 'One arm at a time', sets: 3, reps: '10 each', rest: '60s' },
+          { name: 'Glute Bridge', note: 'Squeeze at the top', sets: 3, reps: '15', rest: '45s' },
+          { name: 'Plank Hold', note: 'Keep hips level', sets: 3, reps: '20–30s', rest: '45s' },
+          { name: '10-Minute Walk', note: 'Brisk pace', sets: 1, reps: '10 min', rest: '—' },
+        ]
+      },
+      { name: 'Tue', focus: 'Rest / Walk', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+      { name: 'Wed', focus: 'Full Body B', tag: 'full', tagClass: 'tag-full',
+        exercises: [
+          { name: 'Romanian Deadlift', note: 'Light weight, hinge at hips', sets: 3, reps: '10–12', rest: '90s' },
+          { name: 'Dumbbell Shoulder Press', note: 'Seated or standing', sets: 3, reps: '10–12', rest: '60s' },
+          { name: 'Lat Pulldown or Band Pull', note: 'Squeeze shoulder blades', sets: 3, reps: '10–12', rest: '60s' },
+          { name: 'Reverse Lunge', note: 'Step back, knee at 90°', sets: 3, reps: '8 each', rest: '60s' },
+          { name: 'Dead Bug', note: 'Slow and controlled', sets: 3, reps: '6 each', rest: '45s' },
+        ]
+      },
+      { name: 'Thu', focus: 'Rest / Stretch', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+      { name: 'Fri', focus: 'Full Body C', tag: 'full', tagClass: 'tag-full',
+        exercises: [
+          { name: 'Goblet Squat', note: 'Hold dumbbell at chest', sets: 3, reps: '10–12', rest: '90s' },
+          { name: 'Dumbbell Chest Press', note: 'On floor or bench', sets: 3, reps: '10–12', rest: '60s' },
+          { name: 'Seated Cable Row or Band Row', note: 'Elbows back, chest up', sets: 3, reps: '10–12', rest: '60s' },
+          { name: 'Step-Up', note: 'Use a sturdy box or step', sets: 3, reps: '8 each', rest: '60s' },
+          { name: 'Side Plank', note: 'Keep hips stacked', sets: 2, reps: '20s each', rest: '45s' },
+          { name: '15-Minute Walk or Light Bike', note: 'Easy pace, cool down', sets: 1, reps: '15 min', rest: '—' },
+        ]
+      },
+      { name: 'Sat', focus: 'Active Rest', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+      { name: 'Sun', focus: 'Rest', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+    ]
+  },
+  intermediate: {
+    title: 'Push / Pull / Legs',
+    description: '6 days/week PPL split. Build muscle and strength with targeted training for each muscle group.',
+    duration: '12 Weeks', frequency: '6x / Week', goal: 'Muscle & Strength', equipment: 'Full Gym',
+    days: [
+      { name: 'Mon', focus: 'Push (Chest, Shoulders, Triceps)', tag: 'Push', tagClass: 'tag-push',
+        exercises: [
+          { name: 'Barbell Bench Press', note: 'Warm up with 50% first set', sets: 4, reps: '6–8', rest: '2min' },
+          { name: 'Incline Dumbbell Press', note: '30–45° incline', sets: 3, reps: '8–10', rest: '90s' },
+          { name: 'Seated Dumbbell Shoulder Press', note: 'Full range of motion', sets: 3, reps: '8–10', rest: '90s' },
+          { name: 'Cable Lateral Raise', note: 'Controlled tempo', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Tricep Rope Pushdown', note: 'Elbows tucked', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Overhead Tricep Extension', note: 'EZ bar or dumbbell', sets: 2, reps: '10–12', rest: '60s' },
+        ]
+      },
+      { name: 'Tue', focus: 'Pull (Back, Biceps)', tag: 'Pull', tagClass: 'tag-pull',
+        exercises: [
+          { name: 'Pull-Up or Lat Pulldown', note: 'Full stretch at top', sets: 4, reps: '6–8', rest: '2min' },
+          { name: 'Barbell Row', note: 'Chest to bar, controlled', sets: 4, reps: '6–8', rest: '90s' },
+          { name: 'Seated Cable Row', note: 'Neutral grip', sets: 3, reps: '10–12', rest: '90s' },
+          { name: 'Face Pull', note: 'External rotation focus', sets: 3, reps: '15–20', rest: '60s' },
+          { name: 'Barbell Curl', note: 'No swinging', sets: 3, reps: '8–10', rest: '60s' },
+          { name: 'Hammer Curl', note: 'Alternating', sets: 2, reps: '10–12', rest: '60s' },
+        ]
+      },
+      { name: 'Wed', focus: 'Legs (Quads, Hamstrings, Glutes)', tag: 'Legs', tagClass: 'tag-legs',
+        exercises: [
+          { name: 'Barbell Back Squat', note: 'Below parallel, big breath', sets: 4, reps: '5–7', rest: '3min' },
+          { name: 'Romanian Deadlift', note: 'Controlled descent', sets: 3, reps: '8–10', rest: '2min' },
+          { name: 'Leg Press', note: 'Full range, don\'t lock out', sets: 3, reps: '10–12', rest: '90s' },
+          { name: 'Walking Lunge', note: 'Add dumbbells for weight', sets: 3, reps: '10 each', rest: '90s' },
+          { name: 'Leg Curl', note: 'Hamstring focus', sets: 3, reps: '10–12', rest: '60s' },
+          { name: 'Standing Calf Raise', note: 'Full range, pause at top', sets: 4, reps: '15–20', rest: '60s' },
+        ]
+      },
+      { name: 'Thu', focus: 'Push (Volume)', tag: 'Push', tagClass: 'tag-push',
+        exercises: [
+          { name: 'Dumbbell Bench Press', note: 'More range than barbell', sets: 4, reps: '8–12', rest: '90s' },
+          { name: 'Cable Fly', note: 'Full stretch, slow eccentric', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Arnold Press', note: 'Full rotation', sets: 3, reps: '10–12', rest: '90s' },
+          { name: 'Lateral Raise', note: 'Dumbbell, controlled', sets: 4, reps: '15', rest: '60s' },
+          { name: 'Skull Crusher', note: 'EZ bar, controlled descent', sets: 3, reps: '10–12', rest: '60s' },
+          { name: 'Close-Grip Push-Up', note: 'Bodyweight finisher', sets: 2, reps: 'To failure', rest: '60s' },
+        ]
+      },
+      { name: 'Fri', focus: 'Pull (Volume)', tag: 'Pull', tagClass: 'tag-pull',
+        exercises: [
+          { name: 'Chest-Supported Row', note: 'Eliminates lower back fatigue', sets: 4, reps: '8–10', rest: '90s' },
+          { name: 'Single-Arm Dumbbell Row', note: 'Full stretch, heavy', sets: 3, reps: '8–10 each', rest: '90s' },
+          { name: 'Straight-Arm Pulldown', note: 'Lat isolation', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Rear Delt Fly', note: 'Bent over or cable', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Incline Curl', note: 'Full stretch at bottom', sets: 3, reps: '10–12', rest: '60s' },
+          { name: 'Preacher Curl', note: 'EZ bar or machine', sets: 2, reps: '10–12', rest: '60s' },
+        ]
+      },
+      { name: 'Sat', focus: 'Legs (Volume)', tag: 'Legs', tagClass: 'tag-legs',
+        exercises: [
+          { name: 'Front Squat or Hack Squat', note: 'Quad focus', sets: 4, reps: '8–10', rest: '2min' },
+          { name: 'Leg Extension', note: 'Quad isolation', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Glute-Ham Raise or Nordic Curl', note: 'Hamstring strength', sets: 3, reps: '6–8', rest: '90s' },
+          { name: 'Hip Thrust', note: 'Barbell, glute focus', sets: 4, reps: '10–12', rest: '90s' },
+          { name: 'Seated Calf Raise', note: 'Soleus focus', sets: 4, reps: '15–20', rest: '60s' },
+          { name: 'Ab Wheel Rollout', note: 'Core finisher', sets: 3, reps: '8–10', rest: '60s' },
+        ]
+      },
+      { name: 'Sun', focus: 'Rest & Recovery', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+    ]
+  },
+  advanced: {
+    title: 'Power & Hypertrophy',
+    description: '5-day split combining powerlifting strength work with hypertrophy volume. For experienced lifters.',
+    duration: 'Ongoing', frequency: '5x / Week', goal: 'Strength + Size', equipment: 'Full Gym',
+    days: [
+      { name: 'Mon', focus: 'Heavy Chest & Triceps', tag: 'Push', tagClass: 'tag-push',
+        exercises: [
+          { name: 'Barbell Bench Press', note: 'Work up to heavy 3–5RM', sets: 5, reps: '3–5', rest: '3min' },
+          { name: 'Close-Grip Bench Press', note: '75% of main lift', sets: 3, reps: '6–8', rest: '2min' },
+          { name: 'Weighted Dip', note: 'Belt or dumbbell between legs', sets: 4, reps: '6–10', rest: '2min' },
+          { name: 'Incline DB Fly', note: 'Slow eccentric, 3 seconds down', sets: 3, reps: '12–15', rest: '60s' },
+          { name: 'Skull Crusher', note: 'Heavy EZ bar', sets: 4, reps: '8–10', rest: '90s' },
+          { name: 'Tricep Pushdown Superset w/ Overhead Ext.', note: 'Back-to-back, no rest', sets: 3, reps: '12 each', rest: '90s' },
+        ]
+      },
+      { name: 'Tue', focus: 'Heavy Back & Biceps', tag: 'Pull', tagClass: 'tag-pull',
+        exercises: [
+          { name: 'Deadlift', note: 'Work up to heavy 3RM', sets: 5, reps: '1–3', rest: '4min' },
+          { name: 'Weighted Pull-Up', note: 'Add 20–45lbs', sets: 4, reps: '4–6', rest: '2min' },
+          { name: 'Pendlay Row', note: 'Dead stop each rep', sets: 4, reps: '5–6', rest: '2min' },
+          { name: 'Meadows Row', note: 'Landmine setup', sets: 3, reps: '8–10 each', rest: '90s' },
+          { name: 'Barbell Curl', note: 'Strict, full range', sets: 4, reps: '6–8', rest: '90s' },
+          { name: 'Zottman Curl', note: 'Pronated on the way down', sets: 3, reps: '10–12', rest: '60s' },
+        ]
+      },
+      { name: 'Wed', focus: 'Cardio & Core', tag: 'Cardio', tagClass: 'tag-cardio',
+        exercises: [
+          { name: 'Assault Bike or Rowing', note: 'Moderate pace', sets: 1, reps: '20 min', rest: '—' },
+          { name: 'Hanging Leg Raise', note: 'Full range, slow', sets: 4, reps: '12–15', rest: '60s' },
+          { name: 'Ab Wheel Rollout', note: 'From knees or standing', sets: 4, reps: '10–12', rest: '60s' },
+          { name: 'Cable Crunch', note: 'Rope attachment, heavy', sets: 4, reps: '15', rest: '60s' },
+          { name: 'Pallof Press', note: 'Anti-rotation, both sides', sets: 3, reps: '10 each', rest: '45s' },
+          { name: 'Farmer Carry', note: 'Heavy dumbbells, 40 yards', sets: 4, reps: '40 yds', rest: '90s' },
+        ]
+      },
+      { name: 'Thu', focus: 'Heavy Legs', tag: 'Legs', tagClass: 'tag-legs',
+        exercises: [
+          { name: 'Barbell Back Squat', note: 'Work up to heavy 3–5RM', sets: 6, reps: '3–5', rest: '3min' },
+          { name: 'Pause Squat', note: '2-second pause at bottom', sets: 3, reps: '5', rest: '2min' },
+          { name: 'Bulgarian Split Squat', note: 'Rear foot elevated, heavy', sets: 3, reps: '6–8 each', rest: '2min' },
+          { name: 'Leg Press', note: 'High foot placement for glutes', sets: 3, reps: '10–12', rest: '90s' },
+          { name: 'Stiff-Leg Deadlift', note: 'Slow descent, full stretch', sets: 4, reps: '8–10', rest: '90s' },
+          { name: 'Standing Calf Raise', note: 'Heavy, 3-second pause at top', sets: 5, reps: '12–15', rest: '60s' },
+        ]
+      },
+      { name: 'Fri', focus: 'Shoulders & Arms', tag: 'Push', tagClass: 'tag-push',
+        exercises: [
+          { name: 'Barbell Overhead Press', note: 'Standing, strict form', sets: 5, reps: '4–6', rest: '2min' },
+          { name: 'Dumbbell Lateral Raise', note: '4 sets, controlled tempo', sets: 4, reps: '15–20', rest: '60s' },
+          { name: 'Rear Delt Fly', note: 'Cable or machine', sets: 4, reps: '15', rest: '60s' },
+          { name: 'EZ Bar Curl', note: 'Supinate at the top', sets: 4, reps: '8–10', rest: '90s' },
+          { name: 'Skull Crusher', note: 'Heavy, pause at bottom', sets: 4, reps: '8', rest: '90s' },
+          { name: 'Cable Curl / Pushdown Superset', note: 'Burnout finisher', sets: 3, reps: '15 each', rest: '60s' },
+        ]
+      },
+      { name: 'Sat', focus: 'Active Recovery', tag: 'Rest', tagClass: 'tag-rest', rest: true,
+        exercises: [
+          { name: 'Light Walking or Swimming', note: '30–45 minutes', sets: 1, reps: '30–45 min', rest: '—' },
+          { name: 'Full Body Stretch Routine', note: 'Hip flexors, hamstrings, chest, lats', sets: 1, reps: '20 min', rest: '—' },
+          { name: 'Foam Roll', note: 'Target sore areas', sets: 1, reps: '10 min', rest: '—' },
+        ]
+      },
+      { name: 'Sun', focus: 'Rest', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+    ]
+  }
+};
+
+let currentLevel = 'beginner';
+let completedExercises = {};
+
+function setLevel(level, btn) {
+  currentLevel = level;
+  completedExercises = {};
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProgram();
+  document.getElementById('workout-detail').classList.remove('visible');
+  document.getElementById('workout-detail').innerHTML = '';
+}
+
+function renderProgram() {
+  const prog = PROGRAMS[currentLevel];
+  const tagMap = { beginner: 'tag-full', intermediate: 'tag-push', advanced: 'tag-push' };
+
+  const dayCards = prog.days.map((day, i) => `
+    <div class="day-card ${day.rest && !day.exercises ? 'rest' : ''}" onclick="showDay(${i})">
+      <div class="day-name">${day.name}</div>
+      <div class="day-focus">${day.focus}</div>
+      <span class="day-tag ${day.tagClass}">${day.tag}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('program-container').innerHTML = `
+    <div class="program-header">
+      <div class="program-title">${prog.title}</div>
+      <p style="color:var(--text-mid);font-size:12px;margin-top:8px;">${prog.description}</p>
+      <div class="program-meta">
+        <div class="meta-item"><strong>Duration</strong>${prog.duration}</div>
+        <div class="meta-item"><strong>Frequency</strong>${prog.frequency}</div>
+        <div class="meta-item"><strong>Goal</strong>${prog.goal}</div>
+        <div class="meta-item"><strong>Equipment</strong>${prog.equipment}</div>
+      </div>
+    </div>
+    <div class="week-grid">${dayCards}</div>
+  `;
+}
+
+function showDay(index) {
+  const prog = PROGRAMS[currentLevel];
+  const day = prog.days[index];
+  if (!day.exercises || day.exercises.length === 0) {
+    document.getElementById('workout-detail').classList.remove('visible');
+    return;
+  }
+
+  const rows = day.exercises.map((ex, ei) => {
+    const key = `${currentLevel}-${index}-${ei}`;
+    const done = completedExercises[key];
+    return `
+      <div class="exercise-row">
+        <div>
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-note">${ex.note}</div>
+        </div>
+        <div class="ex-stat"><strong>${ex.sets}</strong><span>Sets</span></div>
+        <div class="ex-stat"><strong>${ex.reps}</strong><span>Reps</span></div>
+        <div class="ex-stat"><strong>${ex.rest}</strong><span>Rest</span></div>
+        <button class="complete-btn ${done ? 'done' : ''}" onclick="toggleExercise('${key}', this)">${done ? '✓ Done' : 'Mark Done'}</button>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('workout-detail').innerHTML = `
+    <div class="detail-title">${day.name} — ${day.focus}</div>
+    <div class="detail-sub">${day.exercises.length} exercises &nbsp;·&nbsp; ${currentLevel.charAt(0).toUpperCase()+currentLevel.slice(1)} Program</div>
+    <div class="exercise-list">${rows}</div>
+  `;
+  document.getElementById('workout-detail').classList.add('visible');
+  document.getElementById('workout-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Highlight active day
+  document.querySelectorAll('.day-card').forEach((c, i) => {
+    c.classList.toggle('active-day', i === index);
+  });
+}
+
+function toggleExercise(key, btn) {
+  completedExercises[key] = !completedExercises[key];
+  btn.classList.toggle('done', completedExercises[key]);
+  btn.textContent = completedExercises[key] ? '✓ Done' : 'Mark Done';
+}
+
+// Init
+renderProgram();
+</script>
+</body>
+</html>
