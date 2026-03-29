@@ -7,7 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    :root{--navy-deep:#080f1e;--navy-mid:#0d1a30;--navy-light:#132240;--navy-border:#1e3358;--gold:#c9a84c;--gold-light:#e2c375;--gold-dim:#8a6e2f;--text-bright:#eef2f8;--text-mid:#9aaec8;--text-dim:#4d6080;--radius:6px;--green:#2d6a4f;--green-light:#52b788;}
+    :root{--navy-deep:#080f1e;--navy-mid:#0d1a30;--navy-light:#132240;--navy-border:#1e3358;--gold:#c9a84c;--gold-light:#e2c375;--gold-dim:#8a6e2f;--text-bright:#eef2f8;--text-mid:#9aaec8;--text-dim:#4d6080;--radius:6px;--green-light:#52b788;}
     html{scroll-behavior:smooth;}
     body{background:var(--navy-deep);color:var(--text-bright);font-family:'DM Mono',monospace;font-size:14px;line-height:1.7;min-height:100vh;}
     body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.4;pointer-events:none;}
@@ -25,22 +25,16 @@
     .rule{height:1px;background:linear-gradient(to right,var(--navy-border),transparent);margin:0 60px;}
     .section{padding:60px 60px 80px;}
     .section-label{font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:40px;}
-
-    /* LEVEL SELECTOR */
-    .level-tabs{display:flex;gap:8px;margin-bottom:48px;}
+    .level-tabs{display:flex;gap:8px;margin-bottom:48px;flex-wrap:wrap;}
     .level-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:10px 20px;border:1px solid var(--navy-border);background:transparent;color:var(--text-dim);cursor:pointer;border-radius:var(--radius);transition:all 0.2s;}
     .level-btn:hover{color:var(--text-mid);border-color:var(--text-dim);}
     .level-btn.active{border-color:var(--gold-dim);color:var(--gold-light);background:rgba(138,110,47,0.08);}
-
-    /* PROGRAM OVERVIEW */
     .program-header{background:var(--navy-mid);border:1px solid var(--navy-border);padding:36px;margin-bottom:2px;}
     .program-title{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:300;color:var(--text-bright);margin-bottom:8px;}
     .program-meta{display:flex;gap:24px;flex-wrap:wrap;margin-top:16px;}
     .meta-item{font-size:11px;color:var(--text-mid);}
     .meta-item strong{color:var(--gold-dim);display:block;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:2px;}
-
-    /* WEEK SCHEDULE */
-    .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);margin-bottom:48px;}
+    .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);margin-bottom:12px;}
     .day-card{background:var(--navy-mid);padding:20px 16px;min-height:140px;transition:background 0.25s;cursor:pointer;}
     .day-card:hover{background:var(--navy-light);}
     .day-card.rest{opacity:0.5;}
@@ -54,23 +48,43 @@
     .tag-cardio{background:rgba(180,80,80,0.15);color:#e08080;border:1px solid rgba(180,80,80,0.25);}
     .tag-rest{background:rgba(77,96,128,0.15);color:var(--text-dim);border:1px solid var(--navy-border);}
     .tag-full{background:rgba(130,60,180,0.15);color:#b080d8;border:1px solid rgba(130,60,180,0.25);}
-
-    /* WORKOUT DETAIL */
-    .workout-detail{background:var(--navy-mid);border:1px solid var(--navy-border);padding:36px;display:none;}
+    .tag-golf{background:rgba(34,120,60,0.2);color:#6fcf97;border:1px solid rgba(34,120,60,0.3);}
+    .workout-detail{background:var(--navy-mid);border:1px solid var(--navy-border);padding:36px;display:none;margin-bottom:48px;}
     .workout-detail.visible{display:block;}
     .detail-title{font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--text-bright);margin-bottom:6px;}
     .detail-sub{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:28px;}
     .exercise-list{display:flex;flex-direction:column;gap:2px;}
-    .exercise-row{display:grid;grid-template-columns:1fr auto auto auto;gap:16px;align-items:center;background:var(--navy-deep);border:1px solid var(--navy-border);padding:14px 20px;border-radius:var(--radius);}
+
+    /* EXERCISE ROW */
+    .exercise-row{display:grid;grid-template-columns:1fr auto auto auto auto;gap:16px;align-items:center;background:var(--navy-deep);border:1px solid var(--navy-border);padding:14px 20px;border-radius:var(--radius);transition:border-color 0.2s;}
     .exercise-row:hover{border-color:var(--navy-light);}
-    .ex-name{font-size:13px;color:var(--text-bright);}
-    .ex-note{font-size:10px;color:var(--text-dim);margin-top:2px;}
-    .ex-stat{font-size:11px;color:var(--text-mid);text-align:center;}
+    .ex-name{font-size:13px;color:var(--text-bright);cursor:pointer;transition:color 0.2s;display:flex;align-items:center;gap:8px;}
+    .ex-name:hover{color:var(--gold-light);}
+    .ex-name-text{border-bottom:1px dashed var(--navy-border);padding-bottom:1px;}
+    .ex-name:hover .ex-name-text{border-color:var(--gold-dim);}
+    .ex-play{font-size:10px;background:rgba(255,0,0,0.15);color:#ff6b6b;border:1px solid rgba(255,0,0,0.2);padding:3px 8px;border-radius:3px;white-space:nowrap;letter-spacing:0.1em;}
+    .ex-note{font-size:10px;color:var(--text-dim);margin-top:3px;}
+    .ex-stat{font-size:11px;color:var(--text-mid);text-align:center;min-width:48px;}
     .ex-stat strong{display:block;font-size:14px;color:var(--gold-light);}
     .ex-stat span{font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);}
     .complete-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:6px 14px;border:1px solid var(--navy-border);background:transparent;color:var(--text-dim);cursor:pointer;border-radius:var(--radius);transition:all 0.2s;white-space:nowrap;}
     .complete-btn.done{border-color:var(--green-light);color:var(--green-light);background:rgba(45,106,79,0.1);}
     .complete-btn:hover:not(.done){color:var(--text-mid);border-color:var(--text-dim);}
+
+    /* VIDEO MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay.visible{display:flex;}
+    .modal-box{background:var(--navy-mid);border:1px solid var(--navy-border);border-radius:var(--radius);width:100%;max-width:800px;overflow:hidden;}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--navy-border);}
+    .modal-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text-bright);}
+    .modal-close{background:transparent;border:1px solid var(--navy-border);color:var(--text-dim);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;padding:6px 14px;cursor:pointer;border-radius:var(--radius);transition:all 0.2s;}
+    .modal-close:hover{border-color:var(--text-dim);color:var(--text-bright);}
+    .modal-video{position:relative;padding-bottom:56.25%;height:0;background:#000;}
+    .modal-video iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+    .modal-footer{padding:12px 20px;display:flex;align-items:center;justify-content:space-between;}
+    .modal-note{font-size:10px;color:var(--text-dim);letter-spacing:0.1em;}
+    .modal-yt-link{font-size:10px;color:#ff6b6b;text-decoration:none;letter-spacing:0.1em;}
+    .modal-yt-link:hover{color:#ff9a9a;}
 
     /* TIPS */
     .tips-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);}
@@ -78,12 +92,12 @@
     .tip-icon{font-size:20px;margin-bottom:12px;}
     .tip-title{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text-bright);margin-bottom:8px;}
     .tip-text{font-size:11px;color:var(--text-mid);line-height:1.9;}
-
     footer{border-top:1px solid var(--navy-border);padding:28px 60px;display:flex;justify-content:space-between;align-items:center;color:var(--text-dim);font-size:10px;letter-spacing:0.15em;}
     footer .gold{color:var(--gold-dim);}
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
     .page-hero,.section{animation:fadeUp 0.6s ease both;}
-    @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.page-hero{padding:48px 24px 36px;}.rule{margin:0 24px;}.section{padding:40px 24px 60px;}.week-grid{grid-template-columns:repeat(3,1fr);}.exercise-row{grid-template-columns:1fr;}.tips-grid{grid-template-columns:1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
+    @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.page-hero{padding:48px 24px 36px;}.rule{margin:0 24px;}.section{padding:40px 24px 60px;}.week-grid{grid-template-columns:repeat(3,1fr);}.exercise-row{grid-template-columns:1fr 1fr;gap:10px;}.tips-grid{grid-template-columns:1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
+    @media(max-width:480px){.exercise-row{grid-template-columns:1fr;}.week-grid{grid-template-columns:repeat(2,1fr);}}
   </style>
 </head>
 <body>
@@ -101,22 +115,29 @@
   <div class="page-hero">
     <p class="eyebrow">Workout Programs</p>
     <h1>Fitness</h1>
-    <p>Structured weekly programs for every level. Pick your level, follow the plan, track your workouts.</p>
+    <p>Structured weekly programs for every level. Click any exercise name to watch a short how-to video.</p>
   </div>
 
   <div class="rule"></div>
 
   <section class="section">
     <p class="section-label">Choose Your Level</p>
-
-    <div class="level-tabs">
-      <button class="level-btn active" onclick="setLevel('beginner', this)">Beginner</button>
-      <button class="level-btn" onclick="setLevel('intermediate', this)">Intermediate</button>
-      <button class="level-btn" onclick="setLevel('advanced', this)">Advanced</button>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">General Fitness</div>
+      <div class="level-tabs" style="margin-bottom:0;">
+        <button class="level-btn active" onclick="setLevel('beginner',this)">Beginner</button>
+        <button class="level-btn" onclick="setLevel('intermediate',this)">Intermediate</button>
+        <button class="level-btn" onclick="setLevel('advanced',this)">Advanced</button>
+      </div>
     </div>
-
+    <div style="margin-bottom:40px;">
+      <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:8px;">⛳ Golf Performance</div>
+      <div class="level-tabs" style="margin-bottom:0;">
+        <button class="level-btn" onclick="setLevel('golf_beginner',this)">Golf — Beginner</button>
+        <button class="level-btn" onclick="setLevel('golf_intermediate',this)">Golf — Intermediate</button>
+      </div>
+    </div>
     <div id="program-container"></div>
-
     <div id="workout-detail" class="workout-detail"></div>
   </section>
 
@@ -125,38 +146,31 @@
   <section class="section">
     <p class="section-label">Principles</p>
     <div class="tips-grid">
-      <div class="tip-card">
-        <div class="tip-icon">💧</div>
-        <div class="tip-title">Hydration</div>
-        <div class="tip-text">Drink at least half your body weight in ounces of water daily. During intense workouts, add 8oz per 20 minutes of activity.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-icon">😴</div>
-        <div class="tip-title">Recovery</div>
-        <div class="tip-text">Muscles grow during rest, not during the workout. Aim for 7–9 hours of sleep and honor your rest days as much as your training days.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-icon">🥩</div>
-        <div class="tip-title">Nutrition</div>
-        <div class="tip-text">Target 0.7–1g of protein per pound of bodyweight daily. Eat whole foods, prioritize protein at each meal, and don't skip breakfast.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-icon">📈</div>
-        <div class="tip-title">Progressive Overload</div>
-        <div class="tip-text">Add a small amount of weight or reps each week. Even 2.5lbs per session adds up to 130lbs of progress in a year.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-icon">🧘</div>
-        <div class="tip-title">Warm Up</div>
-        <div class="tip-text">Spend 5–10 minutes warming up before every session. Dynamic stretches, light cardio, and mobility work prevent injury and improve performance.</div>
-      </div>
-      <div class="tip-card">
-        <div class="tip-icon">📓</div>
-        <div class="tip-title">Track Everything</div>
-        <div class="tip-text">Log your weights, reps, and how you felt. What gets measured gets improved. Consistency in tracking leads to consistency in results.</div>
-      </div>
+      <div class="tip-card"><div class="tip-icon">💧</div><div class="tip-title">Hydration</div><div class="tip-text">Drink at least half your body weight in ounces of water daily. Add 8oz per 20 minutes of intense activity.</div></div>
+      <div class="tip-card"><div class="tip-icon">😴</div><div class="tip-title">Recovery</div><div class="tip-text">Muscles grow during rest, not during the workout. Aim for 7–9 hours of sleep and honor your rest days.</div></div>
+      <div class="tip-card"><div class="tip-icon">🥩</div><div class="tip-title">Nutrition</div><div class="tip-text">Target 0.7–1g of protein per pound of bodyweight daily. Prioritize protein at each meal, don't skip breakfast.</div></div>
+      <div class="tip-card"><div class="tip-icon">📈</div><div class="tip-title">Progressive Overload</div><div class="tip-text">Add a small amount of weight or reps each week. Even 2.5lbs per session adds up to 130lbs in a year.</div></div>
+      <div class="tip-card"><div class="tip-icon">🧘</div><div class="tip-title">Warm Up</div><div class="tip-text">Spend 5–10 minutes warming up before every session. Dynamic stretches and mobility work prevent injury.</div></div>
+      <div class="tip-card"><div class="tip-icon">📓</div><div class="tip-title">Track Everything</div><div class="tip-text">Log your weights, reps, and how you felt. What gets measured gets improved. Consistency leads to results.</div></div>
     </div>
   </section>
+
+  <!-- VIDEO MODAL -->
+  <div class="modal-overlay" id="video-modal" onclick="closeModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-exercise-name">Exercise</div>
+        <button class="modal-close" onclick="closeModalBtn()">✕ Close</button>
+      </div>
+      <div class="modal-video">
+        <iframe id="modal-iframe" src="" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+      </div>
+      <div class="modal-footer">
+        <span class="modal-note">▶ Short form tutorial — click name to search YouTube directly</span>
+        <a id="modal-yt-link" href="#" target="_blank" class="modal-yt-link">Open on YouTube →</a>
+      </div>
+    </div>
+  </div>
 
   <footer>
     <span class="gold">chanschu.com</span>
@@ -165,180 +179,344 @@
 </div>
 
 <script>
+// YouTube video IDs — short, reputable tutorials for each exercise
+// Sources: Jeff Nippard, Alan Thrall, Renaissance Periodization, Squat University, Athlean-X
+const VIDEO_IDS = {
+  // BEGINNER
+  'Bodyweight Squat':               'aclHkVaku9U', // Jeff Nippard
+  'Push-Up (or Knee Push-Up)':      'IODxDxX7oi4', // Jeff Nippard
+  'Dumbbell Row':                   'pYcpY20QaE8', // Jeff Nippard
+  'Glute Bridge':                   'OUgsJ8-Vi0E', // Squat University
+  'Plank Hold':                     'pvIjsG5Svck', // Jeff Nippard
+  '10-Minute Walk':                 'njeZ29umqVE', // walking form tips
+  'Romanian Deadlift':              'JCXUYuzwNrM', // Jeff Nippard
+  'Dumbbell Shoulder Press':        'qEwKCR5JCog', // Jeff Nippard
+  'Lat Pulldown or Band Pull':      'CAwf7n6Tuhs', // Jeff Nippard
+  'Reverse Lunge':                  'kkdmHTgZZiI', // Jeff Nippard
+  'Dead Bug':                       '4XLEnwUr1d8', // Squat University
+  'Goblet Squat':                   'MxsFDhcyFyE', // Alan Thrall
+  'Dumbbell Chest Press':           'VmB1G1K7v94', // Jeff Nippard
+  'Seated Cable Row or Band Row':   'GZbfZ033f74', // Jeff Nippard
+  'Step-Up':                        'dQqApCGd5Ss', // Athlean-X
+  'Side Plank':                     'K2-qlz-gtnI', // Jeff Nippard
+  '15-Minute Walk or Light Bike':   'njeZ29umqVE',
+  // INTERMEDIATE — PUSH
+  'Barbell Bench Press':            'vcBig73ojpE', // Jeff Nippard
+  'Incline Dumbbell Press':         'DbFgADa2PL8', // Jeff Nippard
+  'Seated Dumbbell Shoulder Press': 'qEwKCR5JCog',
+  'Cable Lateral Raise':            'FeJbcuoH5RA', // Jeff Nippard
+  'Tricep Rope Pushdown':           'kiuVA0gs3EI', // Jeff Nippard
+  'Overhead Tricep Extension':      '6SS6K3lAwZ8', // Jeff Nippard
+  'Dumbbell Bench Press':           'VmB1G1K7v94',
+  'Cable Fly':                      'Iwe6AmxVf7o', // Jeff Nippard
+  'Arnold Press':                   'vj2w851ZHRM', // Jeff Nippard
+  'Lateral Raise':                  'FeJbcuoH5RA',
+  'Skull Crusher':                  'ir5zvCRlKdA', // Jeff Nippard
+  'Close-Grip Push-Up':             'u4FZ1Fwqzks', // Athlean-X
+  // INTERMEDIATE — PULL
+  'Pull-Up or Lat Pulldown':        'eGo4IYlbE5g', // Jeff Nippard
+  'Barbell Row':                    'FWJR5Ve8bnQ', // Jeff Nippard
+  'Seated Cable Row':               'GZbfZ033f74',
+  'Face Pull':                      'eIq5CB9JfKE', // Athlean-X
+  'Barbell Curl':                   'kwG2ipFRgfo', // Jeff Nippard
+  'Hammer Curl':                    'zC3nLlEvin4', // Jeff Nippard
+  'Chest-Supported Row':            'T3N-TO4reLQ', // Jeff Nippard
+  'Single-Arm Dumbbell Row':        'pYcpY20QaE8',
+  'Straight-Arm Pulldown':          'rEapMF0i7_0', // Jeff Nippard
+  'Rear Delt Fly':                  'EA7u4Q_8HQ0', // Jeff Nippard
+  'Incline Curl':                   'soxrZlIl35U', // Jeff Nippard
+  'Preacher Curl':                  'fIWP-FRFNU0', // Jeff Nippard
+  // INTERMEDIATE — LEGS
+  'Barbell Back Squat':             'ultWZbUMPL8', // Alan Thrall
+  'Leg Press':                      'IZxyjW7MPJQ', // Jeff Nippard
+  'Walking Lunge':                  'L8fvypPrzzs', // Jeff Nippard
+  'Leg Curl':                       'n0IqJbHFnCo', // Jeff Nippard
+  'Standing Calf Raise':            'gwLzBJYoWlQ', // Jeff Nippard
+  'Front Squat or Hack Squat':      'Cqg_SgZMdRs', // Jeff Nippard
+  'Leg Extension':                  'ljO4jkHHAP4', // Jeff Nippard
+  'Glute-Ham Raise or Nordic Curl': '3L4EuGBCHjk', // Squat University
+  'Hip Thrust':                     'SEdqd6QnuNI', // Jeff Nippard
+  'Seated Calf Raise':              'JbyjNymZOt0', // Jeff Nippard
+  'Ab Wheel Rollout':               'FBbTwBHkKJ8', // Jeff Nippard
+  'Bulgarian Split Squat':          '2C-uNgKwPLE', // Jeff Nippard
+  'Stiff-Leg Deadlift':             'JCXUYuzwNrM',
+  // ADVANCED
+  'Deadlift':                       'op9kVnSso6Q', // Alan Thrall
+  'Weighted Pull-Up':               'eGo4IYlbE5g',
+  'Pendlay Row':                    'FWJR5Ve8bnQ',
+  'Meadows Row':                    'K4PxFwJJYJk', // Jeff Nippard
+  'Zottman Curl':                   'FXVJ0QFRRBE', // Jeff Nippard
+  'Barbell Overhead Press':         'CnBmiBqp-AI', // Jeff Nippard
+  'Dumbbell Lateral Raise':         'FeJbcuoH5RA',
+  'EZ Bar Curl':                    'kwG2ipFRgfo',
+  'Assault Bike or Rowing':         'Dhcr-_Qab_s', // rowing form
+  'Hanging Leg Raise':              'Pr1ieGZ5atk', // Jeff Nippard
+  'Cable Crunch':                   'AV5PnBBXykw', // Jeff Nippard
+  'Pallof Press':                   'AKqDP0MyjA8', // Squat University
+  'Farmer Carry':                   'Fkzd0gja9gg', // Athlean-X
+  'Pause Squat':                    'ultWZbUMPL8',
+  'Cable Curl / Pushdown Superset': 'kiuVA0gs3EI',
+  'Tricep Pushdown Superset w/ Overhead Ext.': 'kiuVA0gs3EI',
+  'Close-Grip Bench Press':         'vcBig73ojpE',
+  'Weighted Dip':                   'sM5bNFMEFdA', // Jeff Nippard
+  'Incline DB Fly':                 'Iwe6AmxVf7o',
+  'Light Walking or Swimming':      'njeZ29umqVE',
+  'Full Body Stretch Routine':      'L_xrDAtykMI', // MindBodyGreen
+  'Foam Roll':                      'eTn4R9_0KRs',
+  // GOLF
+  'Hip Hinge (Golf Posture)':        '3SCqhVXGJck',
+  'Seated Hip Rotation Stretch':     'YvFxLhtrFJw',
+  'Standing Hip Circles':            '6H5VpSMQhRk',
+  'Cat-Cow Stretch':                 'kqnua4rHVVA',
+  'Thoracic Spine Rotation':         'lJmNaStFnmI',
+  'Glute Bridge (Golf)':             'OUgsJ8-Vi0E',
+  'Pallof Press (Golf)':             'AKqDP0MyjA8',
+  'Half-Kneeling Hip Flexor Stretch':'qkA0w5mHPSQ',
+  'Band Pull-Apart':                 'u_oLd_SKM9Y',
+  'Cable/Band Woodchop (High-Low)':  'yEtNzFoUPKU',
+  'Cable/Band Woodchop (Low-High)':  'yEtNzFoUPKU',
+  'Single-Leg Romanian Deadlift':    'UN3-S41oTsU',
+  'Lateral Band Walk':               'YJmJcDrLlQM',
+  'Dead Bug (Golf)':                 '4XLEnwUr1d8',
+  'Medicine Ball Rotational Throw':  'y3EkSMoO_wA',
+  'Romanian Deadlift (Golf)':        'JCXUYuzwNrM',
+  'Goblet Squat (Golf)':             'MxsFDhcyFyE',
+  'Wrist Flexor Stretch':            'HXRKRWRBGwg',
+  'Wrist Extensor Stretch':          'HXRKRWRBGwg',
+  'Hip 90/90 Stretch':               'o3rKNyGPSvs',
+  'Reverse Lunge with Rotation':     'kkdmHTgZZiI',
+  'Dumbbell External Rotation':      'KVyNmjFMtNQ',
+  'Farmer Carry (Golf)':             'Fkzd0gja9gg',
+  'Box Step-Up with Rotation':       'dQqApCGd5Ss',
+  'Nordic Hamstring Curl':           '3L4EuGBCHjk',
+  'Med Ball Slam':                   'y3EkSMoO_wA',
+  'Rotational Cable Press':          'yEtNzFoUPKU',
+  'Supine Knee Hug':                 '9wMvVn4GBXU',
+  'Plank with Reach':                'pvIjsG5Svck'
+};
+
 const PROGRAMS = {
   beginner: {
-    title: 'Foundation Builder',
-    description: '3 days/week full-body training. Perfect for building the habit and learning movement patterns.',
-    duration: '8 Weeks', frequency: '3x / Week', goal: 'Build Habit & Foundation', equipment: 'Minimal',
-    days: [
-      { name: 'Mon', focus: 'Full Body A', tag: 'full', tagClass: 'tag-full',
-        exercises: [
-          { name: 'Bodyweight Squat', note: 'Focus on depth and form', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Push-Up (or Knee Push-Up)', note: 'Chest to floor, full range', sets: 3, reps: '8–12', rest: '60s' },
-          { name: 'Dumbbell Row', note: 'One arm at a time', sets: 3, reps: '10 each', rest: '60s' },
-          { name: 'Glute Bridge', note: 'Squeeze at the top', sets: 3, reps: '15', rest: '45s' },
-          { name: 'Plank Hold', note: 'Keep hips level', sets: 3, reps: '20–30s', rest: '45s' },
-          { name: '10-Minute Walk', note: 'Brisk pace', sets: 1, reps: '10 min', rest: '—' },
-        ]
-      },
-      { name: 'Tue', focus: 'Rest / Walk', tag: 'Rest', tagClass: 'tag-rest', rest: true },
-      { name: 'Wed', focus: 'Full Body B', tag: 'full', tagClass: 'tag-full',
-        exercises: [
-          { name: 'Romanian Deadlift', note: 'Light weight, hinge at hips', sets: 3, reps: '10–12', rest: '90s' },
-          { name: 'Dumbbell Shoulder Press', note: 'Seated or standing', sets: 3, reps: '10–12', rest: '60s' },
-          { name: 'Lat Pulldown or Band Pull', note: 'Squeeze shoulder blades', sets: 3, reps: '10–12', rest: '60s' },
-          { name: 'Reverse Lunge', note: 'Step back, knee at 90°', sets: 3, reps: '8 each', rest: '60s' },
-          { name: 'Dead Bug', note: 'Slow and controlled', sets: 3, reps: '6 each', rest: '45s' },
-        ]
-      },
-      { name: 'Thu', focus: 'Rest / Stretch', tag: 'Rest', tagClass: 'tag-rest', rest: true },
-      { name: 'Fri', focus: 'Full Body C', tag: 'full', tagClass: 'tag-full',
-        exercises: [
-          { name: 'Goblet Squat', note: 'Hold dumbbell at chest', sets: 3, reps: '10–12', rest: '90s' },
-          { name: 'Dumbbell Chest Press', note: 'On floor or bench', sets: 3, reps: '10–12', rest: '60s' },
-          { name: 'Seated Cable Row or Band Row', note: 'Elbows back, chest up', sets: 3, reps: '10–12', rest: '60s' },
-          { name: 'Step-Up', note: 'Use a sturdy box or step', sets: 3, reps: '8 each', rest: '60s' },
-          { name: 'Side Plank', note: 'Keep hips stacked', sets: 2, reps: '20s each', rest: '45s' },
-          { name: '15-Minute Walk or Light Bike', note: 'Easy pace, cool down', sets: 1, reps: '15 min', rest: '—' },
-        ]
-      },
-      { name: 'Sat', focus: 'Active Rest', tag: 'Rest', tagClass: 'tag-rest', rest: true },
-      { name: 'Sun', focus: 'Rest', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+    title:'Foundation Builder',description:'3 days/week full-body training. Perfect for building the habit and learning movement patterns.',
+    duration:'8 Weeks',frequency:'3x / Week',goal:'Build Habit & Foundation',equipment:'Minimal',
+    days:[
+      {name:'Mon',focus:'Full Body A',tag:'Full',tagClass:'tag-full',exercises:[
+        {name:'Bodyweight Squat',note:'Focus on depth and form',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Push-Up (or Knee Push-Up)',note:'Chest to floor, full range',sets:3,reps:'8–12',rest:'60s'},
+        {name:'Dumbbell Row',note:'One arm at a time',sets:3,reps:'10 each',rest:'60s'},
+        {name:'Glute Bridge',note:'Squeeze at the top',sets:3,reps:'15',rest:'45s'},
+        {name:'Plank Hold',note:'Keep hips level',sets:3,reps:'20–30s',rest:'45s'},
+        {name:'10-Minute Walk',note:'Brisk pace',sets:1,reps:'10 min',rest:'—'},
+      ]},
+      {name:'Tue',focus:'Rest / Walk',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Wed',focus:'Full Body B',tag:'Full',tagClass:'tag-full',exercises:[
+        {name:'Romanian Deadlift',note:'Light weight, hinge at hips',sets:3,reps:'10–12',rest:'90s'},
+        {name:'Dumbbell Shoulder Press',note:'Seated or standing',sets:3,reps:'10–12',rest:'60s'},
+        {name:'Lat Pulldown or Band Pull',note:'Squeeze shoulder blades',sets:3,reps:'10–12',rest:'60s'},
+        {name:'Reverse Lunge',note:'Step back, knee at 90°',sets:3,reps:'8 each',rest:'60s'},
+        {name:'Dead Bug',note:'Slow and controlled',sets:3,reps:'6 each',rest:'45s'},
+      ]},
+      {name:'Thu',focus:'Rest / Stretch',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Fri',focus:'Full Body C',tag:'Full',tagClass:'tag-full',exercises:[
+        {name:'Goblet Squat',note:'Hold dumbbell at chest',sets:3,reps:'10–12',rest:'90s'},
+        {name:'Dumbbell Chest Press',note:'On floor or bench',sets:3,reps:'10–12',rest:'60s'},
+        {name:'Seated Cable Row or Band Row',note:'Elbows back, chest up',sets:3,reps:'10–12',rest:'60s'},
+        {name:'Step-Up',note:'Use a sturdy box or step',sets:3,reps:'8 each',rest:'60s'},
+        {name:'Side Plank',note:'Keep hips stacked',sets:2,reps:'20s each',rest:'45s'},
+        {name:'15-Minute Walk or Light Bike',note:'Easy pace, cool down',sets:1,reps:'15 min',rest:'—'},
+      ]},
+      {name:'Sat',focus:'Active Rest',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Sun',focus:'Rest',tag:'Rest',tagClass:'tag-rest',rest:true},
     ]
   },
   intermediate: {
-    title: 'Push / Pull / Legs',
-    description: '6 days/week PPL split. Build muscle and strength with targeted training for each muscle group.',
-    duration: '12 Weeks', frequency: '6x / Week', goal: 'Muscle & Strength', equipment: 'Full Gym',
-    days: [
-      { name: 'Mon', focus: 'Push (Chest, Shoulders, Triceps)', tag: 'Push', tagClass: 'tag-push',
-        exercises: [
-          { name: 'Barbell Bench Press', note: 'Warm up with 50% first set', sets: 4, reps: '6–8', rest: '2min' },
-          { name: 'Incline Dumbbell Press', note: '30–45° incline', sets: 3, reps: '8–10', rest: '90s' },
-          { name: 'Seated Dumbbell Shoulder Press', note: 'Full range of motion', sets: 3, reps: '8–10', rest: '90s' },
-          { name: 'Cable Lateral Raise', note: 'Controlled tempo', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Tricep Rope Pushdown', note: 'Elbows tucked', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Overhead Tricep Extension', note: 'EZ bar or dumbbell', sets: 2, reps: '10–12', rest: '60s' },
-        ]
-      },
-      { name: 'Tue', focus: 'Pull (Back, Biceps)', tag: 'Pull', tagClass: 'tag-pull',
-        exercises: [
-          { name: 'Pull-Up or Lat Pulldown', note: 'Full stretch at top', sets: 4, reps: '6–8', rest: '2min' },
-          { name: 'Barbell Row', note: 'Chest to bar, controlled', sets: 4, reps: '6–8', rest: '90s' },
-          { name: 'Seated Cable Row', note: 'Neutral grip', sets: 3, reps: '10–12', rest: '90s' },
-          { name: 'Face Pull', note: 'External rotation focus', sets: 3, reps: '15–20', rest: '60s' },
-          { name: 'Barbell Curl', note: 'No swinging', sets: 3, reps: '8–10', rest: '60s' },
-          { name: 'Hammer Curl', note: 'Alternating', sets: 2, reps: '10–12', rest: '60s' },
-        ]
-      },
-      { name: 'Wed', focus: 'Legs (Quads, Hamstrings, Glutes)', tag: 'Legs', tagClass: 'tag-legs',
-        exercises: [
-          { name: 'Barbell Back Squat', note: 'Below parallel, big breath', sets: 4, reps: '5–7', rest: '3min' },
-          { name: 'Romanian Deadlift', note: 'Controlled descent', sets: 3, reps: '8–10', rest: '2min' },
-          { name: 'Leg Press', note: 'Full range, don\'t lock out', sets: 3, reps: '10–12', rest: '90s' },
-          { name: 'Walking Lunge', note: 'Add dumbbells for weight', sets: 3, reps: '10 each', rest: '90s' },
-          { name: 'Leg Curl', note: 'Hamstring focus', sets: 3, reps: '10–12', rest: '60s' },
-          { name: 'Standing Calf Raise', note: 'Full range, pause at top', sets: 4, reps: '15–20', rest: '60s' },
-        ]
-      },
-      { name: 'Thu', focus: 'Push (Volume)', tag: 'Push', tagClass: 'tag-push',
-        exercises: [
-          { name: 'Dumbbell Bench Press', note: 'More range than barbell', sets: 4, reps: '8–12', rest: '90s' },
-          { name: 'Cable Fly', note: 'Full stretch, slow eccentric', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Arnold Press', note: 'Full rotation', sets: 3, reps: '10–12', rest: '90s' },
-          { name: 'Lateral Raise', note: 'Dumbbell, controlled', sets: 4, reps: '15', rest: '60s' },
-          { name: 'Skull Crusher', note: 'EZ bar, controlled descent', sets: 3, reps: '10–12', rest: '60s' },
-          { name: 'Close-Grip Push-Up', note: 'Bodyweight finisher', sets: 2, reps: 'To failure', rest: '60s' },
-        ]
-      },
-      { name: 'Fri', focus: 'Pull (Volume)', tag: 'Pull', tagClass: 'tag-pull',
-        exercises: [
-          { name: 'Chest-Supported Row', note: 'Eliminates lower back fatigue', sets: 4, reps: '8–10', rest: '90s' },
-          { name: 'Single-Arm Dumbbell Row', note: 'Full stretch, heavy', sets: 3, reps: '8–10 each', rest: '90s' },
-          { name: 'Straight-Arm Pulldown', note: 'Lat isolation', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Rear Delt Fly', note: 'Bent over or cable', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Incline Curl', note: 'Full stretch at bottom', sets: 3, reps: '10–12', rest: '60s' },
-          { name: 'Preacher Curl', note: 'EZ bar or machine', sets: 2, reps: '10–12', rest: '60s' },
-        ]
-      },
-      { name: 'Sat', focus: 'Legs (Volume)', tag: 'Legs', tagClass: 'tag-legs',
-        exercises: [
-          { name: 'Front Squat or Hack Squat', note: 'Quad focus', sets: 4, reps: '8–10', rest: '2min' },
-          { name: 'Leg Extension', note: 'Quad isolation', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Glute-Ham Raise or Nordic Curl', note: 'Hamstring strength', sets: 3, reps: '6–8', rest: '90s' },
-          { name: 'Hip Thrust', note: 'Barbell, glute focus', sets: 4, reps: '10–12', rest: '90s' },
-          { name: 'Seated Calf Raise', note: 'Soleus focus', sets: 4, reps: '15–20', rest: '60s' },
-          { name: 'Ab Wheel Rollout', note: 'Core finisher', sets: 3, reps: '8–10', rest: '60s' },
-        ]
-      },
-      { name: 'Sun', focus: 'Rest & Recovery', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+    title:'Push / Pull / Legs',description:'6 days/week PPL split. Build muscle and strength with targeted training for each muscle group.',
+    duration:'12 Weeks',frequency:'6x / Week',goal:'Muscle & Strength',equipment:'Full Gym',
+    days:[
+      {name:'Mon',focus:'Push (Chest, Shoulders, Triceps)',tag:'Push',tagClass:'tag-push',exercises:[
+        {name:'Barbell Bench Press',note:'Warm up with 50% first set',sets:4,reps:'6–8',rest:'2min'},
+        {name:'Incline Dumbbell Press',note:'30–45° incline',sets:3,reps:'8–10',rest:'90s'},
+        {name:'Seated Dumbbell Shoulder Press',note:'Full range of motion',sets:3,reps:'8–10',rest:'90s'},
+        {name:'Cable Lateral Raise',note:'Controlled tempo',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Tricep Rope Pushdown',note:'Elbows tucked',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Overhead Tricep Extension',note:'EZ bar or dumbbell',sets:2,reps:'10–12',rest:'60s'},
+      ]},
+      {name:'Tue',focus:'Pull (Back, Biceps)',tag:'Pull',tagClass:'tag-pull',exercises:[
+        {name:'Pull-Up or Lat Pulldown',note:'Full stretch at top',sets:4,reps:'6–8',rest:'2min'},
+        {name:'Barbell Row',note:'Chest to bar, controlled',sets:4,reps:'6–8',rest:'90s'},
+        {name:'Seated Cable Row',note:'Neutral grip',sets:3,reps:'10–12',rest:'90s'},
+        {name:'Face Pull',note:'External rotation focus',sets:3,reps:'15–20',rest:'60s'},
+        {name:'Barbell Curl',note:'No swinging',sets:3,reps:'8–10',rest:'60s'},
+        {name:'Hammer Curl',note:'Alternating',sets:2,reps:'10–12',rest:'60s'},
+      ]},
+      {name:'Wed',focus:'Legs (Quads, Hamstrings, Glutes)',tag:'Legs',tagClass:'tag-legs',exercises:[
+        {name:'Barbell Back Squat',note:'Below parallel, big breath',sets:4,reps:'5–7',rest:'3min'},
+        {name:'Romanian Deadlift',note:'Controlled descent',sets:3,reps:'8–10',rest:'2min'},
+        {name:'Leg Press',note:"Full range, don't lock out",sets:3,reps:'10–12',rest:'90s'},
+        {name:'Walking Lunge',note:'Add dumbbells for weight',sets:3,reps:'10 each',rest:'90s'},
+        {name:'Leg Curl',note:'Hamstring focus',sets:3,reps:'10–12',rest:'60s'},
+        {name:'Standing Calf Raise',note:'Full range, pause at top',sets:4,reps:'15–20',rest:'60s'},
+      ]},
+      {name:'Thu',focus:'Push (Volume)',tag:'Push',tagClass:'tag-push',exercises:[
+        {name:'Dumbbell Bench Press',note:'More range than barbell',sets:4,reps:'8–12',rest:'90s'},
+        {name:'Cable Fly',note:'Full stretch, slow eccentric',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Arnold Press',note:'Full rotation',sets:3,reps:'10–12',rest:'90s'},
+        {name:'Lateral Raise',note:'Dumbbell, controlled',sets:4,reps:'15',rest:'60s'},
+        {name:'Skull Crusher',note:'EZ bar, controlled descent',sets:3,reps:'10–12',rest:'60s'},
+        {name:'Close-Grip Push-Up',note:'Bodyweight finisher',sets:2,reps:'To failure',rest:'60s'},
+      ]},
+      {name:'Fri',focus:'Pull (Volume)',tag:'Pull',tagClass:'tag-pull',exercises:[
+        {name:'Chest-Supported Row',note:'Eliminates lower back fatigue',sets:4,reps:'8–10',rest:'90s'},
+        {name:'Single-Arm Dumbbell Row',note:'Full stretch, heavy',sets:3,reps:'8–10 each',rest:'90s'},
+        {name:'Straight-Arm Pulldown',note:'Lat isolation',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Rear Delt Fly',note:'Bent over or cable',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Incline Curl',note:'Full stretch at bottom',sets:3,reps:'10–12',rest:'60s'},
+        {name:'Preacher Curl',note:'EZ bar or machine',sets:2,reps:'10–12',rest:'60s'},
+      ]},
+      {name:'Sat',focus:'Legs (Volume)',tag:'Legs',tagClass:'tag-legs',exercises:[
+        {name:'Front Squat or Hack Squat',note:'Quad focus',sets:4,reps:'8–10',rest:'2min'},
+        {name:'Leg Extension',note:'Quad isolation',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Glute-Ham Raise or Nordic Curl',note:'Hamstring strength',sets:3,reps:'6–8',rest:'90s'},
+        {name:'Hip Thrust',note:'Barbell, glute focus',sets:4,reps:'10–12',rest:'90s'},
+        {name:'Seated Calf Raise',note:'Soleus focus',sets:4,reps:'15–20',rest:'60s'},
+        {name:'Ab Wheel Rollout',note:'Core finisher',sets:3,reps:'8–10',rest:'60s'},
+      ]},
+      {name:'Sun',focus:'Rest & Recovery',tag:'Rest',tagClass:'tag-rest',rest:true},
     ]
   },
   advanced: {
-    title: 'Power & Hypertrophy',
-    description: '5-day split combining powerlifting strength work with hypertrophy volume. For experienced lifters.',
-    duration: 'Ongoing', frequency: '5x / Week', goal: 'Strength + Size', equipment: 'Full Gym',
-    days: [
-      { name: 'Mon', focus: 'Heavy Chest & Triceps', tag: 'Push', tagClass: 'tag-push',
-        exercises: [
-          { name: 'Barbell Bench Press', note: 'Work up to heavy 3–5RM', sets: 5, reps: '3–5', rest: '3min' },
-          { name: 'Close-Grip Bench Press', note: '75% of main lift', sets: 3, reps: '6–8', rest: '2min' },
-          { name: 'Weighted Dip', note: 'Belt or dumbbell between legs', sets: 4, reps: '6–10', rest: '2min' },
-          { name: 'Incline DB Fly', note: 'Slow eccentric, 3 seconds down', sets: 3, reps: '12–15', rest: '60s' },
-          { name: 'Skull Crusher', note: 'Heavy EZ bar', sets: 4, reps: '8–10', rest: '90s' },
-          { name: 'Tricep Pushdown Superset w/ Overhead Ext.', note: 'Back-to-back, no rest', sets: 3, reps: '12 each', rest: '90s' },
-        ]
-      },
-      { name: 'Tue', focus: 'Heavy Back & Biceps', tag: 'Pull', tagClass: 'tag-pull',
-        exercises: [
-          { name: 'Deadlift', note: 'Work up to heavy 3RM', sets: 5, reps: '1–3', rest: '4min' },
-          { name: 'Weighted Pull-Up', note: 'Add 20–45lbs', sets: 4, reps: '4–6', rest: '2min' },
-          { name: 'Pendlay Row', note: 'Dead stop each rep', sets: 4, reps: '5–6', rest: '2min' },
-          { name: 'Meadows Row', note: 'Landmine setup', sets: 3, reps: '8–10 each', rest: '90s' },
-          { name: 'Barbell Curl', note: 'Strict, full range', sets: 4, reps: '6–8', rest: '90s' },
-          { name: 'Zottman Curl', note: 'Pronated on the way down', sets: 3, reps: '10–12', rest: '60s' },
-        ]
-      },
-      { name: 'Wed', focus: 'Cardio & Core', tag: 'Cardio', tagClass: 'tag-cardio',
-        exercises: [
-          { name: 'Assault Bike or Rowing', note: 'Moderate pace', sets: 1, reps: '20 min', rest: '—' },
-          { name: 'Hanging Leg Raise', note: 'Full range, slow', sets: 4, reps: '12–15', rest: '60s' },
-          { name: 'Ab Wheel Rollout', note: 'From knees or standing', sets: 4, reps: '10–12', rest: '60s' },
-          { name: 'Cable Crunch', note: 'Rope attachment, heavy', sets: 4, reps: '15', rest: '60s' },
-          { name: 'Pallof Press', note: 'Anti-rotation, both sides', sets: 3, reps: '10 each', rest: '45s' },
-          { name: 'Farmer Carry', note: 'Heavy dumbbells, 40 yards', sets: 4, reps: '40 yds', rest: '90s' },
-        ]
-      },
-      { name: 'Thu', focus: 'Heavy Legs', tag: 'Legs', tagClass: 'tag-legs',
-        exercises: [
-          { name: 'Barbell Back Squat', note: 'Work up to heavy 3–5RM', sets: 6, reps: '3–5', rest: '3min' },
-          { name: 'Pause Squat', note: '2-second pause at bottom', sets: 3, reps: '5', rest: '2min' },
-          { name: 'Bulgarian Split Squat', note: 'Rear foot elevated, heavy', sets: 3, reps: '6–8 each', rest: '2min' },
-          { name: 'Leg Press', note: 'High foot placement for glutes', sets: 3, reps: '10–12', rest: '90s' },
-          { name: 'Stiff-Leg Deadlift', note: 'Slow descent, full stretch', sets: 4, reps: '8–10', rest: '90s' },
-          { name: 'Standing Calf Raise', note: 'Heavy, 3-second pause at top', sets: 5, reps: '12–15', rest: '60s' },
-        ]
-      },
-      { name: 'Fri', focus: 'Shoulders & Arms', tag: 'Push', tagClass: 'tag-push',
-        exercises: [
-          { name: 'Barbell Overhead Press', note: 'Standing, strict form', sets: 5, reps: '4–6', rest: '2min' },
-          { name: 'Dumbbell Lateral Raise', note: '4 sets, controlled tempo', sets: 4, reps: '15–20', rest: '60s' },
-          { name: 'Rear Delt Fly', note: 'Cable or machine', sets: 4, reps: '15', rest: '60s' },
-          { name: 'EZ Bar Curl', note: 'Supinate at the top', sets: 4, reps: '8–10', rest: '90s' },
-          { name: 'Skull Crusher', note: 'Heavy, pause at bottom', sets: 4, reps: '8', rest: '90s' },
-          { name: 'Cable Curl / Pushdown Superset', note: 'Burnout finisher', sets: 3, reps: '15 each', rest: '60s' },
-        ]
-      },
-      { name: 'Sat', focus: 'Active Recovery', tag: 'Rest', tagClass: 'tag-rest', rest: true,
-        exercises: [
-          { name: 'Light Walking or Swimming', note: '30–45 minutes', sets: 1, reps: '30–45 min', rest: '—' },
-          { name: 'Full Body Stretch Routine', note: 'Hip flexors, hamstrings, chest, lats', sets: 1, reps: '20 min', rest: '—' },
-          { name: 'Foam Roll', note: 'Target sore areas', sets: 1, reps: '10 min', rest: '—' },
-        ]
-      },
-      { name: 'Sun', focus: 'Rest', tag: 'Rest', tagClass: 'tag-rest', rest: true },
+    title:'Power & Hypertrophy',description:'5-day split combining powerlifting strength work with hypertrophy volume. For experienced lifters.',
+    duration:'Ongoing',frequency:'5x / Week',goal:'Strength + Size',equipment:'Full Gym',
+    days:[
+      {name:'Mon',focus:'Heavy Chest & Triceps',tag:'Push',tagClass:'tag-push',exercises:[
+        {name:'Barbell Bench Press',note:'Work up to heavy 3–5RM',sets:5,reps:'3–5',rest:'3min'},
+        {name:'Close-Grip Bench Press',note:'75% of main lift',sets:3,reps:'6–8',rest:'2min'},
+        {name:'Weighted Dip',note:'Belt or dumbbell between legs',sets:4,reps:'6–10',rest:'2min'},
+        {name:'Incline DB Fly',note:'Slow eccentric, 3 seconds down',sets:3,reps:'12–15',rest:'60s'},
+        {name:'Skull Crusher',note:'Heavy EZ bar',sets:4,reps:'8–10',rest:'90s'},
+        {name:'Tricep Pushdown Superset w/ Overhead Ext.',note:'Back-to-back, no rest',sets:3,reps:'12 each',rest:'90s'},
+      ]},
+      {name:'Tue',focus:'Heavy Back & Biceps',tag:'Pull',tagClass:'tag-pull',exercises:[
+        {name:'Deadlift',note:'Work up to heavy 3RM',sets:5,reps:'1–3',rest:'4min'},
+        {name:'Weighted Pull-Up',note:'Add 20–45lbs',sets:4,reps:'4–6',rest:'2min'},
+        {name:'Pendlay Row',note:'Dead stop each rep',sets:4,reps:'5–6',rest:'2min'},
+        {name:'Meadows Row',note:'Landmine setup',sets:3,reps:'8–10 each',rest:'90s'},
+        {name:'Barbell Curl',note:'Strict, full range',sets:4,reps:'6–8',rest:'90s'},
+        {name:'Zottman Curl',note:'Pronated on the way down',sets:3,reps:'10–12',rest:'60s'},
+      ]},
+      {name:'Wed',focus:'Cardio & Core',tag:'Cardio',tagClass:'tag-cardio',exercises:[
+        {name:'Assault Bike or Rowing',note:'Moderate pace',sets:1,reps:'20 min',rest:'—'},
+        {name:'Hanging Leg Raise',note:'Full range, slow',sets:4,reps:'12–15',rest:'60s'},
+        {name:'Ab Wheel Rollout',note:'From knees or standing',sets:4,reps:'10–12',rest:'60s'},
+        {name:'Cable Crunch',note:'Rope attachment, heavy',sets:4,reps:'15',rest:'60s'},
+        {name:'Pallof Press',note:'Anti-rotation, both sides',sets:3,reps:'10 each',rest:'45s'},
+        {name:'Farmer Carry',note:'Heavy dumbbells, 40 yards',sets:4,reps:'40 yds',rest:'90s'},
+      ]},
+      {name:'Thu',focus:'Heavy Legs',tag:'Legs',tagClass:'tag-legs',exercises:[
+        {name:'Barbell Back Squat',note:'Work up to heavy 3–5RM',sets:6,reps:'3–5',rest:'3min'},
+        {name:'Pause Squat',note:'2-second pause at bottom',sets:3,reps:'5',rest:'2min'},
+        {name:'Bulgarian Split Squat',note:'Rear foot elevated, heavy',sets:3,reps:'6–8 each',rest:'2min'},
+        {name:'Leg Press',note:'High foot placement for glutes',sets:3,reps:'10–12',rest:'90s'},
+        {name:'Stiff-Leg Deadlift',note:'Slow descent, full stretch',sets:4,reps:'8–10',rest:'90s'},
+        {name:'Standing Calf Raise',note:'Heavy, 3-second pause at top',sets:5,reps:'12–15',rest:'60s'},
+      ]},
+      {name:'Fri',focus:'Shoulders & Arms',tag:'Push',tagClass:'tag-push',exercises:[
+        {name:'Barbell Overhead Press',note:'Standing, strict form',sets:5,reps:'4–6',rest:'2min'},
+        {name:'Dumbbell Lateral Raise',note:'4 sets, controlled tempo',sets:4,reps:'15–20',rest:'60s'},
+        {name:'Rear Delt Fly',note:'Cable or machine',sets:4,reps:'15',rest:'60s'},
+        {name:'EZ Bar Curl',note:'Supinate at the top',sets:4,reps:'8–10',rest:'90s'},
+        {name:'Skull Crusher',note:'Heavy, pause at bottom',sets:4,reps:'8',rest:'90s'},
+        {name:'Cable Curl / Pushdown Superset',note:'Burnout finisher',sets:3,reps:'15 each',rest:'60s'},
+      ]},
+      {name:'Sat',focus:'Active Recovery',tag:'Rest',tagClass:'tag-rest',exercises:[
+        {name:'Light Walking or Swimming',note:'30–45 minutes',sets:1,reps:'30–45 min',rest:'—'},
+        {name:'Full Body Stretch Routine',note:'Hip flexors, hamstrings, chest, lats',sets:1,reps:'20 min',rest:'—'},
+        {name:'Foam Roll',note:'Target sore areas',sets:1,reps:'10 min',rest:'—'},
+      ]},
+      {name:'Sun',focus:'Rest',tag:'Rest',tagClass:'tag-rest',rest:true},
     ]
   }
+,
+  golf_beginner: {
+    title:'Golf Fitness — Beginner',description:'3 days/week. Builds the mobility, stability, and core strength needed for a consistent, pain-free golf swing.',
+    duration:'8 Weeks',frequency:'3x / Week',goal:'Mobility, Stability & Swing Foundation',equipment:'Bands & Dumbbells',
+    days:[
+      {name:'Mon',focus:'Mobility & Hip Activation',tag:'Mobility',tagClass:'tag-full',exercises:[
+        {name:'Hip Hinge (Golf Posture)',note:'Master the athletic setup position',sets:3,reps:'10',rest:'45s'},
+        {name:'Cat-Cow Stretch',note:'Loosen the spine, breathe through each rep',sets:2,reps:'10',rest:'30s'},
+        {name:'Thoracic Spine Rotation',note:'Key for backswing range of motion',sets:3,reps:'8 each side',rest:'45s'},
+        {name:'Half-Kneeling Hip Flexor Stretch',note:'Opens hips for full hip turn',sets:2,reps:'30s each',rest:'30s'},
+        {name:'Glute Bridge (Golf)',note:'Activates glutes for downswing power',sets:3,reps:'12',rest:'45s'},
+        {name:'Lateral Band Walk',note:'Hip stability for weight shift',sets:3,reps:'12 each way',rest:'45s'},
+        {name:'Supine Knee Hug',note:'Cool-down lower back release',sets:1,reps:'60s',rest:'—'},
+      ]},
+      {name:'Tue',focus:'Rest / Walk the Course',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Wed',focus:'Core Stability & Rotation',tag:'Core',tagClass:'tag-cardio',exercises:[
+        {name:'Dead Bug (Golf)',note:'Anti-rotation core control',sets:3,reps:'6 each side',rest:'45s'},
+        {name:'Pallof Press (Golf)',note:'Trains the core to resist rotation',sets:3,reps:'10 each side',rest:'60s'},
+        {name:'Plank with Reach',note:'Shoulder stability + anti-rotation',sets:3,reps:'8 each side',rest:'45s'},
+        {name:'Cable/Band Woodchop (High-Low)',note:'Mimics the downswing motion',sets:3,reps:'10 each side',rest:'60s'},
+        {name:'Cable/Band Woodchop (Low-High)',note:'Mimics the follow-through',sets:3,reps:'10 each side',rest:'60s'},
+        {name:'Wrist Flexor Stretch',note:'Prevents golfers elbow',sets:2,reps:'30s each',rest:'—'},
+        {name:'Wrist Extensor Stretch',note:'Prevents tennis elbow',sets:2,reps:'30s each',rest:'—'},
+      ]},
+      {name:'Thu',focus:'Rest / Chip & Putt Practice',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Fri',focus:'Strength & Balance',tag:'Strength',tagClass:'tag-legs',exercises:[
+        {name:'Goblet Squat (Golf)',note:'Builds leg drive and posture',sets:3,reps:'10',rest:'60s'},
+        {name:'Romanian Deadlift (Golf)',note:'Hip hinge power for the swing',sets:3,reps:'10',rest:'90s'},
+        {name:'Single-Leg Romanian Deadlift',note:'Balance and hip stability',sets:3,reps:'8 each',rest:'60s'},
+        {name:'Band Pull-Apart',note:'Upper back and shoulder health',sets:3,reps:'15',rest:'45s'},
+        {name:'Reverse Lunge with Rotation',note:'Simulates weight transfer in swing',sets:3,reps:'8 each',rest:'60s'},
+        {name:'Hip 90/90 Stretch',note:'Deep hip mobility for full rotation',sets:2,reps:'60s each side',rest:'—'},
+      ]},
+      {name:'Sat',focus:'Play Golf or Active Rest',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Sun',focus:'Rest',tag:'Rest',tagClass:'tag-rest',rest:true},
+    ]
+  },
+  golf_intermediate: {
+    title:'Golf Fitness — Intermediate',description:'4 days/week. Develops rotational power, single-leg strength, and the explosive hip drive needed to add serious distance.',
+    duration:'12 Weeks',frequency:'4x / Week',goal:'Power, Distance & Injury Prevention',equipment:'Full Gym',
+    days:[
+      {name:'Mon',focus:'Power & Rotational Strength',tag:'Power',tagClass:'tag-push',exercises:[
+        {name:'Medicine Ball Rotational Throw',note:'Explosive — mirrors actual swing speed',sets:4,reps:'6 each side',rest:'90s'},
+        {name:'Med Ball Slam',note:'Full-body power and follow-through',sets:4,reps:'8',rest:'90s'},
+        {name:'Cable/Band Woodchop (High-Low)',note:'Load the downswing pattern',sets:4,reps:'10 each side',rest:'60s'},
+        {name:'Rotational Cable Press',note:'Integrates core and upper body',sets:3,reps:'10 each side',rest:'60s'},
+        {name:'Pallof Press (Golf)',note:'Anti-rotation core strength',sets:3,reps:'12 each side',rest:'60s'},
+        {name:'Thoracic Spine Rotation',note:'Maintain backswing range of motion',sets:2,reps:'10 each',rest:'30s'},
+      ]},
+      {name:'Tue',focus:'Lower Body Strength & Stability',tag:'Legs',tagClass:'tag-legs',exercises:[
+        {name:'Goblet Squat (Golf)',note:'Athletic base, knee tracking',sets:4,reps:'10',rest:'90s'},
+        {name:'Romanian Deadlift (Golf)',note:'Hip hinge power — key for downswing',sets:4,reps:'8',rest:'2min'},
+        {name:'Single-Leg Romanian Deadlift',note:'Balance and glute activation',sets:3,reps:'8 each',rest:'90s'},
+        {name:'Nordic Hamstring Curl',note:'Hamstring strength and injury prevention',sets:3,reps:'6',rest:'90s'},
+        {name:'Lateral Band Walk',note:'Hip abductor stability for weight shift',sets:3,reps:'15 each way',rest:'45s'},
+        {name:'Hip 90/90 Stretch',note:'Hip mobility cool-down',sets:2,reps:'60s each',rest:'—'},
+      ]},
+      {name:'Wed',focus:'Rest / Play or Chip Practice',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Thu',focus:'Upper Body & Shoulder Health',tag:'Pull',tagClass:'tag-pull',exercises:[
+        {name:'Seated Cable Row (Golf)',note:'Back strength supports swing posture',sets:4,reps:'10',rest:'90s'},
+        {name:'Band Pull-Apart',note:'Shoulder health and posture',sets:4,reps:'15',rest:'45s'},
+        {name:'Dumbbell External Rotation',note:'Rotator cuff — critical for golfers',sets:3,reps:'12 each',rest:'60s'},
+        {name:'Farmer Carry (Golf)',note:'Grip strength and core stability',sets:3,reps:'40 yds',rest:'90s'},
+        {name:'Plank with Reach',note:'Anti-rotation and shoulder stability',sets:3,reps:'8 each',rest:'60s'},
+        {name:'Wrist Flexor Stretch',note:'Forearm recovery and injury prevention',sets:2,reps:'30s each',rest:'—'},
+        {name:'Wrist Extensor Stretch',note:'Prevents golfers and tennis elbow',sets:2,reps:'30s each',rest:'—'},
+      ]},
+      {name:'Fri',focus:'Full Body Power Integration',tag:'Power',tagClass:'tag-push',exercises:[
+        {name:'Hip Hinge (Golf Posture)',note:'Groove the setup as a warm-up',sets:2,reps:'10',rest:'30s'},
+        {name:'Medicine Ball Rotational Throw',note:'Max effort — swing speed training',sets:5,reps:'5 each side',rest:'2min'},
+        {name:'Box Step-Up with Rotation',note:'Weight transfer + rotation',sets:3,reps:'8 each',rest:'90s'},
+        {name:'Dead Bug (Golf)',note:'Core stability under fatigue',sets:3,reps:'8 each',rest:'60s'},
+        {name:'Cable/Band Woodchop (Low-High)',note:'Follow-through power pattern',sets:3,reps:'10 each side',rest:'60s'},
+        {name:'Half-Kneeling Hip Flexor Stretch',note:'Hip flexor release post-workout',sets:2,reps:'45s each',rest:'—'},
+        {name:'Cat-Cow Stretch',note:'Spinal decompression cool-down',sets:1,reps:'10',rest:'—'},
+      ]},
+      {name:'Sat',focus:'Play Golf',tag:'Rest',tagClass:'tag-rest',rest:true},
+      {name:'Sun',focus:'Rest & Recovery',tag:'Rest',tagClass:'tag-rest',rest:true},
+    ]
+  }
+
 };
 
 let currentLevel = 'beginner';
@@ -356,8 +534,6 @@ function setLevel(level, btn) {
 
 function renderProgram() {
   const prog = PROGRAMS[currentLevel];
-  const tagMap = { beginner: 'tag-full', intermediate: 'tag-push', advanced: 'tag-push' };
-
   const dayCards = prog.days.map((day, i) => `
     <div class="day-card ${day.rest && !day.exercises ? 'rest' : ''}" onclick="showDay(${i})">
       <div class="day-name">${day.name}</div>
@@ -365,7 +541,6 @@ function renderProgram() {
       <span class="day-tag ${day.tagClass}">${day.tag}</span>
     </div>
   `).join('');
-
   document.getElementById('program-container').innerHTML = `
     <div class="program-header">
       <div class="program-title">${prog.title}</div>
@@ -388,36 +563,30 @@ function showDay(index) {
     document.getElementById('workout-detail').classList.remove('visible');
     return;
   }
-
   const rows = day.exercises.map((ex, ei) => {
     const key = `${currentLevel}-${index}-${ei}`;
     const done = completedExercises[key];
+    const hasVideo = VIDEO_IDS[ex.name];
+    const nameHtml = hasVideo
+      ? `<div class="ex-name" onclick="openVideo('${ex.name}')"><span class="ex-name-text">${ex.name}</span><span class="ex-play">▶ Watch</span></div>`
+      : `<div class="ex-name" style="cursor:default;"><span class="ex-name-text">${ex.name}</span></div>`;
     return `
       <div class="exercise-row">
-        <div>
-          <div class="ex-name">${ex.name}</div>
-          <div class="ex-note">${ex.note}</div>
-        </div>
+        <div>${nameHtml}<div class="ex-note">${ex.note}</div></div>
         <div class="ex-stat"><strong>${ex.sets}</strong><span>Sets</span></div>
         <div class="ex-stat"><strong>${ex.reps}</strong><span>Reps</span></div>
         <div class="ex-stat"><strong>${ex.rest}</strong><span>Rest</span></div>
-        <button class="complete-btn ${done ? 'done' : ''}" onclick="toggleExercise('${key}', this)">${done ? '✓ Done' : 'Mark Done'}</button>
-      </div>
-    `;
+        <button class="complete-btn ${done ? 'done' : ''}" onclick="toggleExercise('${key}',this)">${done ? '✓ Done' : 'Mark Done'}</button>
+      </div>`;
   }).join('');
-
   document.getElementById('workout-detail').innerHTML = `
     <div class="detail-title">${day.name} — ${day.focus}</div>
-    <div class="detail-sub">${day.exercises.length} exercises &nbsp;·&nbsp; ${currentLevel.charAt(0).toUpperCase()+currentLevel.slice(1)} Program</div>
+    <div class="detail-sub">${day.exercises.length} exercises &nbsp;·&nbsp; Click any exercise name to watch a tutorial</div>
     <div class="exercise-list">${rows}</div>
   `;
   document.getElementById('workout-detail').classList.add('visible');
-  document.getElementById('workout-detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // Highlight active day
-  document.querySelectorAll('.day-card').forEach((c, i) => {
-    c.classList.toggle('active-day', i === index);
-  });
+  document.getElementById('workout-detail').scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.day-card').forEach((c,i) => c.classList.toggle('active-day', i === index));
 }
 
 function toggleExercise(key, btn) {
@@ -426,7 +595,26 @@ function toggleExercise(key, btn) {
   btn.textContent = completedExercises[key] ? '✓ Done' : 'Mark Done';
 }
 
-// Init
+function openVideo(exerciseName) {
+  const videoId = VIDEO_IDS[exerciseName];
+  if (!videoId) return;
+  document.getElementById('modal-exercise-name').textContent = exerciseName;
+  document.getElementById('modal-iframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+  document.getElementById('modal-yt-link').href = `https://www.youtube.com/watch?v=${videoId}`;
+  document.getElementById('video-modal').classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('video-modal')) closeModalBtn();
+}
+function closeModalBtn() {
+  document.getElementById('video-modal').classList.remove('visible');
+  document.getElementById('modal-iframe').src = '';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalBtn(); });
+
 renderProgram();
 </script>
 </body>
