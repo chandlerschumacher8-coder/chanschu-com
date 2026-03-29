@@ -80,6 +80,28 @@
     @media(max-width:1000px){.biz-grid{grid-template-columns:1fr;}}
     @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.hero{padding:60px 24px 60px;}.rule{margin:0 24px;}.section{padding:48px 24px 60px;}.cards-grid{grid-template-columns:1fr 1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}} @media(max-width:480px){nav a{font-size:10px;}header{flex-wrap:wrap;gap:12px;}}
     @media(max-width:560px){.cards-grid{grid-template-columns:1fr;}.review-cards{grid-template-columns:1fr;}.review-header{flex-direction:column;gap:12px;align-items:flex-start;}.write-review-btn{width:100%;text-align:center;}}
+
+    /* CONTACT INFO */
+    .contact-info{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+    .contact-row{display:flex;align-items:flex-start;gap:10px;font-size:11px;color:var(--text-mid);text-decoration:none;transition:color 0.2s;line-height:1.6;}
+    .contact-row:not(.no-link):hover{color:var(--gold-light);}
+    .contact-icon{font-size:13px;flex-shrink:0;margin-top:1px;}
+    .contact-btns{display:flex;gap:8px;margin-bottom:20px;}
+    .call-btn,.email-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:10px 8px;border-radius:var(--radius);text-decoration:none;transition:all 0.2s;text-align:center;}
+    .call-btn{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.3);color:#52b788;}
+    .call-btn:hover{background:rgba(82,183,136,0.22);border-color:#52b788;}
+    .email-btn{background:transparent;border:1px solid var(--navy-border);color:var(--text-mid);}
+    .email-btn:hover{border-color:var(--text-dim);color:var(--text-bright);}
+    /* CONTACT FORM */
+    .contact-form-wrap{border-top:1px solid var(--navy-border);padding-top:20px;display:flex;flex-direction:column;gap:10px;}
+    .form-label{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:4px;}
+    .form-input{width:100%;background:var(--navy-deep);border:1px solid var(--navy-border);color:var(--text-bright);font-family:'DM Mono',monospace;font-size:12px;padding:11px 14px;outline:none;border-radius:var(--radius);transition:border-color 0.2s;resize:vertical;}
+    .form-input:focus{border-color:var(--gold-dim);}
+    .form-textarea{min-height:80px;}
+    .form-submit{width:100%;background:transparent;border:1px solid var(--gold-dim);color:var(--gold-light);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;padding:13px;cursor:pointer;border-radius:var(--radius);transition:all 0.2s;}
+    .form-submit:hover{background:var(--gold-dim);color:var(--navy-deep);}
+    .form-success{display:none;font-size:11px;color:#52b788;text-align:center;padding:8px;border:1px solid rgba(82,183,136,0.3);border-radius:var(--radius);background:rgba(82,183,136,0.08);}
+    .form-success.visible{display:block;}
   </style>
 </head>
 <body>
@@ -91,6 +113,7 @@
       <a href="goodnews.html">Good News</a>
       <a href="fitness.html">Fitness</a>
       <a href="#businesses">Businesses</a>
+      <a href="#contact">Contact</a>
     </nav>
   </header>
 
@@ -273,10 +296,160 @@
     </div>
   </section>
 
+  <div class="rule"></div>
+
+  <!-- CONTACT SECTION -->
+  <section class="section" id="contact">
+    <p class="section-label">Contact Our Businesses</p>
+    <div class="biz-grid">
+
+      <!-- DC APPLIANCE CONTACT -->
+      <div class="biz-card">
+        <div class="biz-top">
+          <div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div>
+          <div class="biz-tag">Appliances &amp; Furniture</div>
+        </div>
+        <div class="contact-info">
+          <a class="contact-row" href="tel:+16203716417">
+            <span class="contact-icon">📞</span>
+            <span>(620) 371-6417</span>
+          </a>
+          <a class="contact-row" href="mailto:dodgecityappliance@gmail.com">
+            <span class="contact-icon">✉️</span>
+            <span>dodgecityappliance@gmail.com</span>
+          </a>
+          <div class="contact-row no-link">
+            <span class="contact-icon">📍</span>
+            <span>2610 Central Ave Suite B<br/>Dodge City, KS 67801</span>
+          </div>
+          <div class="contact-row no-link">
+            <span class="contact-icon">🕐</span>
+            <span>Mon–Fri 9am–7pm<br/>Sat 9am–5pm &nbsp;·&nbsp; Sun Closed</span>
+          </div>
+        </div>
+        <div class="contact-btns">
+          <a class="call-btn" href="tel:+16203716417">📞 Call Now</a>
+          <a class="email-btn" href="mailto:dodgecityappliance@gmail.com">✉️ Email</a>
+        </div>
+        <div class="contact-form-wrap">
+          <div class="form-label">Send a Message</div>
+          <input type="text" class="form-input" placeholder="Your Name" id="dc-name" />
+          <input type="text" class="form-input" placeholder="Your Phone or Email" id="dc-contact" />
+          <textarea class="form-input form-textarea" placeholder="How can we help you?" id="dc-message" rows="3"></textarea>
+          <button class="form-submit" onclick="sendForm('dc','DC Appliance','dodgecityappliance@gmail.com')">Send Message</button>
+          <div class="form-success" id="dc-success">✓ Message sent! We'll be in touch soon.</div>
+        </div>
+      </div>
+
+      <!-- DOGHOUSE LIQUOR CONTACT -->
+      <div class="biz-card">
+        <div class="biz-top">
+          <div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div>
+          <div class="biz-tag">Beer, Wine &amp; Spirits</div>
+        </div>
+        <div class="contact-info">
+          <a class="contact-row" href="tel:+17856214030">
+            <span class="contact-icon">📞</span>
+            <span>(785) 621-4030</span>
+          </a>
+          <a class="contact-row" href="mailto:doghouseliquorstore@gmail.com">
+            <span class="contact-icon">✉️</span>
+            <span>doghouseliquorstore@gmail.com</span>
+          </a>
+          <div class="contact-row no-link">
+            <span class="contact-icon">📍</span>
+            <span>2522 Vine St<br/>Hays, KS 67601</span>
+          </div>
+          <div class="contact-row no-link">
+            <span class="contact-icon">🕐</span>
+            <span>Mon–Sat 9am–11pm<br/>Sun Noon–6pm</span>
+          </div>
+        </div>
+        <div class="contact-btns">
+          <a class="call-btn" href="tel:+17856214030">📞 Call Now</a>
+          <a class="email-btn" href="mailto:doghouseliquorstore@gmail.com">✉️ Email</a>
+        </div>
+        <div class="contact-form-wrap">
+          <div class="form-label">Send a Message</div>
+          <input type="text" class="form-input" placeholder="Your Name" id="dh-name" />
+          <input type="text" class="form-input" placeholder="Your Phone or Email" id="dh-contact" />
+          <textarea class="form-input form-textarea" placeholder="What are you looking for?" id="dh-message" rows="3"></textarea>
+          <button class="form-submit" onclick="sendForm('dh','Doghouse Liquor','doghouseliquorstore@gmail.com')">Send Message</button>
+          <div class="form-success" id="dh-success">✓ Message sent! We'll be in touch soon.</div>
+        </div>
+      </div>
+
+      <!-- THE INSURANCE GUYS CONTACT -->
+      <div class="biz-card">
+        <div class="biz-top">
+          <div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Hays, KS</div></div>
+          <div class="biz-tag">Independent Insurance</div>
+        </div>
+        <div class="contact-info">
+          <a class="contact-row" href="tel:+17852610315">
+            <span class="contact-icon">📞</span>
+            <span>(785) 261-0315</span>
+          </a>
+          <a class="contact-row" href="mailto:chandler@tigks.com">
+            <span class="contact-icon">✉️</span>
+            <span>chandler@tigks.com</span>
+          </a>
+          <div class="contact-row no-link">
+            <span class="contact-icon">📍</span>
+            <span>1204 Vine St<br/>Hays, KS 67601</span>
+          </div>
+          <div class="contact-row no-link">
+            <span class="contact-icon">🕐</span>
+            <span>Mon–Fri 8:30am–5pm<br/>Sat–Sun Closed</span>
+          </div>
+        </div>
+        <div class="contact-btns">
+          <a class="call-btn" href="tel:+17852610315">📞 Call Now</a>
+          <a class="email-btn" href="mailto:chandler@tigks.com">✉️ Email</a>
+        </div>
+        <div class="contact-form-wrap">
+          <div class="form-label">Request a Quote</div>
+          <input type="text" class="form-input" placeholder="Your Name" id="tig-name" />
+          <input type="text" class="form-input" placeholder="Your Phone or Email" id="tig-contact" />
+          <textarea class="form-input form-textarea" placeholder="What type of insurance do you need?" id="tig-message" rows="3"></textarea>
+          <button class="form-submit" onclick="sendForm('tig','The Insurance Guys','chandler@tigks.com')">Request a Quote</button>
+          <div class="form-success" id="tig-success">✓ Request sent! An agent will follow up shortly.</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <footer>
     <span class="gold">chanschu.com</span>
     <span>&copy; <script>document.write(new Date().getFullYear())</script> &mdash; All rights reserved</span>
   </footer>
 </div>
+<script>
+  function sendForm(prefix, bizName, email) {
+    const name    = document.getElementById(prefix+'-name').value.trim();
+    const contact = document.getElementById(prefix+'-contact').value.trim();
+    const message = document.getElementById(prefix+'-message').value.trim();
+    if (!name || !contact || !message) {
+      alert('Please fill in all fields before sending.');
+      return;
+    }
+    // Open mailto with pre-filled content
+    const subject = encodeURIComponent('Website Inquiry — ' + bizName);
+    const body    = encodeURIComponent(
+      'Name: ' + name + '\n' +
+      'Contact: ' + contact + '\n\n' +
+      'Message:\n' + message
+    );
+    window.open('mailto:' + email + '?subject=' + subject + '&body=' + body);
+    // Show success
+    document.getElementById(prefix+'-name').value = '';
+    document.getElementById(prefix+'-contact').value = '';
+    document.getElementById(prefix+'-message').value = '';
+    const s = document.getElementById(prefix+'-success');
+    s.classList.add('visible');
+    setTimeout(() => s.classList.remove('visible'), 5000);
+  }
+</script>
 </body>
 </html>
