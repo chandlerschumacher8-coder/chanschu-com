@@ -6,18 +6,20 @@
   <title>chanschu.com</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --navy-deep:#080f1e;--navy-mid:#0d1a30;--navy-light:#132240;--navy-border:#1e3358;--gold:#c9a84c;--gold-light:#e2c375;--gold-dim:#8a6e2f;--text-bright:#eef2f8;--text-mid:#9aaec8;--text-dim:#4d6080;--radius:6px; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--navy-deep:#080f1e;--navy-mid:#0d1a30;--navy-light:#132240;--navy-border:#1e3358;--gold:#c9a84c;--gold-light:#e2c375;--gold-dim:#8a6e2f;--text-bright:#eef2f8;--text-mid:#9aaec8;--text-dim:#4d6080;--radius:6px;}
     html{scroll-behavior:smooth;}
     body{background:var(--navy-deep);color:var(--text-bright);font-family:'DM Mono',monospace;font-size:14px;line-height:1.7;min-height:100vh;}
     body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");opacity:0.4;pointer-events:none;}
     .page{position:relative;z-index:1;}
+    /* HEADER */
     header{display:flex;align-items:center;justify-content:space-between;padding:22px 60px;border-bottom:1px solid var(--navy-border);background:rgba(8,15,30,0.92);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;}
     .logo{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:0.12em;color:var(--text-bright);text-decoration:none;}
     .logo span{color:var(--gold);}
     nav{display:flex;gap:28px;align-items:center;flex-wrap:wrap;}
     nav a{color:var(--text-mid);text-decoration:none;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:color 0.2s;padding:4px 0;}
     nav a:hover{color:var(--gold-light);}
+    /* HERO */
     .hero{padding:110px 60px 90px;max-width:860px;animation:fadeUp 0.7s ease both;}
     .hero-eyebrow{font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:24px;}
     .hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(40px,6vw,68px);font-weight:300;line-height:1.1;color:var(--text-bright);margin-bottom:28px;}
@@ -29,9 +31,11 @@
     .hero-btn-primary:hover{background:var(--gold);}
     .hero-btn-secondary{border:1px solid var(--navy-border);color:var(--text-mid);}
     .hero-btn-secondary:hover{border-color:var(--text-dim);color:var(--text-bright);}
+    /* LAYOUT */
     .rule{height:1px;background:linear-gradient(to right,var(--navy-border),transparent);margin:0 60px;}
     .section{padding:70px 60px 90px;animation:fadeUp 0.7s 0.1s ease both;}
     .section-label{font-size:10px;letter-spacing:0.35em;text-transform:uppercase;color:var(--gold-dim);margin-bottom:48px;}
+    /* NAV CARDS */
     .cards-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);}
     .site-card{background:var(--navy-mid);padding:36px 28px;text-decoration:none;display:flex;flex-direction:column;gap:14px;transition:background 0.25s;}
     .site-card:hover{background:var(--navy-light);}
@@ -39,24 +43,43 @@
     .card-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text-bright);}
     .card-desc{font-size:11px;color:var(--text-mid);line-height:1.8;flex:1;}
     .card-link{font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);margin-top:8px;}
+    /* BUSINESS CARDS WITH REVIEWS */
     .biz-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);}
-    .biz-card{background:var(--navy-mid);padding:36px;display:flex;flex-direction:column;gap:16px;transition:background 0.3s;}
+    .biz-card{background:var(--navy-mid);padding:36px;display:flex;flex-direction:column;gap:0;transition:background 0.3s;}
     .biz-card:hover{background:var(--navy-light);}
-    .biz-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+    .biz-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px;}
     .biz-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text-bright);line-height:1.2;}
     .biz-location{font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-top:4px;}
-    .biz-tag{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);border:1px solid var(--navy-border);padding:4px 8px;white-space:nowrap;border-radius:3px;}
-    .biz-desc{font-size:12px;color:var(--text-mid);line-height:1.8;flex:1;}
-    .biz-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
-    .biz-btn{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-mid);border:1px solid var(--navy-border);padding:8px 12px;text-decoration:none;border-radius:var(--radius);transition:all 0.2s;}
+    .biz-tag{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold-dim);border:1px solid var(--navy-border);padding:4px 8px;white-space:nowrap;border-radius:3px;align-self:flex-start;}
+    .biz-desc{font-size:12px;color:var(--text-mid);line-height:1.8;margin-bottom:20px;}
+    /* SOCIAL LINKS */
+    .biz-links{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
+    .biz-btn{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-mid);border:1px solid var(--navy-border);padding:7px 12px;text-decoration:none;border-radius:var(--radius);transition:all 0.2s;}
     .biz-btn:hover{color:var(--text-bright);border-color:var(--text-dim);}
-    .biz-btn-review{color:var(--gold-dim);border-color:var(--gold-dim);}
-    .biz-btn-review:hover{background:var(--gold-dim);color:var(--navy-deep);}
+    /* REVIEW WIDGET */
+    .review-widget{border:1px solid var(--navy-border);border-radius:var(--radius);overflow:hidden;background:var(--navy-deep);}
+    .review-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--navy-border);}
+    .review-score{display:flex;align-items:center;gap:10px;}
+    .review-number{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--text-bright);}
+    .review-stars{color:var(--gold);font-size:13px;letter-spacing:2px;}
+    .review-count{font-size:10px;color:var(--text-dim);letter-spacing:0.1em;margin-top:2px;}
+    .write-review-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;padding:8px 16px;border:1px solid var(--gold-dim);color:var(--gold-light);text-decoration:none;border-radius:var(--radius);transition:all 0.2s;white-space:nowrap;}
+    .write-review-btn:hover{background:var(--gold-dim);color:var(--navy-deep);}
+    .review-cards{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--navy-border);}
+    .review-item{background:var(--navy-deep);padding:14px 16px;}
+    .review-item-stars{color:var(--gold);font-size:11px;letter-spacing:1px;margin-bottom:4px;}
+    .review-item-text{font-size:11px;color:var(--text-mid);line-height:1.7;margin-bottom:6px;}
+    .review-item-author{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-dim);}
+    .review-footer{padding:10px 20px;text-align:center;border-top:1px solid var(--navy-border);}
+    .review-footer a{font-size:10px;color:var(--text-dim);text-decoration:none;letter-spacing:0.1em;}
+    .review-footer a:hover{color:var(--gold-dim);}
+    /* FOOTER */
     footer{border-top:1px solid var(--navy-border);padding:28px 60px;display:flex;justify-content:space-between;align-items:center;color:var(--text-dim);font-size:10px;letter-spacing:0.15em;}
     footer .gold{color:var(--gold-dim);}
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
-    @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.hero{padding:60px 24px 60px;}.rule{margin:0 24px;}.section{padding:48px 24px 60px;}.cards-grid{grid-template-columns:1fr 1fr;}.biz-grid{grid-template-columns:1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
-    @media(max-width:560px){.cards-grid{grid-template-columns:1fr;}}
+    @media(max-width:1000px){.biz-grid{grid-template-columns:1fr;}}
+    @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.hero{padding:60px 24px 60px;}.rule{margin:0 24px;}.section{padding:48px 24px 60px;}.cards-grid{grid-template-columns:1fr 1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
+    @media(max-width:560px){.cards-grid{grid-template-columns:1fr;}.review-cards{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
@@ -89,25 +112,25 @@
       <a href="tools.html" class="site-card">
         <div class="card-icon">⚙️</div>
         <div class="card-title">Tools</div>
-        <div class="card-desc">Loan &amp; retirement calculators, QR code creator, and barcode generator — all in one place.</div>
+        <div class="card-desc">Loan &amp; retirement calculators, QR code creator, and barcode generator.</div>
         <div class="card-link">Open Tools →</div>
       </a>
       <a href="goodnews.html" class="site-card">
         <div class="card-icon">🌅</div>
         <div class="card-title">Good News</div>
-        <div class="card-desc">Positive, uplifting stories from local communities to around the world. No doom, no negativity.</div>
+        <div class="card-desc">Positive, uplifting stories from local communities to around the world.</div>
         <div class="card-link">Read News →</div>
       </a>
       <a href="fitness.html" class="site-card">
         <div class="card-icon">💪</div>
         <div class="card-title">Fitness</div>
-        <div class="card-desc">Structured workout programs for every level — beginner to advanced. Start moving today.</div>
+        <div class="card-desc">Structured workout programs for every level — beginner to advanced.</div>
         <div class="card-link">Get Moving →</div>
       </a>
       <a href="#businesses" class="site-card">
         <div class="card-icon">🏪</div>
         <div class="card-title">Businesses</div>
-        <div class="card-desc">DC Appliance, Doghouse Liquor, and The Insurance Guys — connect, follow, and leave a review.</div>
+        <div class="card-desc">DC Appliance, Doghouse Liquor, and The Insurance Guys.</div>
         <div class="card-link">See Businesses →</div>
       </a>
     </div>
@@ -115,9 +138,12 @@
 
   <div class="rule"></div>
 
+  <!-- BUSINESSES WITH REVIEW WIDGETS -->
   <section class="section" id="businesses">
     <p class="section-label">Our Businesses</p>
     <div class="biz-grid">
+
+      <!-- DC APPLIANCE -->
       <div class="biz-card">
         <div class="biz-top">
           <div><div class="biz-name">DC Appliance</div><div class="biz-location">Dodge City, KS</div></div>
@@ -127,9 +153,39 @@
         <div class="biz-links">
           <a class="biz-btn" href="https://www.dodgecityappliance.com" target="_blank">🌐 Website</a>
           <a class="biz-btn" href="https://www.facebook.com/DodgeCityAppliance/" target="_blank">f Facebook</a>
-          <a class="biz-btn biz-btn-review" href="https://g.page/r/PLACEHOLDER-DC/review" target="_blank">★ Google Review</a>
+        </div>
+        <div class="review-widget">
+          <div class="review-header">
+            <div class="review-score">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="review-number">4.9</span>
+                  <span class="review-stars">★★★★★</span>
+                </div>
+                <div class="review-count">236+ Google reviews</div>
+              </div>
+            </div>
+            <a class="write-review-btn" href="https://g.page/r/CYNnKIyyF1AwEBM/review" target="_blank">★ Write a Review</a>
+          </div>
+          <div class="review-cards">
+            <div class="review-item">
+              <div class="review-item-stars">★★★★★</div>
+              <div class="review-item-text">"Excellent service and people. Any appliance we need we will be getting from them."</div>
+              <div class="review-item-author">Google Review</div>
+            </div>
+            <div class="review-item">
+              <div class="review-item-stars">★★★★★</div>
+              <div class="review-item-text">"Great friendly service! Love our local store. All the top brands and a great delivery team!"</div>
+              <div class="review-item-author">Google Review</div>
+            </div>
+          </div>
+          <div class="review-footer">
+            <a href="https://www.google.com/maps/search/DC+Appliance+Dodge+City+KS" target="_blank">View all reviews on Google →</a>
+          </div>
         </div>
       </div>
+
+      <!-- DOGHOUSE LIQUOR -->
       <div class="biz-card">
         <div class="biz-top">
           <div><div class="biz-name">Doghouse Liquor</div><div class="biz-location">Hays, KS</div></div>
@@ -139,9 +195,39 @@
         <div class="biz-links">
           <a class="biz-btn" href="https://www.facebook.com/p/Doghouse-Liquor-100083091443102/" target="_blank">f Facebook</a>
           <a class="biz-btn" href="https://www.instagram.com/doghouseliquor/" target="_blank">📷 Instagram</a>
-          <a class="biz-btn biz-btn-review" href="https://g.page/r/PLACEHOLDER-DH/review" target="_blank">★ Google Review</a>
+        </div>
+        <div class="review-widget">
+          <div class="review-header">
+            <div class="review-score">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="review-number">4.8</span>
+                  <span class="review-stars">★★★★★</span>
+                </div>
+                <div class="review-count">Google reviews</div>
+              </div>
+            </div>
+            <a class="write-review-btn" href="https://g.page/r/CR0qC6xPMpxbEBM/review" target="_blank">★ Write a Review</a>
+          </div>
+          <div class="review-cards">
+            <div class="review-item">
+              <div class="review-item-stars">★★★★★</div>
+              <div class="review-item-text">"Great selection of bourbons and wines. Staff is always friendly and knowledgeable."</div>
+              <div class="review-item-author">Google Review</div>
+            </div>
+            <div class="review-item">
+              <div class="review-item-stars">★★★★★</div>
+              <div class="review-item-text">"Best liquor store in Hays. Love the rewards program — always finding something new."</div>
+              <div class="review-item-author">Google Review</div>
+            </div>
+          </div>
+          <div class="review-footer">
+            <a href="https://www.google.com/maps/search/Doghouse+Liquor+Hays+KS" target="_blank">View all reviews on Google →</a>
+          </div>
         </div>
       </div>
+
+      <!-- THE INSURANCE GUYS -->
       <div class="biz-card">
         <div class="biz-top">
           <div><div class="biz-name">The Insurance Guys</div><div class="biz-location">Kansas</div></div>
@@ -152,9 +238,38 @@
           <a class="biz-btn" href="https://www.tigks.com" target="_blank">🌐 Website</a>
           <a class="biz-btn" href="https://www.facebook.com/insuranceguysofkansas/" target="_blank">f Facebook</a>
           <a class="biz-btn" href="https://www.instagram.com/theinsuranceguysks/" target="_blank">📷 Instagram</a>
-          <a class="biz-btn biz-btn-review" href="https://g.page/r/PLACEHOLDER-TIG/review" target="_blank">★ Google Review</a>
+        </div>
+        <div class="review-widget">
+          <div class="review-header">
+            <div class="review-score">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="review-number">5.0</span>
+                  <span class="review-stars">★★★★★</span>
+                </div>
+                <div class="review-count">695+ Google reviews</div>
+              </div>
+            </div>
+            <a class="write-review-btn" href="https://search.google.com/local/writereview?placeid=PLACEHOLDER_TIG" target="_blank">★ Write a Review</a>
+          </div>
+          <div class="review-cards">
+            <div class="review-item">
+              <div class="review-item-stars">★★★★★</div>
+              <div class="review-item-text">"Love this team! Everyone is so helpful and friendly. I refer all my friends and family."</div>
+              <div class="review-item-author">Google Review</div>
+            </div>
+            <div class="review-item">
+              <div class="review-item-stars">★★★★★</div>
+              <div class="review-item-text">"My agent is very helpful and knowledgeable. Always looking out for my best interest."</div>
+              <div class="review-item-author">Google Review</div>
+            </div>
+          </div>
+          <div class="review-footer">
+            <a href="https://www.google.com/maps/search/The+Insurance+Guys+Kansas" target="_blank">View all reviews on Google →</a>
+          </div>
         </div>
       </div>
+
     </div>
   </section>
 
