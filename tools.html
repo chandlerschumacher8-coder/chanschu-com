@@ -64,6 +64,11 @@
     #barcode-svg{background:white;padding:16px 24px;border-radius:8px;}
     .download-btn{font-size:12px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,151,58,0.4);padding:10px 22px;border-radius:8px;cursor:pointer;background:transparent;transition:all 0.2s;}
     .download-btn:hover{background:rgba(201,151,58,0.1);}
+
+    .page-hero{position:relative;overflow:hidden;}
+    .page-hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1600&q=80');background-size:cover;background-position:center;filter:brightness(0.18);}
+    .page-hero-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(7,17,31,0.97) 40%,rgba(7,17,31,0.6) 100%);}
+    .page-hero-content{position:relative;z-index:1;padding:72px 56px 52px;}
     footer{border-top:1px solid rgba(255,255,255,0.06);padding:28px 56px;display:flex;justify-content:space-between;align-items:center;color:var(--gray-2);font-size:12px;}
     footer .f-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
@@ -77,7 +82,6 @@
     <a href="index.html" class="logo">chan<span>schu</span>.com</a>
     <nav>
       <a href="tools.html" class="active">Tools</a>
-      <a href="goodnews.html">Good News</a>
       <a href="fitness.html">Fitness</a>
       <a href="index.html#businesses">Businesses</a>
       <a href="index.html#contact">Contact</a>
@@ -85,9 +89,13 @@
   </header>
 
   <div class="page-hero">
-    <div class="hero-tag">Utilities</div>
-    <h1>Tools</h1>
-    <p>Financial calculators, QR code creator, and barcode generator — all free, all instant, no sign-up required.</p>
+    <div class="page-hero-bg"></div>
+    <div class="page-hero-overlay"></div>
+    <div class="page-hero-content">
+      <div class="hero-tag">Utilities</div>
+      <h1>Tools</h1>
+      <p>Financial calculators, QR code creator, and barcode generator — all free, all instant, no sign-up required.</p>
+    </div>
   </div>
 
   <div class="rule"></div>
@@ -133,6 +141,145 @@
             <div class="result-item"><div class="r-val" id="r-contributed">—</div><div class="r-key">Total Contributed</div></div>
             <div class="result-item"><div class="r-val" id="r-growth">—</div><div class="r-key">Investment Growth</div></div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section class="section">
+    <div class="section-header"><div class="section-title">Mortgage Calculator</div><div class="section-line"></div></div>
+    <div class="tools-grid">
+      <div class="calc-card" id="mortgage" style="grid-column:span 2;">
+        <div class="calc-title">Mortgage Calculator</div>
+        <div class="calc-sub">Full payment with taxes & insurance</div>
+        <div class="fields-row">
+          <div class="field"><label>Home Price</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="m-price" placeholder="300,000" /></div></div>
+          <div class="field"><label>Down Payment</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="m-down" placeholder="60,000" /></div></div>
+        </div>
+        <div class="fields-row">
+          <div class="field"><label>Annual Interest Rate</label><div class="input-wrap"><span class="prefix">%</span><input type="number" id="m-rate" placeholder="6.75" step="0.01" /></div></div>
+          <div class="field"><label>Loan Term</label><div class="input-wrap"><span class="prefix">#</span><input type="number" id="m-term" placeholder="30" /></div></div>
+        </div>
+        <div class="fields-row">
+          <div class="field"><label>Annual Property Tax</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="m-tax" placeholder="3,600" /></div></div>
+          <div class="field"><label>Annual Home Insurance</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="m-ins" placeholder="1,200" /></div></div>
+        </div>
+        <div class="field"><label>Monthly HOA / PMI (optional)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="m-hoa" placeholder="0" /></div></div>
+        <button class="btn" onclick="calcMortgage()">Calculate Full Payment</button>
+        <div class="result-box" id="mortgage-result">
+          <div class="result-primary" id="m-total-payment">—</div>
+          <div class="result-label">Total Monthly Payment (PITI)</div>
+          <div class="result-breakdown" style="grid-template-columns:repeat(4,1fr);">
+            <div class="result-item"><div class="r-val" id="m-principal">—</div><div class="r-key">Principal & Interest</div></div>
+            <div class="result-item"><div class="r-val" id="m-tax-mo">—</div><div class="r-key">Property Tax / mo</div></div>
+            <div class="result-item"><div class="r-val" id="m-ins-mo">—</div><div class="r-key">Insurance / mo</div></div>
+            <div class="result-item"><div class="r-val" id="m-hoa-mo">—</div><div class="r-key">HOA / PMI / mo</div></div>
+          </div>
+          <div class="result-breakdown" style="margin-top:10px;">
+            <div class="result-item"><div class="r-val" id="m-loan-amt">—</div><div class="r-key">Loan Amount</div></div>
+            <div class="result-item"><div class="r-val" id="m-total-interest">—</div><div class="r-key">Total Interest Paid</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div class="rule"></div>
+
+  <section class="section">
+    <div class="section-header"><div class="section-title">Rental Property Calculator</div><div class="section-line"></div></div>
+    <div class="tools-grid">
+      <div class="calc-card" id="rental" style="grid-column:span 2;">
+        <div class="calc-title">Rental Property Analyzer</div>
+        <div class="calc-sub">Cash flow, ROI & rate of return</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:4px;">
+
+          <!-- INCOME COLUMN -->
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(201,151,58,0.2);">Income</div>
+            <div class="field"><label>Monthly Rent Income</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-rent" placeholder="1,800" /></div></div>
+            <div class="field"><label>Other Monthly Income (parking, pets, etc.)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-other" placeholder="0" /></div></div>
+            <div class="field"><label>Vacancy Rate</label><div class="input-wrap"><span class="prefix">%</span><input type="number" id="rp-vacancy" placeholder="8" step="0.5" /></div></div>
+          </div>
+
+          <!-- PURCHASE COLUMN -->
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(201,151,58,0.2);">Purchase</div>
+            <div class="field"><label>Purchase Price</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-price" placeholder="250,000" /></div></div>
+            <div class="field"><label>Down Payment</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-down" placeholder="50,000" /></div></div>
+            <div class="field"><label>Closing Costs</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-closing" placeholder="5,000" /></div></div>
+          </div>
+
+          <!-- MORTGAGE COLUMN -->
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(201,151,58,0.2);">Mortgage</div>
+            <div class="field"><label>Monthly P&amp;I Payment</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-mortgage" placeholder="1,100" /></div></div>
+            <div class="field"><label>Annual Interest Rate (for calc)</label><div class="input-wrap"><span class="prefix">%</span><input type="number" id="rp-rate" placeholder="6.75" step="0.01" /></div></div>
+            <div class="field"><label>Loan Term (years)</label><div class="input-wrap"><span class="prefix">#</span><input type="number" id="rp-term" placeholder="30" /></div></div>
+          </div>
+
+          <!-- EXPENSES COLUMN -->
+          <div>
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(201,151,58,0.2);">Monthly Expenses</div>
+            <div class="field"><label>Property Insurance</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-insurance" placeholder="100" /></div></div>
+            <div class="field"><label>Property Taxes (monthly)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-tax" placeholder="200" /></div></div>
+            <div class="field"><label>Utilities (if owner-paid)</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-utilities" placeholder="0" /></div></div>
+            <div class="field"><label>Maintenance &amp; Repairs</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-maintenance" placeholder="150" /></div></div>
+            <div class="field"><label>Property Management</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-mgmt" placeholder="0" /></div></div>
+            <div class="field"><label>HOA Fees</label><div class="input-wrap"><span class="prefix">$</span><input type="number" id="rp-hoa" placeholder="0" /></div></div>
+          </div>
+
+        </div>
+
+        <button class="btn" style="margin-top:8px;" onclick="calcRental()">Analyze Property</button>
+
+        <div class="result-box" id="rental-result">
+
+          <!-- KEY METRICS ROW -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">
+            <div class="result-item" style="border-color:rgba(201,151,58,0.3);">
+              <div class="r-val" id="rp-cashflow" style="font-size:22px;"></div>
+              <div class="r-key">Monthly Cash Flow</div>
+            </div>
+            <div class="result-item" style="border-color:rgba(201,151,58,0.3);">
+              <div class="r-val" id="rp-coc" style="font-size:22px;"></div>
+              <div class="r-key">Cash-on-Cash Return</div>
+            </div>
+            <div class="result-item" style="border-color:rgba(201,151,58,0.3);">
+              <div class="r-val" id="rp-capr" style="font-size:22px;"></div>
+              <div class="r-key">Cap Rate</div>
+            </div>
+            <div class="result-item" style="border-color:rgba(201,151,58,0.3);">
+              <div class="r-val" id="rp-grm" style="font-size:22px;"></div>
+              <div class="r-key">Gross Rent Multiplier</div>
+            </div>
+          </div>
+
+          <!-- BREAKDOWN ROW -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">
+            <div class="result-item">
+              <div class="r-val" id="rp-eff-income"></div>
+              <div class="r-key">Effective Gross Income / mo</div>
+            </div>
+            <div class="result-item">
+              <div class="r-val" id="rp-total-exp"></div>
+              <div class="r-key">Total Expenses / mo</div>
+            </div>
+            <div class="result-item">
+              <div class="r-val" id="rp-noi"></div>
+              <div class="r-key">Net Operating Income / yr</div>
+            </div>
+            <div class="result-item">
+              <div class="r-val" id="rp-total-invest"></div>
+              <div class="r-key">Total Cash Invested</div>
+            </div>
+          </div>
+
+          <!-- VERDICT -->
+          <div id="rp-verdict" style="padding:14px 18px;border-radius:8px;font-size:13px;font-weight:500;line-height:1.6;margin-top:4px;"></div>
+
         </div>
       </div>
     </div>
@@ -210,7 +357,131 @@
     catch(e){alert('Invalid value for selected format. Try Code 128 for general text.');}
   }
   function downloadBarcode(){const svg=document.getElementById('barcode-svg');const data=new XMLSerializer().serializeToString(svg);const blob=new Blob([data],{type:'image/svg+xml'});const url=URL.createObjectURL(blob);const l=document.createElement('a');l.download='barcode.svg';l.href=url;l.click();URL.revokeObjectURL(url);}
-  document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const card=document.activeElement?.closest('.calc-card');if(!card)return;if(card.id==='loan')calcLoan();if(card.id==='retirement')calcRetirement();});
+
+  function calcMortgage() {
+    const price = parseFloat(document.getElementById('m-price').value) || 0;
+    const down  = parseFloat(document.getElementById('m-down').value) || 0;
+    const rate  = parseFloat(document.getElementById('m-rate').value);
+    const term  = parseFloat(document.getElementById('m-term').value) || 30;
+    const tax   = parseFloat(document.getElementById('m-tax').value) || 0;
+    const ins   = parseFloat(document.getElementById('m-ins').value) || 0;
+    const hoa   = parseFloat(document.getElementById('m-hoa').value) || 0;
+
+    if (!price || !rate) { alert('Please enter at least a home price and interest rate.'); return; }
+
+    const P = price - down;
+    const r = rate / 100 / 12;
+    const n = term * 12;
+
+    let pi = 0;
+    if (r > 0) {
+      pi = P * (r * Math.pow(1+r,n)) / (Math.pow(1+r,n) - 1);
+    } else {
+      pi = P / n;
+    }
+
+    const taxMo  = tax / 12;
+    const insMo  = ins / 12;
+    const total  = pi + taxMo + insMo + hoa;
+    const totalInterest = (pi * n) - P;
+
+    document.getElementById('m-total-payment').textContent = fmt(total);
+    document.getElementById('m-principal').textContent     = fmt(pi);
+    document.getElementById('m-tax-mo').textContent        = fmt(taxMo);
+    document.getElementById('m-ins-mo').textContent        = fmt(insMo);
+    document.getElementById('m-hoa-mo').textContent        = fmt(hoa);
+    document.getElementById('m-loan-amt').textContent      = fmt(P);
+    document.getElementById('m-total-interest').textContent = fmt(totalInterest);
+    document.getElementById('mortgage-result').classList.add('visible');
+  }
+  document.addEventListener('keydown',e=>{if(e.key!=='Enter')return;const card=document.activeElement?.closest('.calc-card');if(!card)return;if(card.id==='loan')calcLoan();if(card.id==='retirement')calcRetirement();if(card.id==='rental')calcRental();});
+
+  function calcRental() {
+    // INCOME
+    const rent      = parseFloat(document.getElementById('rp-rent').value) || 0;
+    const other     = parseFloat(document.getElementById('rp-other').value) || 0;
+    const vacancy   = parseFloat(document.getElementById('rp-vacancy').value) || 0;
+
+    // PURCHASE
+    const price     = parseFloat(document.getElementById('rp-price').value) || 0;
+    const down      = parseFloat(document.getElementById('rp-down').value) || 0;
+    const closing   = parseFloat(document.getElementById('rp-closing').value) || 0;
+
+    // MORTGAGE — use entered P&I or calculate it
+    let pi = parseFloat(document.getElementById('rp-mortgage').value) || 0;
+    if (!pi) {
+      const loanAmt = price - down;
+      const r = (parseFloat(document.getElementById('rp-rate').value) || 6.75) / 100 / 12;
+      const n = (parseFloat(document.getElementById('rp-term').value) || 30) * 12;
+      pi = loanAmt * (r * Math.pow(1+r,n)) / (Math.pow(1+r,n) - 1);
+    }
+
+    // EXPENSES (monthly)
+    const insurance   = parseFloat(document.getElementById('rp-insurance').value) || 0;
+    const tax         = parseFloat(document.getElementById('rp-tax').value) || 0;
+    const utilities   = parseFloat(document.getElementById('rp-utilities').value) || 0;
+    const maintenance = parseFloat(document.getElementById('rp-maintenance').value) || 0;
+    const mgmt        = parseFloat(document.getElementById('rp-mgmt').value) || 0;
+    const hoa         = parseFloat(document.getElementById('rp-hoa').value) || 0;
+
+    if (!rent || !price) { alert('Please enter at least a monthly rent and purchase price.'); return; }
+
+    // CALCULATIONS
+    const grossIncome   = rent + other;
+    const vacancyLoss   = grossIncome * (vacancy / 100);
+    const effIncome     = grossIncome - vacancyLoss;           // Effective Gross Income / mo
+    const opExpenses    = insurance + tax + utilities + maintenance + mgmt + hoa; // operating expenses (no mortgage)
+    const totalExpenses = opExpenses + pi;                     // all monthly costs
+    const cashFlow      = effIncome - totalExpenses;           // monthly cash flow
+    const noi           = (effIncome - opExpenses) * 12;       // Net Operating Income / yr (no mortgage)
+    const totalInvest   = down + closing;                      // total cash invested
+    const cocReturn     = totalInvest > 0 ? (cashFlow * 12 / totalInvest) * 100 : 0;
+    const capRate       = price > 0 ? (noi / price) * 100 : 0;
+    const grm           = (rent * 12) > 0 ? price / (rent * 12) : 0;
+
+    // FORMAT
+    const fmtD = n => {
+      const abs = Math.abs(Math.round(n));
+      const str = '$' + abs.toLocaleString('en-US');
+      return n < 0 ? '-' + str : str;
+    };
+    const fmtP = n => n.toFixed(2) + '%';
+
+    document.getElementById('rp-cashflow').textContent    = fmtD(cashFlow);
+    document.getElementById('rp-coc').textContent         = fmtP(cocReturn);
+    document.getElementById('rp-capr').textContent        = fmtP(capRate);
+    document.getElementById('rp-grm').textContent         = grm.toFixed(1) + 'x';
+    document.getElementById('rp-eff-income').textContent  = fmtD(effIncome);
+    document.getElementById('rp-total-exp').textContent   = fmtD(totalExpenses);
+    document.getElementById('rp-noi').textContent         = fmtD(noi);
+    document.getElementById('rp-total-invest').textContent= fmtD(totalInvest);
+
+    // Color cash flow
+    const cfEl = document.getElementById('rp-cashflow');
+    cfEl.style.color = cashFlow >= 0 ? '#6ecba0' : '#e08080';
+
+    // Verdict
+    const verdict = document.getElementById('rp-verdict');
+    let msg = '', bg = '';
+    if (cashFlow >= 200 && cocReturn >= 8) {
+      msg = '✓ Strong investment — positive cash flow and solid cash-on-cash return above 8%. This property looks like a good deal.';
+      bg = 'rgba(82,183,136,0.1)'; verdict.style.color = '#6ecba0'; verdict.style.borderColor = 'rgba(82,183,136,0.25)';
+    } else if (cashFlow >= 0 && cocReturn >= 4) {
+      msg = '~ Decent investment — cash flow is positive but modest. Returns are acceptable. Look for ways to increase rent or reduce expenses.';
+      bg = 'rgba(201,151,58,0.1)'; verdict.style.color = 'var(--gold-light)'; verdict.style.borderColor = 'rgba(201,151,58,0.25)';
+    } else if (cashFlow >= 0) {
+      msg = '~ Break-even — barely cash flowing. Appreciation potential may still make this worthwhile, but thin margins leave little room for surprises.';
+      bg = 'rgba(201,151,58,0.08)'; verdict.style.color = 'var(--gold)'; verdict.style.borderColor = 'rgba(201,151,58,0.2)';
+    } else {
+      msg = '✗ Negative cash flow — this property costs you ' + fmtD(Math.abs(cashFlow)) + '/month out of pocket. Consider negotiating a lower price, higher rent, or larger down payment.';
+      bg = 'rgba(224,128,128,0.1)'; verdict.style.color = '#e08080'; verdict.style.borderColor = 'rgba(224,128,128,0.25)';
+    }
+    verdict.textContent = msg;
+    verdict.style.background = bg;
+    verdict.style.border = '1px solid';
+
+    document.getElementById('rental-result').classList.add('visible');
+  }
 </script>
 </body>
 </html>
