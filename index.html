@@ -118,6 +118,21 @@
     footer{border-top:1px solid rgba(255,255,255,0.06);padding:28px 56px;display:flex;justify-content:space-between;align-items:center;color:var(--gray-2);font-size:12px;}
     footer .f-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;}
 
+
+    /* IMAGES */
+    .hero{position:relative;min-height:520px;display:flex;align-items:center;overflow:hidden;}
+    .hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1600&q=80');background-size:cover;background-position:center;filter:brightness(0.22);}
+    .hero-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(7,17,31,0.92) 0%,rgba(7,17,31,0.5) 100%);}
+    .hero-content{position:relative;z-index:1;padding:90px 56px;}
+    .feat-card{overflow:hidden;}
+    .feat-card-img{height:120px;background-size:cover;background-position:center;position:relative;border-radius:8px 8px 0 0;margin:-24px -24px 16px -24px;}
+    .feat-card-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(12,28,48,0.9) 100%);}
+    .biz-card{overflow:hidden;}
+    .biz-card-img{height:160px;background-size:cover;background-position:center;position:relative;}
+    .biz-card-img::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 25%,rgba(12,28,48,1) 100%);}
+    .biz-card-img-label{position:absolute;bottom:16px;left:20px;z-index:1;}
+    .biz-card-img-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);}
+    .biz-card-img-loc{font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--gray-1);margin-top:2px;}
     @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
     .hero,.section{animation:fadeUp 0.6s ease both;}
     .section{animation-delay:0.1s;}
@@ -134,7 +149,6 @@
     <a href="index.html" class="logo">chan<span>schu</span>.com</a>
     <nav>
       <a href="tools.html">Tools</a>
-      <a href="goodnews.html">Good News</a>
       <a href="fitness.html">Fitness</a>
       <a href="#businesses">Businesses</a>
       <a href="#contact">Contact</a>
@@ -143,13 +157,15 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-inner">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
       <div class="hero-tag">Private tools &amp; utilities</div>
       <h1>Built for those<br/>who <em>know</em> where<br/>they're going.</h1>
       <p>A curated set of tools, news, and resources — crafted for clients, friends, and community. Simple by design. Precise by necessity.</p>
       <div class="hero-btns">
         <a href="tools.html" class="btn-gold">Explore Tools</a>
-        <a href="goodnews.html" class="btn-outline">Good News</a>
+        <a href="fitness.html" class="btn-outline">Fitness</a>
       </div>
     </div>
   </section>
@@ -162,21 +178,25 @@
     </div>
     <div class="feat-grid">
       <a href="tools.html" class="feat-card">
+        <div class="feat-card-img" style="background-image:url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&q=80')"></div>
         <div class="feat-title">Tools</div>
         <div class="feat-desc">Loan &amp; retirement calculators, QR code creator, and barcode generator.</div>
         <div class="feat-arrow">Open Tools →</div>
       </a>
       <a href="fitness.html" class="feat-card">
+        <div class="feat-card-img" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80')"></div>
         <div class="feat-title">Fitness</div>
         <div class="feat-desc">Structured workout programs for every level — beginner to advanced.</div>
         <div class="feat-arrow">Get Moving →</div>
       </a>
       <a href="#businesses" class="feat-card">
+        <div class="feat-card-img" style="background-image:url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&q=80')"></div>
         <div class="feat-title">Businesses</div>
         <div class="feat-desc">DC Appliance, Doghouse Liquor, and The Insurance Guys.</div>
         <div class="feat-arrow">See Businesses →</div>
       </a>
       <a href="goodnews.html" class="feat-card">
+        <div class="feat-card-img" style="background-image:url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80')"></div>
         <div class="feat-title">Good News</div>
         <div class="feat-desc">Positive, uplifting stories from local communities to around the world.</div>
         <div class="feat-arrow">Read News →</div>
@@ -196,8 +216,11 @@
 
       <!-- DC APPLIANCE -->
       <div class="biz-card">
-        <div class="biz-card-top">
-          <div><div class="biz-card-name">DC Appliance</div><div class="biz-card-loc">Dodge City, KS</div></div>
+        <div class="biz-card-img" style="background-image:url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80')">
+          <div class="biz-card-img-label"><div class="biz-card-img-name">DC Appliance</div><div class="biz-card-img-loc">Dodge City, KS</div></div>
+        </div>
+        <div class="biz-card-top" style="padding-top:0;margin-top:16px;">
+          <div></div>
           <a class="call-pill" href="tel:+16203716417" style="margin:0;padding:7px 14px;font-size:11px;">📞 Call</a>
         </div>
         <div class="biz-chip" style="width:fit-content;margin-bottom:4px;">Appliances &amp; Furniture</div>
@@ -221,8 +244,11 @@
 
       <!-- DOGHOUSE LIQUOR -->
       <div class="biz-card">
-        <div class="biz-card-top">
-          <div><div class="biz-card-name">Doghouse Liquor</div><div class="biz-card-loc">Hays, KS</div></div>
+        <div class="biz-card-img" style="background-image:url('https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&q=80')">
+          <div class="biz-card-img-label"><div class="biz-card-img-name">Doghouse Liquor</div><div class="biz-card-img-loc">Hays, KS</div></div>
+        </div>
+        <div class="biz-card-top" style="padding-top:0;margin-top:16px;">
+          <div></div>
           <a class="call-pill" href="tel:+17856214030" style="margin:0;padding:7px 14px;font-size:11px;">📞 Call</a>
         </div>
         <div class="biz-chip" style="width:fit-content;margin-bottom:4px;">Beer, Wine &amp; Spirits</div>
@@ -246,8 +272,11 @@
 
       <!-- THE INSURANCE GUYS -->
       <div class="biz-card">
-        <div class="biz-card-top">
-          <div><div class="biz-card-name">The Insurance Guys — Agent</div><div class="biz-card-loc">Hays, KS</div></div>
+        <div class="biz-card-img" style="background-image:url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80')">
+          <div class="biz-card-img-label"><div class="biz-card-img-name">The Insurance Guys — Agent</div><div class="biz-card-img-loc">Hays, KS</div></div>
+        </div>
+        <div class="biz-card-top" style="padding-top:0;margin-top:16px;">
+          <div></div>
           <a class="call-pill" href="tel:+17852610315" style="margin:0;padding:7px 14px;font-size:11px;">📞 Call</a>
         </div>
         <div class="biz-chip" style="width:fit-content;margin-bottom:4px;">Independent Insurance</div>
@@ -285,8 +314,11 @@
 
       <!-- DC APPLIANCE CONTACT -->
       <div class="biz-card">
-        <div class="biz-card-top">
-          <div><div class="biz-card-name">DC Appliance</div><div class="biz-card-loc">Dodge City, KS</div></div>
+        <div class="biz-card-img" style="background-image:url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80')">
+          <div class="biz-card-img-label"><div class="biz-card-img-name">DC Appliance</div><div class="biz-card-img-loc">Dodge City, KS</div></div>
+        </div>
+        <div class="biz-card-top" style="padding-top:0;margin-top:16px;">
+          <div></div>
           <a class="call-pill" href="tel:+16203716417" style="margin:0;padding:7px 14px;font-size:11px;">📞 Call</a>
         </div>
         <div class="contact-info-list" style="margin-top:14px;">
@@ -307,8 +339,11 @@
 
       <!-- DOGHOUSE CONTACT -->
       <div class="biz-card">
-        <div class="biz-card-top">
-          <div><div class="biz-card-name">Doghouse Liquor</div><div class="biz-card-loc">Hays, KS</div></div>
+        <div class="biz-card-img" style="background-image:url('https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=800&q=80')">
+          <div class="biz-card-img-label"><div class="biz-card-img-name">Doghouse Liquor</div><div class="biz-card-img-loc">Hays, KS</div></div>
+        </div>
+        <div class="biz-card-top" style="padding-top:0;margin-top:16px;">
+          <div></div>
           <a class="call-pill" href="tel:+17856214030" style="margin:0;padding:7px 14px;font-size:11px;">📞 Call</a>
         </div>
         <div class="contact-info-list" style="margin-top:14px;">
@@ -329,8 +364,11 @@
 
       <!-- TIG CONTACT -->
       <div class="biz-card">
-        <div class="biz-card-top">
-          <div><div class="biz-card-name">The Insurance Guys — Agent</div><div class="biz-card-loc">Hays, KS</div></div>
+        <div class="biz-card-img" style="background-image:url('https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80')">
+          <div class="biz-card-img-label"><div class="biz-card-img-name">The Insurance Guys — Agent</div><div class="biz-card-img-loc">Hays, KS</div></div>
+        </div>
+        <div class="biz-card-top" style="padding-top:0;margin-top:16px;">
+          <div></div>
           <a class="call-pill" href="tel:+17852610315" style="margin:0;padding:7px 14px;font-size:11px;">📞 Call</a>
         </div>
         <div class="contact-info-list" style="margin-top:14px;">
