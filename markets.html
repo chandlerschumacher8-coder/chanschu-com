@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Markets — chanschu.com</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--navy:#07111f;--navy-2:#0c1c30;--navy-3:#112238;--gold:#c9973a;--gold-light:#e4b96a;--white:#f8f6f2;--gray-1:#d4cfc5;--gray-2:#8a8880;--gray-3:#4a4a47;--green:#52b788;--red:#e07070;--radius:10px;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--navy);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;line-height:1.65;min-height:100vh;}
+    header{display:flex;align-items:center;justify-content:space-between;padding:20px 56px;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(7,17,31,0.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+    .logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--white);text-decoration:none;}
+    .logo span{color:var(--gold);}
+    nav{display:flex;gap:28px;}
+    nav a{color:var(--gray-1);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.04em;transition:color 0.2s;}
+    nav a:hover,nav a.active{color:var(--gold-light);}
+    /* TICKER */
+    .ticker-wrap{background:var(--navy-2);border-bottom:1px solid rgba(255,255,255,0.07);overflow:hidden;height:36px;display:flex;align-items:center;}
+    .ticker-track{display:flex;gap:56px;animation:ticker 50s linear infinite;white-space:nowrap;will-change:transform;}
+    .ticker-item{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;}
+    .t-sym{color:var(--gray-2);letter-spacing:0.05em;}
+    .t-price{color:var(--white);}
+    .t-chg{font-size:11px;}
+    .t-chg.up{color:var(--green);}
+    .t-chg.down{color:var(--red);}
+    @keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+    /* HERO */
+    .page-hero{position:relative;overflow:hidden;}
+    .page-hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1600&q=80');background-size:cover;background-position:center;filter:brightness(0.18);}
+    .page-hero-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(7,17,31,0.97) 40%,rgba(7,17,31,0.55) 100%);}
+    .page-hero-content{position:relative;z-index:1;padding:72px 56px 52px;}
+    .hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(201,151,58,0.1);border:1px solid rgba(201,151,58,0.25);color:var(--gold);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:20px;}
+    .page-hero h1{font-family:'Playfair Display',serif;font-size:clamp(30px,4.5vw,50px);font-weight:400;color:var(--white);margin-bottom:14px;}
+    .page-hero p{font-size:15px;color:var(--gray-1);line-height:1.75;max-width:540px;}
+    /* LAYOUT */
+    .rule{height:1px;background:rgba(255,255,255,0.06);margin:0 56px;}
+    .section{padding:48px 56px 64px;}
+    .sec-hdr{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
+    .sec-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;color:var(--white);white-space:nowrap;}
+    .sec-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.1),transparent);}
+    .sec-right{display:flex;align-items:center;gap:12px;white-space:nowrap;}
+    /* STATUS */
+    .mkt-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;}
+    .status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+    .open .status-dot{background:var(--green);box-shadow:0 0 6px rgba(82,183,136,0.6);}
+    .closed .status-dot{background:var(--gray-3);}
+    .open{color:var(--green);}
+    .closed{color:var(--gray-2);}
+    .updated{font-size:11px;color:var(--gray-2);}
+    .refresh-btn{font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;padding:6px 14px;border:1px solid rgba(201,151,58,0.3);color:var(--gold);background:transparent;border-radius:100px;cursor:pointer;transition:all 0.2s;}
+    .refresh-btn:hover{background:rgba(201,151,58,0.08);}
+    .spin{animation:spin 1s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    /* FEATURED CARDS */
+    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;}
+    .mkt-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:26px;}
+    .mkt-card-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-2);margin-bottom:6px;}
+    .mkt-card-name{font-family:'Playfair Display',serif;font-size:17px;color:var(--white);margin-bottom:14px;}
+    .mkt-price{font-family:'Playfair Display',serif;font-size:34px;font-weight:400;color:var(--white);line-height:1;margin-bottom:8px;}
+    .mkt-chg{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+    .chg-val{font-size:13px;font-weight:600;}
+    .chg-pct{font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;}
+    .up .chg-val,.up .chg-pct{color:var(--green);}
+    .up .chg-pct{background:rgba(82,183,136,0.1);border:1px solid rgba(82,183,136,0.2);}
+    .down .chg-val,.down .chg-pct{color:var(--red);}
+    .down .chg-pct{background:rgba(224,112,112,0.1);border:1px solid rgba(224,112,112,0.2);}
+    .mkt-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;border-top:1px solid rgba(255,255,255,0.07);padding-top:14px;}
+    .meta-item .mk{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:2px;}
+    .meta-item .mv{font-size:13px;font-weight:600;color:var(--white);}
+    /* INDEX CARDS */
+    .idx-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+    .idx-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:18px 16px;}
+    .idx-name{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:6px;}
+    .idx-price{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:4px;}
+    .idx-chg{font-size:12px;font-weight:600;}
+    .idx-chg.up{color:var(--green);}
+    .idx-chg.down{color:var(--red);}
+    /* COMMODITY CARDS */
+    .com-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+    .com-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:14px;}
+    .com-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+    .com-name{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:3px;}
+    .com-price{font-family:'Playfair Display',serif;font-size:19px;color:var(--white);}
+    .com-chg{font-size:12px;font-weight:600;margin-top:2px;}
+    .com-chg.up{color:var(--green);}
+    .com-chg.down{color:var(--red);}
+    /* NOTE */
+    .data-note{margin-top:20px;padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;font-size:11px;color:var(--gray-2);line-height:1.7;}
+    .data-note a{color:var(--gold);text-decoration:none;}
+    /* ERROR STATE */
+    .err-note{font-size:12px;color:var(--red);padding:8px 0;}
+    footer{border-top:1px solid rgba(255,255,255,0.06);padding:28px 56px;display:flex;justify-content:space-between;align-items:center;color:var(--gray-2);font-size:12px;}
+    footer .f-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    .page-hero,.section{animation:fadeUp 0.6s ease both;}.section{animation-delay:0.08s;}
+    @media(max-width:900px){header{padding:16px 24px;}nav{gap:16px;}.page-hero-content{padding:48px 24px 40px;}.rule{margin:0 24px;}.section{padding:36px 24px 52px;}.feat-grid{grid-template-columns:1fr;}.idx-grid{grid-template-columns:1fr 1fr;}.com-grid{grid-template-columns:1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
+    @media(max-width:480px){.idx-grid{grid-template-columns:1fr;}.sec-right{gap:8px;}nav a{font-size:11px;}}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">chan<span>schu</span>.com</a>
+    <nav>
+      <a href="tools.html">Tools</a>
+      <a href="markets.html" class="active">Markets</a>
+      <a href="fitness.html">Fitness</a>
+      <a href="index.html#businesses">Businesses</a>
+    </nav>
+  </header>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker-track" id="ticker-track">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="page-hero">
+    <div class="page-hero-bg"></div>
+    <div class="page-hero-overlay"></div>
+    <div class="page-hero-content">
+      <div class="hero-tag">Live Data</div>
+      <h1>Markets</h1>
+      <p>Real-time prices for major stock indices, crude oil, gold, Bitcoin, and Ethereum. Crypto updates every 60 seconds.</p>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <section class="section">
+    <div class="sec-hdr">
+      <div class="sec-title">Featured</div>
+      <div class="sec-line"></div>
+      <div class="sec-right">
+        <div class="mkt-status closed" id="mkt-status"><div class="status-dot"></div><span id="mkt-status-txt">Checking...</span></div>
+        <div class="updated" id="updated-txt">Loading...</div>
+        <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">&#8635; Refresh</button>
+      </div>
+    </div>
+
+    <div class="feat-grid">
+      <!-- S&P 500 -->
+      <div class="mkt-card">
+        <div class="mkt-card-label">US Stock Index</div>
+        <div class="mkt-card-name">S&amp;P 500</div>
+        <div class="mkt-price" id="sp-price">--</div>
+        <div class="mkt-chg" id="sp-chg-wrap"><span class="chg-val" id="sp-chg">--</span><span class="chg-pct" id="sp-pct">--</span></div>
+        <div class="mkt-meta">
+          <div class="meta-item"><div class="mk">Open</div><div class="mv" id="sp-open">--</div></div>
+          <div class="meta-item"><div class="mk">Prev Close</div><div class="mv" id="sp-prev">--</div></div>
+          <div class="meta-item"><div class="mk">Day High</div><div class="mv" id="sp-high">--</div></div>
+          <div class="meta-item"><div class="mk">Day Low</div><div class="mv" id="sp-low">--</div></div>
+        </div>
+      </div>
+      <!-- BITCOIN -->
+      <div class="mkt-card">
+        <div class="mkt-card-label">Cryptocurrency</div>
+        <div class="mkt-card-name">Bitcoin (BTC)</div>
+        <div class="mkt-price" id="btc-price">--</div>
+        <div class="mkt-chg" id="btc-chg-wrap"><span class="chg-val" id="btc-chg">--</span><span class="chg-pct" id="btc-pct">--</span></div>
+        <div class="mkt-meta">
+          <div class="meta-item"><div class="mk">24h High</div><div class="mv" id="btc-high">--</div></div>
+          <div class="meta-item"><div class="mk">24h Low</div><div class="mv" id="btc-low">--</div></div>
+          <div class="meta-item"><div class="mk">Market Cap</div><div class="mv" id="btc-mcap">--</div></div>
+          <div class="meta-item"><div class="mk">Volume 24h</div><div class="mv" id="btc-vol">--</div></div>
+        </div>
+      </div>
+      <!-- OIL -->
+      <div class="mkt-card">
+        <div class="mkt-card-label">Crude Oil</div>
+        <div class="mkt-card-name">WTI Crude Oil</div>
+        <div class="mkt-price" id="oil-price">--</div>
+        <div class="mkt-chg" id="oil-chg-wrap"><span class="chg-val" id="oil-chg">--</span><span class="chg-pct" id="oil-pct">--</span></div>
+        <div class="mkt-meta">
+          <div class="meta-item"><div class="mk">24h High</div><div class="mv" id="oil-high">--</div></div>
+          <div class="meta-item"><div class="mk">24h Low</div><div class="mv" id="oil-low">--</div></div>
+          <div class="meta-item"><div class="mk">Symbol</div><div class="mv">WTI / CL=F</div></div>
+          <div class="meta-item"><div class="mk">Unit</div><div class="mv">USD / Barrel</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDICES -->
+    <div class="sec-hdr" style="margin-top:36px;margin-bottom:16px;">
+      <div class="sec-title" style="font-size:19px;">Indices</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="idx-grid">
+      <div class="idx-card"><div class="idx-name">Dow Jones</div><div class="idx-price" id="dow-price">--</div><div class="idx-chg" id="dow-chg">--</div></div>
+      <div class="idx-card"><div class="idx-name">NASDAQ</div><div class="idx-price" id="nas-price">--</div><div class="idx-chg" id="nas-chg">--</div></div>
+      <div class="idx-card"><div class="idx-name">Russell 2000</div><div class="idx-price" id="rut-price">--</div><div class="idx-chg" id="rut-chg">--</div></div>
+      <div class="idx-card"><div class="idx-name">VIX Volatility</div><div class="idx-price" id="vix-price">--</div><div class="idx-chg" id="vix-chg">--</div></div>
+    </div>
+
+    <!-- COMMODITIES & CRYPTO -->
+    <div class="sec-hdr" style="margin-top:36px;margin-bottom:16px;">
+      <div class="sec-title" style="font-size:19px;">Commodities &amp; Crypto</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="com-grid">
+      <div class="com-card">
+        <div class="com-icon" style="background:rgba(255,215,0,0.08);">&#127947;</div>
+        <div><div class="com-name">Gold (XAU/USD)</div><div class="com-price" id="gold-price">--</div><div class="com-chg" id="gold-chg">--</div></div>
+      </div>
+      <div class="com-card">
+        <div class="com-icon" style="background:rgba(192,192,192,0.08);">&#129352;</div>
+        <div><div class="com-name">Silver (XAG/USD)</div><div class="com-price" id="silver-price">--</div><div class="com-chg" id="silver-chg">--</div></div>
+      </div>
+      <div class="com-card">
+        <div class="com-icon" style="background:rgba(98,126,234,0.1);">&#9959;</div>
+        <div><div class="com-name">Ethereum (ETH)</div><div class="com-price" id="eth-price">--</div><div class="com-chg" id="eth-chg">--</div></div>
+      </div>
+    </div>
+
+    <div class="data-note">
+      Crypto data: <a href="https://www.coingecko.com" target="_blank">CoinGecko</a> (real-time).
+      Stock &amp; commodity data: <a href="https://finance.yahoo.com" target="_blank">Yahoo Finance</a> via public API (15–20 min delayed).
+      For informational purposes only — not financial advice.
+    </div>
+    <div id="err-msg" class="err-note" style="display:none;"></div>
+
+  </section>
+
+  <footer>
+    <span class="f-logo">chanschu.com</span>
+    <span>&copy; 2026 All rights reserved</span>
+  </footer>
+
+<script>
+// ── UTILS ──
+function fp(n, dec) {
+  if (n == null || isNaN(n)) return '--';
+  dec = dec == null ? 2 : dec;
+  return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits: dec, maximumFractionDigits: dec});
+}
+function fBig(n) {
+  if (!n) return '--';
+  if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9)  return '$' + (n/1e9).toFixed(2) + 'B';
+  if (n >= 1e6)  return '$' + (n/1e6).toFixed(2) + 'M';
+  return '$' + Number(n).toLocaleString();
+}
+function applyChg(wrapId, valId, pctId, chg, pct) {
+  var w = document.getElementById(wrapId);
+  var v = document.getElementById(valId);
+  var p = document.getElementById(pctId);
+  var dir = chg >= 0 ? 'up' : 'down';
+  var sign = chg >= 0 ? '+' : '';
+  if (w) { w.classList.remove('up','down'); w.classList.add(dir); }
+  if (v) v.textContent = sign + Number(chg).toFixed(2);
+  if (p) p.textContent = sign + Number(pct).toFixed(2) + '%';
+  return dir;
+}
+function applyIdxChg(el, chg, pct) {
+  if (!el) return;
+  var dir = chg >= 0 ? 'up' : 'down';
+  var sign = chg >= 0 ? '+' : '';
+  el.textContent = sign + Number(chg).toFixed(2) + ' (' + sign + Number(pct).toFixed(2) + '%)';
+  el.classList.remove('up','down'); el.classList.add(dir);
+}
+function set(id, val) { var e = document.getElementById(id); if (e) e.textContent = val; }
+
+// ── MARKET STATUS ──
+function updateStatus() {
+  var now = new Date();
+  var et = new Date(now.toLocaleString('en-US', {timeZone:'America/New_York'}));
+  var d = et.getDay(); var h = et.getHours() + et.getMinutes()/60;
+  var open = d >= 1 && d <= 5 && h >= 9.5 && h < 16;
+  var badge = document.getElementById('mkt-status');
+  var txt = document.getElementById('mkt-status-txt');
+  if (badge) { badge.className = 'mkt-status ' + (open ? 'open' : 'closed'); }
+  if (txt) txt.textContent = open ? 'Market Open' : 'Market Closed';
+}
+
+// ── TICKER BUILDER ──
+var tickerData = {};
+function buildTicker() {
+  var items = [
+    {key:'sp', label:'S&P 500'},
+    {key:'dow', label:'DOW'},
+    {key:'nas', label:'NASDAQ'},
+    {key:'btc', label:'BTC'},
+    {key:'oil', label:'OIL (WTI)'},
+    {key:'gold', label:'GOLD'},
+    {key:'eth', label:'ETH'},
+    {key:'silver', label:'SILVER'},
+  ];
+  var html = '';
+  // Double for seamless loop
+  for (var pass = 0; pass < 2; pass++) {
+    items.forEach(function(item) {
+      var d = tickerData[item.key] || {};
+      var price = d.price || '--';
+      var pct = d.pct != null ? ((d.pct >= 0 ? '+' : '') + Number(d.pct).toFixed(2) + '%') : '--';
+      var dir = d.pct != null ? (d.pct >= 0 ? 'up' : 'down') : '';
+      html += '<span class="ticker-item"><span class="t-sym">' + item.label + '</span>' +
+              '<span class="t-price">' + price + '</span>' +
+              '<span class="t-chg ' + dir + '">' + pct + '</span></span>';
+    });
+  }
+  var track = document.getElementById('ticker-track');
+  if (track) track.innerHTML = html;
+}
+
+// ── CRYPTO (CoinGecko — no API key, CORS friendly) ──
+async function fetchCrypto() {
+  var url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum&order=market_cap_desc&sparkline=false&price_change_percentage=24h&x_cg_demo_api_key=';
+  var res = await fetch(url, {headers: {'Accept':'application/json'}});
+  if (!res.ok) throw new Error('CoinGecko ' + res.status);
+  var data = await res.json();
+  data.forEach(function(coin) {
+    var chg = coin.price_change_24h || 0;
+    var pct = coin.price_change_percentage_24h || 0;
+    if (coin.id === 'bitcoin') {
+      set('btc-price', fp(coin.current_price, 0));
+      applyChg('btc-chg-wrap','btc-chg','btc-pct', chg, pct);
+      set('btc-high', fp(coin.high_24h, 0));
+      set('btc-low',  fp(coin.low_24h, 0));
+      set('btc-mcap', fBig(coin.market_cap));
+      set('btc-vol',  fBig(coin.total_volume));
+      tickerData['btc'] = {price: fp(coin.current_price, 0), pct: pct};
+    }
+    if (coin.id === 'ethereum') {
+      set('eth-price', fp(coin.current_price, 2));
+      var el = document.getElementById('eth-chg');
+      if (el) { var s=pct>=0?'+':''; el.textContent=s+pct.toFixed(2)+'%'; el.classList.remove('up','down'); el.classList.add(pct>=0?'up':'down'); }
+      tickerData['eth'] = {price: fp(coin.current_price, 2), pct: pct};
+    }
+  });
+}
+
+// ── STOCKS via Yahoo Finance (direct — works from browser) ──
+async function fetchYahoo(symbol) {
+  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(symbol) + '?interval=1d&range=1d&includePrePost=false';
+  var res = await fetch(url, {mode:'cors'});
+  if (!res.ok) throw new Error('Yahoo ' + symbol + ' ' + res.status);
+  var json = await res.json();
+  var r = json.chart.result[0];
+  var m = r.meta;
+  var prev = m.chartPreviousClose || m.previousClose || m.regularMarketPreviousClose;
+  var price = m.regularMarketPrice;
+  return {
+    price: price,
+    prev: prev,
+    open: m.regularMarketOpen,
+    high: m.regularMarketDayHigh,
+    low: m.regularMarketDayLow,
+    chg: price - prev,
+    pct: ((price - prev) / prev) * 100
+  };
+}
+
+async function fetchStocks() {
+  var tasks = [
+    {sym:'^GSPC', id:'sp'},
+    {sym:'^DJI',  id:'dow'},
+    {sym:'^IXIC', id:'nas'},
+    {sym:'^RUT',  id:'rut'},
+    {sym:'^VIX',  id:'vix'},
+    {sym:'GC=F',  id:'gold'},
+    {sym:'SI=F',  id:'silver'},
+    {sym:'CL=F',  id:'oil'},
+  ];
+
+  var results = await Promise.allSettled(
+    tasks.map(function(t) {
+      return fetchYahoo(t.sym).then(function(d) { return {id:t.id, d:d}; });
+    })
+  );
+
+  results.forEach(function(r) {
+    if (r.status !== 'fulfilled') return;
+    var id = r.value.id;
+    var d = r.value.d;
+
+    if (id === 'sp') {
+      set('sp-price', fp(d.price, 2));
+      applyChg('sp-chg-wrap','sp-chg','sp-pct', d.chg, d.pct);
+      set('sp-open', fp(d.open, 2));
+      set('sp-prev', fp(d.prev, 2));
+      set('sp-high', fp(d.high, 2));
+      set('sp-low',  fp(d.low, 2));
+      tickerData['sp'] = {price: fp(d.price, 2), pct: d.pct};
+    }
+    if (id === 'dow') {
+      set('dow-price', fp(d.price, 2));
+      applyIdxChg(document.getElementById('dow-chg'), d.chg, d.pct);
+      tickerData['dow'] = {price: fp(d.price, 2), pct: d.pct};
+    }
+    if (id === 'nas') {
+      set('nas-price', fp(d.price, 2));
+      applyIdxChg(document.getElementById('nas-chg'), d.chg, d.pct);
+      tickerData['nas'] = {price: fp(d.price, 2), pct: d.pct};
+    }
+    if (id === 'rut') {
+      set('rut-price', fp(d.price, 2));
+      applyIdxChg(document.getElementById('rut-chg'), d.chg, d.pct);
+    }
+    if (id === 'vix') {
+      set('vix-price', d.price.toFixed(2));
+      applyIdxChg(document.getElementById('vix-chg'), d.chg, d.pct);
+    }
+    if (id === 'gold') {
+      set('gold-price', fp(d.price, 2));
+      var el=document.getElementById('gold-chg');
+      if(el){var s=d.pct>=0?'+':'';el.textContent=s+d.pct.toFixed(2)+'%';el.classList.remove('up','down');el.classList.add(d.pct>=0?'up':'down');}
+      tickerData['gold'] = {price: fp(d.price, 2), pct: d.pct};
+    }
+    if (id === 'silver') {
+      set('silver-price', fp(d.price, 2));
+      var el2=document.getElementById('silver-chg');
+      if(el2){var s2=d.pct>=0?'+':'';el2.textContent=s2+d.pct.toFixed(2)+'%';el2.classList.remove('up','down');el2.classList.add(d.pct>=0?'up':'down');}
+      tickerData['silver'] = {price: fp(d.price, 2), pct: d.pct};
+    }
+    if (id === 'oil') {
+      set('oil-price', fp(d.price, 2));
+      applyChg('oil-chg-wrap','oil-chg','oil-pct', d.chg, d.pct);
+      set('oil-high', fp(d.high, 2));
+      set('oil-low',  fp(d.low, 2));
+      tickerData['oil'] = {price: fp(d.price, 2), pct: d.pct};
+    }
+  });
+}
+
+// ── LOAD ALL ──
+async function loadAll() {
+  var btn = document.getElementById('refresh-btn');
+  if (btn) btn.classList.add('spin');
+  updateStatus();
+  var errEl = document.getElementById('err-msg');
+  if (errEl) errEl.style.display = 'none';
+
+  try {
+    await Promise.allSettled([fetchCrypto(), fetchStocks()]);
+    buildTicker();
+  } catch(e) {
+    if (errEl) { errEl.style.display = 'block'; errEl.textContent = 'Some data could not be loaded. Markets may be closed or data source is temporarily unavailable.'; }
+  }
+
+  var now = new Date();
+  set('updated-txt', 'Updated ' + now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'}));
+  if (btn) btn.classList.remove('spin');
+}
+
+loadAll();
+setInterval(loadAll, 60000);
+</script>
+</body>
+</html>
