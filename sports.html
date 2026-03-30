@@ -513,6 +513,12 @@ async function loadSports() {
 
 // ── MANUALLY TRIGGER NEW PICKS ──
 async function generatePicks() {
+  var pass = prompt('Enter password to generate picks:');
+  if (!pass || pass !== 'chanschu2026') {
+    alert('Incorrect password.');
+    return;
+  }
+
   var btn = document.getElementById('generate-btn');
   var dateEl = document.getElementById('picks-date');
   var grid = document.getElementById('picks-grid');
@@ -529,8 +535,8 @@ async function generatePicks() {
 
     if (!data.ok) throw new Error(data.error || 'Generation failed');
 
-    // Now load the freshly generated picks
-    await loadPicks();
+    // Render picks directly from the response
+    renderPicks(data.data || data);
 
   } catch(e) {
     if (dateEl) dateEl.textContent = 'Error: ' + e.message;
@@ -538,6 +544,54 @@ async function generatePicks() {
   } finally {
     if (btn) { btn.textContent = '⚡ Generate New Picks'; btn.disabled = false; }
   }
+}
+
+
+function renderPicks(data) {
+  var grid = document.getElementById('picks-grid');
+  var dateEl = document.getElementById('picks-date');
+  var analyzedEl = document.getElementById('picks-analyzed');
+
+  if (!data) {
+    if (grid) grid.innerHTML = '<div class="picks-pending">No picks available. Click Generate New Picks!</div>';
+    return;
+  }
+
+  if (data.pending) {
+    if (dateEl) dateEl.textContent = 'Picks generating — refresh in 30 seconds';
+    if (grid) grid.innerHTML = '<div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Claude is analyzing games...</div>';
+    return;
+  }
+
+  if (data.noGames || !data.picks || data.picks.length === 0) {
+    if (dateEl) dateEl.textContent = data.date || 'Today';
+    if (grid) grid.innerHTML = '<div class="picks-pending">No games today. Check back tomorrow!</div>';
+    return;
+  }
+
+  if (dateEl) dateEl.textContent = data.date || 'Today';
+  if (analyzedEl) analyzedEl.textContent = data.gamesAnalyzed ? data.gamesAnalyzed + ' games analyzed' : '';
+
+  var html = '';
+  data.picks.forEach(function(pick) {
+    var confClass = pick.confidence === 'High' ? 'conf-high' : 'conf-med';
+    html +=
+      '<div class="pick-card">' +
+        '<div class="pick-rank">' + pick.rank + '</div>' +
+        '<div class="pick-body">' +
+          '<div class="pick-sport">' + (pick.sport || '') + '</div>' +
+          '<div class="pick-game">' + (pick.game || '') + '</div>' +
+          '<div class="pick-selection">' + (pick.pick || '') + '</div>' +
+          '<div class="pick-reasoning">' + (pick.reasoning || '') + '</div>' +
+        '</div>' +
+        '<div class="pick-right">' +
+          '<div class="pick-odds">' + (pick.odds || '--') + '</div>' +
+          '<div class="pick-conf ' + confClass + '">' + (pick.confidence || '') + '</div>' +
+        '</div>' +
+      '</div>';
+  });
+
+  if (grid) grid.innerHTML = html;
 }
 
 
@@ -552,43 +606,7 @@ async function loadPicks() {
   try {
     var res = await fetch('/api/get-picks');
     var data = await res.json();
-
-    if (data.pending) {
-      if (dateEl) dateEl.textContent = 'Generating picks — check back in 30 seconds';
-      if (grid) grid.innerHTML = '<div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Claude is analyzing today\'s games...<br/><span style="font-size:11px;color:var(--gray-3);">This takes about 15 seconds. Refresh shortly.</span></div>';
-      return;
-    }
-
-    if (data.noGames || !data.picks || data.picks.length === 0) {
-      if (dateEl) dateEl.textContent = data.date || 'Today';
-      if (grid) grid.innerHTML = '<div class="picks-pending">No games scheduled today. Check back tomorrow!</div>';
-      return;
-    }
-
-    if (dateEl) dateEl.textContent = data.date || 'Today';
-    if (analyzedEl) analyzedEl.textContent = data.gamesAnalyzed ? data.gamesAnalyzed + ' games analyzed' : '';
-
-    var html = '';
-    data.picks.forEach(function(pick) {
-      var confClass = pick.confidence === 'High' ? 'conf-high' : 'conf-med';
-      html +=
-        '<div class="pick-card">' +
-          '<div class="pick-rank">' + pick.rank + '</div>' +
-          '<div class="pick-body">' +
-            '<div class="pick-sport">' + (pick.sport || '') + '</div>' +
-            '<div class="pick-game">' + (pick.game || '') + '</div>' +
-            '<div class="pick-selection">' + (pick.pick || '') + '</div>' +
-            '<div class="pick-reasoning">' + (pick.reasoning || '') + '</div>' +
-          '</div>' +
-          '<div class="pick-right">' +
-            '<div class="pick-odds">' + (pick.odds || '--') + '</div>' +
-            '<div class="pick-conf ' + confClass + '">' + (pick.confidence || '') + '</div>' +
-          '</div>' +
-        '</div>';
-    });
-
-    if (grid) grid.innerHTML = html;
-
+    renderPicks(data);
   } catch(e) {
     if (dateEl) dateEl.textContent = 'Could not load picks';
     if (grid) grid.innerHTML = '<div class="picks-pending">Unable to load picks right now. Try refreshing.</div>';
