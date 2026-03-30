@@ -86,6 +86,15 @@
     .com-chg{font-size:12px;font-weight:600;margin-top:2px;}
     .com-chg.up{color:var(--green);}
     .com-chg.down{color:var(--red);}
+
+    /* MARKET CLOSED BANNER */
+    .mkt-banner{display:none;align-items:center;gap:14px;background:rgba(201,151,58,0.08);border:1px solid rgba(201,151,58,0.25);border-radius:var(--radius);padding:14px 20px;margin-bottom:20px;}
+    .mkt-banner.visible{display:flex;}
+    .banner-icon{font-size:18px;flex-shrink:0;}
+    .banner-text{flex:1;}
+    .banner-title{font-size:13px;font-weight:700;color:var(--gold-light);margin-bottom:2px;}
+    .banner-sub{font-size:12px;color:var(--gray-1);line-height:1.6;}
+    .banner-time{font-size:12px;font-weight:600;color:var(--gold);white-space:nowrap;}
     /* NOTE */
     .data-note{margin-top:20px;padding:12px 16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;font-size:11px;color:var(--gray-2);line-height:1.7;}
     .data-note a{color:var(--gold);text-decoration:none;}
@@ -139,6 +148,17 @@
         <div class="updated" id="updated-txt">Loading...</div>
         <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">&#8635; Refresh</button>
       </div>
+    </div>
+
+
+    <!-- MARKET CLOSED BANNER -->
+    <div class="mkt-banner" id="mkt-banner">
+      <div class="banner-icon">&#128274;</div>
+      <div class="banner-text">
+        <div class="banner-title">Stock Market Currently Closed</div>
+        <div class="banner-sub" id="banner-sub">Prices shown are from the last trading session. Crypto trades 24/7 and updates in real time.</div>
+      </div>
+      <div class="banner-time" id="banner-time"></div>
     </div>
 
     <div class="feat-grid">
@@ -267,12 +287,53 @@ function set(id, val) { var e = document.getElementById(id); if (e) e.textConten
 function updateStatus() {
   var now = new Date();
   var et = new Date(now.toLocaleString('en-US', {timeZone:'America/New_York'}));
-  var d = et.getDay(); var h = et.getHours() + et.getMinutes()/60;
-  var open = d >= 1 && d <= 5 && h >= 9.5 && h < 16;
+  var day = et.getDay();
+  var h = et.getHours() + et.getMinutes()/60;
+  var isWeekday = day >= 1 && day <= 5;
+  var isOpen = isWeekday && h >= 9.5 && h < 16;
+
+  // Update badge
   var badge = document.getElementById('mkt-status');
   var txt = document.getElementById('mkt-status-txt');
-  if (badge) { badge.className = 'mkt-status ' + (open ? 'open' : 'closed'); }
-  if (txt) txt.textContent = open ? 'Market Open' : 'Market Closed';
+  if (badge) badge.className = 'mkt-status ' + (isOpen ? 'open' : 'closed');
+  if (txt) txt.textContent = isOpen ? 'Market Open' : 'Market Closed';
+
+  // Show/hide banner
+  var banner = document.getElementById('mkt-banner');
+  var bannerTime = document.getElementById('banner-time');
+  var bannerSub = document.getElementById('banner-sub');
+  if (banner) banner.classList.toggle('visible', !isOpen);
+
+  if (!isOpen && bannerTime) {
+    // Calculate next open time
+    var nextOpen = new Date(et);
+    nextOpen.setSeconds(0); nextOpen.setMilliseconds(0);
+
+    if (isWeekday && h < 9.5) {
+      // Before market open today
+      nextOpen.setHours(9, 30, 0, 0);
+      var mins = Math.round((nextOpen - et) / 60000);
+      var hrs = Math.floor(mins / 60);
+      var rem = mins % 60;
+      bannerTime.textContent = hrs > 0
+        ? 'Opens in ' + hrs + 'h ' + rem + 'm'
+        : 'Opens in ' + rem + 'm';
+    } else if (isWeekday && h >= 16) {
+      // After close — next day (skip weekend)
+      var daysUntil = day === 5 ? 3 : 1; // Friday -> Monday
+      nextOpen.setDate(nextOpen.getDate() + daysUntil);
+      nextOpen.setHours(9, 30, 0, 0);
+      bannerTime.textContent = day === 5
+        ? 'Opens Monday 9:30 AM ET'
+        : 'Opens tomorrow 9:30 AM ET';
+    } else {
+      // Weekend
+      var daysUntilMon = day === 6 ? 2 : 1; // Sat=2, Sun=1
+      nextOpen.setDate(nextOpen.getDate() + daysUntilMon);
+      nextOpen.setHours(9, 30, 0, 0);
+      bannerTime.textContent = 'Opens Monday 9:30 AM ET';
+    }
+  }
 }
 
 // ── TICKER BUILDER ──
@@ -332,49 +393,18 @@ async function fetchCrypto() {
   });
 }
 
-// ── STOCKS via Yahoo Finance (direct — works from browser) ──
-async function fetchYahoo(symbol) {
-  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(symbol) + '?interval=1d&range=1d&includePrePost=false';
-  var res = await fetch(url, {mode:'cors'});
-  if (!res.ok) throw new Error('Yahoo ' + symbol + ' ' + res.status);
-  var json = await res.json();
-  var r = json.chart.result[0];
-  var m = r.meta;
-  var prev = m.chartPreviousClose || m.previousClose || m.regularMarketPreviousClose;
-  var price = m.regularMarketPrice;
-  return {
-    price: price,
-    prev: prev,
-    open: m.regularMarketOpen,
-    high: m.regularMarketDayHigh,
-    low: m.regularMarketDayLow,
-    chg: price - prev,
-    pct: ((price - prev) / prev) * 100
-  };
-}
-
+// ── STOCKS & COMMODITIES via Vercel serverless function ──
 async function fetchStocks() {
-  var tasks = [
-    {sym:'^GSPC', id:'sp'},
-    {sym:'^DJI',  id:'dow'},
-    {sym:'^IXIC', id:'nas'},
-    {sym:'^RUT',  id:'rut'},
-    {sym:'^VIX',  id:'vix'},
-    {sym:'GC=F',  id:'gold'},
-    {sym:'SI=F',  id:'silver'},
-    {sym:'CL=F',  id:'oil'},
-  ];
+  var res = await fetch('/api/markets');
+  if (!res.ok) throw new Error('API ' + res.status);
+  var json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'API error');
+  var data = json.data;
 
-  var results = await Promise.allSettled(
-    tasks.map(function(t) {
-      return fetchYahoo(t.sym).then(function(d) { return {id:t.id, d:d}; });
-    })
-  );
-
-  results.forEach(function(r) {
-    if (r.status !== 'fulfilled') return;
-    var id = r.value.id;
-    var d = r.value.d;
+  function applyStock(id, d) {
+    if (!d) return;
+    var sign = d.chg >= 0 ? '+' : '';
+    var dir  = d.chg >= 0 ? 'up' : 'down';
 
     if (id === 'sp') {
       set('sp-price', fp(d.price, 2));
@@ -382,7 +412,7 @@ async function fetchStocks() {
       set('sp-open', fp(d.open, 2));
       set('sp-prev', fp(d.prev, 2));
       set('sp-high', fp(d.high, 2));
-      set('sp-low',  fp(d.low, 2));
+      set('sp-low',  fp(d.low,  2));
       tickerData['sp'] = {price: fp(d.price, 2), pct: d.pct};
     }
     if (id === 'dow') {
@@ -400,29 +430,31 @@ async function fetchStocks() {
       applyIdxChg(document.getElementById('rut-chg'), d.chg, d.pct);
     }
     if (id === 'vix') {
-      set('vix-price', d.price.toFixed(2));
+      set('vix-price', isNaN(d.price) ? '--' : d.price.toFixed(2));
       applyIdxChg(document.getElementById('vix-chg'), d.chg, d.pct);
     }
     if (id === 'gold') {
       set('gold-price', fp(d.price, 2));
-      var el=document.getElementById('gold-chg');
-      if(el){var s=d.pct>=0?'+':'';el.textContent=s+d.pct.toFixed(2)+'%';el.classList.remove('up','down');el.classList.add(d.pct>=0?'up':'down');}
+      var el = document.getElementById('gold-chg');
+      if (el) { el.textContent=sign+d.pct.toFixed(2)+'%'; el.classList.remove('up','down'); el.classList.add(dir); }
       tickerData['gold'] = {price: fp(d.price, 2), pct: d.pct};
     }
     if (id === 'silver') {
       set('silver-price', fp(d.price, 2));
-      var el2=document.getElementById('silver-chg');
-      if(el2){var s2=d.pct>=0?'+':'';el2.textContent=s2+d.pct.toFixed(2)+'%';el2.classList.remove('up','down');el2.classList.add(d.pct>=0?'up':'down');}
+      var el2 = document.getElementById('silver-chg');
+      if (el2) { el2.textContent=sign+d.pct.toFixed(2)+'%'; el2.classList.remove('up','down'); el2.classList.add(dir); }
       tickerData['silver'] = {price: fp(d.price, 2), pct: d.pct};
     }
     if (id === 'oil') {
       set('oil-price', fp(d.price, 2));
       applyChg('oil-chg-wrap','oil-chg','oil-pct', d.chg, d.pct);
       set('oil-high', fp(d.high, 2));
-      set('oil-low',  fp(d.low, 2));
+      set('oil-low',  fp(d.low,  2));
       tickerData['oil'] = {price: fp(d.price, 2), pct: d.pct};
     }
-  });
+  }
+
+  Object.keys(data).forEach(function(id) { applyStock(id, data[id]); });
 }
 
 // ── LOAD ALL ──
