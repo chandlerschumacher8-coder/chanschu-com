@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sports — chanschu.com</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --navy:#07111f;--navy-2:#0c1c30;--navy-3:#112238;
+      --gold:#c9973a;--gold-light:#e4b96a;
+      --white:#f8f6f2;--gray-1:#d4cfc5;--gray-2:#8a8880;--gray-3:#4a4a47;
+      --green:#52b788;--red:#e07070;--radius:10px;
+      --royals-blue:#004687;--royals-gold:#BD9B60;
+      --chiefs-red:#E31837;--chiefs-gold:#FFB81C;
+    }
+    html{scroll-behavior:smooth;}
+    body{background:var(--navy);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;line-height:1.65;min-height:100vh;}
+    header{display:flex;align-items:center;justify-content:space-between;padding:20px 56px;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(7,17,31,0.95);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;}
+    .logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:400;color:var(--white);text-decoration:none;}
+    .logo span{color:var(--gold);}
+    nav{display:flex;gap:28px;}
+    nav a{color:var(--gray-1);text-decoration:none;font-size:13px;font-weight:500;letter-spacing:0.04em;transition:color 0.2s;}
+    nav a:hover,nav a.active{color:var(--gold-light);}
+
+    /* HERO */
+    .page-hero{position:relative;overflow:hidden;}
+    .page-hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1600&q=80');background-size:cover;background-position:center;filter:brightness(0.2);}
+    .page-hero-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(7,17,31,0.97) 40%,rgba(7,17,31,0.55) 100%);}
+    .page-hero-content{position:relative;z-index:1;padding:72px 56px 52px;}
+    .hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(201,151,58,0.1);border:1px solid rgba(201,151,58,0.25);color:var(--gold);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:5px 14px;border-radius:100px;margin-bottom:20px;}
+    .page-hero h1{font-family:'Playfair Display',serif;font-size:clamp(30px,4.5vw,50px);font-weight:400;color:var(--white);margin-bottom:14px;}
+    .page-hero p{font-size:15px;color:var(--gray-1);line-height:1.75;max-width:540px;}
+
+    /* LAYOUT */
+    .rule{height:1px;background:rgba(255,255,255,0.06);margin:0 56px;}
+    .section{padding:48px 56px 64px;}
+    .sec-hdr{display:flex;align-items:center;gap:14px;margin-bottom:24px;}
+    .sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--white);white-space:nowrap;}
+    .sec-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.1),transparent);}
+
+    /* LOCAL SCHOOL CARDS */
+    .schools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+    .school-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);overflow:hidden;transition:all 0.25s;}
+    .school-card:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px);}
+    .school-banner{height:8px;width:100%;}
+    .school-body{padding:24px;}
+    .school-logo-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+    .school-initials{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:400;flex-shrink:0;}
+    .school-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);line-height:1.2;}
+    .school-sub{font-size:11px;color:var(--gray-2);margin-top:2px;}
+    .school-desc{font-size:13px;color:var(--gray-1);line-height:1.75;margin-bottom:16px;}
+    .school-sports{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px;}
+    .sport-tag{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 10px;border-radius:100px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-1);}
+    .school-links{display:flex;flex-wrap:wrap;gap:8px;}
+    .school-link{font-size:12px;font-weight:600;padding:8px 16px;border-radius:8px;text-decoration:none;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+    .link-primary{background:rgba(201,151,58,0.1);border:1px solid rgba(201,151,58,0.3);color:var(--gold);}
+    .link-primary:hover{background:rgba(201,151,58,0.2);}
+    .link-secondary{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--gray-1);}
+    .link-secondary:hover{background:rgba(255,255,255,0.08);color:var(--white);}
+
+    /* PRO TEAM SECTIONS */
+    .pro-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .pro-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);overflow:hidden;}
+    .pro-header{padding:20px 24px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.07);}
+    .pro-team-info{display:flex;align-items:center;gap:14px;}
+    .pro-initials{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:16px;font-weight:500;flex-shrink:0;}
+    .pro-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);}
+    .pro-record{font-size:11px;color:var(--gray-2);margin-top:2px;}
+    .pro-badge{font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:4px 12px;border-radius:100px;}
+
+    /* GAME ROWS */
+    .games-list{display:flex;flex-direction:column;}
+    .game-row{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;}
+    .game-row:hover{background:rgba(255,255,255,0.02);}
+    .game-row:last-child{border-bottom:none;}
+    .game-date{display:flex;flex-direction:column;align-items:center;}
+    .game-month{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-2);}
+    .game-day{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);line-height:1;}
+    .game-dow{font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--gray-3);}
+    .game-info{}
+    .game-matchup{font-size:14px;font-weight:500;color:var(--white);margin-bottom:2px;}
+    .game-meta{font-size:11px;color:var(--gray-2);}
+    .game-status{text-align:right;}
+    .status-pill{font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 10px;border-radius:100px;display:inline-block;}
+    .pill-home{background:rgba(82,183,136,0.1);border:1px solid rgba(82,183,136,0.25);color:var(--green);}
+    .pill-away{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);}
+    .pill-live{background:rgba(224,112,112,0.15);border:1px solid rgba(224,112,112,0.3);color:#ff9090;animation:blink 1.5s ease infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.6;}}
+
+
+
+
+
+    /* NO GAMES */
+    .no-games{padding:24px;text-align:center;color:var(--gray-2);font-size:13px;}
+
+    /* LOADING SKELETON */
+    .skel{background:rgba(255,255,255,0.07);border-radius:4px;animation:pulse 1.5s ease infinite;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+    /* ODDS NOTE */
+
+
+    footer{border-top:1px solid rgba(255,255,255,0.06);padding:28px 56px;display:flex;justify-content:space-between;align-items:center;color:var(--gray-2);font-size:12px;}
+    footer .f-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+    .page-hero,.section{animation:fadeUp 0.6s ease both;}.section{animation-delay:0.08s;}
+    @media(max-width:1000px){.pro-grid{grid-template-columns:1fr;}}
+    @media(max-width:480px){nav a{font-size:11px;}}
+    @media(max-width:800px){header{padding:16px 24px;}nav{gap:16px;}.page-hero-content{padding:48px 24px 40px;}.rule{margin:0 24px;}.section{padding:36px 24px 52px;}.schools-grid{grid-template-columns:1fr;}.game-row{grid-template-columns:60px 1fr auto;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}}
+
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html" class="logo">chan<span>schu</span>.com</a>
+    <nav>
+      <a href="tools.html">Tools</a>
+      <a href="markets.html">Markets</a>
+      <a href="fitness.html">Fitness</a>
+      <a href="sports.html" class="active">Sports</a>
+      <a href="index.html#businesses">Businesses</a>
+    </nav>
+  </header>
+
+  <div class="page-hero">
+    <div class="page-hero-bg"></div>
+    <div class="page-hero-overlay"></div>
+    <div class="page-hero-content">
+      <div class="hero-tag">Hays, Kansas</div>
+      <h1>Sports</h1>
+      <p>Local schedules for Hays High, TMP-Marian, and Fort Hays State — plus upcoming Kansas City Royals &amp; Chiefs schedules.</p>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <!-- LOCAL SCHOOLS -->
+  <section class="section">
+    <div class="sec-hdr">
+      <div class="sec-title">Local Schools</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="schools-grid">
+
+      <!-- HAYS HIGH -->
+      <div class="school-card">
+        <div class="school-banner" style="background:linear-gradient(to right,#6b0000,#c8a84b);"></div>
+        <div class="school-body">
+          <div class="school-logo-row">
+            <div class="school-initials" style="background:rgba(107,0,0,0.3);border:1px solid rgba(107,0,0,0.5);color:#c8a84b;">HH</div>
+            <div>
+              <div class="school-name">Hays High Indians</div>
+              <div class="school-sub" style="color:#c8a84b;">USD 489 · 5A · Western Athletic Conference</div>
+            </div>
+          </div>
+          <p class="school-desc">Hays High School varsity athletics competing in the Western Athletic Conference. Home games at Eldon Docking Stadium.</p>
+          <div class="school-sports">
+            <span class="sport-tag">Football</span>
+            <span class="sport-tag">Basketball</span>
+            <span class="sport-tag">Volleyball</span>
+            <span class="sport-tag">Baseball</span>
+            <span class="sport-tag">Softball</span>
+            <span class="sport-tag">Track</span>
+            <span class="sport-tag">Soccer</span>
+            <span class="sport-tag">Wrestling</span>
+          </div>
+          <div class="school-links">
+            <a class="school-link link-primary" href="https://www.hayshighindians.com/athletics/" target="_blank">&#128197; Full Schedule</a>
+            <a class="school-link link-secondary" href="https://www.maxpreps.com/ks/hays/hays-indians/" target="_blank">MaxPreps</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- TMP MARIAN -->
+      <div class="school-card">
+        <div class="school-banner" style="background:linear-gradient(to right,#0a1628,#ffffff33);"></div>
+        <div class="school-body">
+          <div class="school-logo-row">
+            <div class="school-initials" style="background:rgba(10,22,40,0.6);border:1px solid rgba(255,255,255,0.25);color:#ffffff;">TMP</div>
+            <div>
+              <div class="school-name">TMP-Marian Monarchs</div>
+              <div class="school-sub">Catholic Diocese of Salina · 2A · KSHSAA</div>
+            </div>
+          </div>
+          <p class="school-desc">Thomas More Prep-Marian, a Catholic college prep school competing in 2A. Home of the Monarchs at Al Billinger Fieldhouse.</p>
+          <div class="school-sports">
+            <span class="sport-tag">Football</span>
+            <span class="sport-tag">Basketball</span>
+            <span class="sport-tag">Volleyball</span>
+            <span class="sport-tag">Baseball</span>
+            <span class="sport-tag">Softball</span>
+            <span class="sport-tag">Track</span>
+            <span class="sport-tag">Golf</span>
+            <span class="sport-tag">Wrestling</span>
+          </div>
+          <div class="school-links">
+            <a class="school-link link-primary" href="https://www.tmpmonarchs.com/" target="_blank">&#128197; Full Schedule</a>
+            <a class="school-link link-secondary" href="https://www.maxpreps.com/ks/hays/thomas-more-prep-marian-monarchs/" target="_blank">MaxPreps</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- FHSU -->
+      <div class="school-card">
+        <div class="school-banner" style="background:linear-gradient(to right,#111111,#c8a84b);"></div>
+        <div class="school-body">
+          <div class="school-logo-row">
+            <div class="school-initials" style="background:rgba(20,20,20,0.6);border:1px solid rgba(201,151,58,0.5);color:#c8a84b;">FHSU</div>
+            <div>
+              <div class="school-name">Fort Hays State Tigers</div>
+              <div class="school-sub">NCAA Division II · MIAA Conference</div>
+            </div>
+          </div>
+          <p class="school-desc">Fort Hays State University Tigers competing in NCAA Division II. Home games at Lewis Field Stadium &amp; Gross Memorial Coliseum.</p>
+          <div class="school-sports">
+            <span class="sport-tag">Football</span>
+            <span class="sport-tag">Basketball</span>
+            <span class="sport-tag">Volleyball</span>
+            <span class="sport-tag">Baseball</span>
+            <span class="sport-tag">Softball</span>
+            <span class="sport-tag">Track</span>
+            <span class="sport-tag">Soccer</span>
+            <span class="sport-tag">Tennis</span>
+          </div>
+          <div class="school-links">
+            <a class="school-link link-primary" href="https://fhsuathletics.com/calendar" target="_blank">&#128197; Full Schedule</a>
+            <a class="school-link link-secondary" href="https://fhsuathletics.com" target="_blank">FHSU Athletics</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <!-- KC PRO TEAMS -->
+  <section class="section">
+    <div class="sec-hdr">
+      <div class="sec-title">Kansas City</div>
+      <div class="sec-line"></div>
+      <div style="font-size:11px;color:var(--gray-2);white-space:nowrap;" id="odds-updated"></div>
+    </div>
+
+    <div class="pro-grid">
+
+      <!-- ROYALS -->
+      <div class="pro-card">
+        <div class="pro-header">
+          <div class="pro-team-info">
+            <div class="pro-initials" style="background:rgba(0,70,135,0.3);border:1px solid rgba(0,70,135,0.5);color:#5b9fd4;">KC</div>
+            <div>
+              <div class="pro-name">Kansas City Royals</div>
+              <div class="pro-record" id="royals-record">MLB · Loading...</div>
+            </div>
+          </div>
+          <span class="pro-badge" style="background:rgba(0,70,135,0.15);border:1px solid rgba(0,70,135,0.3);color:#5b9fd4;">MLB</span>
+        </div>
+        <div class="games-list" id="royals-games">
+          <div class="no-games skel" style="height:56px;margin:12px;border-radius:8px;"></div>
+          <div class="no-games skel" style="height:56px;margin:12px;border-radius:8px;"></div>
+          <div class="no-games skel" style="height:56px;margin:12px;border-radius:8px;"></div>
+        </div>
+        <div style="padding:0 24px 16px;">
+          <a href="https://www.mlb.com/royals/schedule" target="_blank" style="font-size:11px;color:var(--gold);text-decoration:none;font-weight:600;">View full schedule on MLB.com →</a>
+        </div>
+      </div>
+
+      <!-- CHIEFS -->
+      <div class="pro-card">
+        <div class="pro-header">
+          <div class="pro-team-info">
+            <div class="pro-initials" style="background:rgba(227,24,55,0.2);border:1px solid rgba(227,24,55,0.35);color:#ff7070;">KC</div>
+            <div>
+              <div class="pro-name">Kansas City Chiefs</div>
+              <div class="pro-record" id="chiefs-record">NFL · Loading...</div>
+            </div>
+          </div>
+          <span class="pro-badge" style="background:rgba(227,24,55,0.1);border:1px solid rgba(227,24,55,0.25);color:#ff7070;">NFL</span>
+        </div>
+        <div class="games-list" id="chiefs-games">
+          <div class="no-games skel" style="height:56px;margin:12px;border-radius:8px;"></div>
+          <div class="no-games skel" style="height:56px;margin:12px;border-radius:8px;"></div>
+          <div class="no-games skel" style="height:56px;margin:12px;border-radius:8px;"></div>
+        </div>
+        <div style="padding:0 24px 16px;">
+          <a href="https://www.chiefs.com/schedule/" target="_blank" style="font-size:11px;color:var(--gold);text-decoration:none;font-weight:600;">View full schedule on Chiefs.com →</a>
+        </div>
+      </div>
+
+    </div>
+
+
+  </section>
+
+  <footer>
+    <span class="f-logo">chanschu.com</span>
+    <span>&copy; 2026 All rights reserved</span>
+  </footer>
+
+<script>
+var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function fmtGameTime(dateStr) {
+  var d = new Date(dateStr);
+  return {
+    month: MONTHS[d.getMonth()],
+    day:   d.getDate(),
+    dow:   DAYS[d.getDay()],
+    time:  d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZoneName:'short'})
+  };
+}
+
+function shortenTeam(name) {
+  return name
+    .replace('Kansas City ','KC ')
+    .replace('Los Angeles ','LA ')
+    .replace('New York ','NY ')
+    .replace('San Francisco ','SF ')
+    .replace('Tampa Bay ','TB ')
+    .replace('Green Bay ','GB ')
+    .replace('New England ','NE ')
+    .replace('Minnesota ','MIN ')
+    .replace('Philadelphia ','PHI ')
+    .replace('Baltimore ','BAL ')
+    .replace('Cincinnati ','CIN ')
+    .replace('Cleveland ','CLE ')
+    .replace('Pittsburgh ','PIT ')
+    .replace('Houston ','HOU ')
+    .replace('Indianapolis ','IND ')
+    .replace('Jacksonville ','JAX ')
+    .replace('Tennessee ','TEN ')
+    .replace('Denver ','DEN ')
+    .replace('Las Vegas ','LV ')
+    .replace('Seattle ','SEA ')
+    .replace('Arizona ','ARI ')
+    .replace('Atlanta ','ATL ')
+    .replace('Carolina ','CAR ')
+    .replace('New Orleans ','NO ')
+    .replace('Chicago ','CHI ')
+    .replace('Detroit ','DET ')
+    .replace('St. Louis ','STL ')
+    .replace('Milwaukee ','MIL ')
+    .replace('Minnesota ','MIN ')
+    .replace('Chicago ','CHI ')
+    .replace('Cleveland ','CLE ')
+    .replace('Cincinnati ','CIN ')
+    .replace('Detroit ','DET ')
+    .replace('Oakland ','OAK ')
+    .replace('Oakland Athletics','Athletics');
+}
+
+function renderGames(containerId, recordId, games, teamName, leagueLabel, scheduleUrl) {
+  var el  = document.getElementById(containerId);
+  var rec = document.getElementById(recordId);
+  if (!el) return;
+
+  if (!games || games.length === 0) {
+    el.innerHTML = '<div class="no-games">No upcoming games scheduled. <a href="' + scheduleUrl + '" target="_blank" style="color:var(--gold);">View full schedule →</a></div>';
+    if (rec) rec.textContent = leagueLabel + ' · No upcoming games';
+    return;
+  }
+
+  if (rec) rec.textContent = leagueLabel + ' · ' + games.length + ' upcoming games';
+
+  var html = '';
+  games.slice(0, 10).forEach(function(game) {
+    var isHome = game.home_team === teamName;
+    var opp    = shortenTeam(isHome ? game.away_team : game.home_team);
+    var dt     = fmtGameTime(game.commence_time);
+
+    html +=
+      '<div class="game-row">' +
+        '<div class="game-date">' +
+          '<div class="game-month">' + dt.month + '</div>' +
+          '<div class="game-day">'   + dt.day   + '</div>' +
+          '<div class="game-dow">'   + dt.dow   + '</div>' +
+        '</div>' +
+        '<div class="game-info">' +
+          '<div class="game-matchup">' + (isHome ? 'vs ' : '@ ') + opp + '</div>' +
+          '<div class="game-meta">'   + dt.time + '</div>' +
+        '</div>' +
+        '<div class="game-status">' +
+          '<span class="status-pill ' + (isHome ? 'pill-home' : 'pill-away') + '">' +
+            (isHome ? 'Home' : 'Away') +
+          '</span>' +
+        '</div>' +
+      '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+// ── MLB Royals via MLB Stats API (free, no key, CORS friendly) ──
+async function fetchRoyals() {
+  var today = new Date();
+  var end   = new Date(today); end.setDate(end.getDate() + 60);
+  var fmt   = function(d){ return d.toISOString().slice(0,10); };
+  var url   = 'https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=118' +
+              '&startDate=' + fmt(today) + '&endDate=' + fmt(end) +
+              '&hydrate=team&gameType=R';
+  var res   = await fetch(url);
+  if (!res.ok) throw new Error('MLB API ' + res.status);
+  var data  = await res.json();
+
+  var games = [];
+  (data.dates || []).forEach(function(d) {
+    (d.games || []).forEach(function(g) {
+      var isHome = g.teams.home.team.id === 118;
+      games.push({
+        commence_time: g.gameDate,
+        home_team: g.teams.home.team.name,
+        away_team: g.teams.away.team.name,
+      });
+    });
+  });
+
+  renderGames('royals-games','royals-record', games, 'Kansas City Royals',
+    'MLB', 'https://www.mlb.com/royals/schedule');
+}
+
+// ── NFL Chiefs via ESPN API (free, no key) ──
+async function fetchChiefs() {
+  // ESPN public API for NFL schedule
+  var year = new Date().getFullYear();
+  var url  = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/12/schedule?season=' + year;
+  var res  = await fetch(url);
+  if (!res.ok) throw new Error('ESPN API ' + res.status);
+  var data = await res.json();
+
+  var today  = new Date();
+  var games  = [];
+
+  (data.events || []).forEach(function(ev) {
+    var gameDate = new Date(ev.date);
+    if (gameDate < today) return; // skip past games
+    var comp     = ev.competitions[0];
+    var home     = comp.competitors.find(function(c){ return c.homeAway === 'home'; });
+    var away     = comp.competitors.find(function(c){ return c.homeAway === 'away'; });
+    if (!home || !away) return;
+    games.push({
+      commence_time: ev.date,
+      home_team: home.team.displayName,
+      away_team: away.team.displayName,
+    });
+  });
+
+  games.sort(function(a,b){ return new Date(a.commence_time) - new Date(b.commence_time); });
+
+  renderGames('chiefs-games','chiefs-record', games, 'Kansas City Chiefs',
+    'NFL', 'https://www.chiefs.com/schedule/');
+}
+
+async function loadSports() {
+  var el = document.getElementById('odds-updated');
+  try {
+    await Promise.allSettled([fetchRoyals(), fetchChiefs()]);
+    if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  } catch(e) {
+    if (el) el.textContent = 'Data unavailable';
+  }
+}
+
+loadSports();
+</script>
+</body>
+</html>
