@@ -40,6 +40,30 @@
     .sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--white);white-space:nowrap;}
     .sec-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.1),transparent);}
 
+
+    /* AI PICKS */
+    .picks-grid{display:flex;flex-direction:column;gap:12px;}
+    .pick-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:20px 24px;display:grid;grid-template-columns:36px 1fr auto;gap:16px;align-items:start;transition:all 0.2s;}
+    .pick-card:hover{background:var(--navy-3);border-color:rgba(201,151,58,0.2);}
+    .pick-rank{width:36px;height:36px;border-radius:8px;background:rgba(201,151,58,0.1);border:1px solid rgba(201,151,58,0.25);color:var(--gold);font-family:'Playfair Display',serif;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .pick-body{}
+    .pick-game{font-size:12px;color:var(--gray-2);font-weight:500;margin-bottom:4px;letter-spacing:0.03em;}
+    .pick-selection{font-size:16px;font-weight:700;color:var(--white);margin-bottom:6px;}
+    .pick-reasoning{font-size:12px;color:var(--gray-1);line-height:1.7;}
+    .pick-right{text-align:right;flex-shrink:0;}
+    .pick-odds{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold-light);}
+    .pick-conf{font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-top:4px;}
+    .conf-high{color:var(--green);}
+    .conf-med{color:var(--gold);}
+    .pick-sport{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:100px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);margin-bottom:8px;display:inline-block;}
+    .picks-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:gap;}
+    .picks-date{font-size:12px;color:var(--gray-2);}
+    .picks-analyzed{font-size:11px;color:var(--gray-3);}
+    .picks-pending{padding:40px;text-align:center;color:var(--gray-2);font-size:13px;line-height:1.8;}
+    .picks-pending .spin-icon{display:inline-block;animation:spin 1.5s linear infinite;font-size:20px;margin-bottom:10px;}
+    .picks-disclaimer{margin-top:16px;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;font-size:11px;color:var(--gray-3);line-height:1.65;}
+    .refresh-picks-btn{font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;padding:6px 14px;border:1px solid rgba(201,151,58,0.3);color:var(--gold);background:transparent;border-radius:100px;cursor:pointer;transition:all 0.2s;}
+    .refresh-picks-btn:hover{background:rgba(201,151,58,0.08);}
     /* LOCAL SCHOOL CARDS */
     .schools-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
     .school-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);overflow:hidden;transition:all 0.25s;}
@@ -134,6 +158,28 @@
       <p>Local schedules for Hays High, TMP-Marian, and Fort Hays State — plus upcoming Kansas City Royals &amp; Chiefs schedules.</p>
     </div>
   </div>
+
+  <div class="rule"></div>
+
+  <!-- AI DAILY PICKS -->
+  <section class="section">
+    <div class="sec-hdr">
+      <div class="sec-title">AI Best Bets Today</div>
+      <div class="sec-line"></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="refresh-picks-btn" onclick="loadPicks()">&#8635; Refresh</button>
+        <button class="refresh-picks-btn" id="generate-btn" onclick="generatePicks()" style="background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.5);">&#9889; Generate New Picks</button>
+      </div>
+    </div>
+    <div class="picks-meta">
+      <div class="picks-date" id="picks-date">Click "Generate New Picks" to get today's best bets</div>
+      <div class="picks-analyzed" id="picks-analyzed"></div>
+    </div>
+    <div class="picks-grid" id="picks-grid">
+      <div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Loading today's AI picks...</div>
+    </div>
+    <div class="picks-disclaimer">&#9888;&#65039; AI-generated picks are for entertainment purposes only. Not financial advice. Gamble responsibly — if you or someone you know has a gambling problem call 1-800-GAMBLER.</div>
+  </section>
 
   <div class="rule"></div>
 
@@ -465,6 +511,91 @@ async function loadSports() {
   }
 }
 
+// ── MANUALLY TRIGGER NEW PICKS ──
+async function generatePicks() {
+  var btn = document.getElementById('generate-btn');
+  var dateEl = document.getElementById('picks-date');
+  var grid = document.getElementById('picks-grid');
+  var analyzedEl = document.getElementById('picks-analyzed');
+
+  if (btn) { btn.textContent = '⏳ Generating...'; btn.disabled = true; }
+  if (dateEl) dateEl.textContent = 'Claude is analyzing today\'s games...';
+  if (analyzedEl) analyzedEl.textContent = '';
+  if (grid) grid.innerHTML = '<div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Fetching live odds and generating picks...<br/><span style="font-size:11px;color:var(--gray-3);">This takes 15–20 seconds.</span></div>';
+
+  try {
+    var res = await fetch('/api/daily-picks');
+    var data = await res.json();
+
+    if (!data.ok) throw new Error(data.error || 'Generation failed');
+
+    // Now load the freshly generated picks
+    await loadPicks();
+
+  } catch(e) {
+    if (dateEl) dateEl.textContent = 'Error: ' + e.message;
+    if (grid) grid.innerHTML = '<div class="picks-pending">Could not generate picks. Check that your API keys are set correctly in Vercel.</div>';
+  } finally {
+    if (btn) { btn.textContent = '⚡ Generate New Picks'; btn.disabled = false; }
+  }
+}
+
+
+// ── AI DAILY PICKS ──
+async function loadPicks() {
+  var grid = document.getElementById('picks-grid');
+  var dateEl = document.getElementById('picks-date');
+  var analyzedEl = document.getElementById('picks-analyzed');
+
+  if (grid) grid.innerHTML = '<div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Loading today\'s AI picks...</div>';
+
+  try {
+    var res = await fetch('/api/get-picks');
+    var data = await res.json();
+
+    if (data.pending) {
+      if (dateEl) dateEl.textContent = 'Generating picks — check back in 30 seconds';
+      if (grid) grid.innerHTML = '<div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Claude is analyzing today\'s games...<br/><span style="font-size:11px;color:var(--gray-3);">This takes about 15 seconds. Refresh shortly.</span></div>';
+      return;
+    }
+
+    if (data.noGames || !data.picks || data.picks.length === 0) {
+      if (dateEl) dateEl.textContent = data.date || 'Today';
+      if (grid) grid.innerHTML = '<div class="picks-pending">No games scheduled today. Check back tomorrow!</div>';
+      return;
+    }
+
+    if (dateEl) dateEl.textContent = data.date || 'Today';
+    if (analyzedEl) analyzedEl.textContent = data.gamesAnalyzed ? data.gamesAnalyzed + ' games analyzed' : '';
+
+    var html = '';
+    data.picks.forEach(function(pick) {
+      var confClass = pick.confidence === 'High' ? 'conf-high' : 'conf-med';
+      html +=
+        '<div class="pick-card">' +
+          '<div class="pick-rank">' + pick.rank + '</div>' +
+          '<div class="pick-body">' +
+            '<div class="pick-sport">' + (pick.sport || '') + '</div>' +
+            '<div class="pick-game">' + (pick.game || '') + '</div>' +
+            '<div class="pick-selection">' + (pick.pick || '') + '</div>' +
+            '<div class="pick-reasoning">' + (pick.reasoning || '') + '</div>' +
+          '</div>' +
+          '<div class="pick-right">' +
+            '<div class="pick-odds">' + (pick.odds || '--') + '</div>' +
+            '<div class="pick-conf ' + confClass + '">' + (pick.confidence || '') + '</div>' +
+          '</div>' +
+        '</div>';
+    });
+
+    if (grid) grid.innerHTML = html;
+
+  } catch(e) {
+    if (dateEl) dateEl.textContent = 'Could not load picks';
+    if (grid) grid.innerHTML = '<div class="picks-pending">Unable to load picks right now. Try refreshing.</div>';
+  }
+}
+
+// loadPicks() — triggered manually via button
 loadSports();
 </script>
 </body>
