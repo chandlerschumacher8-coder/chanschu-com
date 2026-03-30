@@ -96,6 +96,28 @@
     footer .gold{color:var(--gold-dim);}
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
     .page-hero,.section{animation:fadeUp 0.6s ease both;}
+
+    /* ACV SECTION */
+    .acv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--navy-border);border:1px solid var(--navy-border);}
+    .acv-card{background:var(--navy-mid);padding:32px 28px;display:flex;flex-direction:column;gap:12px;transition:background 0.25s;}
+    .acv-card:hover{background:var(--navy-light);}
+    .acv-badge{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;padding:3px 10px;border-radius:3px;display:inline-block;width:fit-content;}
+    .badge-tonic{background:rgba(201,168,76,0.12);color:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);}
+    .badge-shot{background:rgba(180,80,80,0.12);color:#e08080;border:1px solid rgba(180,80,80,0.25);}
+    .badge-liver{background:rgba(139,90,43,0.15);color:#c4845a;border:1px solid rgba(139,90,43,0.3);}
+    .acv-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text-bright);line-height:1.2;}
+    .acv-benefit{font-size:11px;color:var(--gold-dim);font-style:italic;margin-bottom:4px;}
+    .acv-ingredients{font-size:11px;color:var(--text-mid);line-height:1.9;}
+    .acv-ingredients strong{display:block;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;margin-top:8px;}
+    .acv-steps{font-size:11px;color:var(--text-mid);line-height:1.8;border-top:1px solid var(--navy-border);padding-top:12px;margin-top:4px;}
+    .acv-steps strong{display:block;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+    .acv-tip{font-size:10px;color:var(--text-dim);border-left:2px solid var(--gold-dim);padding-left:10px;margin-top:8px;line-height:1.7;}
+    .acv-intro{background:var(--navy-mid);border:1px solid var(--navy-border);padding:28px 32px;margin-bottom:2px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;}
+    .acv-intro-item{text-align:center;}
+    .acv-intro-icon{font-size:24px;margin-bottom:8px;}
+    .acv-intro-title{font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--text-bright);margin-bottom:4px;}
+    .acv-intro-text{font-size:10px;color:var(--text-mid);line-height:1.8;}
+    @media(max-width:900px){.acv-grid{grid-template-columns:1fr;}.acv-intro{grid-template-columns:1fr;gap:16px;}}
     @media(max-width:900px){header{padding:18px 24px;}nav{gap:16px;}.page-hero{padding:48px 24px 36px;}.rule{margin:0 24px;}.section{padding:40px 24px 60px;}.week-grid{grid-template-columns:repeat(3,1fr);}.exercise-row{grid-template-columns:1fr;gap:8px;}.ex-stat{display:inline-flex;flex-direction:row;gap:6px;align-items:center;}.tips-grid{grid-template-columns:1fr;}footer{padding:24px;flex-direction:column;gap:8px;text-align:center;}.modal-overlay{padding:10px;}.program-meta{gap:12px;}}
     @media(max-width:480px){.week-grid{grid-template-columns:repeat(2,1fr);}.ex-stat strong{font-size:12px;}.level-tabs{gap:6px;}.level-btn{padding:8px 12px;font-size:9px;}}
   </style>
@@ -109,6 +131,7 @@
       <a href="goodnews.html">Good News</a>
       <a href="fitness.html" class="active">Fitness</a>
       <a href="index.html#businesses">Businesses</a>
+      <a href="#acv">ACV</a>
     </nav>
   </header>
 
@@ -152,6 +175,277 @@
       <div class="tip-card"><div class="tip-icon">📈</div><div class="tip-title">Progressive Overload</div><div class="tip-text">Add a small amount of weight or reps each week. Even 2.5lbs per session adds up to 130lbs in a year.</div></div>
       <div class="tip-card"><div class="tip-icon">🧘</div><div class="tip-title">Warm Up</div><div class="tip-text">Spend 5–10 minutes warming up before every session. Dynamic stretches and mobility work prevent injury.</div></div>
       <div class="tip-card"><div class="tip-icon">📓</div><div class="tip-title">Track Everything</div><div class="tip-text">Log your weights, reps, and how you felt. What gets measured gets improved. Consistency leads to results.</div></div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section class="section" id="acv">
+    <p class="section-label">Apple Cider Vinegar</p>
+
+    <div class="acv-intro">
+      <div class="acv-intro-item">
+        <div class="acv-intro-icon">🍎</div>
+        <div class="acv-intro-title">Always Use Raw & Unfiltered</div>
+        <div class="acv-intro-text">Look for "with the mother" on the label — Bragg's is the most popular brand. The mother contains beneficial enzymes and probiotics.</div>
+      </div>
+      <div class="acv-intro-item">
+        <div class="acv-intro-icon">💧</div>
+        <div class="acv-intro-title">Always Dilute It</div>
+        <div class="acv-intro-text">Never drink ACV straight — it can damage tooth enamel and irritate the esophagus. Always mix with water or another liquid first.</div>
+      </div>
+      <div class="acv-intro-item">
+        <div class="acv-intro-icon">⏰</div>
+        <div class="acv-intro-title">Best Time to Take It</div>
+        <div class="acv-intro-text">First thing in the morning on an empty stomach, or 20–30 minutes before a meal. Rinse your mouth with water after drinking.</div>
+      </div>
+    </div>
+
+    <div class="acv-grid">
+
+      <!-- MORNING TONIC -->
+      <div class="acv-card">
+        <span class="acv-badge badge-tonic">Tonic</span>
+        <div class="acv-name">Morning Wake-Up Tonic</div>
+        <div class="acv-benefit">Good for: Energy, digestion, blood sugar balance</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1–2 tbsp apple cider vinegar<br/>
+          · 8 oz warm water<br/>
+          · 1 tbsp raw honey<br/>
+          · ½ lemon, juiced<br/>
+          · Pinch of cayenne pepper
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Mix all ingredients in a glass and stir until honey dissolves. Drink first thing in the morning before eating.
+        </div>
+        <div class="acv-tip">💡 The cayenne boosts metabolism and the lemon adds vitamin C — a powerful morning combo.</div>
+      </div>
+
+      <!-- GUT HEALTH TONIC -->
+      <div class="acv-card">
+        <span class="acv-badge badge-tonic">Tonic</span>
+        <div class="acv-name">Gut Health Tonic</div>
+        <div class="acv-benefit">Good for: Bloating, digestion, gut microbiome</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 8 oz water (room temperature)<br/>
+          · 1 tsp raw honey<br/>
+          · ¼ tsp ground ginger<br/>
+          · ¼ tsp cinnamon
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Combine all ingredients and stir well. Drink 20 minutes before a meal to support digestion and reduce bloating.
+        </div>
+        <div class="acv-tip">💡 Ginger and cinnamon both have anti-inflammatory properties that complement ACV's digestive benefits.</div>
+      </div>
+
+      <!-- IMMUNE BOOSTER -->
+      <div class="acv-card">
+        <span class="acv-badge badge-tonic">Tonic</span>
+        <div class="acv-name">Immune Booster Tonic</div>
+        <div class="acv-benefit">Good for: Immunity, inflammation, antioxidants</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 8 oz warm water<br/>
+          · 1 tbsp raw honey<br/>
+          · ½ tsp turmeric<br/>
+          · Pinch of black pepper<br/>
+          · ½ lemon, juiced
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Mix all ingredients together. The black pepper activates the turmeric — don't skip it. Best taken daily during cold and flu season.
+        </div>
+        <div class="acv-tip">💡 Black pepper increases turmeric absorption by up to 2000% — a small pinch makes a big difference.</div>
+      </div>
+
+      <!-- WEIGHT LOSS SHOT -->
+      <div class="acv-card">
+        <span class="acv-badge badge-shot">Detox Shot</span>
+        <div class="acv-name">Fat Burner Shot</div>
+        <div class="acv-benefit">Good for: Weight management, appetite suppression, metabolism</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 2 oz water<br/>
+          · ½ tsp raw honey<br/>
+          · Pinch of cayenne pepper<br/>
+          · ¼ lemon, juiced
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Mix in a shot glass and drink in one go. Take 30 minutes before a meal. Chase with a full glass of water.
+        </div>
+        <div class="acv-tip">💡 Studies suggest ACV can help reduce appetite and lower blood sugar spikes after meals.</div>
+      </div>
+
+      <!-- DETOX SHOT -->
+      <div class="acv-card">
+        <span class="acv-badge badge-shot">Detox Shot</span>
+        <div class="acv-name">Green Detox Shot</div>
+        <div class="acv-benefit">Good for: Detox, liver support, alkalizing the body</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 2 oz cucumber juice or water<br/>
+          · ½ tsp spirulina or wheatgrass powder<br/>
+          · ½ lemon, juiced<br/>
+          · 1 tsp raw honey
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Blend or shake all ingredients together. Drink immediately in the morning on an empty stomach for best detox results.
+        </div>
+        <div class="acv-tip">💡 Spirulina is one of the most nutrient-dense foods on earth — this shot packs a serious nutritional punch.</div>
+      </div>
+
+      <!-- ENERGY SHOT -->
+      <div class="acv-card">
+        <span class="acv-badge badge-shot">Detox Shot</span>
+        <div class="acv-name">Pre-Workout Energy Shot</div>
+        <div class="acv-benefit">Good for: Energy, endurance, electrolyte balance</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 2 oz coconut water<br/>
+          · ½ tsp raw honey<br/>
+          · Pinch of sea salt<br/>
+          · ¼ tsp ginger powder
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Mix all ingredients in a shot glass. Take 15–20 minutes before your workout. The coconut water provides natural electrolytes.
+        </div>
+        <div class="acv-tip">💡 Sea salt replenishes sodium lost through sweat and helps with muscle function during exercise.</div>
+      </div>
+
+      <!-- LIVER DETOX SHOT 1 -->
+      <div class="acv-card">
+        <span class="acv-badge badge-liver">Liver Detox</span>
+        <div class="acv-name">Classic Liver Flush Shot</div>
+        <div class="acv-benefit">Good for: Liver cleansing, bile production, toxin elimination</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 1 tbsp fresh lemon juice<br/>
+          · 1 tbsp olive oil (extra virgin)<br/>
+          · 1 clove garlic, minced<br/>
+          · 2 oz warm water
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Blend or whisk all ingredients together and take as a shot first thing in the morning. The olive oil stimulates bile flow which helps flush the liver.
+        </div>
+        <div class="acv-tip">💡 Garlic contains allicin and selenium — two compounds clinically shown to help protect and cleanse the liver.</div>
+      </div>
+
+      <!-- LIVER DETOX SHOT 2 -->
+      <div class="acv-card">
+        <span class="acv-badge badge-liver">Liver Detox</span>
+        <div class="acv-name">Dandelion & Ginger Liver Shot</div>
+        <div class="acv-benefit">Good for: Liver regeneration, inflammation, bile flow</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 2 oz dandelion root tea (cooled)<br/>
+          · ½ tsp fresh ginger, grated<br/>
+          · ½ lemon, juiced<br/>
+          · 1 tsp raw honey
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Brew dandelion root tea, let cool slightly. Mix all ingredients and take as a shot. Best taken mid-morning after breakfast.
+        </div>
+        <div class="acv-tip">💡 Dandelion root has been used for centuries as a natural liver tonic — it stimulates bile production and supports liver cell regeneration.</div>
+      </div>
+
+      <!-- LIVER DETOX SHOT 3 -->
+      <div class="acv-card">
+        <span class="acv-badge badge-liver">Liver Detox</span>
+        <div class="acv-name">Turmeric Liver Revival Shot</div>
+        <div class="acv-benefit">Good for: Liver inflammation, detox enzymes, antioxidant protection</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 1 tsp turmeric powder (or fresh)<br/>
+          · ½ tsp black pepper<br/>
+          · 1 tbsp lemon juice<br/>
+          · 1 tsp raw honey<br/>
+          · 2 oz warm water
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Mix all ingredients well — whisk if using powder. Take as a shot in the morning. Rinse mouth with water afterward to protect tooth enamel.
+        </div>
+        <div class="acv-tip">💡 Curcumin in turmeric activates liver detox enzymes and reduces liver inflammation — one of the most researched natural liver protectors.</div>
+      </div>
+
+      <!-- LIVER DETOX SHOT 4 -->
+      <div class="acv-card">
+        <span class="acv-badge badge-liver">Liver Detox</span>
+        <div class="acv-name">Beet & Lemon Liver Shot</div>
+        <div class="acv-benefit">Good for: Blood purification, liver enzyme support, heavy metal detox</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 2 oz fresh beet juice<br/>
+          · ½ lemon, juiced<br/>
+          · ¼ tsp ginger powder<br/>
+          · Pinch of sea salt
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Juice a small beet or use store-bought 100% beet juice. Combine all ingredients and shake well. Take on an empty stomach in the morning.
+        </div>
+        <div class="acv-tip">💡 Betaine in beets helps the liver process fats and is one of the best natural foods for reducing fatty liver.</div>
+      </div>
+
+      <!-- LIVER DETOX SHOT 5 -->
+      <div class="acv-card">
+        <span class="acv-badge badge-liver">Liver Detox</span>
+        <div class="acv-name">Milk Thistle Power Shot</div>
+        <div class="acv-benefit">Good for: Liver cell repair, toxin filtering, hangover recovery</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 1 tsp milk thistle powder<br/>
+          · 1 tbsp lemon juice<br/>
+          · 1 tsp raw honey<br/>
+          · 2 oz warm water<br/>
+          · Pinch of cinnamon
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Whisk all ingredients until milk thistle is fully dissolved. Take as a shot. Especially effective the morning after alcohol consumption to support liver recovery.
+        </div>
+        <div class="acv-tip">💡 Silymarin in milk thistle is one of the most studied liver-protective compounds — it actively repairs damaged liver cells.</div>
+      </div>
+
+      <!-- LIVER DETOX SHOT 6 -->
+      <div class="acv-card">
+        <span class="acv-badge badge-liver">Liver Detox</span>
+        <div class="acv-name">Chlorophyll Cleanse Shot</div>
+        <div class="acv-benefit">Good for: Full body detox, liver alkalizing, toxin binding</div>
+        <div class="acv-ingredients">
+          <strong>Ingredients</strong>
+          · 1 tbsp apple cider vinegar<br/>
+          · 1 tsp liquid chlorophyll<br/>
+          · 2 oz cold water<br/>
+          · ½ lemon, juiced<br/>
+          · ½ tsp raw honey
+        </div>
+        <div class="acv-steps">
+          <strong>How to Make It</strong>
+          Mix all ingredients in a shot glass — it will turn a vivid green. Take in the morning or early afternoon. Can be taken daily as part of a detox routine.
+        </div>
+        <div class="acv-tip">💡 Liquid chlorophyll binds to toxins and heavy metals in the bloodstream, helping the liver filter them out more efficiently.</div>
+      </div>
+
     </div>
   </section>
 
