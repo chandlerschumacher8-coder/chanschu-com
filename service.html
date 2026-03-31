@@ -118,6 +118,22 @@
     .assign-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
     .assign-row label{font-size:11px;color:var(--gray-2);white-space:nowrap;}
     .assign-sel{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;flex:1;}
+
+    /* CUSTOMER STATUS EXPANDED */
+    .status-section{background:rgba(224,144,80,0.06);border:1px solid rgba(224,144,80,0.2);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
+    .status-section-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);margin-bottom:12px;}
+    .status-block{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.05);}
+    .status-block:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+    .status-ts{font-size:10px;color:var(--green);margin-top:4px;font-weight:600;}
+    .status-ts.none{color:var(--gray-3);}
+    .sched-fields{margin-top:8px;display:none;}
+    .sched-fields.show{display:block;}
+    .sched-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+    .sched-type-row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+    .type-btn{font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .type-btn.active{background:rgba(91,159,212,0.12);border-color:rgba(91,159,212,0.35);color:var(--blue);}
+    .sched-save-btn{margin-top:10px;font-size:11px;font-weight:700;padding:7px 16px;background:var(--gold);color:var(--navy);border:none;border-radius:7px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+    .sched-save-btn:hover{background:var(--gold-light);}
     /* PART ORDER */
     .part-section{background:rgba(224,144,80,0.06);border:1px solid rgba(224,144,80,0.2);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
     .part-section-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;}
@@ -802,9 +818,62 @@ function printJob(id){
 async function setStatus(id,status){var j=jobs.find(function(x){return x.id===id;});if(!j)return;j.status=status;if(status==='Completed')j.completedAt=new Date().toISOString();await saveJobs();renderJobs();updateStats();}
 async function assignTech(id,tech){var j=jobs.find(function(x){return x.id===id;});if(!j)return;j.tech=tech;await saveJobs();renderJobs();updateStats();setTimeout(function(){toggleJob(id);},50);}
 async function deleteJob(id){if(!confirm('Delete this job?'))return;jobs=jobs.filter(function(j){return j.id!==id;});await saveJobs();renderJobs();updateStats();}
-async function togglePartOrder(id,checked){var j=jobs.find(function(x){return x.id===id;});if(!j)return;j.partOnOrder=checked;if(!checked)j.partNumber='';var pnf=document.getElementById('pnf-'+id);if(pnf)pnf.classList.toggle('show',checked);if(!checked){var pnum=document.getElementById('pnum-'+id);if(pnum)pnum.value='';}await saveJobs();}
+function formatSchedDate(j) {
+  if (!j.schedDate) return '';
+  var d = new Date(j.schedDate + 'T' + (j.schedTime || '12:00'));
+  var dateStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  if (j.schedTime) {
+    var h=parseInt(j.schedTime.split(':')[0]), m=j.schedTime.split(':')[1];
+    dateStr += ' at ' + (h>12?h-12:h||12) + ':' + m + (h>=12?'pm':'am');
+  }
+  return dateStr;
+}
+
+function setSchedType(id, type, btn) {
+  btn.closest('.sched-type-row').querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  var j = jobs.find(function(x){return x.id===id;}); if(!j)return;
+  j.schedType = type;
+}
+
+async function toggleScheduled(id, checked) {
+  var j=jobs.find(function(x){return x.id===id;}); if(!j)return;
+  j.customerScheduled = checked;
+  if (!checked) { j.schedDate=''; j.schedTime=''; j.schedType=''; j.scheduledBy=''; }
+  var sf=document.getElementById('sched-fields-'+id); if(sf)sf.classList.toggle('show',checked);
+  await saveJobs();
+}
+
+async function saveScheduled(id) {
+  var j=jobs.find(function(x){return x.id===id;}); if(!j)return;
+  j.schedDate = document.getElementById('sched-date-'+id).value;
+  j.schedTime = document.getElementById('sched-time-'+id).value;
+  j.scheduledBy = currentUser.name;
+  if (!j.schedDate) { alert('Please enter a scheduled date.'); return; }
+  await saveJobs();
+  renderJobs(); updateStats();
+  setTimeout(function(){ toggleJob(id); }, 50);
+}
+
+async function togglePartOrder(id,checked){
+  var j=jobs.find(function(x){return x.id===id;});if(!j)return;
+  j.partOnOrder=checked;
+  if(checked){j.partOrderedAt=new Date().toISOString();j.partOrderedBy=currentUser.name;}
+  else{j.partNumber='';j.partOrderedAt=null;j.partOrderedBy='';}
+  var pnf=document.getElementById('pnf-'+id);if(pnf)pnf.classList.toggle('show',checked);
+  if(!checked){var pnum=document.getElementById('pnum-'+id);if(pnum)pnum.value='';}
+  await saveJobs();
+  renderJobs();updateStats();setTimeout(function(){toggleJob(id);},50);
+}
 async function savePartNumber(id,val){var j=jobs.find(function(x){return x.id===id;});if(!j)return;j.partNumber=val.trim();await saveJobs();}
-async function toggleContacted(id,checked){var j=jobs.find(function(x){return x.id===id;});if(!j)return;j.customerContacted=checked;await saveJobs();}
+async function toggleContacted(id,checked){
+  var j=jobs.find(function(x){return x.id===id;});if(!j)return;
+  j.customerContacted=checked;
+  if(checked){j.customerContactedAt=new Date().toISOString();j.customerContactedBy=currentUser.name;}
+  else{j.customerContactedAt=null;j.customerContactedBy='';}
+  await saveJobs();
+  renderJobs();updateStats();setTimeout(function(){toggleJob(id);},50);
+}
 function updateStats(){
   var today=new Date().toISOString().slice(0,10);
   var mine=currentUser&&currentUser.role==='tech'?jobs.filter(function(j){return j.tech===currentUser.tech;}):jobs;
