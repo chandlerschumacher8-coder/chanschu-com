@@ -102,6 +102,7 @@
     .call-pill{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:11px;border-radius:8px;background:rgba(82,183,136,0.1);border:1px solid rgba(82,183,136,0.25);color:#6ecba0;text-decoration:none;margin-bottom:18px;transition:all 0.2s;}
     .call-pill:hover{background:rgba(82,183,136,0.2);border-color:#6ecba0;}
     .form-wrap{border-top:1px solid rgba(255,255,255,0.07);padding-top:18px;display:flex;flex-direction:column;gap:10px;}
+    .req{color:#e07070;margin-left:2px;}
     .form-label-sm{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:2px;}
     .form-field{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;padding:11px 14px;outline:none;border-radius:8px;transition:border-color 0.2s;resize:vertical;}
     .form-field::placeholder{color:var(--gray-2);}
@@ -243,9 +244,11 @@
           </div>
           <div class="form-wrap">
             <div class="form-label-sm">Send a Message</div>
-            <input id="dc-name" class="form-field" type="text" placeholder="Your Name" />
-            <input id="dc-contact" class="form-field" type="text" placeholder="Your Phone or Email" />
+            <input id="dc-name" class="form-field" type="text" placeholder="Your Name *" required />
+            <input id="dc-contact" class="form-field" type="email" placeholder="Your Email *" required />
+            <input id="dc-phone" class="form-field" type="tel" placeholder="Phone (optional)" />
             <textarea id="dc-message" class="form-field form-textarea" placeholder="How can we help you?"></textarea>
+            <div style="font-size:10px;color:var(--gray-2);margin-bottom:6px;"><span style="color:#e07070;">*</span> Required fields</div>
             <input class="hp-trap" type="text" id="dc-hp" tabindex="-1" autocomplete="off" />
             <button class="form-send-btn" data-label="Send Message" onclick="sendForm('dc','DC Appliance','dodgecityappliance@gmail.com','service_gx9g5vj',this)">Send Message</button>
             <div class="form-ok" id="dc-success">✓ Message sent! We'll be in touch soon.</div>
@@ -280,9 +283,11 @@
           </div>
           <div class="form-wrap">
             <div class="form-label-sm">Send a Message</div>
-            <input id="dh-name" class="form-field" type="text" placeholder="Your Name" />
-            <input id="dh-contact" class="form-field" type="text" placeholder="Your Phone or Email" />
+            <input id="dh-name" class="form-field" type="text" placeholder="Your Name *" required />
+            <input id="dh-contact" class="form-field" type="email" placeholder="Your Email *" required />
+            <input id="dh-phone" class="form-field" type="tel" placeholder="Phone (optional)" />
             <textarea id="dh-message" class="form-field form-textarea" placeholder="What are you looking for?"></textarea>
+            <div style="font-size:10px;color:var(--gray-2);margin-bottom:6px;"><span style="color:#e07070;">*</span> Required fields</div>
             <input class="hp-trap" type="text" id="dh-hp" tabindex="-1" autocomplete="off" />
             <button class="form-send-btn" data-label="Send Message" onclick="sendForm('dh','Doghouse Liquor','doghouseliquorstore@gmail.com','service_5hv6wnk',this)">Send Message</button>
             <div class="form-ok" id="dh-success">✓ Message sent! We'll be in touch soon.</div>
@@ -318,9 +323,11 @@
           </div>
           <div class="form-wrap">
             <div class="form-label-sm">Request a Quote</div>
-            <input id="tig-name" class="form-field" type="text" placeholder="Your Name" />
-            <input id="tig-contact" class="form-field" type="text" placeholder="Your Phone or Email" />
+            <input id="tig-name" class="form-field" type="text" placeholder="Your Name *" required />
+            <input id="tig-contact" class="form-field" type="email" placeholder="Your Email *" required />
+            <input id="tig-phone" class="form-field" type="tel" placeholder="Phone (optional)" />
             <textarea id="tig-message" class="form-field form-textarea" placeholder="What type of insurance do you need?"></textarea>
+            <div style="font-size:10px;color:var(--gray-2);margin-bottom:6px;"><span style="color:#e07070;">*</span> Required fields</div>
             <input class="hp-trap" type="text" id="tig-hp" tabindex="-1" autocomplete="off" />
             <button class="form-send-btn" data-label="Request a Quote" onclick="sendForm('tig','The Insurance Guys','chandler@tigks.com','service_blb2ybo',this)">Request a Quote</button>
             <div class="form-ok" id="tig-success">✓ Request sent! An agent will follow up shortly.</div>
@@ -357,12 +364,15 @@
     btn.disabled = true;
     btn.textContent = 'Sending...';
 
+    var phone = document.getElementById(prefix + '-phone');
+    var phoneVal = phone ? phone.value.trim() : '';
+
     emailjs.send(serviceId, 'template_p3hleri', {
       from_name:    name,
       from_contact: contact,
       business:     bizName,
       to_email:     toEmail,
-      message:      message
+      message:      message + (phoneVal ? '\n\nPhone: ' + phoneVal : '')
     }).then(function() {
       btn.textContent = 'Sent!';
       btn.style.background = 'rgba(82,183,136,0.15)';
@@ -374,6 +384,7 @@
       document.getElementById(prefix + '-name').value = '';
       document.getElementById(prefix + '-contact').value = '';
       document.getElementById(prefix + '-message').value = '';
+      var phoneField = document.getElementById(prefix + '-phone'); if (phoneField) phoneField.value = '';
     }, function(error) {
       btn.disabled = false;
       btn.textContent = btn.getAttribute('data-label') || 'Send Message';
