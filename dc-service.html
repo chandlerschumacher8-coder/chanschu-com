@@ -243,6 +243,16 @@
               <input class="input" id="f-brand" type="text" placeholder="Samsung, LG, etc."/>
             </div>
           </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Model Number</label>
+              <input class="input" id="f-model" type="text" placeholder="e.g. WF45R6100AW"/>
+            </div>
+            <div class="field">
+              <label>Serial Number</label>
+              <input class="input" id="f-serial" type="text" placeholder="e.g. 0B2F3CSD700123V"/>
+            </div>
+          </div>
           <div class="field">
             <label>Issue Description <span class="req">*</span></label>
             <textarea class="textarea" id="f-issue" placeholder="Describe the problem..."></textarea>
@@ -371,24 +381,31 @@ function updateDate() {
 }
 
 // ── STORAGE ──
-function saveJobs() {
-  try { localStorage.setItem('dc-service-jobs', JSON.stringify({jobs:jobs, nextId:nextId})); } catch(e) {}
-}
-function loadJobs() {
+async function saveJobs() {
   try {
-    var raw = localStorage.getItem('dc-service-jobs');
-    if (raw) {
-      var d = JSON.parse(raw);
-      jobs = d.jobs || [];
-      nextId = d.nextId || jobs.length + 1;
+    await fetch('/api/dc-jobs-save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobs: jobs, nextId: nextId })
+    });
+  } catch(e) { console.warn('Save failed:', e); }
+}
+
+async function loadJobs() {
+  try {
+    var res = await fetch('/api/dc-jobs-get');
+    var data = await res.json();
+    if (data.ok) {
+      jobs = data.jobs || [];
+      nextId = data.nextId || 1;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('Load failed:', e); }
   renderJobs();
   updateStats();
 }
 
 // ── ADD JOB ──
-function addJob() {
+async function addJob() {
   var name     = document.getElementById('f-name').value.trim();
   var phone    = document.getElementById('f-phone').value.trim();
   var email    = document.getElementById('f-email').value.trim();
@@ -401,6 +418,8 @@ function addJob() {
   var tech     = document.getElementById('f-tech').value;
   var priority = document.getElementById('f-priority').value;
   var notes    = document.getElementById('f-notes').value.trim();
+  var model    = document.getElementById('f-model').value.trim();
+  var serial   = document.getElementById('f-serial').value.trim();
 
   if (!name || !phone || !address || !appliance || !issue || !date) {
     alert('Please fill in all required fields.');
@@ -409,7 +428,7 @@ function addJob() {
 
   var job = {
     id: 'DC-' + String(nextId).padStart(4,'0'),
-    name, phone, email, address, appliance, brand, issue,
+    name, phone, email, address, appliance, brand, model, serial, issue,
     date, time, tech, priority, notes,
     status: 'Open',
     createdAt: new Date().toISOString(),
@@ -417,7 +436,7 @@ function addJob() {
   };
   nextId++;
   jobs.unshift(job);
-  saveJobs();
+  await saveJobs();
   renderJobs();
   updateStats();
   clearForm();
@@ -425,7 +444,7 @@ function addJob() {
 }
 
 function clearForm() {
-  ['f-name','f-phone','f-email','f-address','f-brand','f-issue','f-notes'].forEach(function(id) {
+  ['f-name','f-phone','f-email','f-address','f-brand','f-model','f-serial','f-issue','f-notes'].forEach(function(id) {
     document.getElementById(id).value = '';
   });
   document.getElementById('f-appliance').value = '';
@@ -500,6 +519,8 @@ function renderJobs() {
           '<div class="detail-field"><label>Phone</label><div class="dval"><a href="tel:' + j.phone + '" style="color:var(--blue);text-decoration:none;" onclick="event.stopPropagation()">' + j.phone + '</a></div></div>' +
           (j.email ? '<div class="detail-field"><label>Email</label><div class="dval"><a href="mailto:' + j.email + '" style="color:var(--blue);text-decoration:none;" onclick="event.stopPropagation()">' + j.email + '</a></div></div>' : '<div class="detail-field"><label>Email</label><div class="dval" style="color:var(--gray-2)">—</div></div>') +
           '<div class="detail-field"><label>Address</label><div class="dval">' + j.address + '</div></div>' +
+          (j.model ? '<div class="detail-field"><label>Model #</label><div class="dval">' + j.model + '</div></div>' : '<div class="detail-field"><label>Model #</label><div class="dval" style="color:var(--gray-2)">—</div></div>') +
+          (j.serial ? '<div class="detail-field"><label>Serial #</label><div class="dval">' + j.serial + '</div></div>' : '<div class="detail-field"><label>Serial #</label><div class="dval" style="color:var(--gray-2)">—</div></div>') +
           '<div class="detail-field"><label>Priority</label><div class="dval">' + j.priority + '</div></div>' +
         '</div>' +
         '<div class="detail-field" style="margin-bottom:10px;"><label>Issue</label><div class="notes-block">' + j.issue + '</div></div>' +
@@ -529,31 +550,31 @@ function toggleJob(id) {
   }
 }
 
-function assignTech(id, tech) {
+async function assignTech(id, tech) {
   var job = jobs.find(function(j) { return j.id === id; });
   if (!job) return;
   job.tech = tech;
-  saveJobs();
+  await saveJobs();
   renderJobs();
   updateStats();
   // Re-open the card
   setTimeout(function() { toggleJob(id); }, 50);
 }
 
-function setStatus(id, status) {
+async function setStatus(id, status) {
   var job = jobs.find(function(j) { return j.id === id; });
   if (!job) return;
   job.status = status;
   if (status === 'Completed') job.completedAt = new Date().toISOString();
-  saveJobs();
+  await saveJobs();
   renderJobs();
   updateStats();
 }
 
-function deleteJob(id) {
+async function deleteJob(id) {
   if (!confirm('Delete this job? This cannot be undone.')) return;
   jobs = jobs.filter(function(j) { return j.id !== id; });
-  saveJobs();
+  await saveJobs();
   renderJobs();
   updateStats();
 }
@@ -616,7 +637,7 @@ async function sendChat() {
     'Today\'s date value is ' + today + '. Tomorrow is ' + tomorrow + '. ' +
     'Available techs: Jeff, Justin, DC Appliance. ' +
     'When you have enough info to create a job, respond with a JSON block like this (and nothing else before or after the JSON): ' +
-    '{"action":"create_job","name":"Customer Name","phone":"620-555-1234","email":"","address":"123 Main St, Dodge City KS","appliance":"Washer","brand":"Samsung","issue":"Not spinning","date":"' + today + '","time":"Morning (8am–12pm)","tech":"Jeff","priority":"Medium","notes":""}' +
+    '{"action":"create_job","name":"Customer Name","phone":"620-555-1234","email":"","address":"123 Main St, Dodge City KS","appliance":"Washer","brand":"Samsung","model":"WF45R6100AW","serial":"0B2F3CSD700123V","issue":"Not spinning","date":"' + today + '","time":"Morning (8am–12pm)","tech":"Jeff","priority":"Medium","notes":""}' +
     'Valid time values: "Morning (8am–12pm)", "Afternoon (12pm–5pm)", "All Day", "Call Ahead". ' +
     'Valid priority values: "High", "Medium", "Low". ' +
     'If you need more info, ask a short friendly question. ' +
@@ -664,6 +685,8 @@ async function sendChat() {
           time:      jobData.time      || 'All Day',
           tech:      jobData.tech      || 'Unassigned',
           priority:  jobData.priority  || 'Medium',
+          model:     jobData.model     || '',
+          serial:    jobData.serial    || '',
           notes:     jobData.notes     || '',
           status:    'Open',
           createdAt: new Date().toISOString(),
@@ -671,7 +694,7 @@ async function sendChat() {
         };
         nextId++;
         jobs.unshift(job);
-        saveJobs();
+        await saveJobs();
         renderJobs();
         updateStats();
 
