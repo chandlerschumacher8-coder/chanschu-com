@@ -199,6 +199,11 @@
       .print-header p{font-size:12px;color:#666;margin-top:4px;}
       .tab-panel.active{display:block!important;}
     }
+
+    /* EDIT MODAL */
+    .edit-modal-body{padding:18px 20px;max-height:70vh;overflow-y:auto;}
+    .edit-section-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin:14px 0 8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;}
+    .edit-section-title:first-child{margin-top:0;border-top:none;padding-top:0;}
     /* MODALS */
     .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
     .modal-bg.open{display:flex;}
@@ -401,6 +406,77 @@
   </div>
   <footer id="footer-bar">Service Portal</footer>
 </div>
+
+<!-- EDIT JOB MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-hdr"><div class="modal-title">Edit Job</div><button class="modal-close" onclick="closeModal('edit-modal')">x</button></div>
+    <div class="edit-modal-body">
+      <div class="edit-section-title">Customer Info</div>
+      <div class="field"><label>Customer Name <span class="req">*</span></label><input class="inp" id="e-name" type="text"/></div>
+      <div class="frow">
+        <div class="field"><label>Phone <span class="req">*</span></label><input class="inp" id="e-phone" type="tel"/></div>
+        <div class="field"><label>Email</label><input class="inp" id="e-email" type="email"/></div>
+      </div>
+      <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="e-address"/></div>
+      <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="e-city"/></div>
+      <div class="edit-section-title">Appliance Info</div>
+      <div class="frow">
+        <div class="field"><label>Appliance <span class="req">*</span></label>
+          <select class="sel" id="e-appliance">
+            <option value="">Select...</option>
+            <option>Refrigerator</option><option>Washer</option><option>Dryer</option>
+            <option>Dishwasher</option><option>Oven / Range</option><option>Microwave</option>
+            <option>Freezer</option><option>Ice Maker</option><option>Garbage Disposal</option>
+            <option>AC Unit</option><option>TV</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Brand</label><input class="inp" id="e-brand"/></div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Model #</label><input class="inp" id="e-model"/></div>
+        <div class="field"><label>Serial #</label><input class="inp" id="e-serial"/></div>
+      </div>
+      <div class="field"><label>Warranty</label>
+        <select class="sel" id="e-warranty">
+          <option value="Out of Warranty">Out of Warranty</option>
+          <option value="Manufacturer Warranty">Manufacturer Warranty</option>
+          <option value="5 Year Warranty">5 Year Warranty</option>
+        </select>
+      </div>
+      <div class="edit-section-title">Job Details</div>
+      <div class="frow">
+        <div class="field"><label>Invoice #</label><input class="inp" id="e-invoice"/></div>
+        <div class="field"><label>Claim #</label><input class="inp" id="e-claim"/></div>
+      </div>
+      <div class="field"><label>Delivery Date</label><input class="inp" id="e-delivery" type="date"/></div>
+      <div class="field"><label>Issue <span class="req">*</span></label><textarea class="txta" id="e-issue"></textarea></div>
+      <div class="frow">
+        <div class="field"><label>Scheduled Date <span class="req">*</span></label><input class="inp" id="e-date" type="date"/></div>
+        <div class="field"><label>Time Window</label>
+          <select class="sel" id="e-time">
+            <option>Morning (8am-12pm)</option><option>Afternoon (12pm-5pm)</option>
+            <option>All Day</option><option>Call Ahead</option>
+          </select>
+        </div>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Assign To</label><select class="sel" id="e-tech"><option value="Unassigned">Unassigned</option></select></div>
+        <div class="field"><label>Priority</label>
+          <select class="sel" id="e-priority">
+            <option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Notes</label><textarea class="txta" id="e-notes" style="min-height:56px;"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-msg" id="edit-msg"></div>
+      <button class="modal-save-btn" onclick="saveEditJob()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- COMPANIES MODAL -->
 <div class="modal-bg" id="companies-modal">
@@ -860,6 +936,103 @@ async function sendChat(){
   }catch(e){typing.remove();addMsg('ai','Connection error: '+e.message);}
   btn.disabled=false;document.getElementById('chat-inp').focus();
 }
+
+// ── EDIT JOB ──
+var editingJobId = null;
+
+function openEditJob(id) {
+  var j = jobs.find(function(x){return x.id===id;});
+  if (!j) return;
+  editingJobId = id;
+
+  // Fill all fields
+  document.getElementById('e-name').value    = j.name    || '';
+  document.getElementById('e-phone').value   = j.phone   || '';
+  document.getElementById('e-email').value   = j.email   || '';
+  document.getElementById('e-address').value = j.address || '';
+  document.getElementById('e-city').value    = j.city    || '';
+  document.getElementById('e-brand').value   = j.brand   || '';
+  document.getElementById('e-model').value   = j.model   || '';
+  document.getElementById('e-serial').value  = j.serial  || '';
+  document.getElementById('e-invoice').value = j.invoice || '';
+  document.getElementById('e-claim').value   = j.claim   || '';
+  document.getElementById('e-delivery').value= j.delivery|| '';
+  document.getElementById('e-issue').value   = j.issue   || '';
+  document.getElementById('e-date').value    = j.date    || '';
+  document.getElementById('e-notes').value   = j.notes   || '';
+
+  // Selects
+  var appSel = document.getElementById('e-appliance');
+  for(var i=0;i<appSel.options.length;i++){if(appSel.options[i].value===j.appliance){appSel.selectedIndex=i;break;}}
+  var warSel = document.getElementById('e-warranty');
+  for(var i=0;i<warSel.options.length;i++){if(warSel.options[i].value===j.warranty){warSel.selectedIndex=i;break;}}
+  var timeSel = document.getElementById('e-time');
+  for(var i=0;i<timeSel.options.length;i++){if(timeSel.options[i].value===j.time){timeSel.selectedIndex=i;break;}}
+  var priSel = document.getElementById('e-priority');
+  for(var i=0;i<priSel.options.length;i++){if(priSel.options[i].value===j.priority){priSel.selectedIndex=i;break;}}
+
+  // Tech dropdown — rebuild from current techList
+  var techSel = document.getElementById('e-tech');
+  techSel.innerHTML = techList.map(function(t){return '<option value="'+t+'"'+(j.tech===t?' selected':'')+'>'+t+'</option>';}).join('');
+
+  document.getElementById('edit-msg').textContent = '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function saveEditJob() {
+  var msg = document.getElementById('edit-msg');
+  var j = jobs.find(function(x){return x.id===editingJobId;});
+  if (!j) return;
+
+  var name    = document.getElementById('e-name').value.trim();
+  var phone   = document.getElementById('e-phone').value.trim();
+  var address = document.getElementById('e-address').value.trim();
+  var city    = document.getElementById('e-city').value.trim();
+  var appliance = document.getElementById('e-appliance').value;
+  var issue   = document.getElementById('e-issue').value.trim();
+  var date    = document.getElementById('e-date').value;
+
+  if (!name||!phone||!address||!city||!appliance||!issue||!date) {
+    msg.textContent = 'Please fill in all required fields.';
+    msg.className = 'modal-msg err';
+    return;
+  }
+
+  // Update job fields
+  j.name     = name;
+  j.phone    = phone;
+  j.email    = document.getElementById('e-email').value.trim();
+  j.address  = address;
+  j.city     = city;
+  j.appliance= appliance;
+  j.brand    = document.getElementById('e-brand').value.trim();
+  j.model    = document.getElementById('e-model').value.trim();
+  j.serial   = document.getElementById('e-serial').value.trim();
+  j.warranty = document.getElementById('e-warranty').value;
+  j.invoice  = document.getElementById('e-invoice').value.trim();
+  j.claim    = document.getElementById('e-claim').value.trim();
+  j.delivery = document.getElementById('e-delivery').value;
+  j.issue    = issue;
+  j.date     = date;
+  j.time     = document.getElementById('e-time').value;
+  j.tech     = document.getElementById('e-tech').value;
+  j.priority = document.getElementById('e-priority').value;
+  j.notes    = document.getElementById('e-notes').value.trim();
+
+  msg.textContent = 'Saving...';
+  msg.className = 'modal-msg';
+  await saveJobs();
+  renderJobs();
+  updateStats();
+  msg.textContent = 'Saved!';
+  msg.className = 'modal-msg ok';
+  setTimeout(function(){
+    closeModal('edit-modal');
+    // Re-expand the card
+    setTimeout(function(){ toggleJob(editingJobId); }, 100);
+  }, 800);
+}
+
 
 function closeModal(id){document.getElementById(id).classList.remove('open');document.querySelectorAll('.modal-msg').forEach(function(m){m.textContent='';});}
 </script>
