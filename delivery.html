@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DC Appliance — Delivery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --navy:#07111f;--navy-2:#0c1c30;--navy-3:#112238;--navy-4:#162d47;
+      --gold:#c9973a;--gold-light:#e4b96a;--white:#f8f6f2;
+      --gray-1:#d4cfc5;--gray-2:#8a8880;--gray-3:#4a4a47;
+      --green:#52b788;--red:#e07070;--blue:#5b9fd4;--orange:#e09050;--purple:#9b7fd4;
+      --radius:10px;
+    }
+    body{background:var(--navy);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+
+    /* LOGIN */
+    .login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .login-box{background:var(--navy-2);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:48px 40px;width:100%;max-width:380px;text-align:center;}
+    .login-logo{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin-bottom:4px;}
+    .login-logo span{color:var(--gold);}
+    .login-sub{font-size:12px;color:var(--gray-2);margin-bottom:32px;}
+    .login-field{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 16px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;margin-bottom:12px;outline:none;transition:border-color 0.2s;}
+    .login-field:focus{border-color:rgba(201,151,58,0.5);}
+    .login-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .login-btn:hover{background:var(--gold-light);}
+    .login-err{font-size:12px;color:var(--red);margin-top:10px;display:none;}
+
+    /* APP */
+    .app{display:none;}
+    header{background:var(--navy-2);border-bottom:1px solid rgba(255,255,255,0.07);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .h-logo{font-family:'Playfair Display',serif;font-size:17px;color:var(--white);}
+    .h-logo span{color:var(--gold);}
+    .h-right{display:flex;align-items:center;gap:8px;}
+    .hbtn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;border-radius:100px;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .hbtn:hover{color:var(--white);}
+    .hbtn.gold{border-color:rgba(201,151,58,0.3);color:var(--gold);}
+    .hbtn.danger:hover{color:var(--red);border-color:rgba(224,112,112,0.4);}
+    .main{padding:24px 28px;max-width:1400px;margin:0 auto;}
+
+    /* STATS */
+    .stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;}
+    .stat-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:16px 18px;}
+    .stat-val{font-family:'Playfair Display',serif;font-size:26px;line-height:1;}
+    .stat-key{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-top:4px;}
+    .sc-sched .stat-val{color:var(--blue);}
+    .sc-out .stat-val{color:var(--orange);}
+    .sc-done .stat-val{color:var(--green);}
+    .sc-today .stat-val{color:var(--gold);}
+
+    /* DATE NAV */
+    .date-nav{display:flex;align-items:center;gap:12px;margin-bottom:20px;background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:14px 18px;}
+    .date-nav-btn{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;transition:all 0.2s;}
+    .date-nav-btn:hover{color:var(--white);border-color:rgba(255,255,255,0.25);}
+    .date-nav-label{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);flex:1;text-align:center;}
+    .date-nav-today{font-size:11px;font-weight:600;padding:5px 12px;background:rgba(201,151,58,0.1);border:1px solid rgba(201,151,58,0.25);color:var(--gold);border-radius:100px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+    .date-input{background:var(--navy-3);border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:6px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;}
+
+    /* LAYOUT */
+    .two-col{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start;}
+    .panel{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);overflow:hidden;}
+    .panel-hdr{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .panel-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--white);}
+    .panel-body{padding:18px 20px;}
+
+    /* FORM */
+    .field{margin-bottom:12px;}
+    .field label{display:block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:5px;}
+    .req{color:var(--red);}
+    .inp,.sel,.txta{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.09);border-radius:7px;padding:9px 12px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;}
+    .inp:focus,.sel:focus,.txta:focus{border-color:rgba(201,151,58,0.4);}
+    .sel option{background:var(--navy-3);}
+    .txta{resize:vertical;min-height:64px;}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .submit-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:11px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+    .submit-btn:hover{background:var(--gold-light);}
+
+    /* STOP CARDS */
+    .stop-list{display:flex;flex-direction:column;gap:8px;}
+    .stop-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;background:rgba(201,151,58,0.15);border:1px solid rgba(201,151,58,0.3);color:var(--gold);}
+    .stop-card{background:var(--navy-3);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:all 0.2s;}
+    .stop-card:hover{border-color:rgba(255,255,255,0.14);}
+    .stop-card.expanded{border-color:rgba(201,151,58,0.3);}
+    .sc-top{display:flex;align-items:flex-start;gap:10px;}
+    .sc-info{flex:1;}
+    .sc-id{font-size:9px;font-weight:700;letter-spacing:0.1em;color:var(--gray-3);}
+    .sc-name{font-size:14px;font-weight:600;color:var(--white);margin-top:1px;}
+    .sc-address{font-size:12px;color:var(--gray-1);margin-top:1px;}
+    .sc-appliance{font-size:11px;color:var(--gray-2);margin-top:2px;}
+    .sc-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+    .spill{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:3px 9px;border-radius:100px;}
+    .s-sched{background:rgba(91,159,212,0.12);border:1px solid rgba(91,159,212,0.25);color:var(--blue);}
+    .s-out{background:rgba(224,144,80,0.12);border:1px solid rgba(224,144,80,0.25);color:var(--orange);}
+    .s-done{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.25);color:var(--green);}
+    .s-resched{background:rgba(155,127,212,0.12);border:1px solid rgba(155,127,212,0.25);color:var(--purple);}
+    .sc-meta{display:flex;gap:10px;margin-top:7px;flex-wrap:wrap;}
+    .sc-meta span{font-size:11px;color:var(--gray-2);}
+    .haul-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(224,112,112,0.1);border:1px solid rgba(224,112,112,0.2);color:var(--red);}
+    .time-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-1);}
+
+    /* STOP DETAIL */
+    .stop-detail{display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);}
+    .stop-detail.open{display:block;}
+    .dg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+    .df label{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);display:block;margin-bottom:2px;}
+    .df .dv{font-size:13px;color:var(--white);}
+    .df .dv a{color:var(--blue);text-decoration:none;}
+    .notes-blk{background:var(--navy-2);border-radius:7px;padding:10px 13px;font-size:12px;color:var(--gray-1);line-height:1.7;margin-bottom:12px;}
+    .act-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;}
+    .abtn{font-size:11px;font-weight:600;padding:6px 13px;border-radius:7px;border:1px solid;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .abtn.orange{border-color:rgba(224,144,80,0.3);color:var(--orange);background:rgba(224,144,80,0.06);}
+    .abtn.orange:hover{background:rgba(224,144,80,0.15);}
+    .abtn.green{border-color:rgba(82,183,136,0.3);color:var(--green);background:rgba(82,183,136,0.06);}
+    .abtn.green:hover{background:rgba(82,183,136,0.15);}
+    .abtn.blue{border-color:rgba(91,159,212,0.3);color:var(--blue);background:rgba(91,159,212,0.06);}
+    .abtn.blue:hover{background:rgba(91,159,212,0.15);}
+    .abtn.purple{border-color:rgba(155,127,212,0.3);color:var(--purple);background:rgba(155,127,212,0.06);}
+    .abtn.purple:hover{background:rgba(155,127,212,0.15);}
+    .abtn.red{border-color:rgba(224,112,112,0.3);color:var(--red);background:rgba(224,112,112,0.06);}
+    .abtn.red:hover{background:rgba(224,112,112,0.15);}
+    .stop-order-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+    .stop-order-row label{font-size:11px;color:var(--gray-2);white-space:nowrap;}
+    .stop-order-sel{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;flex:1;}
+    .print-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid rgba(201,151,58,0.3);color:var(--gold);background:transparent;border-radius:100px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+
+    /* ROUTE SUMMARY */
+    .route-bar{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .route-stat{text-align:center;}
+    .route-stat-val{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);}
+    .route-stat-key{font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-2);margin-top:2px;}
+    .route-divider{width:1px;height:36px;background:rgba(255,255,255,0.07);}
+
+    /* FILTERS */
+    .filters-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+    .ftab{font-size:11px;font-weight:600;padding:5px 12px;border-radius:100px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .ftab.active{background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.35);color:var(--gold-light);}
+    .search-inp{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:8px 12px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;margin-bottom:10px;}
+
+    /* PRINT */
+    .print-header{display:none;}
+    @media print{
+      header,.h-right,.two-col>div:first-child,.date-nav,.filters-row,
+      .search-inp,.act-row,.stop-order-row,.print-btn,.stats-bar{display:none!important;}
+      body{background:white!important;color:black!important;}
+      .app{display:block!important;}
+      .main{padding:0!important;}
+      .two-col{grid-template-columns:1fr!important;}
+      .stop-card{border:1px solid #ccc!important;background:white!important;break-inside:avoid;margin-bottom:12px;}
+      .stop-detail{display:block!important;}
+      .sc-name,.dv,.df label{color:black!important;}
+      .sc-meta span,.sc-address,.sc-appliance{color:#333!important;}
+      .notes-blk{background:#f5f5f5!important;color:#333!important;}
+      .spill,.haul-badge,.time-badge{border:1px solid #999!important;color:#333!important;background:#f5f5f5!important;}
+      .print-header{display:block!important;text-align:center;padding:16px 0 12px;border-bottom:2px solid #333;margin-bottom:16px;}
+      .print-header h2{font-size:22px;font-weight:700;}
+      .print-header p{font-size:12px;color:#666;margin-top:4px;}
+      .route-bar{background:#f5f5f5!important;border:1px solid #ccc!important;}
+      .route-stat-val,.route-stat-key{color:#333!important;}
+    }
+
+    .empty-state{padding:32px;text-align:center;color:var(--gray-2);font-size:13px;}
+    footer{padding:20px 28px;text-align:center;color:var(--gray-3);font-size:11px;margin-top:32px;}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr;}.stats-bar{grid-template-columns:repeat(3,1fr);}.main{padding:14px 16px;}}
+    @media(max-width:500px){.stats-bar{grid-template-columns:1fr 1fr;}.dg{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">DC <span>Appliance</span></div>
+    <div class="login-sub">Delivery Portal</div>
+    <input class="login-field" type="password" id="login-pw" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="login-err">Incorrect password.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <header>
+    <div class="h-logo">DC <span>Appliance</span> — Deliveries</div>
+    <div class="h-right">
+      <button class="hbtn gold" onclick="printManifest()">Print Manifest</button>
+      <button class="hbtn danger" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat-card sc-sched"><div class="stat-val" id="s-sched">0</div><div class="stat-key">Scheduled</div></div>
+      <div class="stat-card sc-out"><div class="stat-val" id="s-out">0</div><div class="stat-key">Out for Delivery</div></div>
+      <div class="stat-card sc-done"><div class="stat-val" id="s-done">0</div><div class="stat-key">Delivered</div></div>
+      <div class="stat-card sc-today"><div class="stat-val" id="s-today">0</div><div class="stat-key">Today's Stops</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-key">Total</div></div>
+    </div>
+
+    <!-- DATE NAV -->
+    <div class="date-nav">
+      <button class="date-nav-btn" onclick="changeDay(-1)">&#8592;</button>
+      <div class="date-nav-label" id="date-label">Today</div>
+      <button class="date-nav-btn" onclick="changeDay(1)">&#8594;</button>
+      <button class="date-nav-today" onclick="goToday()">Today</button>
+      <input type="date" class="date-input" id="date-picker" onchange="setDate(this.value)"/>
+    </div>
+
+    <div class="two-col" id="two-col">
+
+      <!-- NEW STOP FORM -->
+      <div class="panel" id="form-panel">
+        <div class="panel-hdr"><div class="panel-title">Add Delivery Stop</div></div>
+        <div class="panel-body">
+          <div class="field"><label>Customer Name <span class="req">*</span></label><input class="inp" id="f-name" placeholder="John Smith"/></div>
+          <div class="frow">
+            <div class="field"><label>Phone <span class="req">*</span></label><input class="inp" id="f-phone" type="tel" placeholder="(620) 555-1234"/></div>
+            <div class="field"><label>Email</label><input class="inp" id="f-email" type="email" placeholder="optional"/></div>
+          </div>
+          <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="f-address" placeholder="123 Main St"/></div>
+          <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="f-city" placeholder="Dodge City"/></div>
+          <div class="frow">
+            <div class="field"><label>Appliance <span class="req">*</span></label>
+              <select class="sel" id="f-appliance">
+                <option value="">Select...</option>
+                <option>Refrigerator</option><option>Washer</option><option>Dryer</option>
+                <option>Dishwasher</option><option>Oven / Range</option><option>Microwave</option>
+                <option>Freezer</option><option>Ice Maker</option><option>TV</option>
+                <option>Mattress</option><option>Grill</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Brand</label><input class="inp" id="f-brand" placeholder="Samsung, LG..."/></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Model #</label><input class="inp" id="f-model" placeholder="Model number"/></div>
+            <div class="field"><label>Invoice #</label><input class="inp" id="f-invoice" placeholder="INV-0001"/></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Delivery Date <span class="req">*</span></label><input class="inp" id="f-date" type="date"/></div>
+            <div class="field"><label>Time Window</label>
+              <select class="sel" id="f-time">
+                <option>Morning (8am-12pm)</option>
+                <option>Afternoon (12pm-5pm)</option>
+                <option>All Day</option>
+                <option>Call Ahead</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label>Stop Order</label>
+            <input class="inp" id="f-stop-order" type="number" min="1" placeholder="e.g. 1, 2, 3..."/>
+          </div>
+          <!-- HAUL AWAY -->
+          <div style="background:rgba(224,112,112,0.06);border:1px solid rgba(224,112,112,0.18);border-radius:8px;padding:12px 14px;margin-bottom:12px;">
+            <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin-bottom:8px;">Haul Away</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <input type="checkbox" id="f-haul" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer;"/>
+              <label for="f-haul" style="font-size:12px;color:var(--gray-1);cursor:pointer;">Old appliance haul away</label>
+            </div>
+            <div id="haul-details" style="display:none;margin-top:6px;">
+              <input class="inp" id="f-haul-item" placeholder="What appliance to haul away?"/>
+            </div>
+          </div>
+          <div class="field"><label>Notes</label><textarea class="txta" id="f-notes" placeholder="Access codes, floor level, special instructions..."></textarea></div>
+          <button class="submit-btn" onclick="addStop()">+ Add Stop</button>
+        </div>
+      </div>
+
+      <!-- STOPS LIST -->
+      <div class="panel">
+        <div class="panel-hdr" style="flex-direction:column;align-items:stretch;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="panel-title" id="route-title">Today's Route</div>
+          </div>
+          <!-- Route summary bar -->
+          <div class="route-bar" id="route-bar">
+            <div class="route-stat"><div class="route-stat-val" id="r-stops">0</div><div class="route-stat-key">Stops</div></div>
+            <div class="route-divider"></div>
+            <div class="route-stat"><div class="route-stat-val" id="r-haul">0</div><div class="route-stat-key">Haul Aways</div></div>
+            <div class="route-divider"></div>
+            <div class="route-stat"><div class="route-stat-val" id="r-delivered">0</div><div class="route-stat-key">Delivered</div></div>
+            <div class="route-divider"></div>
+            <div class="route-stat"><div class="route-stat-val" id="r-remain">0</div><div class="route-stat-key">Remaining</div></div>
+          </div>
+          <div class="filters-row">
+            <button class="ftab active" onclick="setFilter('all',this)">All</button>
+            <button class="ftab" onclick="setFilter('Scheduled',this)">Scheduled</button>
+            <button class="ftab" onclick="setFilter('Out for Delivery',this)">Out</button>
+            <button class="ftab" onclick="setFilter('Delivered',this)">Delivered</button>
+            <button class="ftab" onclick="setFilter('Rescheduled',this)">Rescheduled</button>
+          </div>
+          <input class="search-inp" id="search" placeholder="Search name, address, appliance..." oninput="renderStops()"/>
+        </div>
+        <div class="panel-body" style="padding:12px 14px;">
+          <div class="print-header" id="print-hdr"></div>
+          <div class="stop-list" id="stop-list"><div class="empty-state">Loading...</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <footer>DC Appliance Delivery Portal &nbsp;·&nbsp; Dodge City, KS &nbsp;·&nbsp; (620) 371-6417</footer>
+</div>
+
+<script>
+var PASSWORD = 'DCDelivery2026';
+var deliveries = [], nextId = 1, FILTER = 'all';
+var viewDate = new Date().toISOString().slice(0,10);
+
+// ── AUTH ──
+function doLogin(){
+  var pw = document.getElementById('login-pw').value;
+  if(pw === PASSWORD){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadDeliveries();
+    setViewDate(viewDate);
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-pw').value = '';
+  }
+}
+function doLogout(){
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('login-err').style.display = 'none';
+}
+
+// ── DATE NAV ──
+function setViewDate(d){
+  viewDate = d;
+  document.getElementById('date-picker').value = d;
+  var dt = new Date(d + 'T12:00:00');
+  var today = new Date().toISOString().slice(0,10);
+  var tomorrow = new Date(Date.now()+86400000).toISOString().slice(0,10);
+  var label = d === today ? 'Today — ' : d === tomorrow ? 'Tomorrow — ' : '';
+  label += dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('date-label').textContent = label;
+  document.getElementById('route-title').textContent = d===today?'Today\'s Route':dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' Route';
+  renderStops();
+  updateRouteSummary();
+}
+function changeDay(delta){
+  var d = new Date(viewDate+'T12:00:00');
+  d.setDate(d.getDate()+delta);
+  setViewDate(d.toISOString().slice(0,10));
+}
+function goToday(){ setViewDate(new Date().toISOString().slice(0,10)); }
+function setDate(v){ if(v) setViewDate(v); }
+
+// ── LOAD/SAVE ──
+async function loadDeliveries(){
+  try{
+    var res = await fetch('/api/deliveries-get');
+    var data = await res.json();
+    deliveries = data.deliveries || [];
+    nextId = data.nextId || 1;
+  }catch(e){ deliveries=[]; nextId=1; }
+  renderStops(); updateStats(); updateRouteSummary();
+}
+async function saveDeliveries(){
+  try{
+    await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:deliveries,nextId:nextId})});
+  }catch(e){ console.warn('Save failed:',e); }
+}
+
+// ── ADD STOP ──
+async function addStop(){
+  var name=document.getElementById('f-name').value.trim(),
+      phone=document.getElementById('f-phone').value.trim(),
+      email=document.getElementById('f-email').value.trim(),
+      address=document.getElementById('f-address').value.trim(),
+      city=document.getElementById('f-city').value.trim(),
+      appliance=document.getElementById('f-appliance').value,
+      brand=document.getElementById('f-brand').value.trim(),
+      model=document.getElementById('f-model').value.trim(),
+      invoice=document.getElementById('f-invoice').value.trim(),
+      date=document.getElementById('f-date').value,
+      time=document.getElementById('f-time').value,
+      stopOrder=parseInt(document.getElementById('f-stop-order').value)||null,
+      haul=document.getElementById('f-haul').checked,
+      haulItem=document.getElementById('f-haul-item').value.trim(),
+      notes=document.getElementById('f-notes').value.trim();
+
+  if(!name||!phone||!address||!city||!appliance||!date){alert('Please fill in all required fields.');return;}
+
+  var stop = {
+    id:'DEL-'+String(nextId).padStart(4,'0'),
+    name,phone,email,address,city,appliance,brand,model,invoice,
+    date,time,stopOrder,haul,haulItem,notes,
+    status:'Scheduled',
+    reschedDate:'',reschedNotes:'',
+    createdAt:new Date().toISOString(),deliveredAt:null
+  };
+  nextId++; deliveries.unshift(stop);
+  await saveDeliveries(); renderStops(); updateStats(); updateRouteSummary();
+
+  // Reset form
+  ['f-name','f-phone','f-email','f-address','f-city','f-brand','f-model','f-invoice','f-notes','f-haul-item','f-stop-order'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-appliance').value='';
+  document.getElementById('f-haul').checked=false;
+  document.getElementById('haul-details').style.display='none';
+  document.getElementById('f-date').value=viewDate;
+
+  alert('Stop '+stop.id+' added for '+name+'!');
+}
+
+// Hook haul checkbox
+document.getElementById('f-haul').addEventListener('change',function(){
+  document.getElementById('haul-details').style.display=this.checked?'block':'none';
+});
+
+// ── FILTERS ──
+function setFilter(f,btn){
+  FILTER=f;
+  document.querySelectorAll('.ftab').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderStops();
+}
+
+// ── RENDER ──
+function renderStops(){
+  var search=(document.getElementById('search')?.value||'').toLowerCase();
+  var dayStops = deliveries.filter(function(d){ return d.date===viewDate; });
+  var filtered = dayStops.filter(function(d){
+    var mf=FILTER==='all'||d.status===FILTER;
+    var ms=!search||d.name.toLowerCase().includes(search)||d.address.toLowerCase().includes(search)||d.appliance.toLowerCase().includes(search)||d.id.toLowerCase().includes(search);
+    return mf&&ms;
+  });
+  // Sort by stop order then by created time
+  filtered.sort(function(a,b){
+    if(a.stopOrder&&b.stopOrder) return a.stopOrder-b.stopOrder;
+    if(a.stopOrder) return -1; if(b.stopOrder) return 1;
+    return new Date(a.createdAt)-new Date(b.createdAt);
+  });
+
+  var list=document.getElementById('stop-list');
+  if(filtered.length===0){list.innerHTML='<div class="empty-state">No stops found for this day.</div>';return;}
+
+  list.innerHTML=filtered.map(function(d,idx){
+    var sc=d.status==='Scheduled'?'s-sched':d.status==='Out for Delivery'?'s-out':d.status==='Delivered'?'s-done':'s-resched';
+    return '<div class="stop-card" id="card-'+d.id+'" onclick="toggleStop(\''+d.id+'\')">'+
+      '<div class="sc-top">'+
+        '<div class="stop-num">'+(d.stopOrder||idx+1)+'</div>'+
+        '<div class="sc-info">'+
+          '<div class="sc-id">'+d.id+'</div>'+
+          '<div class="sc-name">'+d.name+'</div>'+
+          '<div class="sc-address">'+d.address+', '+d.city+'</div>'+
+          '<div class="sc-appliance">'+(d.brand?d.brand+' ':'')+d.appliance+(d.model?' — '+d.model:'')+'</div>'+
+        '</div>'+
+        '<div class="sc-right">'+
+          '<span class="spill '+sc+'">'+d.status+'</span>'+
+          (d.haul?'<span class="haul-badge">Haul Away</span>':'')+
+          '<span class="time-badge">'+d.time+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="stop-detail" id="detail-'+d.id+'">'+
+        '<div class="dg">'+
+          '<div class="df"><label>Phone</label><div class="dv"><a href="tel:'+d.phone+'" onclick="event.stopPropagation()">'+d.phone+'</a></div></div>'+
+          (d.email?'<div class="df"><label>Email</label><div class="dv"><a href="mailto:'+d.email+'" onclick="event.stopPropagation()">'+d.email+'</a></div></div>':'<div class="df"><label>Email</label><div class="dv" style="color:var(--gray-2)">--</div></div>')+
+          (d.invoice?'<div class="df"><label>Invoice #</label><div class="dv">'+d.invoice+'</div></div>':'')+
+          (d.model?'<div class="df"><label>Model #</label><div class="dv">'+d.model+'</div></div>':'')+
+        '</div>'+
+        (d.haul&&d.haulItem?'<div class="df" style="margin-bottom:10px;"><label>Haul Away</label><div class="notes-blk" style="border-left:3px solid var(--red);">'+d.haulItem+'</div></div>':
+          d.haul?'<div class="df" style="margin-bottom:10px;"><label>Haul Away</label><div class="notes-blk" style="border-left:3px solid var(--red);">Old appliance pickup</div></div>':'')+
+        (d.notes?'<div class="df" style="margin-bottom:12px;"><label>Notes</label><div class="notes-blk">'+d.notes+'</div></div>':'')+
+        (d.deliveredAt?'<div style="font-size:11px;color:var(--green);margin-bottom:10px;font-weight:600;">Delivered: '+new Date(d.deliveredAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</div>':'')+
+        (d.reschedDate?'<div style="font-size:11px;color:var(--purple);margin-bottom:10px;">Rescheduled to: '+new Date(d.reschedDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+(d.reschedNotes?' — '+d.reschedNotes:'')+'</div>':'')+
+        '<div class="stop-order-row" onclick="event.stopPropagation()">'+
+          '<label>Stop #:</label>'+
+          '<input type="number" min="1" class="stop-order-sel" style="width:80px;" value="'+(d.stopOrder||'')+'" placeholder="--" onblur="updateStopOrder(\''+d.id+'\',this.value)"/>'+
+        '</div>'+
+        '<div class="act-row" onclick="event.stopPropagation()">'+
+          (d.status!=='Out for Delivery'&&d.status!=='Delivered'?'<button class="abtn orange" onclick="setStatus(\''+d.id+'\',\'Out for Delivery\')">Out for Delivery</button>':'')+
+          (d.status!=='Delivered'?'<button class="abtn green" onclick="setStatus(\''+d.id+'\',\'Delivered\')">Mark Delivered</button>':'')+
+          (d.status!=='Scheduled'?'<button class="abtn blue" onclick="setStatus(\''+d.id+'\',\'Scheduled\')">Reschedule</button>':'')+
+          '<button class="abtn purple" onclick="openReschedModal(\''+d.id+'\')">Reschedule Date</button>'+
+          '<button class="abtn red" onclick="deleteStop(\''+d.id+'\')">Delete</button>'+
+          '<button class="print-btn" onclick="event.stopPropagation();printManifest()" style="margin-left:auto;">Print</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  updateRouteSummary();
+}
+
+function toggleStop(id){
+  var d=document.getElementById('detail-'+id),c=document.getElementById('card-'+id);
+  var open=d.classList.contains('open');
+  document.querySelectorAll('.stop-detail').forEach(function(x){x.classList.remove('open');});
+  document.querySelectorAll('.stop-card').forEach(function(x){x.classList.remove('expanded');});
+  if(!open){d.classList.add('open');c.classList.add('expanded');}
+}
+
+async function setStatus(id,status){
+  var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
+  d.status=status;
+  if(status==='Delivered') d.deliveredAt=new Date().toISOString();
+  if(status==='Scheduled'||status==='Rescheduled') d.deliveredAt=null;
+  await saveDeliveries(); renderStops(); updateStats(); updateRouteSummary();
+}
+
+async function updateStopOrder(id,val){
+  var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
+  d.stopOrder=parseInt(val)||null;
+  await saveDeliveries(); renderStops();
+}
+
+async function deleteStop(id){
+  if(!confirm('Delete this delivery stop?'))return;
+  deliveries=deliveries.filter(function(d){return d.id!==id;});
+  await saveDeliveries(); renderStops(); updateStats(); updateRouteSummary();
+}
+
+function updateStats(){
+  var today=new Date().toISOString().slice(0,10);
+  document.getElementById('s-sched').textContent=deliveries.filter(function(d){return d.status==='Scheduled';}).length;
+  document.getElementById('s-out').textContent=deliveries.filter(function(d){return d.status==='Out for Delivery';}).length;
+  document.getElementById('s-done').textContent=deliveries.filter(function(d){return d.status==='Delivered';}).length;
+  document.getElementById('s-today').textContent=deliveries.filter(function(d){return d.date===today;}).length;
+  document.getElementById('s-total').textContent=deliveries.length;
+}
+
+function updateRouteSummary(){
+  var dayStops=deliveries.filter(function(d){return d.date===viewDate;});
+  var haulaways=dayStops.filter(function(d){return d.haul;}).length;
+  var delivered=dayStops.filter(function(d){return d.status==='Delivered';}).length;
+  var remain=dayStops.filter(function(d){return d.status!=='Delivered'&&d.status!=='Rescheduled';}).length;
+  document.getElementById('r-stops').textContent=dayStops.length;
+  document.getElementById('r-haul').textContent=haulaways;
+  document.getElementById('r-delivered').textContent=delivered;
+  document.getElementById('r-remain').textContent=remain;
+}
+
+// ── RESCHEDULE MODAL ──
+function openReschedModal(id){
+  var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
+  var newDate=prompt('New delivery date (YYYY-MM-DD):',d.reschedDate||'');
+  if(!newDate)return;
+  var notes=prompt('Reschedule reason (optional):','');
+  d.reschedDate=newDate; d.reschedNotes=notes||''; d.status='Rescheduled'; d.date=newDate;
+  saveDeliveries().then(function(){renderStops();updateStats();updateRouteSummary();});
+}
+
+// ── PRINT MANIFEST ──
+function printManifest(){
+  var dayStops=deliveries.filter(function(d){return d.date===viewDate;});
+  dayStops.sort(function(a,b){
+    if(a.stopOrder&&b.stopOrder)return a.stopOrder-b.stopOrder;
+    if(a.stopOrder)return -1; if(b.stopOrder)return 1;
+    return 0;
+  });
+  var dt=new Date(viewDate+'T12:00:00');
+  var hdr=document.getElementById('print-hdr');
+  hdr.innerHTML='<h2>DC Appliance — Delivery Manifest</h2><p>'+
+    dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+
+    ' &nbsp;·&nbsp; '+dayStops.length+' stops &nbsp;·&nbsp; '+
+    dayStops.filter(function(d){return d.haul;}).length+' haul aways</p>';
+  // Expand all cards for printing
+  dayStops.forEach(function(d){
+    var det=document.getElementById('detail-'+d.id);
+    if(det)det.classList.add('open');
+  });
+  setTimeout(function(){window.print();},200);
+}
+
+// Set default date
+document.getElementById('f-date').value = viewDate;
+</script>
+</body>
+</html>
