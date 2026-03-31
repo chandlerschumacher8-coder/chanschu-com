@@ -207,16 +207,7 @@
     .ap-item-name{font-size:13px;font-weight:600;color:var(--white);}
     .ap-item-detail{font-size:11px;color:var(--gray-2);margin-top:2px;}
     .ap-cancel{font-size:12px;font-weight:600;padding:7px 16px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
-    /* PRINT */
-    @media print{
-      .sidebar,.day-header,.modal-bg,header{display:none!important;}
-      .calendar-app,.day-view{display:block!important;overflow:visible!important;}
-      .time-grid{overflow:visible!important;}
-      .delivery-event{border:1px solid #ccc!important;background:#f9f9f9!important;break-inside:avoid;margin-bottom:8px;}
-      .de-name,.de-sub{color:black!important;}
-      .slot-empty{display:none!important;}
-      body,html{overflow:visible!important;height:auto!important;}
-    }
+
   </style>
 </head>
 <body>
@@ -570,12 +561,17 @@ function renderTimeGrid(){
   HOURS.forEach(function(hour){
     var hourMins=timeToMinutes(hour);
     var slots=dayStops.filter(function(d){
-      var startMins=timeToMinutes(d.time);
       if(d.duration==='all-day')return hour==='8:00 AM';
       if(d.time==='Call Ahead')return hour==='8:00 AM';
-      // Show event at its start time and for its duration
-      return startMins===hourMins;
+      var startMins=timeToMinutes(d.time);
+      var durMins=parseInt(d.duration)||60;
+      var endMins=startMins+durMins;
+      // Show event in every 30-min slot it covers
+      return hourMins>=startMins && hourMins<endMins;
     });
+    // Deduplicate (same stop can appear multiple times due to spanning)
+    var seenSlots={};
+    slots=slots.filter(function(d){if(seenSlots[d.id])return false;seenSlots[d.id]=true;return true;});
 
     // Deduplicate
     var seen={};
@@ -787,11 +783,127 @@ async function deleteStop(id){
 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-// ── PRINT ──
+// ── PRINT MANIFEST ──
 function printManifest(){
   var dt=new Date(viewDate+'T12:00:00');
-  document.title='DC Appliance Delivery — '+dt.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  window.print();
+  var dateStr=dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  var dayStops=deliveries.filter(function(d){return d.date===viewDate;});
+  dayStops.sort(function(a,b){
+    if(a.stopOrder&&b.stopOrder)return a.stopOrder-b.stopOrder;
+    if(a.stopOrder)return -1; if(b.stopOrder)return 1;
+    return new Date(a.createdAt)-new Date(b.createdAt);
+  });
+
+  var win=window.open('','_blank');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>DC Appliance Delivery Manifest</title>'+
+  '<style>'+
+    '*{box-sizing:border-box;margin:0;padding:0;}'+
+    'body{font-family:"Plus Jakarta Sans",Arial,sans-serif;font-size:13px;color:#111;padding:24px;}'+
+    '.manifest-header{text-align:center;border-bottom:3px solid #111;padding-bottom:14px;margin-bottom:20px;}'+
+    '.manifest-header h1{font-size:22px;font-weight:700;letter-spacing:0.02em;}'+
+    '.manifest-header .sub{font-size:13px;color:#555;margin-top:4px;}'+
+    '.manifest-header .meta{font-size:12px;color:#777;margin-top:4px;}'+
+    '.stop{border:1px solid #ccc;border-radius:6px;margin-bottom:16px;break-inside:avoid;overflow:hidden;}'+
+    '.stop-header{background:#f0f0f0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ccc;}'+
+    '.stop-num{font-size:11px;font-weight:700;background:#111;color:white;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin-right:8px;}'+
+    '.stop-name{font-size:15px;font-weight:700;}'+
+    '.stop-time{font-size:12px;color:#555;}'+
+    '.stop-body{padding:12px 14px;}'+
+    '.info-row{display:flex;gap:24px;margin-bottom:10px;flex-wrap:wrap;}'+
+    '.info-item{flex:1;min-width:160px;}'+
+    '.info-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:2px;}'+
+    '.info-val{font-size:13px;font-weight:600;}'+
+    '.delivery-type-badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:0.06em;border:1px solid #999;color:#555;margin-bottom:10px;}'+
+    '.appliances-section{margin-bottom:10px;}'+
+    '.appliances-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:6px;}'+
+    '.appliance-row{display:flex;align-items:center;border:1px solid #ddd;border-radius:4px;margin-bottom:6px;overflow:hidden;}'+
+    '.appliance-info{flex:1;padding:8px 12px;background:#fafafa;}'+
+    '.appliance-name{font-size:13px;font-weight:600;}'+
+    '.appliance-model{font-size:11px;color:#777;margin-top:1px;}'+
+    '.serial-field{width:200px;border-left:1px solid #ddd;padding:8px 12px;}'+
+    '.serial-label{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#aaa;margin-bottom:4px;}'+
+    '.serial-line{border-bottom:1px solid #999;width:100%;height:18px;}'+
+    '.haul-section{background:#fff5f5;border:1px solid #ffcccc;border-radius:4px;padding:8px 12px;margin-bottom:10px;border-left:3px solid #e07070;}'+
+    '.haul-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#e07070;margin-bottom:3px;}'+
+    '.notes-section{background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:8px 12px;margin-bottom:8px;}'+
+    '.notes-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:3px;}'+
+    '.sig-section{display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid #eee;}'+
+    '.sig-box{flex:1;}'+
+    '.sig-label{font-size:10px;color:#999;margin-bottom:4px;}'+
+    '.sig-line{border-bottom:1px solid #999;height:24px;}'+
+    '.summary-bar{background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:10px 14px;margin-bottom:20px;display:flex;gap:20px;font-size:12px;}'+
+    '.summary-item{text-align:center;}'+
+    '.summary-val{font-size:18px;font-weight:700;}'+
+    '.summary-key{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.06em;}'+
+    '@media print{body{padding:16px;}.stop{page-break-inside:avoid;}}'+
+  '</style></head><body>'+
+  '<div class="manifest-header">'+
+    '<h1>DC Appliance — Delivery Manifest</h1>'+
+    '<div class="sub">'+dateStr+'</div>'+
+    '<div class="meta">(620) 371-6417 &nbsp;·&nbsp; Dodge City, KS</div>'+
+  '</div>'+
+  // Summary
+  '<div class="summary-bar">'+
+    '<div class="summary-item"><div class="summary-val">'+dayStops.length+'</div><div class="summary-key">Total Stops</div></div>'+
+    '<div class="summary-item"><div class="summary-val">'+dayStops.filter(function(d){return d.haul;}).length+'</div><div class="summary-key">Haul Aways</div></div>'+
+    '<div class="summary-item"><div class="summary-val">'+dayStops.reduce(function(n,d){return n+((d.appliances&&d.appliances.length)||1);},0)+'</div><div class="summary-key">Appliances</div></div>'+
+    '<div class="summary-item"><div class="summary-val">'+dayStops.filter(function(d){return d.deliveryType==='Full Install';}).length+'</div><div class="summary-key">Full Installs</div></div>'+
+  '</div>';
+
+  // Each stop
+  dayStops.forEach(function(d,idx){
+    var durStr=d.duration==='all-day'?'All Day':(d.time!=='Call Ahead'&&d.duration?(function(){var sm=timeToMinutes(d.time);var dur=parseInt(d.duration)||60;return d.time+' – '+minutesToTime(sm+dur);}()):(d.time||''));
+    var appList=d.appliances&&d.appliances.length?d.appliances:[{appliance:d.appliance||'',model:d.model||''}];
+
+    html+='<div class="stop">'+
+      '<div class="stop-header">'+
+        '<div><span class="stop-num">'+(d.stopOrder||idx+1)+'</span><span class="stop-name">'+d.name+'</span></div>'+
+        '<div class="stop-time">'+durStr+'</div>'+
+      '</div>'+
+      '<div class="stop-body">'+
+        '<div class="info-row">'+
+          '<div class="info-item"><div class="info-label">Phone</div><div class="info-val">'+d.phone+'</div></div>'+
+          '<div class="info-item"><div class="info-label">Address</div><div class="info-val">'+d.address+(d.city?', '+d.city:'')+'</div></div>'+
+          (d.invoice?'<div class="info-item"><div class="info-label">Invoice #</div><div class="info-val">'+d.invoice+'</div></div>':'')+'</div>'+
+        '<span class="delivery-type-badge">'+(d.deliveryType||'Full Install')+'</span>'+
+        // Appliances with serial number lines
+        '<div class="appliances-section">'+
+          '<div class="appliances-title">Appliances &amp; Serial Numbers</div>'+
+          appList.map(function(a){
+            return '<div class="appliance-row">'+
+              '<div class="appliance-info">'+
+                '<div class="appliance-name">'+a.appliance+'</div>'+
+                (a.model?'<div class="appliance-model">Model: '+a.model+'</div>':'')+
+              '</div>'+
+              '<div class="serial-field">'+
+                '<div class="serial-label">Serial Number</div>'+
+                '<div class="serial-line"></div>'+
+              '</div>'+
+            '</div>';
+          }).join('')+
+        '</div>'+
+        // Haul away
+        (d.haul?'<div class="haul-section"><div class="haul-label">Haul Away</div><div>'+(d.haulItem||'Old appliance pickup')+'</div></div>':'')+
+        // Notes
+        (d.notes?'<div class="notes-section"><div class="notes-label">Notes / Instructions</div><div>'+d.notes+'</div></div>':'')+
+        // Signature line
+        '<div class="sig-section">'+
+          '<div class="sig-box"><div class="sig-label">Customer Signature</div><div class="sig-line"></div></div>'+
+          '<div class="sig-box"><div class="sig-label">Delivered by</div><div class="sig-line"></div></div>'+
+          '<div class="sig-box" style="width:100px;flex:0 0 100px;"><div class="sig-label">Time</div><div class="sig-line"></div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  });
+
+  if(dayStops.length===0){
+    html+='<div style="text-align:center;padding:40px;color:#999;">No deliveries scheduled for this date.</div>';
+  }
+
+  html+='</body></html>';
+  win.document.write(html);
+  win.document.close();
+  setTimeout(function(){win.print();},400);
 }
 
 
