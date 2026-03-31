@@ -183,6 +183,7 @@
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="refresh-picks-btn" onclick="loadPicks()">&#8635; Refresh</button>
         <button class="refresh-picks-btn" id="generate-btn" onclick="generatePicks()" style="background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.5);">&#9889; Generate New Picks</button>
+        <button class="refresh-picks-btn" id="grade-btn" onclick="gradeYesterday()" style="background:rgba(82,183,136,0.08);border-color:rgba(82,183,136,0.35);color:var(--green);">&#10003; Grade Yesterday</button>
       </div>
     </div>
     <div class="picks-meta">
@@ -547,6 +548,42 @@ async function loadSports() {
 }
 
 // ── MANUALLY TRIGGER NEW PICKS ──
+async function gradeYesterday() {
+  var btn = document.getElementById('grade-btn');
+  var pass = prompt('Enter password to grade picks:');
+  if (!pass || pass !== 'chanschu2026') { alert('Incorrect password.'); return; }
+
+  if (btn) { btn.textContent = '⏳ Grading...'; btn.disabled = true; }
+
+  try {
+    var res = await fetch('/api/grade-picks');
+    var data = await res.json();
+
+    if (!data.ok) {
+      alert('Could not grade: ' + (data.message || data.error || 'Unknown error'));
+      return;
+    }
+
+    // Show results
+    var summary = data.graded.map(function(g) {
+      var icon = g.result === 'win' ? '✓' : g.result === 'loss' ? '✗' : '~';
+      return icon + ' Pick ' + g.rank + ': ' + g.pick + ' — ' + g.result.toUpperCase();
+    }).join('\n');
+
+    alert('Picks graded!\n\n' + summary + '\n\nAll-time record: ' + data.totals.wins + 'W - ' + data.totals.losses + 'L - ' + data.totals.pushes + 'P');
+
+    // Refresh tracker display
+    trackerCache = null;
+    await updateTrackerDisplay();
+
+  } catch(e) {
+    alert('Error: ' + e.message);
+  } finally {
+    if (btn) { btn.textContent = '✓ Grade Yesterday'; btn.disabled = false; }
+  }
+}
+
+
 async function generatePicks() {
   var pass = prompt('Enter password to generate picks:');
   if (!pass || pass !== 'chanschu2026') {
