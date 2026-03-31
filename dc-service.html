@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DC Appliance — Service Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --navy:#07111f;--navy-2:#0c1c30;--navy-3:#112238;--navy-4:#162d47;
+      --gold:#c9973a;--gold-light:#e4b96a;--white:#f8f6f2;
+      --gray-1:#d4cfc5;--gray-2:#8a8880;--gray-3:#4a4a47;
+      --green:#52b788;--red:#e07070;--blue:#5b9fd4;--orange:#e09050;
+      --radius:10px;
+    }
+    html{scroll-behavior:smooth;}
+    body{background:var(--navy);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+
+    /* LOGIN */
+    .login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:1000;}
+    .login-box{background:var(--navy-2);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:48px 40px;width:100%;max-width:380px;text-align:center;}
+    .login-logo{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin-bottom:6px;}
+    .login-logo span{color:var(--gold);}
+    .login-sub{font-size:12px;color:var(--gray-2);margin-bottom:32px;}
+    .login-field{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 16px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;margin-bottom:12px;outline:none;transition:border-color 0.2s;}
+    .login-field:focus{border-color:rgba(201,151,58,0.5);}
+    .login-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.05em;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+    .login-btn:hover{background:var(--gold-light);}
+    .login-err{font-size:12px;color:var(--red);margin-top:10px;display:none;}
+
+    /* LAYOUT */
+    .app{display:none;}
+    header{background:var(--navy-2);border-bottom:1px solid rgba(255,255,255,0.07);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .h-logo{font-family:'Playfair Display',serif;font-size:17px;color:var(--white);}
+    .h-logo span{color:var(--gold);}
+    .h-right{display:flex;align-items:center;gap:12px;}
+    .h-date{font-size:11px;color:var(--gray-2);}
+    .logout-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;border-radius:100px;cursor:pointer;transition:all 0.2s;}
+    .logout-btn:hover{color:var(--red);border-color:rgba(224,112,112,0.3);}
+    .main{padding:32px;max-width:1400px;margin:0 auto;}
+
+    /* STATS BAR */
+    .stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px;}
+    .stat-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:18px 20px;}
+    .stat-val{font-family:'Playfair Display',serif;font-size:28px;color:var(--white);line-height:1;}
+    .stat-key{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-top:4px;}
+    .stat-card.open .stat-val{color:var(--blue);}
+    .stat-card.progress .stat-val{color:var(--orange);}
+    .stat-card.done .stat-val{color:var(--green);}
+    .stat-card.today .stat-val{color:var(--gold);}
+
+    /* TWO COL LAYOUT */
+    .two-col{display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start;}
+
+    /* NEW JOB FORM */
+    .panel{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);overflow:hidden;}
+    .panel-hdr{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;}
+    .panel-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);}
+    .panel-body{padding:22px;}
+    .field{margin-bottom:14px;}
+    .field label{display:block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:6px;}
+    .field label .req{color:var(--red);}
+    .input,.select,.textarea{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:10px 14px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;}
+    .input:focus,.select:focus,.textarea:focus{border-color:rgba(201,151,58,0.4);}
+    .select option{background:var(--navy-3);color:var(--white);}
+    .textarea{resize:vertical;min-height:80px;}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .submit-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.04em;cursor:pointer;transition:all 0.2s;margin-top:6px;}
+    .submit-btn:hover{background:var(--gold-light);}
+
+    /* JOBS LIST */
+    .jobs-hdr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .filter-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+    .ftab{font-size:11px;font-weight:600;padding:5px 14px;border-radius:100px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;cursor:pointer;transition:all 0.2s;}
+    .ftab.active{background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.35);color:var(--gold-light);}
+    .ftab:hover:not(.active){color:var(--white);}
+    .search-wrap{position:relative;flex:1;min-width:180px;}
+    .search-input{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 12px 8px 32px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;}
+    .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gray-2);font-size:13px;}
+
+    /* JOB CARDS */
+    .jobs-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+    .job-card{background:var(--navy-3);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:16px 18px;transition:all 0.2s;cursor:pointer;}
+    .job-card:hover{border-color:rgba(255,255,255,0.15);background:var(--navy-4);}
+    .job-card.expanded{border-color:rgba(201,151,58,0.3);}
+    .job-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+    .job-id{font-size:10px;font-weight:700;letter-spacing:0.1em;color:var(--gray-2);}
+    .job-name{font-size:15px;font-weight:600;color:var(--white);margin-top:2px;}
+    .job-appliance{font-size:12px;color:var(--gray-1);margin-top:2px;}
+    .job-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+    .status-pill{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:3px 10px;border-radius:100px;}
+    .s-open{background:rgba(91,159,212,0.12);border:1px solid rgba(91,159,212,0.25);color:var(--blue);}
+    .s-progress{background:rgba(224,144,80,0.12);border:1px solid rgba(224,144,80,0.25);color:var(--orange);}
+    .s-done{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.25);color:var(--green);}
+    .s-waiting{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:var(--gray-2);}
+    .tech-badge{font-size:10px;font-weight:600;padding:2px 9px;border-radius:100px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-1);}
+    .job-meta-row{display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap;}
+    .job-meta-item{font-size:11px;color:var(--gray-2);display:flex;align-items:center;gap:4px;}
+
+    /* EXPANDED JOB DETAIL */
+    .job-detail{display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07);}
+    .job-detail.open{display:block;}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+    .detail-field label{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:4px;display:block;}
+    .detail-field .dval{font-size:13px;color:var(--white);}
+    .notes-block{background:var(--navy-2);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--gray-1);line-height:1.7;margin-bottom:12px;}
+    .detail-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .act-btn{font-size:11px;font-weight:600;padding:7px 14px;border-radius:8px;border:1px solid;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .act-btn.blue{border-color:rgba(91,159,212,0.3);color:var(--blue);background:rgba(91,159,212,0.06);}
+    .act-btn.blue:hover{background:rgba(91,159,212,0.15);}
+    .act-btn.orange{border-color:rgba(224,144,80,0.3);color:var(--orange);background:rgba(224,144,80,0.06);}
+    .act-btn.orange:hover{background:rgba(224,144,80,0.15);}
+    .act-btn.green{border-color:rgba(82,183,136,0.3);color:var(--green);background:rgba(82,183,136,0.06);}
+    .act-btn.green:hover{background:rgba(82,183,136,0.15);}
+    .act-btn.red{border-color:rgba(224,112,112,0.3);color:var(--red);background:rgba(224,112,112,0.06);}
+    .act-btn.red:hover{background:rgba(224,112,112,0.15);}
+    .assign-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+    .assign-row label{font-size:11px;color:var(--gray-2);white-space:nowrap;}
+    .assign-select{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:6px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;flex:1;}
+
+    /* EMPTY STATE */
+    .empty-state{padding:40px;text-align:center;color:var(--gray-2);font-size:13px;}
+
+    /* PRIORITY DOT */
+    .prio-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .prio-high .prio-dot{background:var(--red);}
+    .prio-med .prio-dot{background:var(--orange);}
+    .prio-low .prio-dot{background:var(--green);}
+
+
+    /* AI CHAT */
+    .chat-toggle{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 20px rgba(201,151,58,0.4);transition:all 0.2s;z-index:200;}
+    .chat-toggle:hover{background:var(--gold-light);transform:scale(1.05);}
+    .chat-panel{position:fixed;bottom:88px;right:24px;width:380px;max-height:560px;background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:16px;display:none;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.5);z-index:200;overflow:hidden;}
+    .chat-panel.open{display:flex;}
+    .chat-hdr{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;background:var(--navy-3);}
+    .chat-hdr-title{font-size:13px;font-weight:700;color:var(--white);}
+    .chat-hdr-sub{font-size:10px;color:var(--gray-2);margin-top:1px;}
+    .chat-close{background:transparent;border:none;color:var(--gray-2);cursor:pointer;font-size:16px;padding:2px 6px;}
+    .chat-close:hover{color:var(--white);}
+    .chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+    .chat-msg{max-width:88%;padding:10px 13px;border-radius:10px;font-size:12px;line-height:1.65;}
+    .chat-msg.ai{background:var(--navy-3);color:var(--gray-1);align-self:flex-start;border:1px solid rgba(255,255,255,0.07);}
+    .chat-msg.user{background:rgba(201,151,58,0.15);color:var(--white);align-self:flex-end;border:1px solid rgba(201,151,58,0.2);}
+    .chat-msg.system{background:rgba(82,183,136,0.1);color:var(--green);align-self:center;border:1px solid rgba(82,183,136,0.2);font-size:11px;text-align:center;max-width:96%;}
+    .chat-input-row{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.07);display:flex;gap:8px;align-items:flex-end;}
+    .chat-textarea{flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:9px 12px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;resize:none;outline:none;max-height:100px;min-height:36px;transition:border-color 0.2s;}
+    .chat-textarea:focus{border-color:rgba(201,151,58,0.4);}
+    .chat-send{background:var(--gold);border:none;border-radius:8px;padding:9px 14px;color:var(--navy);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;flex-shrink:0;}
+    .chat-send:hover{background:var(--gold-light);}
+    .chat-send:disabled{opacity:0.5;cursor:default;}
+    .typing-dots span{animation:blink 1.2s infinite;display:inline-block;}
+    .typing-dots span:nth-child(2){animation-delay:0.2s;}
+    .typing-dots span:nth-child(3){animation-delay:0.4s;}
+    @keyframes blink{0%,80%,100%{opacity:0;}40%{opacity:1;}}
+    footer{padding:24px 32px;text-align:center;color:var(--gray-3);font-size:11px;margin-top:40px;}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr;}.stats-bar{grid-template-columns:repeat(3,1fr);}  .main{padding:16px;}}
+    @media(max-width:500px){.stats-bar{grid-template-columns:1fr 1fr;}.detail-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">DC <span>Appliance</span></div>
+    <div class="login-sub">Service Portal — Staff Access Only</div>
+    <input class="login-field" type="password" id="login-pw" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-err" id="login-err">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <header>
+    <div class="h-logo">DC <span>Appliance</span> — Service</div>
+    <div class="h-right">
+      <div class="h-date" id="h-date"></div>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- STATS -->
+    <div class="stats-bar">
+      <div class="stat-card open"><div class="stat-val" id="s-open">0</div><div class="stat-key">Open Jobs</div></div>
+      <div class="stat-card progress"><div class="stat-val" id="s-progress">0</div><div class="stat-key">In Progress</div></div>
+      <div class="stat-card done"><div class="stat-val" id="s-done">0</div><div class="stat-key">Completed</div></div>
+      <div class="stat-card today"><div class="stat-val" id="s-today">0</div><div class="stat-key">Scheduled Today</div></div>
+      <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-key">Total Jobs</div></div>
+    </div>
+
+    <div class="two-col">
+
+      <!-- NEW JOB FORM -->
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title">Schedule New Job</div>
+        </div>
+        <div class="panel-body">
+          <div class="field">
+            <label>Customer Name <span class="req">*</span></label>
+            <input class="input" id="f-name" type="text" placeholder="John Smith"/>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Phone <span class="req">*</span></label>
+              <input class="input" id="f-phone" type="tel" placeholder="(620) 555-1234"/>
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input class="input" id="f-email" type="email" placeholder="optional"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Address <span class="req">*</span></label>
+            <input class="input" id="f-address" type="text" placeholder="123 Main St, Dodge City KS"/>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Appliance <span class="req">*</span></label>
+              <select class="select" id="f-appliance">
+                <option value="">Select...</option>
+                <option>Refrigerator</option>
+                <option>Washer</option>
+                <option>Dryer</option>
+                <option>Dishwasher</option>
+                <option>Oven / Range</option>
+                <option>Microwave</option>
+                <option>Freezer</option>
+                <option>Ice Maker</option>
+                <option>Garbage Disposal</option>
+                <option>AC Unit</option>
+                <option>TV</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Brand</label>
+              <input class="input" id="f-brand" type="text" placeholder="Samsung, LG, etc."/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Issue Description <span class="req">*</span></label>
+            <textarea class="textarea" id="f-issue" placeholder="Describe the problem..."></textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Scheduled Date <span class="req">*</span></label>
+              <input class="input" id="f-date" type="date"/>
+            </div>
+            <div class="field">
+              <label>Time Window</label>
+              <select class="select" id="f-time">
+                <option>Morning (8am–12pm)</option>
+                <option>Afternoon (12pm–5pm)</option>
+                <option>All Day</option>
+                <option>Call Ahead</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Assign To</label>
+              <select class="select" id="f-tech">
+                <option value="Unassigned">Unassigned</option>
+                <option value="Jeff">Jeff</option>
+                <option value="Justin">Justin</option>
+                <option value="DC Appliance">DC Appliance</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Priority</label>
+              <select class="select" id="f-priority">
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Internal Notes</label>
+            <textarea class="textarea" id="f-notes" placeholder="Parts needed, access info, etc..." style="min-height:60px;"></textarea>
+          </div>
+          <button class="submit-btn" onclick="addJob()">+ Schedule Job</button>
+        </div>
+      </div>
+
+      <!-- JOBS LIST -->
+      <div class="panel">
+        <div class="panel-hdr jobs-hdr">
+          <div class="panel-title">Jobs</div>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1;margin-left:16px;">
+            <div class="filter-tabs">
+              <button class="ftab active" data-filter="all" onclick="setFilter('all',this)">All</button>
+              <button class="ftab" data-filter="Open" onclick="setFilter('Open',this)">Open</button>
+              <button class="ftab" data-filter="In Progress" onclick="setFilter('In Progress',this)">In Progress</button>
+              <button class="ftab" data-filter="Completed" onclick="setFilter('Completed',this)">Completed</button>
+              <button class="ftab" data-filter="Jeff" onclick="setFilter('Jeff',this)">Jeff</button>
+              <button class="ftab" data-filter="Justin" onclick="setFilter('Justin',this)">Justin</button>
+            </div>
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input class="search-input" id="search-input" type="text" placeholder="Search by name, appliance, address..." oninput="renderJobs()"/>
+            </div>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:16px;">
+          <div class="jobs-list" id="jobs-list">
+            <div class="empty-state">No jobs yet. Schedule the first one!</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <footer>DC Appliance Service Portal &nbsp;·&nbsp; Dodge City, KS &nbsp;·&nbsp; (620) 371-6417</footer>
+  <!-- AI CHAT BUTTON -->
+  <button class="chat-toggle" onclick="toggleChat()" title="AI Job Assistant">🤖</button>
+
+  <!-- AI CHAT PANEL -->
+  <div class="chat-panel" id="chat-panel">
+    <div class="chat-hdr">
+      <div>
+        <div class="chat-hdr-title">🤖 AI Job Assistant</div>
+        <div class="chat-hdr-sub">Tell me about the service call — I'll create the job</div>
+      </div>
+      <button class="chat-close" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="chat-msg ai">Hi! I'm your service scheduling assistant. Just tell me about the job in plain English and I'll create it automatically.<br/><br/>Example: <em>"John Smith at 123 Main St needs his Samsung washer looked at — it's not spinning. His number is 620-555-1234. Schedule for Jeff tomorrow morning."</em></div>
+    </div>
+    <div class="chat-input-row">
+      <textarea class="chat-textarea" id="chat-input" placeholder="Describe the service call..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+      <button class="chat-send" id="chat-send-btn" onclick="sendChat()">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var PASSWORD = 'DCAppliance2026';
+window.ANTHROPIC_KEY = ''; // Set your Anthropic API key here
+var FILTER = 'all';
+var jobs = [];
+var nextId = 1;
+
+// ── AUTH ──
+function doLogin() {
+  var pw = document.getElementById('login-pw').value;
+  if (pw === PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadJobs();
+    updateDate();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+    document.getElementById('login-pw').value = '';
+  }
+}
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-pw').value = '';
+}
+function updateDate() {
+  var el = document.getElementById('h-date');
+  if (el) el.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+
+// ── STORAGE ──
+function saveJobs() {
+  try { localStorage.setItem('dc-service-jobs', JSON.stringify({jobs:jobs, nextId:nextId})); } catch(e) {}
+}
+function loadJobs() {
+  try {
+    var raw = localStorage.getItem('dc-service-jobs');
+    if (raw) {
+      var d = JSON.parse(raw);
+      jobs = d.jobs || [];
+      nextId = d.nextId || jobs.length + 1;
+    }
+  } catch(e) {}
+  renderJobs();
+  updateStats();
+}
+
+// ── ADD JOB ──
+function addJob() {
+  var name     = document.getElementById('f-name').value.trim();
+  var phone    = document.getElementById('f-phone').value.trim();
+  var email    = document.getElementById('f-email').value.trim();
+  var address  = document.getElementById('f-address').value.trim();
+  var appliance= document.getElementById('f-appliance').value;
+  var brand    = document.getElementById('f-brand').value.trim();
+  var issue    = document.getElementById('f-issue').value.trim();
+  var date     = document.getElementById('f-date').value;
+  var time     = document.getElementById('f-time').value;
+  var tech     = document.getElementById('f-tech').value;
+  var priority = document.getElementById('f-priority').value;
+  var notes    = document.getElementById('f-notes').value.trim();
+
+  if (!name || !phone || !address || !appliance || !issue || !date) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+
+  var job = {
+    id: 'DC-' + String(nextId).padStart(4,'0'),
+    name, phone, email, address, appliance, brand, issue,
+    date, time, tech, priority, notes,
+    status: 'Open',
+    createdAt: new Date().toISOString(),
+    completedAt: null,
+  };
+  nextId++;
+  jobs.unshift(job);
+  saveJobs();
+  renderJobs();
+  updateStats();
+  clearForm();
+  alert('Job ' + job.id + ' scheduled for ' + name + '!');
+}
+
+function clearForm() {
+  ['f-name','f-phone','f-email','f-address','f-brand','f-issue','f-notes'].forEach(function(id) {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f-appliance').value = '';
+  document.getElementById('f-tech').value = 'Unassigned';
+  document.getElementById('f-priority').value = 'Medium';
+  document.getElementById('f-date').value = '';
+}
+
+// ── FILTER ──
+function setFilter(f, btn) {
+  FILTER = f;
+  document.querySelectorAll('.ftab').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderJobs();
+}
+
+// ── RENDER ──
+function renderJobs() {
+  var search = (document.getElementById('search-input')?.value || '').toLowerCase();
+  var filtered = jobs.filter(function(j) {
+    var matchFilter = FILTER === 'all' || j.status === FILTER || j.tech === FILTER;
+    var matchSearch = !search ||
+      j.name.toLowerCase().includes(search) ||
+      j.appliance.toLowerCase().includes(search) ||
+      j.address.toLowerCase().includes(search) ||
+      j.id.toLowerCase().includes(search) ||
+      (j.brand || '').toLowerCase().includes(search);
+    return matchFilter && matchSearch;
+  });
+
+  var list = document.getElementById('jobs-list');
+  if (!list) return;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state">No jobs found.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(function(j) {
+    var statusClass = j.status === 'Open' ? 's-open' : j.status === 'In Progress' ? 's-progress' : j.status === 'Completed' ? 's-done' : 's-waiting';
+    var prioClass = j.priority === 'High' ? 'prio-high' : j.priority === 'Low' ? 'prio-low' : 'prio-med';
+    var fmtDate = j.date ? new Date(j.date + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+
+    return '<div class="job-card ' + prioClass + '" id="card-' + j.id + '" onclick="toggleJob(\'' + j.id + '\')">' +
+      '<div class="job-top">' +
+        '<div>' +
+          '<div style="display:flex;align-items:center;gap:7px;">' +
+            '<div class="prio-dot"></div>' +
+            '<div class="job-id">' + j.id + '</div>' +
+          '</div>' +
+          '<div class="job-name">' + j.name + '</div>' +
+          '<div class="job-appliance">' + (j.brand ? j.brand + ' ' : '') + j.appliance + '</div>' +
+        '</div>' +
+        '<div class="job-right">' +
+          '<span class="status-pill ' + statusClass + '">' + j.status + '</span>' +
+          '<span class="tech-badge">' + j.tech + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="job-meta-row">' +
+        '<div class="job-meta-item">📅 ' + fmtDate + '</div>' +
+        '<div class="job-meta-item">🕐 ' + j.time + '</div>' +
+        '<div class="job-meta-item">📍 ' + j.address.split(',')[0] + '</div>' +
+      '</div>' +
+      '<div class="job-detail" id="detail-' + j.id + '">' +
+        '<div class="assign-row">' +
+          '<label>Assign to:</label>' +
+          '<select class="assign-select" onchange="assignTech(\'' + j.id + '\',this.value)" onclick="event.stopPropagation()">' +
+            ['Unassigned','Jeff','Justin','DC Appliance'].map(function(t){ return '<option value="' + t + '"' + (j.tech===t?' selected':'') + '>' + t + '</option>'; }).join('') +
+          '</select>' +
+        '</div>' +
+        '<div class="detail-grid">' +
+          '<div class="detail-field"><label>Phone</label><div class="dval"><a href="tel:' + j.phone + '" style="color:var(--blue);text-decoration:none;" onclick="event.stopPropagation()">' + j.phone + '</a></div></div>' +
+          (j.email ? '<div class="detail-field"><label>Email</label><div class="dval"><a href="mailto:' + j.email + '" style="color:var(--blue);text-decoration:none;" onclick="event.stopPropagation()">' + j.email + '</a></div></div>' : '<div class="detail-field"><label>Email</label><div class="dval" style="color:var(--gray-2)">—</div></div>') +
+          '<div class="detail-field"><label>Address</label><div class="dval">' + j.address + '</div></div>' +
+          '<div class="detail-field"><label>Priority</label><div class="dval">' + j.priority + '</div></div>' +
+        '</div>' +
+        '<div class="detail-field" style="margin-bottom:10px;"><label>Issue</label><div class="notes-block">' + j.issue + '</div></div>' +
+        (j.notes ? '<div class="detail-field" style="margin-bottom:12px;"><label>Internal Notes</label><div class="notes-block">' + j.notes + '</div></div>' : '') +
+        '<div class="detail-actions" onclick="event.stopPropagation()">' +
+          (j.status !== 'In Progress' && j.status !== 'Completed' ? '<button class="act-btn orange" onclick="setStatus(\'' + j.id + '\',\'In Progress\')">▶ Start Job</button>' : '') +
+          (j.status !== 'Completed' ? '<button class="act-btn green" onclick="setStatus(\'' + j.id + '\',\'Completed\')">✓ Mark Complete</button>' : '') +
+          (j.status !== 'Open' ? '<button class="act-btn blue" onclick="setStatus(\'' + j.id + '\',\'Open\')">↩ Reopen</button>' : '') +
+          '<button class="act-btn red" onclick="deleteJob(\'' + j.id + '\')">Delete</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleJob(id) {
+  var detail = document.getElementById('detail-' + id);
+  var card   = document.getElementById('card-' + id);
+  if (!detail) return;
+  var isOpen = detail.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.job-detail').forEach(function(d) { d.classList.remove('open'); });
+  document.querySelectorAll('.job-card').forEach(function(c) { c.classList.remove('expanded'); });
+  if (!isOpen) {
+    detail.classList.add('open');
+    card.classList.add('expanded');
+  }
+}
+
+function assignTech(id, tech) {
+  var job = jobs.find(function(j) { return j.id === id; });
+  if (!job) return;
+  job.tech = tech;
+  saveJobs();
+  renderJobs();
+  updateStats();
+  // Re-open the card
+  setTimeout(function() { toggleJob(id); }, 50);
+}
+
+function setStatus(id, status) {
+  var job = jobs.find(function(j) { return j.id === id; });
+  if (!job) return;
+  job.status = status;
+  if (status === 'Completed') job.completedAt = new Date().toISOString();
+  saveJobs();
+  renderJobs();
+  updateStats();
+}
+
+function deleteJob(id) {
+  if (!confirm('Delete this job? This cannot be undone.')) return;
+  jobs = jobs.filter(function(j) { return j.id !== id; });
+  saveJobs();
+  renderJobs();
+  updateStats();
+}
+
+function updateStats() {
+  var today = new Date().toISOString().slice(0,10);
+  var open  = jobs.filter(function(j){ return j.status==='Open'; }).length;
+  var prog  = jobs.filter(function(j){ return j.status==='In Progress'; }).length;
+  var done  = jobs.filter(function(j){ return j.status==='Completed'; }).length;
+  var tod   = jobs.filter(function(j){ return j.date===today; }).length;
+  document.getElementById('s-open').textContent    = open;
+  document.getElementById('s-progress').textContent= prog;
+  document.getElementById('s-done').textContent    = done;
+  document.getElementById('s-today').textContent   = tod;
+  document.getElementById('s-total').textContent   = jobs.length;
+}
+
+
+// ── AI CHAT ──
+var chatHistory = [];
+
+function toggleChat() {
+  var panel = document.getElementById('chat-panel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) {
+    document.getElementById('chat-input').focus();
+  }
+}
+
+function addChatMsg(role, text) {
+  var messages = document.getElementById('chat-messages');
+  var div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  div.innerHTML = text;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+  return div;
+}
+
+async function sendChat() {
+  var input = document.getElementById('chat-input');
+  var btn   = document.getElementById('chat-send-btn');
+  var text  = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  btn.disabled = true;
+  addChatMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
+
+  // Typing indicator
+  var typingEl = addChatMsg('ai', '<span class="typing-dots"><span>●</span><span>●</span><span>●</span></span>');
+
+  var today = new Date().toISOString().slice(0,10);
+  var tomorrow = new Date(Date.now()+86400000).toISOString().slice(0,10);
+
+  var systemPrompt = 'You are a service scheduling assistant for DC Appliance in Dodge City, KS. ' +
+    'Your job is to extract job details from natural conversation and create service jobs. ' +
+    'Today is ' + new Date().toLocaleDateString('en-US',{weekday:"long",month:"long",day:"numeric",year:"numeric"}) + '. ' +
+    'Today\'s date value is ' + today + '. Tomorrow is ' + tomorrow + '. ' +
+    'Available techs: Jeff, Justin, DC Appliance. ' +
+    'When you have enough info to create a job, respond with a JSON block like this (and nothing else before or after the JSON): ' +
+    '{"action":"create_job","name":"Customer Name","phone":"620-555-1234","email":"","address":"123 Main St, Dodge City KS","appliance":"Washer","brand":"Samsung","issue":"Not spinning","date":"' + today + '","time":"Morning (8am–12pm)","tech":"Jeff","priority":"Medium","notes":""}' +
+    'Valid time values: "Morning (8am–12pm)", "Afternoon (12pm–5pm)", "All Day", "Call Ahead". ' +
+    'Valid priority values: "High", "Medium", "Low". ' +
+    'If you need more info, ask a short friendly question. ' +
+    'If the user says something unrelated, gently redirect to scheduling. ' +
+    'Keep responses brief and conversational.';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': window.ANTHROPIC_KEY || '',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: chatHistory,
+      }),
+    });
+
+    var data = await res.json();
+    var reply = data.content?.[0]?.text || 'Sorry, I had trouble with that. Please try again.';
+
+    chatHistory.push({ role: 'assistant', content: reply });
+    typingEl.remove();
+
+    // Check if reply contains a job JSON
+    var jsonMatch = reply.match(/\{[\s\S]*"action"\s*:\s*"create_job"[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        var jobData = JSON.parse(jsonMatch[0]);
+        // Create the job
+        var job = {
+          id: 'DC-' + String(nextId).padStart(4,'0'),
+          name:      jobData.name      || '',
+          phone:     jobData.phone     || '',
+          email:     jobData.email     || '',
+          address:   jobData.address   || '',
+          appliance: jobData.appliance || 'Other',
+          brand:     jobData.brand     || '',
+          issue:     jobData.issue     || '',
+          date:      jobData.date      || today,
+          time:      jobData.time      || 'All Day',
+          tech:      jobData.tech      || 'Unassigned',
+          priority:  jobData.priority  || 'Medium',
+          notes:     jobData.notes     || '',
+          status:    'Open',
+          createdAt: new Date().toISOString(),
+          completedAt: null,
+        };
+        nextId++;
+        jobs.unshift(job);
+        saveJobs();
+        renderJobs();
+        updateStats();
+
+        addChatMsg('system', '✓ Job ' + job.id + ' created for ' + job.name + ' — ' + job.appliance + ' on ' + new Date(job.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' assigned to ' + job.tech);
+        addChatMsg('ai', 'Job created! Anything else to add, or want to schedule another call?');
+        chatHistory = []; // reset for next job
+      } catch(e) {
+        addChatMsg('ai', reply);
+      }
+    } else {
+      addChatMsg('ai', reply);
+    }
+
+  } catch(e) {
+    typingEl.remove();
+    addChatMsg('ai', 'Connection error. Check that the Anthropic API key is set. Error: ' + e.message);
+  }
+
+  btn.disabled = false;
+  document.getElementById('chat-input').focus();
+}
+// Set default date to today
+document.getElementById('f-date').valueAsDate = new Date();
+</script>
+</body>
+</html>
