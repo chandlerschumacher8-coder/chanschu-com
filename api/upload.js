@@ -1,4 +1,4 @@
-// api/upload.js — File upload to Vercel Blob
+// api/upload.js — File upload to Vercel Blob (works with private store)
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
  
 export default async function handler(req, res) {
@@ -12,26 +12,24 @@ export default async function handler(req, res) {
     if (!filename || !data || !companyId || !jobId) {
       return res.status(400).json({ ok: false, error: 'Missing required fields' });
     }
- 
-    // Check Blob token is configured
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      return res.status(500).json({ 
-        ok: false, 
-        error: 'Vercel Blob storage not configured. Go to Vercel Dashboard -> Storage tab -> Create Blob Store -> Connect to this project, then redeploy.' 
-      });
+      return res.status(500).json({ ok: false, error: 'BLOB_READ_WRITE_TOKEN not configured in Vercel.' });
     }
  
     const { put } = await import('@vercel/blob');
     const buffer = Buffer.from(data, 'base64');
     const safeName = `service/${companyId}/${jobId}/${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const blob = await put(safeName, buffer, { 
-      access: 'public', 
+ 
+    // Try without specifying access (uses store default)
+    const blob = await put(safeName, buffer, {
       contentType: contentType || 'application/octet-stream',
-      token: process.env.BLOB_READ_WRITE_TOKEN
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+      addRandomSuffix: false,
     });
+ 
     return res.status(200).json({ ok: true, url: blob.url, filename });
   } catch (err) {
-    console.error('Upload error:', err);
+    console.error('Upload error:', err.message);
     return res.status(500).json({ ok: false, error: err.message });
   }
 }
