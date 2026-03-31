@@ -833,7 +833,7 @@ async function sendChat(){
   var techs=techList.filter(function(t){return t!=='Unassigned';}).join(', ')||'Unassigned';
   var sys='You are a service scheduling assistant. Today is '+new Date().toLocaleDateString('en-US',{weekday:"long",month:"long",day:"numeric",year:"numeric"})+'. Today='+today+', Tomorrow='+tomorrow+'. Available techs: '+techs+'. When you have enough info, respond with ONLY this JSON: {"action":"create_job","name":"","phone":"","email":"","address":"","appliance":"","brand":"","model":"","serial":"","issue":"","date":"'+today+'","time":"Morning (8am–12pm)","tech":"Unassigned","priority":"Medium","notes":""}. Valid times: "Morning (8am–12pm)","Afternoon (12pm–5pm)","All Day","Call Ahead". Valid priorities: "High","Medium","Low". Ask short questions if info is missing.';
   try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':window.ANTHROPIC_KEY||'','anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:sys,messages:chatHistory})});
+    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,messages:chatHistory,max_tokens:600})});
     var data=await res.json();
     var reply=data.content?.[0]?.text||'Sorry, I had trouble. Please try again.';
     chatHistory.push({role:'assistant',content:reply});
@@ -857,7 +857,6 @@ async function sendChat(){
 //  UTILS
 // ════════════════════════════════
 function closeModal(id){document.getElementById(id).classList.remove('open');document.querySelectorAll('.modal-msg').forEach(function(m){m.textContent='';});}
-window.ANTHROPIC_KEY=''; // Set your Anthropic API key here
 </script>
 </body>
 </html>
