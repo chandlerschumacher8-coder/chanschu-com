@@ -87,6 +87,10 @@
     .day-title .today-badge{font-size:11px;font-weight:700;padding:2px 9px;background:rgba(201,151,58,0.15);border:1px solid rgba(201,151,58,0.3);color:var(--gold);border-radius:100px;vertical-align:middle;margin-left:8px;font-family:'Plus Jakarta Sans',sans-serif;}
     .today-btn{font-size:11px;font-weight:600;padding:6px 13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);border-radius:100px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
     .today-btn:hover{color:var(--white);}
+    .active-team{background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.35);color:var(--gold);}
+    .team-badge-main{background:rgba(91,159,212,0.15);color:var(--blue);font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;}
+    .team-badge-other{background:rgba(155,127,212,0.15);color:var(--purple);font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;}
+    .today-btn:hover{color:var(--white);}
 
     /* TIME SLOTS */
     .time-grid{flex:1;overflow-y:auto;}
@@ -253,7 +257,8 @@
         <div class="route-stat"><span class="route-stat-label">Total Stops</span><span class="route-stat-val" id="r-stops">0</span></div>
         <div class="route-stat"><span class="route-stat-label">Delivered</span><span class="route-stat-val" id="r-delivered" style="color:var(--green)">0</span></div>
         <div class="route-stat"><span class="route-stat-label">Remaining</span><span class="route-stat-val" id="r-remain" style="color:var(--orange)">0</span></div>
-        <div class="route-stat"><span class="route-stat-label">Haul Aways</span><span class="route-stat-val" id="r-haul" style="color:var(--red)">0</span></div>
+        <div class="route-stat"><span class="route-stat-label">Main Team</span><span class="route-stat-val" id="r-main" style="color:var(--blue)">0</span></div>
+        <div class="route-stat"><span class="route-stat-label">Other Team</span><span class="route-stat-val" id="r-other" style="color:var(--purple)">0</span></div>
       </div>
 
       <!-- Legend -->
@@ -272,6 +277,11 @@
       <div class="day-header">
         <button class="day-nav-btn" onclick="changeDay(-1)">&#8592;</button>
         <div class="day-title" id="day-title"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="today-btn active-team" id="team-all" onclick="setTeamFilter('all',this)">All Teams</button>
+          <button class="today-btn" id="team-main" onclick="setTeamFilter('Main Delivery Team',this)">Main Team</button>
+          <button class="today-btn" id="team-other" onclick="setTeamFilter('Other Delivery Team',this)">Other Team</button>
+        </div>
         <button class="today-btn" onclick="goToday()">Today</button>
         <button class="day-nav-btn" onclick="changeDay(1)">&#8594;</button>
       </div>
@@ -384,18 +394,14 @@
           <button class="file-attach-remove" onclick="removeAttachedInvoice()" title="Remove">&#x2715;</button>
         </div>
       </div>
-      <!-- HAUL AWAY -->
-      <div style="background:rgba(224,112,112,0.06);border:1px solid rgba(224,112,112,0.18);border-radius:8px;padding:12px 14px;margin-bottom:12px;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--red);margin-bottom:8px;">Haul Away</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <input type="checkbox" id="f-haul" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer;" onchange="document.getElementById('haul-details').style.display=this.checked?'block':'none'"/>
-          <label for="f-haul" style="font-size:12px;color:var(--gray-1);cursor:pointer;">Old appliance haul away</label>
-        </div>
-        <div id="haul-details" style="display:none;margin-top:4px;">
-          <input class="inp" id="f-haul-item" placeholder="What appliance to haul away?"/>
-        </div>
+
+      <div class="field"><label>Delivery Team <span class="req">*</span></label>
+        <select class="sel" id="f-team">
+          <option value="Main Delivery Team">Main Delivery Team</option>
+          <option value="Other Delivery Team">Other Delivery Team</option>
+        </select>
       </div>
-      <div class="field"><label>Notes</label><textarea class="txta" id="f-notes" placeholder="Access codes, floor level, special instructions..."></textarea></div>
+      <div class="field"><label>Notes</label><textarea class="txta" id="f-notes" placeholder="Access codes, floor level, haul away info, special instructions..."></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="ghost-btn" onclick="closeModal('add-modal')">Cancel</button>
@@ -437,7 +443,16 @@ var PASSWORD='DCDelivery2026';
 var deliveries=[],nextId=1;
 var viewDate=new Date().toISOString().slice(0,10);
 var calMonth=new Date().getMonth(), calYear=new Date().getFullYear();
+var TEAM_FILTER='all';
 var HOURS=['8:00 AM','8:30 AM','9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM'];
+function setTeamFilter(team, btn){
+  TEAM_FILTER=team;
+  document.querySelectorAll('#team-all,#team-main,#team-other').forEach(function(b){b.classList.remove('active-team');});
+  btn.classList.add('active-team');
+  renderTimeGrid();
+  updateRouteSummary();
+}
+
 function timeToMinutes(t){
   if(!t||t==='Call Ahead'||t==='all-day')return -1;
   var m=t.match(/(\d+):(\d+)\s*(AM|PM)/i); if(!m)return -1;
@@ -550,7 +565,11 @@ function changeCalMonth(delta){
 // ── TIME GRID ──
 function renderTimeGrid(){
   var grid=document.getElementById('time-grid');
-  var dayStops=deliveries.filter(function(d){return d.date===viewDate;});
+  var dayStops=deliveries.filter(function(d){
+    if(d.date!==viewDate)return false;
+    if(TEAM_FILTER!=='all'&&d.team!==TEAM_FILTER)return false;
+    return true;
+  });
   dayStops.sort(function(a,b){
     if(a.stopOrder&&b.stopOrder)return a.stopOrder-b.stopOrder;
     if(a.stopOrder)return -1; if(b.stopOrder)return 1;
@@ -560,18 +579,20 @@ function renderTimeGrid(){
   var html='';
   HOURS.forEach(function(hour){
     var hourMins=timeToMinutes(hour);
-    // Only show event card at START time, but block out subsequent slots
+    // Show event card at START time slot only
     var slots=dayStops.filter(function(d){
       if(d.duration==='all-day')return hour==='8:00 AM';
       if(d.time==='Call Ahead')return hour==='8:00 AM';
-      return timeToMinutes(d.time)===hourMins;
+      var startMins=timeToMinutes(d.time);
+      return startMins===hourMins;
     });
-    // Check if this slot is blocked by a multi-hour event starting earlier
+    // Check if this slot is BLOCKED by a multi-hour event starting in a PREVIOUS slot
     var blockedBy=dayStops.filter(function(d){
       if(d.duration==='all-day'||d.time==='Call Ahead')return false;
       var startMins=timeToMinutes(d.time);
       var durMins=parseInt(d.duration)||60;
-      return hourMins>startMins && hourMins<startMins+durMins;
+      // Block slots AFTER start and WITHIN duration
+      return hourMins>startMins && hourMins<=(startMins+durMins-30);
     });
 
     // Deduplicate
@@ -587,12 +608,12 @@ function renderTimeGrid(){
         var badgeCls=d.status==='Scheduled'?'status-scheduled':d.status==='Out for Delivery'?'status-out':d.status==='Delivered'?'status-delivered':'status-rescheduled';
         html+='<div class="delivery-event '+sc+'" onclick="openDetail(\''+d.id+'\')">'+
           '<div class="de-name">'+d.name+'</div>'+
-          '<div class="de-sub">'+(d.brand?d.brand+' ':'')+d.appliance+' &nbsp;·&nbsp; '+d.address+'</div>'+
+          '<div class="de-sub">'+((d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.appliance;}).join(', '):d.appliance)+' &nbsp;·&nbsp; '+d.address+(d.city?', '+d.city:'')+'</div>'+
           '<div class="de-badges">'+
             '<span class="de-badge '+badgeCls+'">'+d.status+'</span>'+
             (d.stopOrder?'<span class="de-badge stop-num">Stop #'+d.stopOrder+'</span>':'')+
-            (d.haul?'<span class="de-badge haul">Haul Away</span>':'')+
             (d.invoice?'<span class="de-badge invoice">'+d.invoice+'</span>':'')+
+            (d.team==='Other Delivery Team'?'<span class="team-badge-other">Other Team</span>':'<span class="team-badge-main">Main</span>')+
             (d.deliveredAt?'<span style="font-size:9px;color:var(--green);margin-left:2px;">'+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</span>':'')+
           '</div>'+
         '</div>';
@@ -606,18 +627,19 @@ function renderTimeGrid(){
 // ── ROUTE SUMMARY ──
 function updateRouteSummary(){
   var dayStops=deliveries.filter(function(d){return d.date===viewDate;});
-  document.getElementById('r-stops').textContent=dayStops.length;
-  document.getElementById('r-delivered').textContent=dayStops.filter(function(d){return d.status==='Delivered';}).length;
-  document.getElementById('r-remain').textContent=dayStops.filter(function(d){return d.status!=='Delivered'&&d.status!=='Rescheduled';}).length;
-  document.getElementById('r-haul').textContent=dayStops.filter(function(d){return d.haul;}).length;
+  var allDayStops=deliveries.filter(function(d){return d.date===viewDate;});
+  document.getElementById('r-stops').textContent=allDayStops.length;
+  document.getElementById('r-delivered').textContent=allDayStops.filter(function(d){return d.status==='Delivered';}).length;
+  document.getElementById('r-remain').textContent=allDayStops.filter(function(d){return d.status!=='Delivered'&&d.status!=='Rescheduled';}).length;
+  document.getElementById('r-main').textContent=allDayStops.filter(function(d){return !d.team||d.team==='Main Delivery Team';}).length;
+  document.getElementById('r-other').textContent=allDayStops.filter(function(d){return d.team==='Other Delivery Team';}).length;
 }
 
 // ── ADD/EDIT MODAL ──
 function openAddModal(timeSlot){
   document.getElementById('edit-id').value='';
   document.getElementById('add-modal-title').textContent='Add Delivery Stop';
-  ['f-name','f-phone','f-email','f-address','f-city','f-invoice','f-notes','f-haul-item','f-stop-order'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('f-haul').checked=false;
+  ['f-name','f-phone','f-email','f-address','f-city','f-invoice','f-notes','f-stop-order'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('dtype-install').checked=true;
   document.getElementById('f-duration').value='60';
   pendingDelInvoiceFile=null;
@@ -648,6 +670,8 @@ function openEditStop(id){
   var appData=d.appliances&&d.appliances.length?d.appliances:[{appliance:d.appliance||'',model:d.model||''}];
   initApplianceRows(appData);
   // Set delivery type
+  var teamSel=document.getElementById('f-team');
+  for(var i=0;i<teamSel.options.length;i++){if(teamSel.options[i].value===(d.team||'Main Delivery Team')){teamSel.selectedIndex=i;break;}}
   var dtVal=d.deliveryType||'Full Install';
   document.querySelectorAll('input[name="dtype"]').forEach(function(r){r.checked=r.value===dtVal;});
   // Set duration
@@ -680,6 +704,7 @@ async function saveStop(){
       email=document.getElementById('f-email').value.trim(),address=document.getElementById('f-address').value.trim(),
       city=document.getElementById('f-city').value.trim(),
       duration=document.getElementById('f-duration').value,
+      team=document.getElementById('f-team').value,
       attachedInvoice=pendingDelInvoiceFile,
 
       invoice=document.getElementById('f-invoice').value.trim(),date=document.getElementById('f-date').value,
@@ -706,7 +731,7 @@ async function saveStop(){
     d.model=appList.map(function(a){return a.model;}).filter(Boolean).join(', ');
   } else {
     var invoiceFile=attachedInvoice&&attachedInvoice.url?{url:attachedInvoice.url,filename:attachedInvoice.filename}:null;
-    deliveries.unshift({id:'DEL-'+String(nextId).padStart(4,'0'),name,phone,email,address,city,appliances:appList,appliance:appList.map(function(a){return a.appliance;}).join(', '),model:appList.map(function(a){return a.model;}).filter(Boolean).join(', '),invoice,deliveryType,duration,date,time,stopOrder,haul,haulItem,notes,invoiceFile,status:'Scheduled',reschedDate:'',reschedNotes:'',createdAt:new Date().toISOString(),deliveredAt:null});
+    deliveries.unshift({id:'DEL-'+String(nextId).padStart(4,'0'),name,phone,email,address,city,appliances:appList,appliance:appList.map(function(a){return a.appliance;}).join(', '),model:appList.map(function(a){return a.model;}).filter(Boolean).join(', '),invoice,deliveryType,duration,team,date,time,stopOrder,notes,invoiceFile,status:'Scheduled',reschedDate:'',reschedNotes:'',createdAt:new Date().toISOString(),deliveredAt:null});
     nextId++;
   }
   await saveDeliveries();
@@ -733,7 +758,7 @@ function openDetail(id){
     (d.invoice?'<div><div class="detail-label">Invoice #</div><div class="detail-val">'+d.invoice+'</div></div>':'<div></div>')+
     (d.stopOrder?'<div><div class="detail-label">Stop #</div><div class="detail-val">'+d.stopOrder+'</div></div>':'<div></div>')+
     '</div>';
-  if(d.haul) body+='<div class="detail-label" style="margin-bottom:6px;">Haul Away</div><div class="haul-blk">'+(d.haulItem||'Old appliance pickup')+'</div>';
+
   if(d.notes) body+='<div class="detail-label" style="margin-bottom:6px;">Notes</div><div class="notes-blk" style="margin-bottom:12px;">'+d.notes+'</div>';
   if(d.deliveredAt) body+='<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered at '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>';
   if(d.reschedDate) body+='<div style="font-size:11px;color:var(--purple);margin-bottom:8px;">Rescheduled to '+new Date(d.reschedDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+(d.reschedNotes?' — '+d.reschedNotes:'')+'</div>';
@@ -863,7 +888,7 @@ function printManifest(){
           (d.invoice?'<div style="font-size:10px;color:#888;margin-top:1px;">'+d.invoice+'</div>':'')+
           '<div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;">'+
             '<span class="badge">'+(d.deliveryType||'Full Install')+'</span>'+
-            (d.haul?'<span class="badge haul-badge">Haul Away</span>':'')+
+            '<span class="badge" style="border-color:#9b7fd4;color:#7b5fb4;">'+(d.team||'Main Team')+'</span>'+
           '</div>'+
         '</td>'+
         '<td class="address-cell">'+d.address+(d.city?'<br/>'+d.city:'')+'</td>'+
@@ -877,7 +902,7 @@ function printManifest(){
             '</div>';
           }).join('')+
         '</td>'+
-        '<td class="notes-cell">'+(d.notes||'')+(d.haul&&d.haulItem?'<br/><span style="color:#c04040;">Haul: '+d.haulItem+'</span>':'')+'</td>'+
+        '<td class="notes-cell">'+(d.notes||'')+'</td>'+
       '</tr>';
     });
     html+='</tbody></table>';
