@@ -355,8 +355,9 @@
           </div>
           <div class="frow">
             <div class="field"><label>Invoice #</label><input class="inp" id="f-invoice" placeholder="INV-0001"/></div>
-            <div class="field"><label>Delivery Date</label><input class="inp" id="f-delivery" type="date"/></div>
+            <div class="field"><label>Claim #</label><input class="inp" id="f-claim" placeholder="Claim number"/></div>
           </div>
+          <div class="field"><label>Delivery Date</label><input class="inp" id="f-delivery" type="date"/></div>
           <div class="field"><label>Issue <span class="req">*</span></label><textarea class="txta" id="f-issue" placeholder="Describe the problem..."></textarea></div>
           <div class="frow">
             <div class="field"><label>Date <span class="req">*</span></label><input class="inp" id="f-date" type="date"/></div>
@@ -601,13 +602,13 @@ async function addJob(){
       address=document.getElementById('f-address').value.trim(),city=document.getElementById('f-city').value.trim(),
       appliance=document.getElementById('f-appliance').value,brand=document.getElementById('f-brand').value.trim(),
       model=document.getElementById('f-model').value.trim(),serial=document.getElementById('f-serial').value.trim(),
-      warranty=document.getElementById('f-warranty').value,invoice=document.getElementById('f-invoice').value.trim(),
+      warranty=document.getElementById('f-warranty').value,invoice=document.getElementById('f-invoice').value.trim(),claim=document.getElementById('f-claim').value.trim(),
       delivery=document.getElementById('f-delivery').value,issue=document.getElementById('f-issue').value.trim(),
       date=document.getElementById('f-date').value,time=document.getElementById('f-time').value,
       tech=document.getElementById('f-tech').value,priority=document.getElementById('f-priority').value,
       notes=document.getElementById('f-notes').value.trim();
   if(!name||!phone||!address||!city||!appliance||!issue||!date){alert('Please fill in all required fields.');return;}
-  var job={id:'JOB-'+String(nextId).padStart(4,'0'),name:name,phone:phone,email:email,address:address,city:city,appliance:appliance,brand:brand,model:model,serial:serial,warranty:warranty,invoice:invoice,delivery:delivery,issue:issue,date:date,time:time,tech:tech,priority:priority,notes:notes,status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null};
+  var job={id:'JOB-'+String(nextId).padStart(4,'0'),name:name,phone:phone,email:email,address:address,city:city,appliance:appliance,brand:brand,model:model,serial:serial,warranty:warranty,invoice:invoice,claim:claim,delivery:delivery,issue:issue,date:date,time:time,tech:tech,priority:priority,notes:notes,status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null};
   nextId++;jobs.unshift(job);await saveJobs();
 
   // Attach pending invoice if present
@@ -617,13 +618,13 @@ async function addJob(){
       var upRes=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:pendingInvoiceFile.name,contentType:pendingInvoiceFile.type,data:b64,companyId:currentUser.companyId,jobId:job.id})});
       var upData=await upRes.json();
       if(upData.ok){job.files=job.files||[];job.files.push({url:upData.url,filename:pendingInvoiceFile.name,type:pendingInvoiceFile.type,uploadedAt:new Date().toISOString(),label:'Sales Invoice'});await saveJobs();}
-    }catch(e){console.warn('Invoice attach failed:',e);}
+    }catch(e){console.warn('Invoice attach failed:',e);alert('Note: Invoice could not be saved to files ('+e.message+'). Job was created successfully. Set up Vercel Blob storage to enable file uploads.');}
     pendingInvoiceFile=null;
     var preview=document.getElementById('invoice-drop-zone').querySelector('.idz-preview');if(preview)preview.remove();
   }
 
   renderJobs();updateStats();
-  ['f-name','f-phone','f-email','f-address','f-city','f-brand','f-model','f-serial','f-invoice','f-issue','f-notes'].forEach(function(id){document.getElementById(id).value='';});
+  ['f-name','f-phone','f-email','f-address','f-city','f-brand','f-model','f-serial','f-invoice','f-claim','f-issue','f-notes'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('f-appliance').value='';document.getElementById('f-warranty').value='Out of Warranty';document.getElementById('f-delivery').value='';
   document.getElementById('f-tech').value='Unassigned';document.getElementById('f-priority').value='Medium';
   document.getElementById('f-date').valueAsDate=new Date();
@@ -664,7 +665,7 @@ function renderJobs(){
           (j.warranty?'<div class="df"><label>Warranty</label><div class="dv"><span class="w-pill '+wc+'">'+j.warranty+'</span></div></div>':'')+
           (j.model?'<div class="df"><label>Model #</label><div class="dv">'+j.model+'</div></div>':'')+
           (j.serial?'<div class="df"><label>Serial #</label><div class="dv">'+j.serial+'</div></div>':'')+
-          (j.invoice?'<div class="df"><label>Invoice #</label><div class="dv">'+j.invoice+'</div></div>':'')+
+          (j.invoice?'<div class="df"><label>Invoice #</label><div class="dv">'+j.invoice+'</div></div>':'')+(j.claim?'<div class="df"><label>Claim #</label><div class="dv">'+j.claim+'</div></div>':'')+
           (j.delivery?'<div class="df"><label>Delivery</label><div class="dv">'+new Date(j.delivery+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>':'')+
         '</div>'+
         '<div class="df" style="margin-bottom:10px;"><label>Issue</label><div class="notes-blk">'+j.issue+'</div></div>'+
@@ -766,9 +767,22 @@ function renderFiles(j){
 async function handleUpload(jobId,files){
   var j=jobs.find(function(x){return x.id===jobId;});if(!j||!files||files.length===0)return;
   if(!j.files)j.files=[];
+  // Show uploading indicator
+  var zone=document.getElementById('uzone-'+jobId)||document.querySelector('#tab-files-'+jobId+' .upload-zone');
+  var statusEl=document.createElement('div');statusEl.style.cssText='font-size:11px;color:var(--gold);margin-top:6px;';statusEl.textContent='Uploading...';
+  if(zone)zone.appendChild(statusEl);
+  var errors=[];
   for(var i=0;i<files.length;i++){
-    try{var b64=await toB64(files[i]);var res=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,companyId:currentUser.companyId,jobId:jobId})});var d=await res.json();if(d.ok)j.files.push({url:d.url,filename:files[i].name,type:files[i].type,uploadedAt:new Date().toISOString()});}catch(e){console.error('Upload failed:',e);}
+    try{
+      var b64=await toB64(files[i]);
+      var res=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,companyId:currentUser.companyId,jobId:jobId})});
+      var d=await res.json();
+      if(d.ok){j.files.push({url:d.url,filename:files[i].name,type:files[i].type,uploadedAt:new Date().toISOString()});}
+      else{errors.push(files[i].name+': '+d.error);}
+    }catch(e){errors.push(files[i].name+': '+e.message);}
   }
+  if(statusEl)statusEl.remove();
+  if(errors.length>0)alert('Upload error:\n'+errors.join('\n')+'\n\nMake sure Vercel Blob storage is set up: Vercel Dashboard -> Storage -> Create Blob Store -> Connect to project');
   await saveJobs();var g=document.getElementById('agrid-'+jobId);if(g)g.innerHTML=renderFiles(j);
 }
 async function deleteFile(id,i){if(!confirm('Remove this file?'))return;var j=jobs.find(function(x){return x.id===id;});if(!j||!j.files)return;j.files.splice(i,1);await saveJobs();var g=document.getElementById('agrid-'+id);if(g)g.innerHTML=renderFiles(j);}
@@ -837,7 +851,7 @@ async function sendChat(){
     if(jm){
       try{
         var jd=JSON.parse(jm[0]);
-        var job={id:'JOB-'+String(nextId).padStart(4,'0'),name:jd.name||'',phone:jd.phone||'',email:jd.email||'',address:jd.address||'',city:jd.city||'',appliance:jd.appliance||'Other',brand:jd.brand||'',model:jd.model||'',serial:jd.serial||'',warranty:'Out of Warranty',invoice:'',delivery:'',issue:jd.issue||'',date:jd.date||today,time:jd.time||'All Day',tech:jd.tech||'Unassigned',priority:jd.priority||'Medium',notes:jd.notes||'',status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null};
+        var job={id:'JOB-'+String(nextId).padStart(4,'0'),name:jd.name||'',phone:jd.phone||'',email:jd.email||'',address:jd.address||'',city:jd.city||'',appliance:jd.appliance||'Other',brand:jd.brand||'',model:jd.model||'',serial:jd.serial||'',warranty:'Out of Warranty',invoice:'',claim:'',delivery:'',issue:jd.issue||'',date:jd.date||today,time:jd.time||'All Day',tech:jd.tech||'Unassigned',priority:jd.priority||'Medium',notes:jd.notes||'',status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null};
         nextId++;jobs.unshift(job);await saveJobs();renderJobs();updateStats();
         addMsg('sys','Job '+job.id+' created for '+job.name+' on '+new Date(job.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})+' assigned to '+job.tech);
         addMsg('ai','Job created! Anything else?');chatHistory=[];
