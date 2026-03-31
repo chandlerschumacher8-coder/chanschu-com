@@ -52,17 +52,6 @@
     .tracker-stat.push .ts-val{color:var(--gold);}
     .tracker-stat.pct .ts-val{color:var(--white);}
     .tracker-divider{width:1px;height:40px;background:rgba(255,255,255,0.07);margin:0 auto;}
-    .tracker-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:16px;flex-wrap:wrap;}
-    .pick-result-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
-    .result-btn{font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;border-radius:100px;border:1px solid;cursor:pointer;transition:all 0.2s;background:transparent;}
-    .result-btn.win-btn{border-color:rgba(82,183,136,0.3);color:var(--green);}
-    .result-btn.win-btn:hover,.result-btn.win-btn.active{background:rgba(82,183,136,0.15);border-color:var(--green);}
-    .result-btn.loss-btn{border-color:rgba(224,112,112,0.3);color:var(--red);}
-    .result-btn.loss-btn:hover,.result-btn.loss-btn.active{background:rgba(224,112,112,0.15);border-color:var(--red);}
-    .result-btn.push-btn{border-color:rgba(201,151,58,0.3);color:var(--gold);}
-    .result-btn.push-btn:hover,.result-btn.push-btn.active{background:rgba(201,151,58,0.15);border-color:var(--gold);}
-    .result-btn.clear-btn{border-color:rgba(255,255,255,0.1);color:var(--gray-2);}
-    .result-btn.clear-btn:hover{background:rgba(255,255,255,0.05);color:var(--white);}
     .pick-card.result-win{border-color:rgba(82,183,136,0.35);background:rgba(82,183,136,0.04);}
     .pick-card.result-loss{border-color:rgba(224,112,112,0.35);background:rgba(224,112,112,0.04);}
     .pick-card.result-push{border-color:rgba(201,151,58,0.35);background:rgba(201,151,58,0.04);}
@@ -178,7 +167,7 @@
     <div class="page-hero-bg"></div>
     <div class="page-hero-overlay"></div>
     <div class="page-hero-content">
-      <div class="hero-tag">Hays, Kansas</div>
+      
       <h1>Sports</h1>
       <p>Local schedules for Hays High, TMP-Marian, and Fort Hays State — plus upcoming Kansas City Royals &amp; Chiefs schedules.</p>
     </div>
@@ -207,7 +196,7 @@
       <div class="tracker-stat push"><div class="ts-val" id="t-pushes">0</div><div class="ts-key">Pushes</div></div>
       <div class="tracker-stat pct"><div class="ts-val" id="t-pct">--</div><div class="ts-key">Win %</div></div>
     </div>
-    <div style="font-size:11px;color:var(--gray-2);margin-bottom:16px;">Mark each pick Win / Loss / Push after the game to track your record.</div>
+    <div style="font-size:11px;color:var(--gray-2);margin-bottom:16px;">Results are graded automatically each morning by Claude based on actual game scores.</div>
 
     <div class="picks-grid" id="picks-grid">
       <div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Loading today's AI picks...</div>
@@ -609,38 +598,7 @@ async function updateTrackerDisplay() {
   document.getElementById('t-pct').textContent = total > 0 ? Math.round((wins/total)*100) + '%' : '--';
 }
 
-async function markResult(pickId, result) {
-  var t = await getTracker();
-  // Toggle off if same result clicked again
-  if (t[pickId] === result) {
-    delete t[pickId];
-  } else {
-    t[pickId] = result;
-  }
-  trackerCache = t;
 
-  // Save to server
-  try {
-    await fetch('/api/save-result', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ pickId: pickId, result: t[pickId] || null })
-    });
-  } catch(e) { console.warn('Could not save result', e); }
-
-  updateTrackerDisplay();
-
-  // Update card styling and button active states
-  var card = document.getElementById('pick-' + pickId);
-  if (card) {
-    card.classList.remove('result-win','result-loss','result-push');
-    if (t[pickId]) card.classList.add('result-' + t[pickId]);
-  }
-  ['win','loss','push'].forEach(function(r) {
-    var btn = document.getElementById('btn-' + r + '-' + pickId);
-    if (btn) btn.classList.toggle('active', t[pickId] === r);
-  });
-}
 
 
 function renderPicks(data) {
@@ -683,11 +641,7 @@ function renderPicks(data) {
           '<div class="pick-game">' + (pick.game || '') + '</div>' +
           '<div class="pick-selection">' + (pick.pick || '') + '</div>' +
           '<div class="pick-reasoning">' + (pick.reasoning || '') + '</div>' +
-          '<div class="pick-result-row">' +
-            '<button id="btn-win-' + pickId + '" class="result-btn win-btn' + (result==='win'?' active':'') + '" onclick="markResult(\'' + pickId + '\',\'win\')">&#10003; Win</button>' +
-            '<button id="btn-loss-' + pickId + '" class="result-btn loss-btn' + (result==='loss'?' active':'') + '" onclick="markResult(\'' + pickId + '\',\'loss\')">&#10007; Loss</button>' +
-            '<button id="btn-push-' + pickId + '" class="result-btn push-btn' + (result==='push'?' active':'') + '" onclick="markResult(\'' + pickId + '\',\'push\')">&#8734; Push</button>' +
-          '</div>' +
+
         '</div>' +
         '<div class="pick-right">' +
           '<div class="pick-odds">' + (pick.odds || '--') + '</div>' +
