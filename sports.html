@@ -41,6 +41,31 @@
     .sec-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.1),transparent);}
 
 
+
+    /* WIN/LOSS TRACKER */
+    .tracker-bar{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:center;}
+    .tracker-stat{text-align:center;}
+    .tracker-stat .ts-val{font-family:'Playfair Display',serif;font-size:28px;color:var(--white);line-height:1;}
+    .tracker-stat .ts-key{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-top:4px;}
+    .tracker-stat.win .ts-val{color:var(--green);}
+    .tracker-stat.loss .ts-val{color:var(--red);}
+    .tracker-stat.push .ts-val{color:var(--gold);}
+    .tracker-stat.pct .ts-val{color:var(--white);}
+    .tracker-divider{width:1px;height:40px;background:rgba(255,255,255,0.07);margin:0 auto;}
+    .tracker-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:16px;flex-wrap:wrap;}
+    .pick-result-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+    .result-btn{font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:4px 12px;border-radius:100px;border:1px solid;cursor:pointer;transition:all 0.2s;background:transparent;}
+    .result-btn.win-btn{border-color:rgba(82,183,136,0.3);color:var(--green);}
+    .result-btn.win-btn:hover,.result-btn.win-btn.active{background:rgba(82,183,136,0.15);border-color:var(--green);}
+    .result-btn.loss-btn{border-color:rgba(224,112,112,0.3);color:var(--red);}
+    .result-btn.loss-btn:hover,.result-btn.loss-btn.active{background:rgba(224,112,112,0.15);border-color:var(--red);}
+    .result-btn.push-btn{border-color:rgba(201,151,58,0.3);color:var(--gold);}
+    .result-btn.push-btn:hover,.result-btn.push-btn.active{background:rgba(201,151,58,0.15);border-color:var(--gold);}
+    .result-btn.clear-btn{border-color:rgba(255,255,255,0.1);color:var(--gray-2);}
+    .result-btn.clear-btn:hover{background:rgba(255,255,255,0.05);color:var(--white);}
+    .pick-card.result-win{border-color:rgba(82,183,136,0.35);background:rgba(82,183,136,0.04);}
+    .pick-card.result-loss{border-color:rgba(224,112,112,0.35);background:rgba(224,112,112,0.04);}
+    .pick-card.result-push{border-color:rgba(201,151,58,0.35);background:rgba(201,151,58,0.04);}
     /* AI PICKS */
     .picks-grid{display:flex;flex-direction:column;gap:12px;}
     .pick-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:20px 24px;display:grid;grid-template-columns:36px 1fr auto;gap:16px;align-items:start;transition:all 0.2s;}
@@ -175,6 +200,15 @@
       <div class="picks-date" id="picks-date">Click "Generate New Picks" to get today's best bets</div>
       <div class="picks-analyzed" id="picks-analyzed"></div>
     </div>
+    <!-- WIN/LOSS TRACKER -->
+    <div class="tracker-bar" id="tracker-bar">
+      <div class="tracker-stat win"><div class="ts-val" id="t-wins">0</div><div class="ts-key">Wins</div></div>
+      <div class="tracker-stat loss"><div class="ts-val" id="t-losses">0</div><div class="ts-key">Losses</div></div>
+      <div class="tracker-stat push"><div class="ts-val" id="t-pushes">0</div><div class="ts-key">Pushes</div></div>
+      <div class="tracker-stat pct"><div class="ts-val" id="t-pct">--</div><div class="ts-key">Win %</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--gray-2);margin-bottom:16px;">Mark each pick Win / Loss / Push after the game to track your record.</div>
+
     <div class="picks-grid" id="picks-grid">
       <div class="picks-pending"><div class="spin-icon">&#9881;</div><br/>Loading today's AI picks...</div>
     </div>
@@ -547,6 +581,50 @@ async function generatePicks() {
 }
 
 
+// ── TRACKER ──
+function getTracker() {
+  try { return JSON.parse(localStorage.getItem('picks-tracker') || '{}'); } catch(e) { return {}; }
+}
+function saveTracker(t) {
+  try { localStorage.setItem('picks-tracker', JSON.stringify(t)); } catch(e) {}
+}
+function updateTrackerDisplay() {
+  var t = getTracker();
+  var wins = 0, losses = 0, pushes = 0;
+  Object.values(t).forEach(function(v) {
+    if (v === 'win') wins++;
+    else if (v === 'loss') losses++;
+    else if (v === 'push') pushes++;
+  });
+  var total = wins + losses;
+  document.getElementById('t-wins').textContent = wins;
+  document.getElementById('t-losses').textContent = losses;
+  document.getElementById('t-pushes').textContent = pushes;
+  document.getElementById('t-pct').textContent = total > 0 ? Math.round((wins/total)*100) + '%' : '--';
+}
+function markResult(pickId, result) {
+  var t = getTracker();
+  // Toggle off if same result clicked again
+  if (t[pickId] === result) {
+    delete t[pickId];
+  } else {
+    t[pickId] = result;
+  }
+  saveTracker(t);
+  updateTrackerDisplay();
+  // Update card styling and button active states
+  var card = document.getElementById('pick-' + pickId);
+  if (card) {
+    card.classList.remove('result-win','result-loss','result-push');
+    if (t[pickId]) card.classList.add('result-' + t[pickId]);
+  }
+  ['win','loss','push'].forEach(function(r) {
+    var btn = document.getElementById('btn-' + r + '-' + pickId);
+    if (btn) btn.classList.toggle('active', t[pickId] === r);
+  });
+}
+
+
 function renderPicks(data) {
   var grid = document.getElementById('picks-grid');
   var dateEl = document.getElementById('picks-date');
@@ -572,17 +650,26 @@ function renderPicks(data) {
   if (dateEl) dateEl.textContent = data.date || 'Today';
   if (analyzedEl) analyzedEl.textContent = data.gamesAnalyzed ? data.gamesAnalyzed + ' games analyzed' : '';
 
+  var tracker = getTracker();
   var html = '';
   data.picks.forEach(function(pick) {
     var confClass = pick.confidence === 'High' ? 'conf-high' : 'conf-med';
+    var pickId = 'pick-' + pick.rank + '-' + (data.date || 'today').replace(/[^a-z0-9]/gi, '');
+    var result = tracker[pickId] || '';
+    var cardClass = result ? ' result-' + result : '';
     html +=
-      '<div class="pick-card">' +
+      '<div class="pick-card' + cardClass + '" id="pick-' + pickId + '">' +
         '<div class="pick-rank">' + pick.rank + '</div>' +
         '<div class="pick-body">' +
           '<div class="pick-sport">' + (pick.sport || '') + '</div>' +
           '<div class="pick-game">' + (pick.game || '') + '</div>' +
           '<div class="pick-selection">' + (pick.pick || '') + '</div>' +
           '<div class="pick-reasoning">' + (pick.reasoning || '') + '</div>' +
+          '<div class="pick-result-row">' +
+            '<button id="btn-win-' + pickId + '" class="result-btn win-btn' + (result==='win'?' active':'') + '" onclick="markResult(\'' + pickId + '\',\'win\')">&#10003; Win</button>' +
+            '<button id="btn-loss-' + pickId + '" class="result-btn loss-btn' + (result==='loss'?' active':'') + '" onclick="markResult(\'' + pickId + '\',\'loss\')">&#10007; Loss</button>' +
+            '<button id="btn-push-' + pickId + '" class="result-btn push-btn' + (result==='push'?' active':'') + '" onclick="markResult(\'' + pickId + '\',\'push\')">&#8734; Push</button>' +
+          '</div>' +
         '</div>' +
         '<div class="pick-right">' +
           '<div class="pick-odds">' + (pick.odds || '--') + '</div>' +
@@ -592,9 +679,11 @@ function renderPicks(data) {
   });
 
   if (grid) grid.innerHTML = html;
+  updateTrackerDisplay();
 }
 
 
+updateTrackerDisplay();
 // ── AI DAILY PICKS ──
 async function loadPicks() {
   var grid = document.getElementById('picks-grid');
