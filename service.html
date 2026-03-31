@@ -124,6 +124,18 @@
     .assign-row label{font-size:11px;color:var(--gray-2);white-space:nowrap;}
     .assign-sel{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;flex:1;}
 
+
+    .part-order-section{background:rgba(224,144,80,0.06);border:1px solid rgba(224,144,80,0.2);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+    .part-order-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;}
+    .part-check-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .part-check-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--orange);cursor:pointer;flex-shrink:0;}
+    .part-check-row label{font-size:12px;color:var(--gray-1);cursor:pointer;}
+    .part-number-field{margin-top:8px;display:none;}
+    .part-number-field.visible{display:block;}
+    .warranty-pill{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:2px 8px;border-radius:100px;}
+    .w-manufacturer{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.25);color:var(--green);}
+    .w-5year{background:rgba(91,159,212,0.12);border:1px solid rgba(91,159,212,0.25);color:var(--blue);}
+    .w-out{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);}
     /* ── TABS ── */
     .job-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:12px;}
     .job-tab{font-size:11px;font-weight:600;padding:7px 14px;border:none;background:transparent;color:var(--gray-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
@@ -286,6 +298,7 @@
             <div class="field"><label>Email</label><input class="inp" id="f-email" type="email" placeholder="optional"/></div>
           </div>
           <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="f-address" placeholder="123 Main St"/></div>
+          <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="f-city" placeholder="Dodge City"/></div>
           <div class="frow">
             <div class="field"><label>Appliance <span class="req">*</span></label>
               <select class="sel" id="f-appliance">
@@ -301,6 +314,13 @@
           <div class="frow">
             <div class="field"><label>Model #</label><input class="inp" id="f-model" placeholder="Model number"/></div>
             <div class="field"><label>Serial #</label><input class="inp" id="f-serial" placeholder="Serial number"/></div>
+          </div>
+          <div class="field"><label>Warranty Status</label>
+            <select class="sel" id="f-warranty">
+              <option value="Out of Warranty">Out of Warranty</option>
+              <option value="Manufacturer Warranty">Manufacturer Warranty</option>
+              <option value="5 Year Warranty">5 Year Warranty</option>
+            </select>
           </div>
           <div class="field"><label>Issue <span class="req">*</span></label><textarea class="txta" id="f-issue" placeholder="Describe the problem..."></textarea></div>
           <div class="frow">
@@ -634,16 +654,18 @@ async function saveJobs() {
 async function addJob() {
   var name=document.getElementById('f-name').value.trim(), phone=document.getElementById('f-phone').value.trim(),
       email=document.getElementById('f-email').value.trim(), address=document.getElementById('f-address').value.trim(),
+      city=document.getElementById('f-city').value.trim(), warranty=document.getElementById('f-warranty').value,
       appliance=document.getElementById('f-appliance').value, brand=document.getElementById('f-brand').value.trim(),
-      model=document.getElementById('f-model').value.trim(), serial=document.getElementById('f-serial').value.trim(),
+      model=document.getElementById('f-model').value.trim(), serial=document.getElementById('f-serial').value.trim(), warranty=document.getElementById('f-warranty').value,
       issue=document.getElementById('f-issue').value.trim(), date=document.getElementById('f-date').value,
       time=document.getElementById('f-time').value, tech=document.getElementById('f-tech').value,
       priority=document.getElementById('f-priority').value, notes=document.getElementById('f-notes').value.trim();
-  if (!name||!phone||!address||!appliance||!issue||!date) { alert('Please fill in all required fields.'); return; }
-  var job = { id:'JOB-'+String(nextId).padStart(4,'0'), name,phone,email,address,appliance,brand,model,serial,issue,date,time,tech,priority,notes,status:'Open',activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null };
+  if (!name||!phone||!address||!city||!appliance||!issue||!date) { alert('Please fill in all required fields.'); return; }
+  var job = { id:'JOB-'+String(nextId).padStart(4,'0'), name,phone,email,address,city,appliance,brand,model,serial,warranty,issue,date,time,tech,priority,notes,status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null };
   nextId++; jobs.unshift(job);
   await saveJobs(); renderJobs(); updateStats();
-  ['f-name','f-phone','f-email','f-address','f-brand','f-model','f-serial','f-issue','f-notes'].forEach(function(id){document.getElementById(id).value='';});
+  ['f-name','f-phone','f-email','f-address','f-city','f-brand','f-model','f-serial','f-issue','f-notes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-warranty').value='Out of Warranty';
   document.getElementById('f-appliance').value=''; document.getElementById('f-tech').value='Unassigned'; document.getElementById('f-priority').value='Medium';
   document.getElementById('f-date').valueAsDate = new Date();
   alert('Job ' + job.id + ' scheduled for ' + name + '!');
@@ -679,13 +701,30 @@ function renderJobs() {
         '<div class="dg">' +
           '<div class="df"><label>Phone</label><div class="dv"><a href="tel:'+j.phone+'" onclick="event.stopPropagation()">'+j.phone+'</a></div></div>' +
           (j.email?'<div class="df"><label>Email</label><div class="dv"><a href="mailto:'+j.email+'" onclick="event.stopPropagation()">'+j.email+'</a></div></div>':'<div class="df"><label>Email</label><div class="dv" style="color:var(--gray-2)">—</div></div>') +
-          '<div class="df"><label>Address</label><div class="dv">'+j.address+'</div></div>' +
+          '<div class="df"><label>Address</label><div class="dv">'+j.address+(j.city?', '+j.city:'')+'</div></div>' +
+          (j.warranty?'<div class="df"><label>Warranty</label><div class="dv"><span class="warranty-pill '+(j.warranty==='Manufacturer Warranty'?'w-manufacturer':j.warranty==='5 Year Warranty'?'w-5year':'w-out')+'">'+j.warranty+'</span></div></div>':'') +
           '<div class="df"><label>Priority</label><div class="dv">'+j.priority+'</div></div>' +
           (j.model?'<div class="df"><label>Model #</label><div class="dv">'+j.model+'</div></div>':'') +
           (j.serial?'<div class="df"><label>Serial #</label><div class="dv">'+j.serial+'</div></div>':'') +
         '</div>' +
         '<div class="df" style="margin-bottom:10px;"><label>Issue</label><div class="notes-blk">'+j.issue+'</div></div>' +
         (j.notes?'<div class="df" style="margin-bottom:10px;"><label>Notes</label><div class="notes-blk">'+j.notes+'</div></div>':'') +
+        (j.status==='In Progress'?
+          '<div class="part-order-section" onclick="event.stopPropagation()">' +
+            '<div class="part-order-title">📦 Parts & Customer Status</div>' +
+            '<div class="part-check-row">' +
+              '<input type="checkbox" id="chk-part-'+j.id+'"'+(j.partOnOrder?' checked':'')+' onchange="togglePartOrder(\''+j.id+'\',this.checked)"/>' +
+              '<label for="chk-part-'+j.id+'">Part on Order</label>' +
+            '</div>' +
+            '<div class="part-number-field'+(j.partOnOrder?' visible':'')+'" id="pnf-'+j.id+'">' +
+              '<input class="inp" id="pnum-'+j.id+'" placeholder="Part number..." value="'+(j.partNumber||'')+'" style="margin-top:4px;" onblur="savePartNumber(\''+j.id+'\',this.value)"/>' +
+            '</div>' +
+            '<div class="part-check-row" style="margin-top:8px;">' +
+              '<input type="checkbox" id="chk-contact-'+j.id+'"'+(j.customerContacted?' checked':'')+' onchange="toggleCustomerContacted(\''+j.id+'\',this.checked)"/>' +
+              '<label for="chk-contact-'+j.id+'">Customer Contacted</label>' +
+            '</div>' +
+          '</div>'
+        :'') +
         '<div class="act-row" onclick="event.stopPropagation()">' +
           (j.status!=='In Progress'&&j.status!=='Completed'?'<button class="abtn orange" onclick="setStatus(\''+j.id+'\',\'In Progress\')">▶ Start</button>':'') +
           (j.status!=='Completed'?'<button class="abtn green" onclick="setStatus(\''+j.id+'\',\'Completed\')">✓ Complete</button>':'') +
@@ -726,6 +765,28 @@ function switchTab(id,tab,btn) {
   btn.classList.add('active');
   document.getElementById('tab-log-'+id).classList.toggle('active',tab==='log');
   document.getElementById('tab-files-'+id).classList.toggle('active',tab==='files');
+}
+
+async function togglePartOrder(id, checked) {
+  var j=jobs.find(function(x){return x.id===id;}); if(!j)return;
+  j.partOnOrder = checked;
+  if (!checked) j.partNumber = '';
+  var pnf = document.getElementById('pnf-'+id);
+  if (pnf) pnf.classList.toggle('visible', checked);
+  if (!checked) { var pnum=document.getElementById('pnum-'+id); if(pnum)pnum.value=''; }
+  await saveJobs();
+}
+
+async function savePartNumber(id, val) {
+  var j=jobs.find(function(x){return x.id===id;}); if(!j)return;
+  j.partNumber = val.trim();
+  await saveJobs();
+}
+
+async function toggleCustomerContacted(id, checked) {
+  var j=jobs.find(function(x){return x.id===id;}); if(!j)return;
+  j.customerContacted = checked;
+  await saveJobs();
 }
 
 async function setStatus(id,status) {
