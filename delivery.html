@@ -12,147 +12,157 @@
       --gold:#c9973a;--gold-light:#e4b96a;--white:#f8f6f2;
       --gray-1:#d4cfc5;--gray-2:#8a8880;--gray-3:#4a4a47;
       --green:#52b788;--red:#e07070;--blue:#5b9fd4;--orange:#e09050;--purple:#9b7fd4;
-      --radius:10px;
+      --radius:8px;
     }
     html,body{height:100%;overflow:hidden;}
-    body{background:var(--navy);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;line-height:1.6;display:flex;flex-direction:column;}
+    body{background:var(--navy);color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;display:flex;flex-direction:column;}
 
     /* LOGIN */
     .login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:1000;}
     .login-box{background:var(--navy-2);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:48px 40px;width:100%;max-width:380px;text-align:center;}
     .login-logo{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin-bottom:4px;}
     .login-logo span{color:var(--gold);}
-    .login-sub{font-size:12px;color:var(--gray-2);margin-bottom:32px;}
+    .login-sub{font-size:12px;color:var(--gray-2);margin-bottom:28px;}
     .login-field{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 16px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;margin-bottom:12px;outline:none;}
     .login-field:focus{border-color:rgba(201,151,58,0.5);}
-    .login-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+    .login-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
     .login-btn:hover{background:var(--gold-light);}
-    .login-err{font-size:12px;color:var(--red);margin-top:10px;display:none;}
+    .login-err{font-size:12px;color:var(--red);margin-top:8px;display:none;}
 
-    /* APP SHELL */
+    /* APP */
     .app{display:none;flex-direction:column;height:100%;}
-    header{background:var(--navy-2);border-bottom:1px solid rgba(255,255,255,0.07);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-    .h-logo{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);}
+
+    /* HEADER */
+    header{background:var(--navy-2);border-bottom:1px solid rgba(255,255,255,0.07);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;}
+    .h-logo{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);white-space:nowrap;}
     .h-logo span{color:var(--gold);}
-    .h-right{display:flex;align-items:center;gap:8px;}
-    .hbtn{font-size:11px;font-weight:600;padding:6px 13px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;border-radius:100px;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .h-nav{display:flex;align-items:center;gap:6px;}
+    .hbtn{font-size:11px;font-weight:600;padding:5px 12px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;border-radius:100px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
     .hbtn:hover{color:var(--white);}
-    .hbtn.gold{border-color:rgba(201,151,58,0.3);color:var(--gold);}
-    .hbtn.danger:hover{color:var(--red);}
+    .hbtn.gold{border-color:rgba(201,151,58,0.3);color:var(--gold);background:rgba(201,151,58,0.06);}
+    .hbtn.gold:hover{background:rgba(201,151,58,0.14);}
+    .hbtn.active{background:rgba(201,151,58,0.12);border-color:rgba(201,151,58,0.4);color:var(--gold-light);}
 
-    /* MAIN LAYOUT */
-    .calendar-app{display:flex;flex:1;overflow:hidden;}
+    /* WEEK VIEW CONTAINER */
+    .cal-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 
-    /* LEFT SIDEBAR */
-    .sidebar{width:220px;flex-shrink:0;background:var(--navy-2);border-right:1px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;overflow-y:auto;}
-    .mini-cal{padding:16px;}
-    .mini-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-    .mini-cal-title{font-size:13px;font-weight:600;color:var(--white);}
-    .mini-cal-nav{background:transparent;border:none;color:var(--gray-2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;}
-    .mini-cal-nav:hover{color:var(--white);background:rgba(255,255,255,0.05);}
-    .mini-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
-    .mini-cal-dow{font-size:9px;font-weight:700;letter-spacing:0.05em;text-align:center;color:var(--gray-3);padding:4px 0;}
-    .mini-cal-day{font-size:11px;text-align:center;padding:5px 2px;border-radius:50%;cursor:pointer;color:var(--gray-2);transition:all 0.15s;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;}
-    .mini-cal-day:hover{background:rgba(255,255,255,0.06);color:var(--white);}
-    .mini-cal-day.today{color:var(--gold);font-weight:700;}
-    .mini-cal-day.selected{background:var(--gold);color:var(--navy);font-weight:700;}
-    .mini-cal-day.has-deliveries::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--blue);}
-    .mini-cal-day.selected.has-deliveries::after{background:var(--navy);}
-    .mini-cal-day.other-month{opacity:0.3;}
+    /* WEEK NAV BAR */
+    .week-nav{background:var(--navy-2);border-bottom:1px solid rgba(255,255,255,0.07);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+    .week-nav-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:14px;}
+    .week-nav-btn:hover{color:var(--white);}
+    .week-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);flex:1;}
+    .team-filter-row{display:flex;gap:5px;}
+    .tfbtn{font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+    .tfbtn.active{background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.35);color:var(--gold-light);}
 
-    /* LEGEND */
-    .legend{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.07);}
-    .legend-title{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-3);margin-bottom:10px;}
-    .legend-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--gray-2);}
-    .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    /* CALENDAR GRID */
+    .cal-grid{flex:1;display:flex;overflow:hidden;}
+    .time-col{width:54px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.06);overflow:hidden;display:flex;flex-direction:column;}
+    .time-col-header{height:44px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.06);}
+    .time-col-body{flex:1;overflow-y:auto;}
+    .time-col-body::-webkit-scrollbar{display:none;}
+    .time-label{height:60px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px 8px 0 0;font-size:10px;color:var(--gray-3);flex-shrink:0;}
 
-    /* ADD STOP BTN */
-    .add-stop-sidebar{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.07);}
-    .add-stop-btn{width:100%;background:rgba(201,151,58,0.1);border:1px solid rgba(201,151,58,0.3);color:var(--gold);border-radius:8px;padding:9px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;}
-    .add-stop-btn:hover{background:rgba(201,151,58,0.2);}
+    /* DAY COLUMNS */
+    .days-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+    .days-header{height:44px;flex-shrink:0;display:flex;border-bottom:1px solid rgba(255,255,255,0.06);}
+    .day-header-cell{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:background 0.15s;padding:4px;}
+    .day-header-cell:hover{background:rgba(255,255,255,0.03);}
+    .day-header-cell.today{background:rgba(201,151,58,0.06);}
+    .dhc-dow{font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-3);}
+    .dhc-date{font-size:16px;font-weight:700;color:var(--gray-2);margin-top:1px;}
+    .day-header-cell.today .dhc-date{color:var(--gold);background:rgba(201,151,58,0.15);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+    .days-body{flex:1;overflow-y:auto;display:flex;}
+    .days-body::-webkit-scrollbar{width:4px;}
+    .days-body::-webkit-scrollbar-track{background:transparent;}
+    .days-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
 
-    /* ROUTE SUMMARY in sidebar */
-    .route-summary{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.07);}
-    .route-summary-title{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray-3);margin-bottom:10px;}
-    .route-stat{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-    .route-stat-label{font-size:11px;color:var(--gray-2);}
-    .route-stat-val{font-size:13px;font-weight:700;color:var(--white);}
+    /* DAY COLUMN */
+    .day-col{flex:1;border-right:1px solid rgba(255,255,255,0.04);position:relative;min-width:0;}
+    .day-col.today-col{background:rgba(201,151,58,0.02);}
+    .hour-cell{height:60px;border-bottom:1px solid rgba(255,255,255,0.03);position:relative;cursor:pointer;}
+    .hour-cell:hover{background:rgba(255,255,255,0.015);}
+    .hour-half{position:absolute;top:50%;left:0;right:0;border-top:1px dashed rgba(255,255,255,0.03);}
+    .add-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(255,255,255,0.15);opacity:0;transition:opacity 0.15s;}
+    .hour-cell:hover .add-hint{opacity:1;}
 
-    /* DAY VIEW */
-    .day-view{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-    .day-header{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px;flex-shrink:0;background:var(--navy-2);}
-    .day-nav-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:14px;transition:all 0.2s;}
-    .day-nav-btn:hover{color:var(--white);border-color:rgba(255,255,255,0.2);}
-    .day-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);flex:1;}
-    .day-title .today-badge{font-size:11px;font-weight:700;padding:2px 9px;background:rgba(201,151,58,0.15);border:1px solid rgba(201,151,58,0.3);color:var(--gold);border-radius:100px;vertical-align:middle;margin-left:8px;font-family:'Plus Jakarta Sans',sans-serif;}
-    .today-btn{font-size:11px;font-weight:600;padding:6px 13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);border-radius:100px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
-    .today-btn:hover{color:var(--white);}
-    .active-team{background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.35);color:var(--gold);}
-    .team-badge-main{background:rgba(91,159,212,0.15);color:var(--blue);font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;}
-    .team-badge-other{background:rgba(155,127,212,0.15);color:var(--purple);font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;}
-    .today-btn:hover{color:var(--white);}
-
-    /* TIME SLOTS */
-    .time-grid{flex:1;overflow-y:auto;}
-    .time-row{display:flex;min-height:60px;border-bottom:1px solid rgba(255,255,255,0.04);}
-    .time-row:hover .slot-area{background:rgba(255,255,255,0.01);}
-    .time-label{width:72px;flex-shrink:0;padding:8px 12px 0;font-size:11px;color:var(--gray-3);text-align:right;padding-right:14px;position:relative;top:-6px;}
-    .slot-area{flex:1;padding:4px 8px 4px 0;position:relative;}
-    .slot-empty{font-size:11px;color:rgba(255,255,255,0.15);padding:8px 10px;cursor:pointer;border-radius:6px;transition:all 0.15s;}
-    .slot-empty:hover{color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.04);}
-
-    /* DELIVERY EVENTS */
-    .delivery-event{border-radius:7px;padding:8px 12px;margin-bottom:4px;cursor:pointer;transition:all 0.15s;border-left:3px solid;}
-    .delivery-event:hover{opacity:0.85;}
-    .de-scheduled{background:rgba(91,159,212,0.12);border-left-color:var(--blue);}
-    .de-out{background:rgba(224,144,80,0.15);border-left-color:var(--orange);}
-    .de-delivered{background:rgba(82,183,136,0.1);border-left-color:var(--green);}
-    .de-rescheduled{background:rgba(155,127,212,0.1);border-left-color:var(--purple);}
-    .de-name{font-size:13px;font-weight:600;color:var(--white);}
-    .de-sub{font-size:11px;color:var(--gray-2);margin-top:1px;}
-    .de-badges{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;}
-    .de-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;}
-    .de-badge.status-scheduled{background:rgba(91,159,212,0.2);color:var(--blue);}
-    .de-badge.status-out{background:rgba(224,144,80,0.2);color:var(--orange);}
-    .de-badge.status-delivered{background:rgba(82,183,136,0.2);color:var(--green);}
-    .de-badge.status-rescheduled{background:rgba(155,127,212,0.2);color:var(--purple);}
-    .de-badge.haul{background:rgba(224,112,112,0.15);color:var(--red);}
-    .de-badge.stop-num{background:rgba(201,151,58,0.15);color:var(--gold);}
-    .de-badge.invoice{background:rgba(255,255,255,0.06);color:var(--gray-1);}
+    /* EVENTS */
+    .cal-event{position:absolute;left:2px;right:2px;border-radius:5px;padding:4px 6px;cursor:pointer;overflow:hidden;z-index:10;transition:opacity 0.15s;border-left:3px solid;}
+    .cal-event:hover{opacity:0.85;z-index:20;}
+    .cal-event.ev-scheduled{background:rgba(91,159,212,0.18);border-left-color:var(--blue);}
+    .cal-event.ev-out{background:rgba(224,144,80,0.2);border-left-color:var(--orange);}
+    .cal-event.ev-delivered{background:rgba(82,183,136,0.15);border-left-color:var(--green);}
+    .cal-event.ev-rescheduled{background:rgba(155,127,212,0.15);border-left-color:var(--purple);}
+    .ev-name{font-size:11px;font-weight:700;color:var(--white);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .ev-sub{font-size:10px;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+    .ev-time{font-size:9px;color:rgba(255,255,255,0.5);margin-top:2px;}
 
     /* MODAL */
-    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;}
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;}
     .modal-bg.open{display:flex;}
-    .modal{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:14px;width:100%;max-width:520px;}
-    .modal-hdr{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;background:var(--navy-3);border-radius:14px 14px 0 0;}
-    .modal-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--white);}
-    .modal-close{background:transparent;border:none;color:var(--gray-2);font-size:17px;cursor:pointer;padding:2px 7px;}
+    .modal{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:14px;width:100%;max-width:540px;}
+    .modal-hdr{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;background:var(--navy-3);border-radius:14px 14px 0 0;}
+    .modal-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);}
+    .modal-close{background:transparent;border:none;color:var(--gray-2);font-size:16px;cursor:pointer;padding:2px 6px;}
     .modal-close:hover{color:var(--white);}
-    .modal-body{padding:20px;max-height:70vh;overflow-y:auto;}
-    .modal-footer{padding:12px 20px;border-top:1px solid rgba(255,255,255,0.07);display:flex;justify-content:flex-end;gap:8px;}
-    .field{margin-bottom:12px;}
-    .field label{display:block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:5px;}
+    .modal-body{padding:18px;max-height:75vh;overflow-y:auto;}
+    .modal-footer{padding:12px 18px;border-top:1px solid rgba(255,255,255,0.07);display:flex;justify-content:flex-end;gap:8px;}
+    .field{margin-bottom:11px;}
+    .field label{display:block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:4px;}
     .req{color:var(--red);}
-    .inp,.sel,.txta{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.09);border-radius:7px;padding:9px 12px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;}
+    .inp,.sel,.txta{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.09);border-radius:7px;padding:8px 11px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;transition:border-color 0.2s;}
     .inp:focus,.sel:focus,.txta:focus{border-color:rgba(201,151,58,0.4);}
     .sel option{background:var(--navy-3);}
-    .txta{resize:vertical;min-height:64px;}
-    .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-    .primary-btn{background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:9px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+    .txta{resize:vertical;min-height:60px;}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+    .primary-btn{background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:8px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
     .primary-btn:hover{background:var(--gold-light);}
-    .ghost-btn{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);border-radius:8px;padding:9px 16px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
+    .ghost-btn{background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);border-radius:8px;padding:8px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
     .ghost-btn:hover{color:var(--white);}
+    .danger-btn{background:rgba(224,112,112,0.08);border:1px solid rgba(224,112,112,0.2);color:var(--red);border-radius:8px;padding:8px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
+    .danger-btn:hover{background:rgba(224,112,112,0.18);}
+
+    /* INVOICE DROP */
+    .idz{border:2px dashed rgba(201,151,58,0.3);border-radius:8px;padding:12px;text-align:center;cursor:pointer;position:relative;background:rgba(201,151,58,0.03);margin-bottom:12px;transition:all 0.2s;}
+    .idz:hover,.idz.drag-over{border-color:rgba(201,151,58,0.6);background:rgba(201,151,58,0.07);}
+    .idz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+    .idz-txt{font-size:12px;font-weight:600;color:var(--gold);}
+    .idz-sub{font-size:10px;color:var(--gray-2);margin-top:2px;}
+    .idz-loading{font-size:11px;color:var(--gold);margin-top:4px;display:none;}
+    .idz-attached{font-size:11px;color:var(--green);margin-top:4px;font-weight:600;}
+
+    /* APPLIANCE ROWS */
+    .app-row{background:var(--navy-3);border:1px solid rgba(255,255,255,0.07);border-radius:7px;padding:8px 10px;margin-bottom:7px;}
+    .app-row-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+    .app-row-title{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);}
+    .app-row-remove{background:transparent;border:none;color:var(--gray-3);cursor:pointer;font-size:12px;padding:1px 5px;}
+    .app-row-remove:hover{color:var(--red);}
+    .add-app-btn{width:100%;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.12);color:var(--gray-2);border-radius:7px;padding:7px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin-bottom:10px;}
+    .add-app-btn:hover{border-color:rgba(201,151,58,0.4);color:var(--gold);}
+
+    /* DELIVERY TYPE */
+    .dtype-wrap{background:rgba(91,159,212,0.06);border:1px solid rgba(91,159,212,0.18);border-radius:7px;padding:10px 12px;margin-bottom:11px;}
+    .dtype-title{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;}
+    .dtype-opts{display:flex;gap:6px;flex-wrap:wrap;}
+    .dtype-opt{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-1);cursor:pointer;}
+    .dtype-opt input{accent-color:var(--blue);cursor:pointer;}
+
+    /* FILE ATTACH */
+    .file-attach{display:flex;align-items:center;gap:8px;background:rgba(91,159,212,0.07);border:1px solid rgba(91,159,212,0.18);border-radius:7px;padding:8px 10px;margin-bottom:10px;}
+    .file-attach-name{flex:1;font-size:11px;font-weight:600;color:var(--white);}
+    .file-attach-open{font-size:10px;font-weight:600;padding:4px 10px;border:1px solid rgba(91,159,212,0.3);color:var(--blue);background:transparent;border-radius:5px;cursor:pointer;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;}
+    .file-attach-rm{background:transparent;border:none;color:var(--gray-3);cursor:pointer;font-size:13px;}
+    .file-attach-rm:hover{color:var(--red);}
 
     /* DETAIL MODAL */
-    .detail-section{margin-bottom:14px;}
-    .detail-label{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:3px;}
-    .detail-val{font-size:13px;color:var(--white);}
-    .detail-val a{color:var(--blue);text-decoration:none;}
-    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-    .notes-blk{background:var(--navy-3);border-radius:7px;padding:10px 13px;font-size:12px;color:var(--gray-1);line-height:1.7;}
-    .haul-blk{background:rgba(224,112,112,0.07);border:1px solid rgba(224,112,112,0.18);border-radius:7px;padding:10px 13px;font-size:12px;color:var(--gray-1);line-height:1.7;border-left:3px solid var(--red);margin-bottom:10px;}
-    .act-row{display:flex;gap:7px;flex-wrap:wrap;padding-top:4px;}
-    .abtn{font-size:11px;font-weight:600;padding:6px 13px;border-radius:7px;border:1px solid;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+    .dl{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:2px;}
+    .dv{font-size:12px;color:var(--white);}
+    .dv a{color:var(--blue);text-decoration:none;}
+    .notes-blk{background:var(--navy-3);border-radius:6px;padding:8px 11px;font-size:11px;color:var(--gray-1);margin-bottom:10px;}
+    .act-row{display:flex;gap:6px;flex-wrap:wrap;}
+    .abtn{font-size:11px;font-weight:600;padding:5px 11px;border-radius:6px;border:1px solid;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
     .abtn.orange{border-color:rgba(224,144,80,0.3);color:var(--orange);background:rgba(224,144,80,0.06);}
     .abtn.orange:hover{background:rgba(224,144,80,0.15);}
     .abtn.green{border-color:rgba(82,183,136,0.3);color:var(--green);background:rgba(82,183,136,0.06);}
@@ -160,58 +170,8 @@
     .abtn.blue{border-color:rgba(91,159,212,0.3);color:var(--blue);background:rgba(91,159,212,0.06);}
     .abtn.blue:hover{background:rgba(91,159,212,0.15);}
     .abtn.purple{border-color:rgba(155,127,212,0.3);color:var(--purple);background:rgba(155,127,212,0.06);}
-    .abtn.purple:hover{background:rgba(155,127,212,0.15);}
     .abtn.red{border-color:rgba(224,112,112,0.3);color:var(--red);background:rgba(224,112,112,0.06);}
     .abtn.red:hover{background:rgba(224,112,112,0.15);}
-
-
-
-
-    /* DURATION & FILES */
-    .duration-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-    .file-attach-row{display:flex;align-items:center;gap:8px;background:rgba(91,159,212,0.06);border:1px solid rgba(91,159,212,0.18);border-radius:8px;padding:10px 12px;margin-top:8px;}
-    .file-attach-icon{font-size:18px;flex-shrink:0;}
-    .file-attach-info{flex:1;}
-    .file-attach-name{font-size:12px;font-weight:600;color:var(--white);}
-    .file-attach-sub{font-size:10px;color:var(--gray-2);margin-top:1px;}
-    .file-attach-open{font-size:11px;font-weight:600;padding:5px 12px;border:1px solid rgba(91,159,212,0.3);color:var(--blue);background:transparent;border-radius:6px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
-    .file-attach-open:hover{background:rgba(91,159,212,0.1);}
-    .file-attach-remove{background:transparent;border:none;color:var(--gray-3);cursor:pointer;font-size:14px;padding:2px 5px;}
-    .file-attach-remove:hover{color:var(--red);}
-    /* MULTI-APPLIANCE */
-    .appliance-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
-    .appliance-row{background:var(--navy-3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px;position:relative;}
-    .appliance-row-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-    .appliance-row-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);}
-    .remove-appliance-btn{background:rgba(224,112,112,0.08);border:1px solid rgba(224,112,112,0.2);color:var(--red);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;font-family:'Plus Jakarta Sans',sans-serif;}
-    .add-appliance-btn{width:100%;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.15);color:var(--gray-2);border-radius:8px;padding:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-bottom:12px;}
-    .add-appliance-btn:hover{border-color:rgba(201,151,58,0.4);color:var(--gold);background:rgba(201,151,58,0.04);}
-    /* DELIVERY TYPE */
-    .delivery-type-section{background:rgba(91,159,212,0.06);border:1px solid rgba(91,159,212,0.18);border-radius:8px;padding:12px 14px;margin-bottom:12px;}
-    .delivery-type-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;}
-    .dtype-row{display:flex;flex-direction:column;gap:6px;}
-    .dtype-item{display:flex;align-items:center;gap:8px;}
-    .dtype-item input[type=radio]{width:15px;height:15px;accent-color:var(--blue);cursor:pointer;}
-    .dtype-item label{font-size:12px;color:var(--gray-1);cursor:pointer;}
-    /* INVOICE DROP */
-    .invoice-drop-zone{border:2px dashed rgba(201,151,58,0.3);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.25s;position:relative;margin-bottom:14px;background:rgba(201,151,58,0.03);}
-    .invoice-drop-zone:hover,.invoice-drop-zone.drag-over{border-color:rgba(201,151,58,0.7);background:rgba(201,151,58,0.07);}
-    .invoice-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-    .idz-icon{font-size:20px;margin-bottom:3px;}
-    .idz-text{font-size:12px;font-weight:600;color:var(--gold);}
-    .idz-sub{font-size:10px;color:var(--gray-2);margin-top:2px;}
-    .idz-loading{font-size:11px;color:var(--gold);margin-top:5px;display:none;}
-    /* Appliance picker */
-    .ap-box{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:20px;width:100%;max-width:460px;}
-    .ap-title{font-family:'Playfair Display',serif;font-size:17px;color:var(--white);margin-bottom:4px;}
-    .ap-sub{font-size:12px;color:var(--gray-2);margin-bottom:14px;}
-    .ap-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;max-height:300px;overflow-y:auto;}
-    .ap-item{background:var(--navy-3);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:12px 14px;cursor:pointer;transition:all 0.2s;}
-    .ap-item:hover{border-color:rgba(201,151,58,0.4);background:rgba(201,151,58,0.06);}
-    .ap-item-name{font-size:13px;font-weight:600;color:var(--white);}
-    .ap-item-detail{font-size:11px;color:var(--gray-2);margin-top:2px;}
-    .ap-cancel{font-size:12px;font-weight:600;padding:7px 16px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
-
   </style>
 </head>
 <body>
@@ -230,67 +190,45 @@
 <!-- APP -->
 <div class="app" id="app">
   <header>
-    <div class="h-logo">DC <span>Appliance</span> — Delivery Schedule</div>
-    <div class="h-right">
-      <button class="hbtn gold" onclick="openAddModal(null)">+ Add Stop</button>
-      <button class="hbtn gold" onclick="printManifest()">Print Manifest</button>
-      <button class="hbtn danger" onclick="doLogout()">Sign Out</button>
+    <div class="h-logo">DC <span>Appliance</span> — Delivery</div>
+    <div class="h-nav">
+      <div class="team-filter-row">
+        <button class="tfbtn active" id="tf-all" onclick="setTeam('all',this)">All Teams</button>
+        <button class="tfbtn" id="tf-main" onclick="setTeam('Main Delivery Team',this)">Main Team</button>
+        <button class="tfbtn" id="tf-other" onclick="setTeam('Other Delivery Team',this)">Other Team</button>
+      </div>
+      <button class="hbtn gold" onclick="openAddModal(null,null)">+ Add Stop</button>
+      <button class="hbtn gold" onclick="printManifest()">Print</button>
+      <button class="hbtn" onclick="doLogout()">Sign Out</button>
     </div>
   </header>
 
-  <div class="calendar-app">
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <!-- Mini Calendar -->
-      <div class="mini-cal">
-        <div class="mini-cal-header">
-          <button class="mini-cal-nav" onclick="changeCalMonth(-1)">&#8249;</button>
-          <div class="mini-cal-title" id="mini-cal-title"></div>
-          <button class="mini-cal-nav" onclick="changeCalMonth(1)">&#8250;</button>
-        </div>
-        <div class="mini-cal-grid" id="mini-cal-grid"></div>
-      </div>
-
-      <!-- Route Summary -->
-      <div class="route-summary">
-        <div class="route-summary-title">Today's Route</div>
-        <div class="route-stat"><span class="route-stat-label">Total Stops</span><span class="route-stat-val" id="r-stops">0</span></div>
-        <div class="route-stat"><span class="route-stat-label">Delivered</span><span class="route-stat-val" id="r-delivered" style="color:var(--green)">0</span></div>
-        <div class="route-stat"><span class="route-stat-label">Remaining</span><span class="route-stat-val" id="r-remain" style="color:var(--orange)">0</span></div>
-        <div class="route-stat"><span class="route-stat-label">Main Team</span><span class="route-stat-val" id="r-main" style="color:var(--blue)">0</span></div>
-        <div class="route-stat"><span class="route-stat-label">Other Team</span><span class="route-stat-val" id="r-other" style="color:var(--purple)">0</span></div>
-      </div>
-
-      <!-- Legend -->
-      <div class="legend">
-        <div class="legend-title">Legend</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Delivered</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Out for Delivery</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Scheduled</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Rescheduled</div>
-        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2)"></div>Available Slot</div>
-      </div>
+  <div class="cal-wrap">
+    <!-- Week nav -->
+    <div class="week-nav">
+      <button class="week-nav-btn" onclick="changeWeek(-1)">&#8592;</button>
+      <button class="week-nav-btn" onclick="changeWeek(1)">&#8594;</button>
+      <div class="week-title" id="week-title"></div>
+      <button class="hbtn" onclick="goToday()">Today</button>
     </div>
 
-    <!-- DAY VIEW -->
-    <div class="day-view">
-      <div class="day-header">
-        <button class="day-nav-btn" onclick="changeDay(-1)">&#8592;</button>
-        <div class="day-title" id="day-title"></div>
-        <div style="display:flex;gap:6px;">
-          <button class="today-btn active-team" id="team-all" onclick="setTeamFilter('all',this)">All Teams</button>
-          <button class="today-btn" id="team-main" onclick="setTeamFilter('Main Delivery Team',this)">Main Team</button>
-          <button class="today-btn" id="team-other" onclick="setTeamFilter('Other Delivery Team',this)">Other Team</button>
-        </div>
-        <button class="today-btn" onclick="goToday()">Today</button>
-        <button class="day-nav-btn" onclick="changeDay(1)">&#8594;</button>
+    <!-- Calendar grid -->
+    <div class="cal-grid">
+      <!-- Time labels -->
+      <div class="time-col">
+        <div class="time-col-header"></div>
+        <div class="time-col-body" id="time-col-body"></div>
       </div>
-      <div class="time-grid" id="time-grid"></div>
+      <!-- Days -->
+      <div class="days-wrap">
+        <div class="days-header" id="days-header"></div>
+        <div class="days-body" id="days-body" onscroll="syncTimeScroll(this.scrollTop)"></div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ADD/EDIT STOP MODAL -->
+<!-- ADD/EDIT MODAL -->
 <div class="modal-bg" id="add-modal">
   <div class="modal">
     <div class="modal-hdr">
@@ -299,109 +237,86 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-id"/>
-      <!-- INVOICE DROP ZONE -->
-      <div style="margin-bottom:14px;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Auto-Fill from Invoice</div>
-        <div class="invoice-drop-zone" id="del-invoice-drop"
-          ondragover="event.preventDefault();this.classList.add('drag-over')"
-          ondragleave="this.classList.remove('drag-over')"
-          ondrop="handleDelInvoiceDrop(event)">
-          <input type="file" accept="image/*,.pdf" onchange="handleDelInvoiceFile(this.files[0])"/>
-          <div class="idz-icon">📎</div>
-          <div class="idz-text">Drop invoice or click to upload</div>
+      <!-- Invoice auto-fill -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">Auto-Fill from Invoice</div>
+        <div class="idz" id="invoice-dz" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleInvoiceDrop(event)">
+          <input type="file" accept="image/*,.pdf" onchange="handleInvoiceFile(this.files[0])"/>
+          <div class="idz-txt">📎 Drop invoice or click to upload</div>
           <div class="idz-sub">PDF or image — Claude reads and fills the form</div>
-          <div class="idz-loading" id="del-idz-loading">Reading invoice...</div>
+          <div class="idz-loading" id="idz-loading">Reading invoice...</div>
+        </div>
+        <div id="file-attach-wrap" style="display:none;">
+          <div class="file-attach">
+            <span style="font-size:16px;">📄</span>
+            <div class="file-attach-name" id="file-attach-name"></div>
+            <a class="file-attach-open" id="file-attach-link" href="#" target="_blank">Open</a>
+            <button class="file-attach-rm" onclick="removeInvoiceFile()">&#x2715;</button>
+          </div>
         </div>
       </div>
+      <!-- Customer -->
       <div class="field"><label>Customer Name <span class="req">*</span></label><input class="inp" id="f-name" placeholder="John Smith"/></div>
       <div class="frow">
-        <div class="field"><label>Phone <span class="req">*</span></label><input class="inp" id="f-phone" type="tel" placeholder="(620) 555-1234"/></div>
+        <div class="field"><label>Phone <span class="req">*</span></label><input class="inp" id="f-phone" type="tel"/></div>
         <div class="field"><label>Email</label><input class="inp" id="f-email" type="email"/></div>
       </div>
-      <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="f-address" placeholder="123 Main St"/></div>
-      <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="f-city" placeholder="Dodge City"/></div>
-      <div class="field"><label>Invoice # <span class="req">*</span></label><input class="inp" id="f-invoice" placeholder="INV-0001"/></div>
-      <!-- DELIVERY TYPE -->
-      <div class="delivery-type-section">
-        <div class="delivery-type-title">Delivery Type</div>
-        <div class="dtype-row">
-          <div class="dtype-item"><input type="radio" name="dtype" id="dtype-install" value="Full Install" checked/><label for="dtype-install">Full Install</label></div>
-          <div class="dtype-item"><input type="radio" name="dtype" id="dtype-inside" value="Drop Off Inside"/><label for="dtype-inside">Drop Off Inside</label></div>
-          <div class="dtype-item"><input type="radio" name="dtype" id="dtype-outside" value="Drop Off Outside"/><label for="dtype-outside">Drop Off Outside</label></div>
+      <div class="frow">
+        <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="f-address"/></div>
+        <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="f-city"/></div>
+      </div>
+      <div class="field"><label>Invoice #</label><input class="inp" id="f-invoice"/></div>
+      <!-- Delivery type -->
+      <div class="dtype-wrap">
+        <div class="dtype-title">Delivery Type</div>
+        <div class="dtype-opts">
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Full Install" checked/> Full Install</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Inside"/> Drop Off Inside</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Outside"/> Drop Off Outside</label>
         </div>
       </div>
-      <!-- APPLIANCES -->
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Appliances <span class="req">*</span></div>
-      <div class="appliance-list" id="appliance-list"></div>
-      <button type="button" class="add-appliance-btn" onclick="addApplianceRow()">+ Add Another Appliance</button>
-      <div class="field"><label>Delivery Date <span class="req">*</span></label><input class="inp" id="f-date" type="date"/></div>
-      <div class="duration-row">
-        <div class="field">
-          <label>Start Time</label>
+      <!-- Appliances -->
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">Appliances <span class="req">*</span></div>
+      <div id="app-list"></div>
+      <button type="button" class="add-app-btn" onclick="addAppRow()">+ Add Another Appliance</button>
+      <!-- Schedule -->
+      <div class="frow3">
+        <div class="field"><label>Date <span class="req">*</span></label><input class="inp" id="f-date" type="date"/></div>
+        <div class="field"><label>Start Time</label>
           <select class="sel" id="f-time">
-            <option value="8:00 AM">8:00 AM</option>
-            <option value="8:30 AM">8:30 AM</option>
-            <option value="9:00 AM">9:00 AM</option>
-            <option value="9:30 AM">9:30 AM</option>
-            <option value="10:00 AM">10:00 AM</option>
-            <option value="10:30 AM">10:30 AM</option>
-            <option value="11:00 AM">11:00 AM</option>
-            <option value="11:30 AM">11:30 AM</option>
-            <option value="12:00 PM">12:00 PM</option>
-            <option value="12:30 PM">12:30 PM</option>
-            <option value="1:00 PM">1:00 PM</option>
-            <option value="1:30 PM">1:30 PM</option>
-            <option value="2:00 PM">2:00 PM</option>
-            <option value="2:30 PM">2:30 PM</option>
-            <option value="3:00 PM">3:00 PM</option>
-            <option value="3:30 PM">3:30 PM</option>
-            <option value="4:00 PM">4:00 PM</option>
-            <option value="4:30 PM">4:30 PM</option>
-            <option value="5:00 PM">5:00 PM</option>
-            <option value="Call Ahead">Call Ahead</option>
+            <option>8:00 AM</option><option>8:30 AM</option><option>9:00 AM</option>
+            <option>9:30 AM</option><option>10:00 AM</option><option>10:30 AM</option>
+            <option>11:00 AM</option><option>11:30 AM</option><option>12:00 PM</option>
+            <option>12:30 PM</option><option>1:00 PM</option><option>1:30 PM</option>
+            <option>2:00 PM</option><option>2:30 PM</option><option>3:00 PM</option>
+            <option>3:30 PM</option><option>4:00 PM</option><option>4:30 PM</option>
+            <option>5:00 PM</option><option>Call Ahead</option>
           </select>
         </div>
-        <div class="field">
-          <label>Duration</label>
+        <div class="field"><label>Duration</label>
           <select class="sel" id="f-duration">
             <option value="30">30 min</option>
             <option value="60" selected>1 hour</option>
-            <option value="90">1.5 hours</option>
-            <option value="120">2 hours</option>
-            <option value="150">2.5 hours</option>
-            <option value="180">3 hours</option>
-            <option value="240">4 hours</option>
-            <option value="300">5 hours</option>
-            <option value="all-day">All Day</option>
+            <option value="90">1.5 hrs</option>
+            <option value="120">2 hrs</option>
+            <option value="150">2.5 hrs</option>
+            <option value="180">3 hrs</option>
+            <option value="240">4 hrs</option>
+            <option value="300">5 hrs</option>
+            <option value="480">All Day</option>
           </select>
         </div>
-        <div class="field">
-          <label>Stop #</label>
-          <input class="inp" id="f-stop-order" type="number" min="1" placeholder="1, 2, 3..."/>
+      </div>
+      <div class="frow">
+        <div class="field"><label>Team</label>
+          <select class="sel" id="f-team">
+            <option>Main Delivery Team</option>
+            <option>Other Delivery Team</option>
+          </select>
         </div>
+        <div class="field"><label>Stop #</label><input class="inp" id="f-stop" type="number" min="1" placeholder="1"/></div>
       </div>
-
-      <!-- ATTACHED INVOICE FILE -->
-      <div id="attached-invoice-section" style="display:none;margin-bottom:12px;">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:6px;">Attached Invoice</div>
-        <div class="file-attach-row">
-          <div class="file-attach-icon">📄</div>
-          <div class="file-attach-info">
-            <div class="file-attach-name" id="attached-invoice-name">invoice.pdf</div>
-            <div class="file-attach-sub" id="attached-invoice-sub">Tap to view</div>
-          </div>
-          <a class="file-attach-open" id="attached-invoice-link" href="#" target="_blank">Open</a>
-          <button class="file-attach-remove" onclick="removeAttachedInvoice()" title="Remove">&#x2715;</button>
-        </div>
-      </div>
-
-      <div class="field"><label>Delivery Team <span class="req">*</span></label>
-        <select class="sel" id="f-team">
-          <option value="Main Delivery Team">Main Delivery Team</option>
-          <option value="Other Delivery Team">Other Delivery Team</option>
-        </select>
-      </div>
-      <div class="field"><label>Notes</label><textarea class="txta" id="f-notes" placeholder="Access codes, floor level, haul away info, special instructions..."></textarea></div>
+      <div class="field"><label>Notes</label><textarea class="txta" id="f-notes" placeholder="Access codes, floor, haul away details..."></textarea></div>
     </div>
     <div class="modal-footer">
       <button class="ghost-btn" onclick="closeModal('add-modal')">Cancel</button>
@@ -415,58 +330,47 @@
   <div class="modal">
     <div class="modal-hdr">
       <div>
-        <div class="modal-title" id="detail-name"></div>
-        <div style="font-size:11px;color:var(--gray-2);margin-top:2px;" id="detail-id"></div>
+        <div class="modal-title" id="det-name"></div>
+        <div style="font-size:11px;color:var(--gray-2);margin-top:2px;" id="det-meta"></div>
       </div>
       <button class="modal-close" onclick="closeModal('detail-modal')">&#x2715;</button>
     </div>
-    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-body" id="det-body"></div>
     <div class="modal-footer" style="justify-content:space-between;">
-      <div class="act-row" id="detail-actions"></div>
+      <div class="act-row" id="det-actions"></div>
       <button class="ghost-btn" onclick="closeModal('detail-modal')">Close</button>
     </div>
   </div>
 </div>
 
 <!-- APPLIANCE PICKER -->
-<div class="modal-bg" id="del-ap-modal">
-  <div class="ap-box">
-    <div class="ap-title">Multiple Appliances Found</div>
-    <div class="ap-sub">Which appliance is being delivered?</div>
-    <div class="ap-list" id="del-ap-list"></div>
-    <button class="ap-cancel" onclick="closeModal('del-ap-modal')">Cancel</button>
+<div class="modal-bg" id="ap-modal">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-hdr"><div class="modal-title">Multiple Appliances Found</div><button class="modal-close" onclick="closeModal('ap-modal')">&#x2715;</button></div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--gray-2);margin-bottom:12px;">Which appliance is being delivered?</p>
+      <div id="ap-list"></div>
+      <button class="ghost-btn" onclick="closeModal('ap-modal');initAppRows([{a:'',m:''}])">Use all appliances</button>
+    </div>
   </div>
 </div>
 
 <script>
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
 var PASSWORD='DCDelivery2026';
 var deliveries=[],nextId=1;
-var viewDate=new Date().toISOString().slice(0,10);
-var calMonth=new Date().getMonth(), calYear=new Date().getFullYear();
+var weekStart=getWeekStart(new Date());
 var TEAM_FILTER='all';
-var HOURS=['8:00 AM','8:30 AM','9:00 AM','9:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','12:00 PM','12:30 PM','1:00 PM','1:30 PM','2:00 PM','2:30 PM','3:00 PM','3:30 PM','4:00 PM','4:30 PM','5:00 PM'];
-function setTeamFilter(team, btn){
-  TEAM_FILTER=team;
-  document.querySelectorAll('#team-all,#team-main,#team-other').forEach(function(b){b.classList.remove('active-team');});
-  btn.classList.add('active-team');
-  renderTimeGrid();
-  updateRouteSummary();
-}
+var pendingFile=null;
+var APP_OPTIONS=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Microwave','Freezer','Ice Maker','TV','Mattress','Grill','Other'];
+var HOURS_START=7, HOURS_END=20; // 7am to 8pm
+var PX_PER_MIN=1.0; // 60px per hour = 1px per min
 
-function timeToMinutes(t){
-  if(!t||t==='Call Ahead'||t==='all-day')return -1;
-  var m=t.match(/(\d+):(\d+)\s*(AM|PM)/i); if(!m)return -1;
-  var h=parseInt(m[1]),min=parseInt(m[2]),ap=m[3].toUpperCase();
-  if(ap==='PM'&&h!==12)h+=12; if(ap==='AM'&&h===12)h=0;
-  return h*60+min;
-}
-function minutesToTime(mins){
-  var h=Math.floor(mins/60)%24,m=mins%60;
-  var ap=h>=12?'PM':'AM'; var h12=h>12?h-12:(h===0?12:h);
-  return h12+':'+(m<10?'0':'')+m+' '+ap;
-}
-
-// ── AUTH ──
+// ═══════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════
 function doLogin(){
   var pw=document.getElementById('login-pw').value;
   if(pw===PASSWORD){
@@ -485,174 +389,201 @@ function doLogout(){
   document.getElementById('login-err').style.display='none';
 }
 
-// ── DATA ──
+// ═══════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════
 async function loadDeliveries(){
   try{
     var res=await fetch('/api/deliveries-get');
     var data=await res.json();
     deliveries=data.deliveries||[]; nextId=data.nextId||1;
   }catch(e){deliveries=[];nextId=1;}
-  setViewDate(viewDate);
-  renderMiniCal();
+  renderCalendar();
 }
 async function saveDeliveries(){
   try{
-    await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries,nextId})});
+    await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:deliveries,nextId:nextId})});
   }catch(e){console.warn('Save failed',e);}
 }
 
-// ── DATE NAV ──
-function setViewDate(d){
-  viewDate=d;
-  var dt=new Date(d+'T12:00:00');
-  var today=new Date().toISOString().slice(0,10);
-  var isToday=d===today;
-  var label=dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  document.getElementById('day-title').innerHTML=label+(isToday?' <span class="today-badge">Today</span>':'');
-  renderTimeGrid();
-  updateRouteSummary();
-  renderMiniCal();
+// ═══════════════════════════════════════
+//  DATE UTILS
+// ═══════════════════════════════════════
+function getWeekStart(d){
+  var dt=new Date(d);
+  var day=dt.getDay();
+  dt.setDate(dt.getDate()-day);
+  dt.setHours(0,0,0,0);
+  return dt;
 }
-function changeDay(delta){
-  var dt=new Date(viewDate+'T12:00:00'); dt.setDate(dt.getDate()+delta);
-  setViewDate(dt.toISOString().slice(0,10));
+function dateStr(d){ return d.toISOString().slice(0,10); }
+function timeToMins(t){
+  if(!t||t==='Call Ahead')return HOURS_START*60;
+  var m=t.match(/(\d+):(\d+)\s*(AM|PM)/i); if(!m)return HOURS_START*60;
+  var h=parseInt(m[1]),mn=parseInt(m[2]),ap=m[3].toUpperCase();
+  if(ap==='PM'&&h!==12)h+=12; if(ap==='AM'&&h===12)h=0;
+  return h*60+mn;
 }
-function goToday(){setViewDate(new Date().toISOString().slice(0,10));}
+function minsToTime(mins){
+  var h=Math.floor(mins/60)%24, mn=mins%60;
+  var ap=h>=12?'PM':'AM'; var h12=h>12?h-12:(h===0?12:h);
+  return h12+':'+(mn<10?'0':'')+mn+' '+ap;
+}
+function fmt12(t){ return t; }
+function changeWeek(delta){
+  weekStart=new Date(weekStart);
+  weekStart.setDate(weekStart.getDate()+delta*7);
+  renderCalendar();
+}
+function goToday(){
+  weekStart=getWeekStart(new Date());
+  renderCalendar();
+}
+function setTeam(team,btn){
+  TEAM_FILTER=team;
+  document.querySelectorAll('.tfbtn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderEvents();
+}
+function syncTimeScroll(top){
+  var tcb=document.getElementById('time-col-body');
+  if(tcb)tcb.scrollTop=top;
+}
 
-// ── MINI CALENDAR ──
-function renderMiniCal(){
-  var title=document.getElementById('mini-cal-title');
-  var grid=document.getElementById('mini-cal-grid');
-  var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  title.textContent=months[calMonth]+' '+calYear;
-
-  // Days of week header
-  var dows=['S','M','T','W','T','F','S'];
-  var html=dows.map(function(d){return '<div class="mini-cal-dow">'+d+'</div>';}).join('');
-
-  var firstDay=new Date(calYear,calMonth,1).getDay();
-  var daysInMonth=new Date(calYear,calMonth+1,0).getDate();
-  var daysInPrev=new Date(calYear,calMonth,0).getDate();
-  var today=new Date().toISOString().slice(0,10);
-
-  // Prev month padding
-  for(var i=firstDay-1;i>=0;i--){
-    var day=daysInPrev-i;
-    html+='<div class="mini-cal-day other-month">'+day+'</div>';
+// ═══════════════════════════════════════
+//  CALENDAR RENDER
+// ═══════════════════════════════════════
+function renderCalendar(){
+  // Build week days
+  var days=[];
+  for(var i=0;i<7;i++){
+    var d=new Date(weekStart);
+    d.setDate(d.getDate()+i);
+    days.push(d);
   }
-  // Current month
-  for(var d=1;d<=daysInMonth;d++){
-    var dateStr=calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    var hasD=deliveries.some(function(x){return x.date===dateStr;});
-    var cls='mini-cal-day'+(dateStr===today?' today':'')+(dateStr===viewDate?' selected':'')+(hasD?' has-deliveries':'');
-    html+='<div class="'+cls+'" onclick="setViewDate(\''+dateStr+'\');calMonth='+calMonth+';calYear='+calYear+'">'+d+'</div>';
+
+  // Week title
+  var ws=days[0],we=days[6];
+  var title=ws.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' — '+we.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  document.getElementById('week-title').textContent=title;
+
+  // Days header
+  var today=dateStr(new Date());
+  var dows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('days-header').innerHTML=days.map(function(d,i){
+    var ds=dateStr(d);
+    var isTod=ds===today;
+    return '<div class="day-header-cell'+(isTod?' today':'')+'" onclick="openAddModal(\''+ds+'\',null)">'+
+      '<div class="dhc-dow">'+dows[i]+'</div>'+
+      '<div class="dhc-date">'+d.getDate()+'</div>'+
+    '</div>';
+  }).join('');
+
+  // Time labels + day columns
+  var tcb=document.getElementById('time-col-body');
+  var timeHtml='';
+  for(var h=HOURS_START;h<HOURS_END;h++){
+    var label=h===12?'12 PM':(h>12?(h-12)+' PM':h+' AM');
+    timeHtml+='<div class="time-label">'+label+'</div>';
   }
-  // Next month padding
-  var total=firstDay+daysInMonth;
-  var remaining=total%7===0?0:7-(total%7);
-  for(var n=1;n<=remaining;n++){
-    html+='<div class="mini-cal-day other-month">'+n+'</div>';
-  }
-  grid.innerHTML=html;
-}
-function changeCalMonth(delta){
-  calMonth+=delta;
-  if(calMonth>11){calMonth=0;calYear++;}
-  if(calMonth<0){calMonth=11;calYear--;}
-  renderMiniCal();
-}
+  tcb.innerHTML=timeHtml;
 
-// ── TIME GRID ──
-function renderTimeGrid(){
-  var grid=document.getElementById('time-grid');
-  var dayStops=deliveries.filter(function(d){
-    if(d.date!==viewDate)return false;
-    if(TEAM_FILTER!=='all'&&d.team!==TEAM_FILTER)return false;
-    return true;
-  });
-  dayStops.sort(function(a,b){
-    if(a.stopOrder&&b.stopOrder)return a.stopOrder-b.stopOrder;
-    if(a.stopOrder)return -1; if(b.stopOrder)return 1;
-    return new Date(a.createdAt)-new Date(b.createdAt);
-  });
-
-  var html='';
-  HOURS.forEach(function(hour){
-    var hourMins=timeToMinutes(hour);
-    // Show event card at START time slot only
-    var slots=dayStops.filter(function(d){
-      if(d.duration==='all-day')return hour==='8:00 AM';
-      if(d.time==='Call Ahead')return hour==='8:00 AM';
-      var startMins=timeToMinutes(d.time);
-      return startMins===hourMins;
-    });
-    // Check if this slot is BLOCKED by a multi-hour event starting in a PREVIOUS slot
-    var blockedBy=dayStops.filter(function(d){
-      if(d.duration==='all-day'||d.time==='Call Ahead')return false;
-      var startMins=timeToMinutes(d.time);
-      var durMins=parseInt(d.duration)||60;
-      // Block slots AFTER start and WITHIN duration
-      return hourMins>startMins && hourMins<=(startMins+durMins-30);
-    });
-
-    // Deduplicate
-    var seen={};
-    slots=slots.filter(function(d){if(seen[d.id])return false;seen[d.id]=true;return true;});
-
-    html+='<div class="time-row"><div class="time-label">'+hour+'</div><div class="slot-area">';
-    if(slots.length===0){
-      html+='<div class="slot-empty" onclick="openAddModal(\''+hour+'\')">Available slot &nbsp;&#43;</div>';
-    } else {
-      slots.forEach(function(d){
-        var sc=d.status==='Scheduled'?'de-scheduled':d.status==='Out for Delivery'?'de-out':d.status==='Delivered'?'de-delivered':'de-rescheduled';
-        var badgeCls=d.status==='Scheduled'?'status-scheduled':d.status==='Out for Delivery'?'status-out':d.status==='Delivered'?'status-delivered':'status-rescheduled';
-        html+='<div class="delivery-event '+sc+'" onclick="openDetail(\''+d.id+'\')">'+
-          '<div class="de-name">'+d.name+'</div>'+
-          '<div class="de-sub">'+((d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.appliance;}).join(', '):d.appliance)+' &nbsp;·&nbsp; '+d.address+(d.city?', '+d.city:'')+'</div>'+
-          '<div class="de-badges">'+
-            '<span class="de-badge '+badgeCls+'">'+d.status+'</span>'+
-            (d.stopOrder?'<span class="de-badge stop-num">Stop #'+d.stopOrder+'</span>':'')+
-            (d.invoice?'<span class="de-badge invoice">'+d.invoice+'</span>':'')+
-            (d.team==='Other Delivery Team'?'<span class="team-badge-other">Other Team</span>':'<span class="team-badge-main">Main</span>')+
-            (d.deliveredAt?'<span style="font-size:9px;color:var(--green);margin-left:2px;">'+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</span>':'')+
-          '</div>'+
-        '</div>';
-      });
+  var db=document.getElementById('days-body');
+  var totalHours=HOURS_END-HOURS_START;
+  db.innerHTML=days.map(function(d,i){
+    var ds=dateStr(d);
+    var isTod=ds===today;
+    var cells='';
+    for(var h=HOURS_START;h<HOURS_END;h++){
+      var hh=h; var mm=0;
+      cells+='<div class="hour-cell" onclick="openAddModal(\''+ds+'\',\''+minsToTime(h*60)+'\')">'+
+        '<div class="hour-half"></div>'+
+        '<div class="add-hint">+</div>'+
+      '</div>';
     }
-    html+='</div></div>';
+    return '<div class="day-col'+(isTod?' today-col':'')+'" id="col-'+ds+'" style="height:'+(totalHours*60)+'px;position:relative;">'+cells+'</div>';
+  }).join('');
+
+  renderEvents();
+
+  // Scroll to 8am
+  setTimeout(function(){
+    var db2=document.getElementById('days-body');
+    if(db2) db2.scrollTop=(8-HOURS_START)*60;
+  },50);
+}
+
+function renderEvents(){
+  // Clear existing events
+  document.querySelectorAll('.cal-event').forEach(function(e){e.remove();});
+
+  var days=[];
+  for(var i=0;i<7;i++){
+    var d=new Date(weekStart); d.setDate(d.getDate()+i);
+    days.push(dateStr(d));
+  }
+
+  var filtered=deliveries.filter(function(d){
+    if(TEAM_FILTER!=='all'&&d.team!==TEAM_FILTER)return false;
+    return days.indexOf(d.date)>=0;
   });
-  grid.innerHTML=html;
+
+  filtered.forEach(function(d){
+    var col=document.getElementById('col-'+d.date);
+    if(!col)return;
+
+    var startMins=timeToMins(d.time);
+    var durMins=d.duration==='all-day'?480:(parseInt(d.duration)||60);
+    var top=(startMins-HOURS_START*60)*PX_PER_MIN;
+    var height=Math.max(durMins*PX_PER_MIN,22);
+
+    // Clamp to visible range
+    var maxTop=(HOURS_END-HOURS_START)*60*PX_PER_MIN;
+    if(top<0)top=0;
+    if(top>maxTop)return;
+    if(top+height>maxTop)height=maxTop-top;
+
+    var sc=d.status==='Delivered'?'ev-delivered':d.status==='Out for Delivery'?'ev-out':d.status==='Rescheduled'?'ev-rescheduled':'ev-scheduled';
+    var appNames=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
+    var endTime=minsToTime(startMins+durMins);
+    var timeStr=d.time==='Call Ahead'?'Call Ahead':d.time+(durMins?'–'+endTime:'');
+
+    var ev=document.createElement('div');
+    ev.className='cal-event '+sc;
+    ev.style.top=top+'px';
+    ev.style.height=height+'px';
+    ev.setAttribute('data-id',d.id);
+    ev.innerHTML=
+      '<div class="ev-name">'+(d.stopOrder?d.stopOrder+'. ':'')+d.name+'</div>'+
+      (height>30?'<div class="ev-sub">'+appNames+(d.city?' · '+d.city:'')+'</div>':'')+
+      (height>45?'<div class="ev-time">'+timeStr+'</div>':'');
+    ev.onclick=function(e){e.stopPropagation();openDetail(d.id);};
+    col.appendChild(ev);
+  });
 }
 
-// ── ROUTE SUMMARY ──
-function updateRouteSummary(){
-  var dayStops=deliveries.filter(function(d){return d.date===viewDate;});
-  var allDayStops=deliveries.filter(function(d){return d.date===viewDate;});
-  document.getElementById('r-stops').textContent=allDayStops.length;
-  document.getElementById('r-delivered').textContent=allDayStops.filter(function(d){return d.status==='Delivered';}).length;
-  document.getElementById('r-remain').textContent=allDayStops.filter(function(d){return d.status!=='Delivered'&&d.status!=='Rescheduled';}).length;
-  document.getElementById('r-main').textContent=allDayStops.filter(function(d){return !d.team||d.team==='Main Delivery Team';}).length;
-  document.getElementById('r-other').textContent=allDayStops.filter(function(d){return d.team==='Other Delivery Team';}).length;
-}
-
-// ── ADD/EDIT MODAL ──
-function openAddModal(timeSlot){
+// ═══════════════════════════════════════
+//  ADD / EDIT MODAL
+// ═══════════════════════════════════════
+function openAddModal(date,time){
   document.getElementById('edit-id').value='';
   document.getElementById('add-modal-title').textContent='Add Delivery Stop';
-  ['f-name','f-phone','f-email','f-address','f-city','f-invoice','f-notes','f-stop-order'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('dtype-install').checked=true;
+  ['f-name','f-phone','f-email','f-address','f-city','f-invoice','f-notes','f-stop'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('f-date').value=date||dateStr(new Date());
   document.getElementById('f-duration').value='60';
-  pendingDelInvoiceFile=null;
-  document.getElementById('attached-invoice-section').style.display='none';
-  initApplianceRows([{appliance:'',model:''}]);
-  document.getElementById('haul-details').style.display='none';
-  document.getElementById('f-date').value=viewDate;
-  if(timeSlot&&timeSlot!=='null'){
+  document.getElementById('f-team').value='Main Delivery Team';
+  document.querySelector('input[name="dtype"][value="Full Install"]').checked=true;
+  // Set time
+  if(time){
     var sel=document.getElementById('f-time');
-    for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===timeSlot){sel.selectedIndex=i;break;}}
+    for(var i=0;i<sel.options.length;i++){if(sel.options[i].value===time){sel.selectedIndex=i;break;}}
+  } else {
+    document.getElementById('f-time').selectedIndex=2; // 9:00 AM
   }
-  // Make sure appliance rows are initialized
-  if(!document.getElementById('appliance-list').children.length) initApplianceRows([{appliance:'',model:''}]);
+  pendingFile=null;
+  document.getElementById('file-attach-wrap').style.display='none';
+  document.getElementById('invoice-dz').querySelector('.idz-attached')&&(document.getElementById('invoice-dz').querySelector('.idz-attached').textContent='');
+  initAppRows([{a:'',m:''}]);
   document.getElementById('add-modal').classList.add('open');
 }
 
@@ -660,118 +591,149 @@ function openEditStop(id){
   closeModal('detail-modal');
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
   document.getElementById('edit-id').value=id;
-  document.getElementById('add-modal-title').textContent='Edit Delivery Stop';
+  document.getElementById('add-modal-title').textContent='Edit Stop';
   document.getElementById('f-name').value=d.name||'';
   document.getElementById('f-phone').value=d.phone||'';
   document.getElementById('f-email').value=d.email||'';
   document.getElementById('f-address').value=d.address||'';
   document.getElementById('f-city').value=d.city||'';
-  // Populate appliance rows
-  var appData=d.appliances&&d.appliances.length?d.appliances:[{appliance:d.appliance||'',model:d.model||''}];
-  initApplianceRows(appData);
-  // Set delivery type
-  var teamSel=document.getElementById('f-team');
-  for(var i=0;i<teamSel.options.length;i++){if(teamSel.options[i].value===(d.team||'Main Delivery Team')){teamSel.selectedIndex=i;break;}}
-  var dtVal=d.deliveryType||'Full Install';
-  document.querySelectorAll('input[name="dtype"]').forEach(function(r){r.checked=r.value===dtVal;});
-  // Set duration
-  var durSel=document.getElementById('f-duration');
-  for(var i=0;i<durSel.options.length;i++){if(durSel.options[i].value===(d.duration||'60')){durSel.selectedIndex=i;break;}}
-  // Show attached invoice if exists
-  pendingDelInvoiceFile=null;
-  if(d.invoiceFile&&d.invoiceFile.url){
-    pendingDelInvoiceFile={url:d.invoiceFile.url,filename:d.invoiceFile.filename};
-    showAttachedInvoice(d.invoiceFile.filename,d.invoiceFile.url);
-  } else {
-    document.getElementById('attached-invoice-section').style.display='none';
-  }
   document.getElementById('f-invoice').value=d.invoice||'';
   document.getElementById('f-notes').value=d.notes||'';
-  document.getElementById('f-haul-item').value=d.haulItem||'';
-  document.getElementById('f-stop-order').value=d.stopOrder||'';
-  document.getElementById('f-date').value=d.date||viewDate;
-  document.getElementById('f-haul').checked=!!d.haul;
-  document.getElementById('haul-details').style.display=d.haul?'block':'none';
-
-  var timeSel=document.getElementById('f-time');
-  for(var i=0;i<timeSel.options.length;i++){if(timeSel.options[i].value===d.time){timeSel.selectedIndex=i;break;}}
+  document.getElementById('f-stop').value=d.stopOrder||'';
+  document.getElementById('f-date').value=d.date||'';
+  document.getElementById('f-duration').value=d.duration||'60';
+  document.getElementById('f-team').value=d.team||'Main Delivery Team';
+  // Time
+  var tsel=document.getElementById('f-time');
+  for(var i=0;i<tsel.options.length;i++){if(tsel.options[i].value===d.time){tsel.selectedIndex=i;break;}}
+  // Delivery type
+  var dtv=d.deliveryType||'Full Install';
+  document.querySelectorAll('input[name="dtype"]').forEach(function(r){r.checked=r.value===dtv;});
+  // Appliances
+  var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
+  initAppRows(apps);
+  // Invoice file
+  pendingFile=d.invoiceFile||null;
+  if(pendingFile&&pendingFile.url){showFileAttach(pendingFile.filename,pendingFile.url);}
+  else{document.getElementById('file-attach-wrap').style.display='none';}
   document.getElementById('add-modal').classList.add('open');
 }
 
 async function saveStop(){
   var editId=document.getElementById('edit-id').value;
-  var name=document.getElementById('f-name').value.trim(),phone=document.getElementById('f-phone').value.trim(),
-      email=document.getElementById('f-email').value.trim(),address=document.getElementById('f-address').value.trim(),
-      city=document.getElementById('f-city').value.trim(),
-      duration=document.getElementById('f-duration').value,
-      team=document.getElementById('f-team').value,
-      attachedInvoice=pendingDelInvoiceFile,
+  var name=document.getElementById('f-name').value.trim();
+  var phone=document.getElementById('f-phone').value.trim();
+  var email=document.getElementById('f-email').value.trim();
+  var address=document.getElementById('f-address').value.trim();
+  var city=document.getElementById('f-city').value.trim();
+  var invoice=document.getElementById('f-invoice').value.trim();
+  var notes=document.getElementById('f-notes').value.trim();
+  var date=document.getElementById('f-date').value;
+  var time=document.getElementById('f-time').value;
+  var duration=document.getElementById('f-duration').value;
+  var team=document.getElementById('f-team').value;
+  var stopOrder=parseInt(document.getElementById('f-stop').value)||null;
+  var deliveryType=document.querySelector('input[name="dtype"]:checked').value;
 
-      invoice=document.getElementById('f-invoice').value.trim(),date=document.getElementById('f-date').value,
-      time=document.getElementById('f-time').value,stopOrder=parseInt(document.getElementById('f-stop-order').value)||null,
-      haul=document.getElementById('f-haul').checked,haulItem=document.getElementById('f-haul-item').value.trim(),
-      notes=document.getElementById('f-notes').value.trim();
-  // Collect appliances from rows
-  var appRows=document.querySelectorAll('.appliance-row');
-  var appList=[];
-  for(var i=0;i<appRows.length;i++){
-    var row=appRows[i];
-    var app=row.querySelector('.app-sel').value;
-    var mod=row.querySelector('.app-model').value.trim();
-    if(app)appList.push({appliance:app,model:mod});
+  // Collect appliances
+  var apps=[];
+  document.querySelectorAll('.app-row').forEach(function(row){
+    var a=row.querySelector('.app-sel').value;
+    var m=row.querySelector('.app-model').value.trim();
+    if(a)apps.push({a:a,m:m});
+  });
+
+  if(!name||!phone||!address||!city||!date||apps.length===0){
+    alert('Please fill in all required fields and at least one appliance.');
+    return;
   }
-  var deliveryType=document.querySelector('input[name="dtype"]:checked')?.value||'Full Install';
-  if(!name||!phone||!address||!city||appList.length===0||!date){alert('Please fill in all required fields including at least one appliance.');return;}
+
+  var invoiceFile=pendingFile&&pendingFile.url?{url:pendingFile.url,filename:pendingFile.filename}:null;
+  var appStr=apps.map(function(x){return x.a;}).join(', ');
+  var modStr=apps.map(function(x){return x.m;}).filter(Boolean).join(', ');
 
   if(editId){
     var d=deliveries.find(function(x){return x.id===editId;}); if(!d)return;
-    Object.assign(d,{name,phone,email,address,city,appliances:appList,invoice,deliveryType,date,time,stopOrder,haul,haulItem,notes});
-    // Keep legacy fields for display compat
-    d.appliance=appList.map(function(a){return a.appliance;}).join(', ');
-    d.model=appList.map(function(a){return a.model;}).filter(Boolean).join(', ');
+    Object.assign(d,{name,phone,email,address,city,invoice,notes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,model:modStr,invoiceFile:invoiceFile});
   } else {
-    var invoiceFile=attachedInvoice&&attachedInvoice.url?{url:attachedInvoice.url,filename:attachedInvoice.filename}:null;
-    deliveries.unshift({id:'DEL-'+String(nextId).padStart(4,'0'),name,phone,email,address,city,appliances:appList,appliance:appList.map(function(a){return a.appliance;}).join(', '),model:appList.map(function(a){return a.model;}).filter(Boolean).join(', '),invoice,deliveryType,duration,team,date,time,stopOrder,notes,invoiceFile,status:'Scheduled',reschedDate:'',reschedNotes:'',createdAt:new Date().toISOString(),deliveredAt:null});
+    deliveries.unshift({
+      id:'DEL-'+String(nextId).padStart(4,'0'),
+      name,phone,email,address,city,invoice,notes,date,time,duration,team,stopOrder,deliveryType,
+      appliances:apps,appliance:appStr,model:modStr,invoiceFile,
+      status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null,reschedDate:''
+    });
     nextId++;
   }
+
   await saveDeliveries();
-  pendingDelInvoiceFile=null;
-  document.getElementById('attached-invoice-section').style.display='none';
   closeModal('add-modal');
-  setViewDate(date);
-  renderMiniCal();
+  renderEvents();
 }
 
-// ── DETAIL MODAL ──
+// ═══════════════════════════════════════
+//  APPLIANCE ROWS
+// ═══════════════════════════════════════
+function initAppRows(list){
+  document.getElementById('app-list').innerHTML='';
+  list.forEach(function(x){addAppRow(x.a||x.appliance||'',x.m||x.model||'');});
+}
+function addAppRow(appVal,modelVal){
+  var container=document.getElementById('app-list');
+  var idx=container.children.length;
+  var div=document.createElement('div');
+  div.className='app-row';
+  var opts='<option value="">Select...</option>'+APP_OPTIONS.map(function(o){return '<option value="'+o+'"'+(o===(appVal||'')?' selected':'')+'>'+o+'</option>';}).join('');
+  div.innerHTML=
+    '<div class="app-row-hdr">'+
+      '<div class="app-row-title">Appliance '+(idx+1)+'</div>'+
+      (idx>0?'<button type="button" class="app-row-remove" onclick="removeAppRow(this)">&#x2715;</button>':'')+
+    '</div>'+
+    '<div class="frow">'+
+      '<select class="sel app-sel">'+opts+'</select>'+
+      '<input class="inp app-model" placeholder="Model #" value="'+(modelVal||'')+'"/>'+
+    '</div>';
+  container.appendChild(div);
+}
+function removeAppRow(btn){
+  btn.closest('.app-row').remove();
+  document.querySelectorAll('.app-row-title').forEach(function(t,i){t.textContent='Appliance '+(i+1);});
+}
+
+// ═══════════════════════════════════════
+//  DETAIL MODAL
+// ═══════════════════════════════════════
 function openDetail(id){
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
-  document.getElementById('detail-name').textContent=d.name;
-  document.getElementById('detail-id').textContent=d.id+' &nbsp;·&nbsp; '+d.time;
-  var body='<div class="detail-grid">'+
-    '<div><div class="detail-label">Phone</div><div class="detail-val"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div>'+
-    (d.email?'<div><div class="detail-label">Email</div><div class="detail-val"><a href="mailto:'+d.email+'">'+d.email+'</a></div></div>':'<div></div>')+
-    '<div><div class="detail-label">Address</div><div class="detail-val">'+d.address+', '+d.city+'</div></div>'+
-    '<div><div class="detail-label">Appliance</div><div class="detail-val">'+(d.brand?d.brand+' ':'')+d.appliance+'</div></div>'+
-    (d.model?'<div><div class="detail-label">Model #</div><div class="detail-val">'+d.model+'</div></div>':'<div></div>')+
-    '<div><div class="detail-label">Duration</div><div class="detail-val">'+(d.duration==='all-day'?'All Day':(d.duration?d.duration+' min':'-'))+'</div></div>'+
-    (d.invoiceFile&&d.invoiceFile.url?'<div style="grid-column:1/-1"><div class="detail-label" style="margin-bottom:6px;">Invoice File</div><div class="file-attach-row"><div class="file-attach-icon">📄</div><div class="file-attach-info"><div class="file-attach-name">'+(d.invoiceFile.filename||'invoice')+'</div></div><a class="file-attach-open" href="'+d.invoiceFile.url+'" target="_blank">Open Invoice</a></div></div>':'')+
-    (d.invoice?'<div><div class="detail-label">Invoice #</div><div class="detail-val">'+d.invoice+'</div></div>':'<div></div>')+
-    (d.stopOrder?'<div><div class="detail-label">Stop #</div><div class="detail-val">'+d.stopOrder+'</div></div>':'<div></div>')+
-    '</div>';
-
-  if(d.notes) body+='<div class="detail-label" style="margin-bottom:6px;">Notes</div><div class="notes-blk" style="margin-bottom:12px;">'+d.notes+'</div>';
-  if(d.deliveredAt) body+='<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered at '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>';
-  if(d.reschedDate) body+='<div style="font-size:11px;color:var(--purple);margin-bottom:8px;">Rescheduled to '+new Date(d.reschedDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+(d.reschedNotes?' — '+d.reschedNotes:'')+'</div>';
-  document.getElementById('detail-body').innerHTML=body;
-
-  var actions='';
-  if(d.status!=='Out for Delivery'&&d.status!=='Delivered') actions+='<button class="abtn orange" onclick="setStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
-  if(d.status!=='Delivered') actions+='<button class="abtn green" onclick="setStatus(\''+id+'\',\'Delivered\')">Mark Delivered</button>';
-  if(d.status!=='Scheduled') actions+='<button class="abtn blue" onclick="setStatus(\''+id+'\',\'Scheduled\')">Mark Scheduled</button>';
-  actions+='<button class="abtn purple" onclick="reschedStop(\''+id+'\')">Reschedule</button>';
-  actions+='<button class="abtn blue" onclick="openEditStop(\''+id+'\')">Edit</button>';
-  actions+='<button class="abtn red" onclick="deleteStop(\''+id+'\')">Delete</button>';
-  document.getElementById('detail-actions').innerHTML=actions;
+  document.getElementById('det-name').textContent=d.name;
+  var durStr=d.duration==='480'?'All Day':(d.time!=='Call Ahead'&&d.duration?(d.time+' – '+minsToTime(timeToMins(d.time)+parseInt(d.duration))):d.time);
+  document.getElementById('det-meta').textContent=d.id+' · '+durStr;
+  var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
+  var body=
+    '<div class="detail-grid">'+
+      '<div><div class="dl">Phone</div><div class="dv"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div>'+
+      (d.email?'<div><div class="dl">Email</div><div class="dv"><a href="mailto:'+d.email+'">'+d.email+'</a></div></div>':'<div></div>')+
+      '<div style="grid-column:1/-1"><div class="dl">Address</div><div class="dv">'+d.address+', '+d.city+'</div></div>'+
+      '<div><div class="dl">Delivery Type</div><div class="dv">'+(d.deliveryType||'Full Install')+'</div></div>'+
+      '<div><div class="dl">Team</div><div class="dv">'+(d.team||'Main Delivery Team')+'</div></div>'+
+      (d.invoice?'<div><div class="dl">Invoice #</div><div class="dv">'+d.invoice+'</div></div>':'<div></div>')+
+      (d.stopOrder?'<div><div class="dl">Stop #</div><div class="dv">'+d.stopOrder+'</div></div>':'<div></div>')+
+    '</div>'+
+    '<div><div class="dl" style="margin-bottom:5px;">Appliances</div>'+
+      apps.map(function(a){return '<div style="font-size:12px;color:var(--white);margin-bottom:3px;">'+a.a+(a.m?' <span style="color:var(--gray-2);font-size:11px;">'+a.m+'</span>':'')+' </div>';}).join('')+
+    '</div>'+
+    (d.notes?'<div style="margin-top:10px;"><div class="dl" style="margin-bottom:4px;">Notes</div><div class="notes-blk">'+d.notes+'</div></div>':'')+
+    (d.deliveredAt?'<div style="font-size:11px;color:var(--green);font-weight:600;margin-top:8px;">Delivered: '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>':'')+
+    (d.invoiceFile&&d.invoiceFile.url?'<div style="margin-top:10px;"><div class="file-attach"><span style="font-size:16px;">📄</span><div class="file-attach-name">'+(d.invoiceFile.filename||'Invoice')+'</div><a class="file-attach-open" href="'+d.invoiceFile.url+'" target="_blank">Open Invoice</a></div></div>':'')+
+    '<div style="margin-top:12px;" class="act-row">';
+  document.getElementById('det-body').innerHTML=body;
+  var acts='';
+  if(d.status!=='Out for Delivery'&&d.status!=='Delivered') acts+='<button class="abtn orange" onclick="setStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
+  if(d.status!=='Delivered') acts+='<button class="abtn green" onclick="setStatus(\''+id+'\',\'Delivered\')">Mark Delivered</button>';
+  if(d.status!=='Scheduled') acts+='<button class="abtn blue" onclick="setStatus(\''+id+'\',\'Scheduled\')">Mark Scheduled</button>';
+  acts+='<button class="abtn purple" onclick="reschedStop(\''+id+'\')">Reschedule</button>';
+  acts+='<button class="abtn blue" onclick="openEditStop(\''+id+'\')">Edit</button>';
+  acts+='<button class="abtn red" onclick="deleteStop(\''+id+'\')">Delete</button>';
+  document.getElementById('det-actions').innerHTML=acts;
   document.getElementById('detail-modal').classList.add('open');
 }
 
@@ -779,293 +741,138 @@ async function setStatus(id,status){
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
   d.status=status;
   if(status==='Delivered')d.deliveredAt=new Date().toISOString();
-  if(status==='Scheduled'||status==='Out for Delivery')d.deliveredAt=null;
-  await saveDeliveries();
-  closeModal('detail-modal');
-  setViewDate(viewDate);
-  renderMiniCal();
+  else d.deliveredAt=null;
+  await saveDeliveries(); closeModal('detail-modal'); renderEvents();
 }
-
 async function reschedStop(id){
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
-  var newDate=prompt('New delivery date (YYYY-MM-DD):',d.date);
-  if(!newDate)return;
-  var reason=prompt('Reason for rescheduling (optional):','');
-  d.date=newDate; d.reschedDate=newDate; d.reschedNotes=reason||''; d.status='Rescheduled';
-  await saveDeliveries();
-  closeModal('detail-modal');
-  setViewDate(viewDate);
-  renderMiniCal();
+  var nd=prompt('New date (YYYY-MM-DD):',d.date); if(!nd)return;
+  d.date=nd; d.status='Rescheduled';
+  await saveDeliveries(); closeModal('detail-modal'); renderEvents();
 }
-
 async function deleteStop(id){
-  if(!confirm('Delete this delivery stop?'))return;
-  deliveries=deliveries.filter(function(d){return d.id!==id;});
-  await saveDeliveries();
-  closeModal('detail-modal');
-  setViewDate(viewDate);
-  renderMiniCal();
+  if(!confirm('Delete this stop?'))return;
+  deliveries=deliveries.filter(function(x){return x.id!==id;});
+  await saveDeliveries(); closeModal('detail-modal'); renderEvents();
 }
 
-function closeModal(id){document.getElementById(id).classList.remove('open');}
+// ═══════════════════════════════════════
+//  INVOICE READER
+// ═══════════════════════════════════════
+function handleInvoiceDrop(e){
+  e.preventDefault();
+  document.getElementById('invoice-dz').classList.remove('drag-over');
+  var f=e.dataTransfer.files[0]; if(f)handleInvoiceFile(f);
+}
+async function handleInvoiceFile(file){
+  if(!file)return;
+  var loading=document.getElementById('idz-loading');
+  loading.style.display='block';
+  try{
+    var b64=await toB64(file);
+    var msgs=[{role:'user',content:[
+      {type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},
+      {type:'text',text:'Extract ALL appliances and customer info from this sales invoice. Respond ONLY in JSON: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"a":"Refrigerator","m":"Model123","invoice":"INV-001"}]}'}
+    ]}];
+    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,max_tokens:800})});
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error);
+    var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
+    var c=parsed.customer||{};
+    if(c.name)document.getElementById('f-name').value=c.name;
+    if(c.phone)document.getElementById('f-phone').value=c.phone;
+    if(c.email)document.getElementById('f-email').value=c.email;
+    if(c.address)document.getElementById('f-address').value=c.address;
+    if(c.city)document.getElementById('f-city').value=c.city;
+    var apps=parsed.appliances||[];
+    if(apps.length>0){
+      if(apps[0].invoice)document.getElementById('f-invoice').value=apps[0].invoice;
+      initAppRows(apps);
+    }
+    // Upload file
+    var upRes=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
+    var upData=await upRes.json();
+    if(upData.ok){pendingFile={url:upData.url,filename:file.name};showFileAttach(file.name,upData.url);}
+  }catch(e){alert('Could not read invoice: '+e.message);}
+  finally{loading.style.display='none';}
+}
+function showFileAttach(name,url){
+  document.getElementById('file-attach-name').textContent=name;
+  document.getElementById('file-attach-link').href=url;
+  document.getElementById('file-attach-wrap').style.display='block';
+}
+function removeInvoiceFile(){pendingFile=null;document.getElementById('file-attach-wrap').style.display='none';}
+function toB64(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});}
 
-// ── PRINT MANIFEST ──
+// ═══════════════════════════════════════
+//  PRINT MANIFEST
+// ═══════════════════════════════════════
 function printManifest(){
-  var dt=new Date(viewDate+'T12:00:00');
-  var dateStr=dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  var dayStops=deliveries.filter(function(d){return d.date===viewDate;});
-  dayStops.sort(function(a,b){
-    if(a.stopOrder&&b.stopOrder)return a.stopOrder-b.stopOrder;
-    if(a.stopOrder)return -1; if(b.stopOrder)return 1;
-    return new Date(a.createdAt)-new Date(b.createdAt);
-  });
-
+  var days=[]; for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(dateStr(d));}
+  var allStops=deliveries.filter(function(d){return days.indexOf(d.date)>=0&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);});
+  allStops.sort(function(a,b){if(a.date!==b.date)return a.date<b.date?-1:1;var sa=(a.stopOrder||99),sb=(b.stopOrder||99);return sa-sb;});
+  var daysWithStops=[...new Set(allStops.map(function(d){return d.date;}))];
   var win=window.open('','_blank');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>DC Appliance Delivery Manifest</title>'+
-  '<style>'+
-    '*{box-sizing:border-box;margin:0;padding:0;}'+
-    'body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:12px;}'+
-    '.manifest-header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px;}'+
-    '.manifest-header h1{font-size:16px;font-weight:700;}'+
-    '.manifest-header .meta{font-size:11px;color:#555;text-align:right;}'+
-    '.summary-bar{display:flex;gap:16px;margin-bottom:10px;font-size:11px;padding:6px 10px;background:#f5f5f5;border:1px solid #ddd;border-radius:4px;}'+
-    '.summary-item{display:flex;gap:4px;align-items:center;}'+
-    '.summary-val{font-weight:700;font-size:13px;}'+
-    '.stops-table{width:100%;border-collapse:collapse;}'+
-    '.stops-table th{background:#222;color:white;font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;padding:5px 8px;text-align:left;}'+
-    '.stops-table td{padding:6px 8px;vertical-align:top;border-bottom:1px solid #eee;}'+
-    '.stops-table tr:last-child td{border-bottom:none;}'+
-    '.stop-num-cell{font-weight:700;font-size:13px;color:#555;width:24px;}'+
-    '.customer-cell{}'+
-    '.customer-name{font-weight:700;font-size:12px;}'+
-    '.customer-contact{font-size:11px;color:#555;margin-top:1px;}'+
-    '.address-cell{font-size:11px;color:#333;}'+
-    '.appliance-cell{font-size:11px;}'+
-    '.app-line{display:flex;align-items:center;gap:6px;margin-bottom:4px;}'+
-    '.app-name{font-weight:600;white-space:nowrap;}'+
-    '.app-model{color:#666;font-size:10px;}'+
-    '.serial-write{border-bottom:1px solid #999;width:110px;display:inline-block;height:14px;vertical-align:bottom;margin-left:4px;}'+
-    '.serial-lbl{font-size:9px;color:#999;}'+
-    '.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;border:1px solid #999;color:#555;white-space:nowrap;}'+
-    '.haul-badge{border-color:#e07070;color:#c04040;}'+
-    '.notes-cell{font-size:10px;color:#444;font-style:italic;max-width:140px;}'+
-    '.time-cell{font-size:10px;color:#555;white-space:nowrap;}'+
-    '@media print{@page{margin:8mm;}body{padding:6px;font-size:10px;}.stops-table th{font-size:9px;}.customer-name{font-size:11px;}}'+
-  '</style></head><body>'+
-  '<div class="manifest-header">'+
-    '<div><h1>DC Appliance — Delivery Manifest</h1><div style="font-size:11px;color:#555;margin-top:2px;">Dodge City, KS &nbsp;·&nbsp; (620) 371-6417</div></div>'+
-    '<div class="meta">'+dateStr+'</div>'+
-  '</div>';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Delivery Manifest</title>'+
+  '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:10px;}'+
+  '.hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:7px;margin-bottom:8px;}'+
+  '.hdr h1{font-size:15px;font-weight:700;}'+
+  '.day-section{margin-bottom:12px;}'+
+  '.day-title{font-size:12px;font-weight:700;background:#222;color:white;padding:4px 8px;margin-bottom:4px;}'+
+  'table{width:100%;border-collapse:collapse;margin-bottom:4px;}'+
+  'th{background:#555;color:white;font-size:9px;font-weight:700;text-transform:uppercase;padding:4px 6px;text-align:left;}'+
+  'td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top;}'+
+  'tr:nth-child(even)td{background:#fafafa;}'+
+  '.nm{font-weight:700;}'+
+  '.sn-line{border-bottom:1px solid #999;width:90px;display:inline-block;height:12px;vertical-align:bottom;}'+
+  '.badge{display:inline-block;border:1px solid #999;border-radius:3px;padding:1px 5px;font-size:9px;color:#555;}'+
+  '@media print{@page{margin:6mm;}body{padding:4px;}}</style></head><body>'+
+  '<div class="hdr"><div><h1>DC Appliance — Delivery Manifest</h1>'+
+  '<div style="font-size:10px;color:#555;margin-top:2px;">'+
+    (TEAM_FILTER==='all'?'All Teams':(TEAM_FILTER))+' &nbsp;·&nbsp; '+
+    new Date(weekStart).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+
+    (function(){var e=new Date(weekStart);e.setDate(e.getDate()+6);return e.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}())+
+  '</div></div>'+
+  '<div style="font-size:10px;text-align:right;color:#555;">(620) 371-6417 &nbsp;·&nbsp; Dodge City, KS<br/>Total stops: '+allStops.length+'</div></div>';
 
-  // Summary
-  html+='<div class="summary-bar">'+
-    '<div class="summary-item"><span class="summary-val">'+dayStops.length+'</span>&nbsp;Stops</div>'+
-    '<div style="color:#ccc;">|</div>'+
-    '<div class="summary-item"><span class="summary-val">'+dayStops.filter(function(d){return d.haul;}).length+'</span>&nbsp;Haul Aways</div>'+
-    '<div style="color:#ccc;">|</div>'+
-    '<div class="summary-item"><span class="summary-val">'+dayStops.reduce(function(n,d){return n+((d.appliances&&d.appliances.length)||1);},0)+'</span>&nbsp;Appliances</div>'+
-    '<div style="color:#ccc;">|</div>'+
-    '<div class="summary-item"><span class="summary-val">'+dayStops.filter(function(d){return d.deliveryType==='Full Install';}).length+'</span>&nbsp;Full Installs</div>'+
-  '</div>';
-
-  if(dayStops.length===0){
-    html+='<div style="text-align:center;padding:30px;color:#999;">No deliveries scheduled for this date.</div>';
-  } else {
-    html+='<table class="stops-table"><thead><tr>'+
-      '<th>#</th><th>Customer</th><th>Address</th><th>Time</th><th>Appliances &amp; Serial Numbers</th><th>Notes</th>'+
-    '</tr></thead><tbody>';
-
-    dayStops.forEach(function(d,idx){
-      var durStr=d.duration==='all-day'?'All Day':(d.time!=='Call Ahead'&&d.duration?(function(){var sm=timeToMinutes(d.time);var dur=parseInt(d.duration)||60;return d.time+'–'+minutesToTime(sm+dur);}()):(d.time||''));
-      var appList=d.appliances&&d.appliances.length?d.appliances:[{appliance:d.appliance||'',model:d.model||''}];
-      var rowBg=idx%2===1?'background:#fafafa;':'';
-
-      html+='<tr style="'+rowBg+'">'+
-        '<td class="stop-num-cell">'+(d.stopOrder||idx+1)+'</td>'+
-        '<td class="customer-cell">'+
-          '<div class="customer-name">'+d.name+'</div>'+
-          '<div class="customer-contact">'+d.phone+'</div>'+
-          (d.invoice?'<div style="font-size:10px;color:#888;margin-top:1px;">'+d.invoice+'</div>':'')+
-          '<div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;">'+
-            '<span class="badge">'+(d.deliveryType||'Full Install')+'</span>'+
-            '<span class="badge" style="border-color:#9b7fd4;color:#7b5fb4;">'+(d.team||'Main Team')+'</span>'+
-          '</div>'+
-        '</td>'+
-        '<td class="address-cell">'+d.address+(d.city?'<br/>'+d.city:'')+'</td>'+
-        '<td class="time-cell">'+durStr+'</td>'+
-        '<td class="appliance-cell">'+
-          appList.map(function(a){
-            return '<div class="app-line">'+
-              '<span class="app-name">'+a.appliance+'</span>'+
-              (a.model?'<span class="app-model">'+a.model+'</span>':'')+
-              '<span class="serial-lbl">SN:</span><span class="serial-write"></span>'+
-            '</div>';
-          }).join('')+
-        '</td>'+
-        '<td class="notes-cell">'+(d.notes||'')+'</td>'+
-      '</tr>';
+  if(allStops.length===0){html+='<p style="text-align:center;padding:20px;color:#999;">No deliveries this week.</p>';}
+  else{
+    daysWithStops.forEach(function(ds){
+      var dt=new Date(ds+'T12:00:00');
+      var dayLabel=dt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+      var dayStops=allStops.filter(function(d){return d.date===ds;});
+      html+='<div class="day-section"><div class="day-title">'+dayLabel+' — '+dayStops.length+' stops</div>'+
+      '<table><thead><tr><th>#</th><th>Customer & Contact</th><th>Time</th><th>Appliances & Serial #</th><th>Notes</th></tr></thead><tbody>';
+      dayStops.forEach(function(d,idx){
+        var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
+        var durMins=parseInt(d.duration)||60;
+        var timeStr=d.time==='Call Ahead'?'Call Ahead':(d.time+(d.duration?(function(){return ' – '+minsToTime(timeToMins(d.time)+durMins);}()):''));
+        html+='<tr>'+
+          '<td style="width:20px;font-weight:700;color:#666;">'+(d.stopOrder||idx+1)+'</td>'+
+          '<td style="min-width:130px;">'+
+            '<div class="nm">'+d.name+'</div>'+
+            '<div style="font-size:10px;color:#555;">'+d.phone+'</div>'+
+            '<div style="font-size:10px;">'+d.address+', '+d.city+'</div>'+
+            (d.invoice?'<div style="font-size:9px;color:#888;">'+d.invoice+'</div>':'')+
+            '<div style="margin-top:3px;"><span class="badge">'+d.deliveryType+'</span></div>'+
+          '</td>'+
+          '<td style="width:80px;font-size:10px;white-space:nowrap;">'+timeStr+'</td>'+
+          '<td>'+apps.map(function(a){return '<div style="margin-bottom:3px;"><span style="font-weight:600;">'+a.a+'</span>'+(a.m?' <span style="color:#777;font-size:10px;">'+a.m+'</span>':'')+' &nbsp;SN: <span class="sn-line"></span></div>';}).join('')+'</td>'+
+          '<td style="font-size:10px;color:#444;min-width:80px;">'+(d.notes||'')+'</td>'+
+        '</tr>';
+      });
+      html+='</tbody></table></div>';
     });
-    html+='</tbody></table>';
   }
-
   html+='</body></html>';
-  win.document.write(html);
-  win.document.close();
+  win.document.write(html); win.document.close();
   setTimeout(function(){win.print();},400);
 }
 
-
-var pendingDelInvoiceFile=null;
-
-function showAttachedInvoice(filename,url){
-  document.getElementById('attached-invoice-name').textContent=filename;
-  document.getElementById('attached-invoice-sub').textContent='Saved — tap Open to view';
-  document.getElementById('attached-invoice-link').href=url;
-  document.getElementById('attached-invoice-section').style.display='block';
-}
-
-function removeAttachedInvoice(){
-  pendingDelInvoiceFile=null;
-  document.getElementById('attached-invoice-section').style.display='none';
-}
-
-// ── INVOICE READER (DELIVERY) ──
-function handleDelInvoiceDrop(e){
-  e.preventDefault();
-  document.getElementById('del-invoice-drop').classList.remove('drag-over');
-  var file=e.dataTransfer.files[0];
-  if(file)handleDelInvoiceFile(file);
-}
-
-async function handleDelInvoiceFile(file){
-  if(!file)return;
-  var loading=document.getElementById('del-idz-loading');
-  if(loading)loading.style.display='block';
-  try{
-    var b64=await toB64Del(file);
-    var isPdf=file.type==='application/pdf';
-    var messages=[{role:'user',content:[
-      {type:isPdf?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},
-      {type:'text',text:'This is a sales invoice. Extract ALL appliances/products listed and customer info. Respond ONLY in JSON: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"appliance":"Refrigerator","brand":"Samsung","model":"RF28R7351SR","serial":"","invoice":"INV-001"}]}'}
-    ]}];
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,max_tokens:1000})});
-    var data=await res.json();
-    if(!data.ok)throw new Error(data.error);
-    var text=data.content[0].text;
-    var match=text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('No data found in invoice');
-    var parsed=JSON.parse(match[0]);
-    var cust=parsed.customer||{};
-    if(cust.name)   document.getElementById('f-name').value=cust.name;
-    if(cust.phone)  document.getElementById('f-phone').value=cust.phone;
-    if(cust.email)  document.getElementById('f-email').value=cust.email;
-    if(cust.address)document.getElementById('f-address').value=cust.address;
-    if(cust.city)   document.getElementById('f-city').value=cust.city;
-    var appliances=parsed.appliances||[];
-    if(appliances.length===0) alert('No appliances found. Please fill in manually.');
-    else {
-      initApplianceRows(appliances);
-      if(appliances[0]&&appliances[0].invoice) document.getElementById('f-invoice').value=appliances[0].invoice;
-    }
-    // Upload the invoice file and store URL for attachment
-    try{
-      var upB64=await toB64Del(file);
-      var upRes=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:upB64,companyId:'dc-appliance',jobId:'delivery-'+Date.now()})});
-      var upData=await upRes.json();
-      if(upData.ok){
-        pendingDelInvoiceFile={url:upData.url,filename:file.name};
-        showAttachedInvoice(file.name,upData.url);
-      }
-    }catch(e){console.warn('Invoice upload failed:',e);}
-    // Show queued notice
-    var zone=document.getElementById('del-invoice-drop');
-    var prev=zone.querySelector('.idz-preview');
-    if(!prev){prev=document.createElement('div');prev.className='idz-preview';zone.appendChild(prev);}
-    prev.style.cssText='font-size:11px;color:var(--green);margin-top:5px;font-weight:600;';
-    prev.textContent='Filled from: '+file.name;
-  }catch(e){
-    alert('Could not read invoice: '+e.message+'. Please fill in manually.');
-  }finally{
-    if(loading)loading.style.display='none';
-  }
-}
-
-function fillDelApplianceFields(a){
-  if(a.appliance){
-    var sel=document.getElementById('f-appliance');
-    var opts=Array.from(sel.options);
-    var m=opts.findIndex(function(o){return o.value&&a.appliance.toLowerCase().includes(o.value.toLowerCase().split('/')[0].trim());});
-    if(m>0)sel.selectedIndex=m; else sel.selectedIndex=sel.options.length-1;
-  }
-  if(a.brand)  document.getElementById('f-brand').value=a.brand;
-  if(a.model)  document.getElementById('f-model').value=a.model;
-  if(a.invoice)document.getElementById('f-invoice').value=a.invoice;
-  closeModal('del-ap-modal');
-}
-
-function showDelAppliancePicker(appliances){
-  document.getElementById('del-ap-list').innerHTML=appliances.map(function(a){
-    return '<div class="ap-item" onclick="fillDelApplianceFields('+JSON.stringify(a).replace(/"/g,'&quot;')+')">' +
-      '<div class="ap-item-name">'+(a.brand||'')+' '+(a.appliance||'')+'</div>'+
-      '<div class="ap-item-detail">'+(a.model?'Model: '+a.model:'')+(a.serial?' · Serial: '+a.serial:'')+'</div>'+
-    '</div>';
-  }).join('');
-  document.getElementById('del-ap-modal').classList.add('open');
-}
-
-function toB64Del(file){
-  return new Promise(function(res,rej){
-    var r=new FileReader();
-    r.onload=function(){res(r.result.split(',')[1]);};
-    r.onerror=rej;
-    r.readAsDataURL(file);
-  });
-}
-
-// ── APPLIANCE ROWS ──
-var APPLIANCE_OPTIONS=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Microwave','Freezer','Ice Maker','TV','Mattress','Grill','Other'];
-
-function applianceSelectHTML(selected){
-  return '<select class="sel app-sel" style="flex:1;">' +
-    '<option value="">Select appliance...</option>' +
-    APPLIANCE_OPTIONS.map(function(o){return '<option value="'+o+'"'+(o===selected?' selected':'')+'>'+o+'</option>';}).join('') +
-  '</select>';
-}
-
-function initApplianceRows(list){
-  var container=document.getElementById('appliance-list');
-  container.innerHTML='';
-  (list&&list.length?list:[{appliance:'',model:''}]).forEach(function(a){
-    addApplianceRow(a.appliance,a.model);
-  });
-}
-
-function addApplianceRow(appVal,modelVal){
-  var container=document.getElementById('appliance-list');
-  var idx=container.children.length;
-  var div=document.createElement('div');
-  div.className='appliance-row';
-  div.innerHTML=
-    '<div class="appliance-row-header">'+
-      '<div class="appliance-row-title">Appliance '+(idx+1)+'</div>'+
-      (idx>0?'<button type="button" class="remove-appliance-btn" onclick="removeApplianceRow(this)">Remove</button>':'')+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
-      applianceSelectHTML(appVal||'')+
-      '<input class="inp app-model" placeholder="Model #" value="'+(modelVal||'')+'"/>'+
-    '</div>';
-  container.appendChild(div);
-}
-
-function removeApplianceRow(btn){
-  btn.closest('.appliance-row').remove();
-  // Renumber
-  document.querySelectorAll('.appliance-row-title').forEach(function(t,i){t.textContent='Appliance '+(i+1);});
-}
-
-
-// Init
-document.getElementById('f-date').value=viewDate;
+// ═══════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════
+function closeModal(id){document.getElementById(id).classList.remove('open');}
 </script>
 </body>
 </html>
