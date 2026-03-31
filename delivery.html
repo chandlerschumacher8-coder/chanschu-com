@@ -560,18 +560,19 @@ function renderTimeGrid(){
   var html='';
   HOURS.forEach(function(hour){
     var hourMins=timeToMinutes(hour);
+    // Only show event card at START time, but block out subsequent slots
     var slots=dayStops.filter(function(d){
       if(d.duration==='all-day')return hour==='8:00 AM';
       if(d.time==='Call Ahead')return hour==='8:00 AM';
+      return timeToMinutes(d.time)===hourMins;
+    });
+    // Check if this slot is blocked by a multi-hour event starting earlier
+    var blockedBy=dayStops.filter(function(d){
+      if(d.duration==='all-day'||d.time==='Call Ahead')return false;
       var startMins=timeToMinutes(d.time);
       var durMins=parseInt(d.duration)||60;
-      var endMins=startMins+durMins;
-      // Show event in every 30-min slot it covers
-      return hourMins>=startMins && hourMins<endMins;
+      return hourMins>startMins && hourMins<startMins+durMins;
     });
-    // Deduplicate (same stop can appear multiple times due to spanning)
-    var seenSlots={};
-    slots=slots.filter(function(d){if(seenSlots[d.id])return false;seenSlots[d.id]=true;return true;});
 
     // Deduplicate
     var seen={};
@@ -798,106 +799,88 @@ function printManifest(){
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>DC Appliance Delivery Manifest</title>'+
   '<style>'+
     '*{box-sizing:border-box;margin:0;padding:0;}'+
-    'body{font-family:"Plus Jakarta Sans",Arial,sans-serif;font-size:13px;color:#111;padding:24px;}'+
-    '.manifest-header{text-align:center;border-bottom:3px solid #111;padding-bottom:14px;margin-bottom:20px;}'+
-    '.manifest-header h1{font-size:22px;font-weight:700;letter-spacing:0.02em;}'+
-    '.manifest-header .sub{font-size:13px;color:#555;margin-top:4px;}'+
-    '.manifest-header .meta{font-size:12px;color:#777;margin-top:4px;}'+
-    '.stop{border:1px solid #ccc;border-radius:6px;margin-bottom:16px;break-inside:avoid;overflow:hidden;}'+
-    '.stop-header{background:#f0f0f0;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ccc;}'+
-    '.stop-num{font-size:11px;font-weight:700;background:#111;color:white;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin-right:8px;}'+
-    '.stop-name{font-size:15px;font-weight:700;}'+
-    '.stop-time{font-size:12px;color:#555;}'+
-    '.stop-body{padding:12px 14px;}'+
-    '.info-row{display:flex;gap:24px;margin-bottom:10px;flex-wrap:wrap;}'+
-    '.info-item{flex:1;min-width:160px;}'+
-    '.info-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:2px;}'+
-    '.info-val{font-size:13px;font-weight:600;}'+
-    '.delivery-type-badge{display:inline-block;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700;letter-spacing:0.06em;border:1px solid #999;color:#555;margin-bottom:10px;}'+
-    '.appliances-section{margin-bottom:10px;}'+
-    '.appliances-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:6px;}'+
-    '.appliance-row{display:flex;align-items:center;border:1px solid #ddd;border-radius:4px;margin-bottom:6px;overflow:hidden;}'+
-    '.appliance-info{flex:1;padding:8px 12px;background:#fafafa;}'+
-    '.appliance-name{font-size:13px;font-weight:600;}'+
-    '.appliance-model{font-size:11px;color:#777;margin-top:1px;}'+
-    '.serial-field{width:200px;border-left:1px solid #ddd;padding:8px 12px;}'+
-    '.serial-label{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#aaa;margin-bottom:4px;}'+
-    '.serial-line{border-bottom:1px solid #999;width:100%;height:18px;}'+
-    '.haul-section{background:#fff5f5;border:1px solid #ffcccc;border-radius:4px;padding:8px 12px;margin-bottom:10px;border-left:3px solid #e07070;}'+
-    '.haul-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#e07070;margin-bottom:3px;}'+
-    '.notes-section{background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:8px 12px;margin-bottom:8px;}'+
-    '.notes-label{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:3px;}'+
-    '.sig-section{display:flex;gap:16px;margin-top:10px;padding-top:10px;border-top:1px solid #eee;}'+
-    '.sig-box{flex:1;}'+
-    '.sig-label{font-size:10px;color:#999;margin-bottom:4px;}'+
-    '.sig-line{border-bottom:1px solid #999;height:24px;}'+
-    '.summary-bar{background:#f5f5f5;border:1px solid #ddd;border-radius:6px;padding:10px 14px;margin-bottom:20px;display:flex;gap:20px;font-size:12px;}'+
-    '.summary-item{text-align:center;}'+
-    '.summary-val{font-size:18px;font-weight:700;}'+
-    '.summary-key{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.06em;}'+
-    '@media print{body{padding:16px;}.stop{page-break-inside:avoid;}}'+
+    'body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:12px;}'+
+    '.manifest-header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px;}'+
+    '.manifest-header h1{font-size:16px;font-weight:700;}'+
+    '.manifest-header .meta{font-size:11px;color:#555;text-align:right;}'+
+    '.summary-bar{display:flex;gap:16px;margin-bottom:10px;font-size:11px;padding:6px 10px;background:#f5f5f5;border:1px solid #ddd;border-radius:4px;}'+
+    '.summary-item{display:flex;gap:4px;align-items:center;}'+
+    '.summary-val{font-weight:700;font-size:13px;}'+
+    '.stops-table{width:100%;border-collapse:collapse;}'+
+    '.stops-table th{background:#222;color:white;font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;padding:5px 8px;text-align:left;}'+
+    '.stops-table td{padding:6px 8px;vertical-align:top;border-bottom:1px solid #eee;}'+
+    '.stops-table tr:last-child td{border-bottom:none;}'+
+    '.stop-num-cell{font-weight:700;font-size:13px;color:#555;width:24px;}'+
+    '.customer-cell{}'+
+    '.customer-name{font-weight:700;font-size:12px;}'+
+    '.customer-contact{font-size:11px;color:#555;margin-top:1px;}'+
+    '.address-cell{font-size:11px;color:#333;}'+
+    '.appliance-cell{font-size:11px;}'+
+    '.app-line{display:flex;align-items:center;gap:6px;margin-bottom:4px;}'+
+    '.app-name{font-weight:600;white-space:nowrap;}'+
+    '.app-model{color:#666;font-size:10px;}'+
+    '.serial-write{border-bottom:1px solid #999;width:110px;display:inline-block;height:14px;vertical-align:bottom;margin-left:4px;}'+
+    '.serial-lbl{font-size:9px;color:#999;}'+
+    '.badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;border:1px solid #999;color:#555;white-space:nowrap;}'+
+    '.haul-badge{border-color:#e07070;color:#c04040;}'+
+    '.notes-cell{font-size:10px;color:#444;font-style:italic;max-width:140px;}'+
+    '.time-cell{font-size:10px;color:#555;white-space:nowrap;}'+
+    '@media print{@page{margin:8mm;}body{padding:6px;font-size:10px;}.stops-table th{font-size:9px;}.customer-name{font-size:11px;}}'+
   '</style></head><body>'+
   '<div class="manifest-header">'+
-    '<h1>DC Appliance — Delivery Manifest</h1>'+
-    '<div class="sub">'+dateStr+'</div>'+
-    '<div class="meta">(620) 371-6417 &nbsp;·&nbsp; Dodge City, KS</div>'+
-  '</div>'+
-  // Summary
-  '<div class="summary-bar">'+
-    '<div class="summary-item"><div class="summary-val">'+dayStops.length+'</div><div class="summary-key">Total Stops</div></div>'+
-    '<div class="summary-item"><div class="summary-val">'+dayStops.filter(function(d){return d.haul;}).length+'</div><div class="summary-key">Haul Aways</div></div>'+
-    '<div class="summary-item"><div class="summary-val">'+dayStops.reduce(function(n,d){return n+((d.appliances&&d.appliances.length)||1);},0)+'</div><div class="summary-key">Appliances</div></div>'+
-    '<div class="summary-item"><div class="summary-val">'+dayStops.filter(function(d){return d.deliveryType==='Full Install';}).length+'</div><div class="summary-key">Full Installs</div></div>'+
+    '<div><h1>DC Appliance — Delivery Manifest</h1><div style="font-size:11px;color:#555;margin-top:2px;">Dodge City, KS &nbsp;·&nbsp; (620) 371-6417</div></div>'+
+    '<div class="meta">'+dateStr+'</div>'+
   '</div>';
 
-  // Each stop
-  dayStops.forEach(function(d,idx){
-    var durStr=d.duration==='all-day'?'All Day':(d.time!=='Call Ahead'&&d.duration?(function(){var sm=timeToMinutes(d.time);var dur=parseInt(d.duration)||60;return d.time+' – '+minutesToTime(sm+dur);}()):(d.time||''));
-    var appList=d.appliances&&d.appliances.length?d.appliances:[{appliance:d.appliance||'',model:d.model||''}];
-
-    html+='<div class="stop">'+
-      '<div class="stop-header">'+
-        '<div><span class="stop-num">'+(d.stopOrder||idx+1)+'</span><span class="stop-name">'+d.name+'</span></div>'+
-        '<div class="stop-time">'+durStr+'</div>'+
-      '</div>'+
-      '<div class="stop-body">'+
-        '<div class="info-row">'+
-          '<div class="info-item"><div class="info-label">Phone</div><div class="info-val">'+d.phone+'</div></div>'+
-          '<div class="info-item"><div class="info-label">Address</div><div class="info-val">'+d.address+(d.city?', '+d.city:'')+'</div></div>'+
-          (d.invoice?'<div class="info-item"><div class="info-label">Invoice #</div><div class="info-val">'+d.invoice+'</div></div>':'')+'</div>'+
-        '<span class="delivery-type-badge">'+(d.deliveryType||'Full Install')+'</span>'+
-        // Appliances with serial number lines
-        '<div class="appliances-section">'+
-          '<div class="appliances-title">Appliances &amp; Serial Numbers</div>'+
-          appList.map(function(a){
-            return '<div class="appliance-row">'+
-              '<div class="appliance-info">'+
-                '<div class="appliance-name">'+a.appliance+'</div>'+
-                (a.model?'<div class="appliance-model">Model: '+a.model+'</div>':'')+
-              '</div>'+
-              '<div class="serial-field">'+
-                '<div class="serial-label">Serial Number</div>'+
-                '<div class="serial-line"></div>'+
-              '</div>'+
-            '</div>';
-          }).join('')+
-        '</div>'+
-        // Haul away
-        (d.haul?'<div class="haul-section"><div class="haul-label">Haul Away</div><div>'+(d.haulItem||'Old appliance pickup')+'</div></div>':'')+
-        // Notes
-        (d.notes?'<div class="notes-section"><div class="notes-label">Notes / Instructions</div><div>'+d.notes+'</div></div>':'')+
-        // Signature line
-        '<div class="sig-section">'+
-          '<div class="sig-box"><div class="sig-label">Customer Signature</div><div class="sig-line"></div></div>'+
-          '<div class="sig-box"><div class="sig-label">Delivered by</div><div class="sig-line"></div></div>'+
-          '<div class="sig-box" style="width:100px;flex:0 0 100px;"><div class="sig-label">Time</div><div class="sig-line"></div></div>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  });
+  // Summary
+  html+='<div class="summary-bar">'+
+    '<div class="summary-item"><span class="summary-val">'+dayStops.length+'</span>&nbsp;Stops</div>'+
+    '<div style="color:#ccc;">|</div>'+
+    '<div class="summary-item"><span class="summary-val">'+dayStops.filter(function(d){return d.haul;}).length+'</span>&nbsp;Haul Aways</div>'+
+    '<div style="color:#ccc;">|</div>'+
+    '<div class="summary-item"><span class="summary-val">'+dayStops.reduce(function(n,d){return n+((d.appliances&&d.appliances.length)||1);},0)+'</span>&nbsp;Appliances</div>'+
+    '<div style="color:#ccc;">|</div>'+
+    '<div class="summary-item"><span class="summary-val">'+dayStops.filter(function(d){return d.deliveryType==='Full Install';}).length+'</span>&nbsp;Full Installs</div>'+
+  '</div>';
 
   if(dayStops.length===0){
-    html+='<div style="text-align:center;padding:40px;color:#999;">No deliveries scheduled for this date.</div>';
+    html+='<div style="text-align:center;padding:30px;color:#999;">No deliveries scheduled for this date.</div>';
+  } else {
+    html+='<table class="stops-table"><thead><tr>'+
+      '<th>#</th><th>Customer</th><th>Address</th><th>Time</th><th>Appliances &amp; Serial Numbers</th><th>Notes</th>'+
+    '</tr></thead><tbody>';
+
+    dayStops.forEach(function(d,idx){
+      var durStr=d.duration==='all-day'?'All Day':(d.time!=='Call Ahead'&&d.duration?(function(){var sm=timeToMinutes(d.time);var dur=parseInt(d.duration)||60;return d.time+'–'+minutesToTime(sm+dur);}()):(d.time||''));
+      var appList=d.appliances&&d.appliances.length?d.appliances:[{appliance:d.appliance||'',model:d.model||''}];
+      var rowBg=idx%2===1?'background:#fafafa;':'';
+
+      html+='<tr style="'+rowBg+'">'+
+        '<td class="stop-num-cell">'+(d.stopOrder||idx+1)+'</td>'+
+        '<td class="customer-cell">'+
+          '<div class="customer-name">'+d.name+'</div>'+
+          '<div class="customer-contact">'+d.phone+'</div>'+
+          (d.invoice?'<div style="font-size:10px;color:#888;margin-top:1px;">'+d.invoice+'</div>':'')+
+          '<div style="margin-top:3px;display:flex;gap:4px;flex-wrap:wrap;">'+
+            '<span class="badge">'+(d.deliveryType||'Full Install')+'</span>'+
+            (d.haul?'<span class="badge haul-badge">Haul Away</span>':'')+
+          '</div>'+
+        '</td>'+
+        '<td class="address-cell">'+d.address+(d.city?'<br/>'+d.city:'')+'</td>'+
+        '<td class="time-cell">'+durStr+'</td>'+
+        '<td class="appliance-cell">'+
+          appList.map(function(a){
+            return '<div class="app-line">'+
+              '<span class="app-name">'+a.appliance+'</span>'+
+              (a.model?'<span class="app-model">'+a.model+'</span>':'')+
+              '<span class="serial-lbl">SN:</span><span class="serial-write"></span>'+
+            '</div>';
+          }).join('')+
+        '</td>'+
+        '<td class="notes-cell">'+(d.notes||'')+(d.haul&&d.haulItem?'<br/><span style="color:#c04040;">Haul: '+d.haulItem+'</span>':'')+'</td>'+
+      '</tr>';
+    });
+    html+='</tbody></table>';
   }
 
   html+='</body></html>';
