@@ -1,4 +1,4 @@
-// api/upload.js — File upload to Vercel Blob (works with private store)
+// api/upload.js — File upload to Vercel Blob (public store)
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
  
 export default async function handler(req, res) {
@@ -20,10 +20,8 @@ export default async function handler(req, res) {
     const buffer = Buffer.from(data, 'base64');
     const safeName = `service/${companyId}/${jobId}/${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
  
-    // Try without specifying access (uses store default)
     const blob = await put(safeName, buffer, {
       contentType: contentType || 'application/octet-stream',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
       addRandomSuffix: false,
     });
  
