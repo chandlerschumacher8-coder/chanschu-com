@@ -136,6 +136,34 @@
     .w-manufacturer{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.25);color:var(--green);}
     .w-5year{background:rgba(91,159,212,0.12);border:1px solid rgba(91,159,212,0.25);color:var(--blue);}
     .w-out{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);}
+
+    /* ── PRINT ── */
+    @media print {
+      header,footer,.chat-fab,.chat-win,.modal-bg,.act-row,.job-tabs,.tab-panel,.assign-row,.hbtn,
+      .stats-bar,.filters-row,.search-inp,.panel:first-child,.ftab,#form-panel,
+      button:not(.print-ignore){display:none!important;}
+      body{background:white!important;color:black!important;font-size:12px;}
+      .app{display:block!important;}
+      .main{padding:0!important;}
+      .two-col{grid-template-columns:1fr!important;}
+      .job-card{border:1px solid #ccc!important;background:white!important;color:black!important;break-inside:avoid;page-break-inside:avoid;margin-bottom:16px;}
+      .job-card:not(.expanded){display:none!important;}
+      .job-detail{display:block!important;}
+      .jc-name,.dv,.df label,.jc-appliance,.panel-title{color:black!important;}
+      .jc-id,.jc-meta span,.log-time,.log-by,.log-content,.notes-blk{color:#333!important;}
+      .spill,.tech-pill,.warranty-pill{border:1px solid #999!important;color:#333!important;background:#f5f5f5!important;}
+      .log-entry{border-left:3px solid #999!important;background:#f9f9f9!important;}
+      .part-order-section{background:#f9f9f9!important;border:1px solid #ccc!important;}
+      .print-header{display:block!important;}
+      .attach-grid{display:none!important;}
+    }
+    .print-header{display:none;text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #ccc;}
+    .print-header h2{font-size:20px;font-weight:700;margin-bottom:4px;}
+    .print-header p{font-size:12px;color:#666;}
+    .print-btn{font-size:11px;font-weight:600;padding:6px 14px;border:1px solid rgba(201,151,58,0.3);color:var(--gold);background:transparent;border-radius:100px;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .print-btn:hover{background:rgba(201,151,58,0.08);}
+    .invoice-section{background:rgba(91,159,212,0.06);border:1px solid rgba(91,159,212,0.2);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+    .invoice-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;}
     /* ── TABS ── */
     .job-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:12px;}
     .job-tab{font-size:11px;font-weight:600;padding:7px 14px;border:none;background:transparent;color:var(--gray-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
@@ -339,6 +367,10 @@
                 <option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option>
               </select>
             </div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>Invoice #</label><input class="inp" id="f-invoice" placeholder="INV-0001"/></div>
+            <div class="field"><label>Delivery Date</label><input class="inp" id="f-delivery" type="date"/></div>
           </div>
           <div class="field"><label>Notes</label><textarea class="txta" id="f-notes" placeholder="Parts, access info..." style="min-height:56px;"></textarea></div>
           <button class="submit-btn" onclick="addJob()">+ Schedule Job</button>
@@ -657,11 +689,12 @@ async function addJob() {
       city=document.getElementById('f-city').value.trim(), warranty=document.getElementById('f-warranty').value,
       appliance=document.getElementById('f-appliance').value, brand=document.getElementById('f-brand').value.trim(),
       model=document.getElementById('f-model').value.trim(), serial=document.getElementById('f-serial').value.trim(), warranty=document.getElementById('f-warranty').value,
+      invoice=document.getElementById('f-invoice').value.trim(), delivery=document.getElementById('f-delivery').value,
       issue=document.getElementById('f-issue').value.trim(), date=document.getElementById('f-date').value,
       time=document.getElementById('f-time').value, tech=document.getElementById('f-tech').value,
       priority=document.getElementById('f-priority').value, notes=document.getElementById('f-notes').value.trim();
   if (!name||!phone||!address||!city||!appliance||!issue||!date) { alert('Please fill in all required fields.'); return; }
-  var job = { id:'JOB-'+String(nextId).padStart(4,'0'), name,phone,email,address,city,appliance,brand,model,serial,warranty,issue,date,time,tech,priority,notes,status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null };
+  var job = { id:'JOB-'+String(nextId).padStart(4,'0'), name,phone,email,address,city,appliance,brand,model,serial,warranty,invoice,delivery,issue,date,time,tech,priority,notes,status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null };
   nextId++; jobs.unshift(job);
   await saveJobs(); renderJobs(); updateStats();
   ['f-name','f-phone','f-email','f-address','f-city','f-brand','f-model','f-serial','f-issue','f-notes'].forEach(function(id){document.getElementById(id).value='';});
@@ -750,6 +783,31 @@ function renderJobs() {
       '</div>' +
     '</div>';
   }).join('');
+}
+
+function printJob(id) {
+  // Expand the job first if not already
+  var detail = document.getElementById('detail-'+id);
+  if (detail && !detail.classList.contains('open')) toggleJob(id);
+  // Open all tab panels for printing
+  var logPanel   = document.getElementById('tab-log-'+id);
+  var filesPanel = document.getElementById('tab-files-'+id);
+  if (logPanel)   logPanel.classList.add('active');
+  // Add print header temporarily
+  var job = jobs.find(function(j){return j.id===id;});
+  var hdr = document.getElementById('print-hdr-'+id);
+  if (!hdr && job) {
+    hdr = document.createElement('div');
+    hdr.id = 'print-hdr-'+id;
+    hdr.className = 'print-header';
+    var fmtDate = job.date ? new Date(job.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) : '';
+    hdr.innerHTML = '<h2>Service Work Order</h2><p>'+
+      (job.invoice?'Invoice: '+job.invoice+'  &nbsp;|&nbsp;  ':'')+
+      'Job: '+job.id+'  &nbsp;|&nbsp;  Date: '+fmtDate+'</p>';
+    var card = document.getElementById('card-'+id);
+    if (card) card.insertBefore(hdr, card.firstChild);
+  }
+  setTimeout(function(){ window.print(); }, 200);
 }
 
 function toggleJob(id) {
