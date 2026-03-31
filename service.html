@@ -750,6 +750,7 @@ function renderJobs(){
           (j.status!=='In Progress'&&j.status!=='Completed'?'<button class="abtn orange" onclick="setStatus(\''+j.id+'\',\'In Progress\')">Start</button>':'')+
           (j.status!=='Completed'?'<button class="abtn green" onclick="setStatus(\''+j.id+'\',\'Completed\')">Complete</button>':'')+
           (j.status!=='Open'?'<button class="abtn blue" onclick="setStatus(\''+j.id+'\',\'Open\')">Reopen</button>':'')+
+          '<button class="abtn blue" onclick="openEditJob(\''+j.id+'\');event.stopPropagation()">Edit</button>'+
           (isAdmin?'<button class="abtn red" onclick="deleteJob(\''+j.id+'\')">Delete</button>':'')+
           '<button class="print-btn" onclick="printJob(\''+j.id+'\')" style="margin-left:auto;">Print</button>'+
         '</div>'+
