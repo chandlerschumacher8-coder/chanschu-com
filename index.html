@@ -338,7 +338,48 @@
 
 <script>
   emailjs.init('8rsxIaKLiiRqq5Yo0');
+
   function sendForm(prefix, bizName, toEmail, serviceId, btn) {
-    const name    = document.getElementById(prefix+'-name').value.trim();
-    const contact = document.getElementById(prefix+'-contact').value.trim();
-    const 
+    var name    = document.getElementById(prefix + '-name').value.trim();
+    var contact = document.getElementById(prefix + '-contact').value.trim();
+    var message = document.getElementById(prefix + '-message').value.trim();
+    var hp      = document.getElementById(prefix + '-hp');
+
+    // Honeypot check
+    if (hp && hp.value) return;
+
+    if (!name || !contact || !message) {
+      alert('Please fill in all fields.');
+      return;
+    }
+
+    // Disable button
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    emailjs.send(serviceId, 'template_p3hleri', {
+      from_name:    name,
+      from_contact: contact,
+      business:     bizName,
+      to_email:     toEmail,
+      message:      message
+    }).then(function() {
+      btn.textContent = 'Sent!';
+      btn.style.background = 'rgba(82,183,136,0.15)';
+      btn.style.borderColor = 'rgba(82,183,136,0.4)';
+      btn.style.color = '#6ecba0';
+      var ok = document.getElementById(prefix + '-success');
+      if (ok) ok.style.display = 'block';
+      // Clear fields
+      document.getElementById(prefix + '-name').value = '';
+      document.getElementById(prefix + '-contact').value = '';
+      document.getElementById(prefix + '-message').value = '';
+    }, function(error) {
+      btn.disabled = false;
+      btn.textContent = btn.getAttribute('data-label') || 'Send Message';
+      alert('Failed to send. Please try again or call us directly. Error: ' + JSON.stringify(error));
+    });
+  }
+</script>
+</body>
+</html>
