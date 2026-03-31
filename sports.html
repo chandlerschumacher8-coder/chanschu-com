@@ -184,6 +184,7 @@
         <button class="refresh-picks-btn" onclick="loadPicks()">&#8635; Refresh</button>
         <button class="refresh-picks-btn" id="generate-btn" onclick="generatePicks()" style="background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.5);">&#9889; Generate New Picks</button>
         <button class="refresh-picks-btn" id="grade-btn" onclick="gradeYesterday()" style="background:rgba(82,183,136,0.08);border-color:rgba(82,183,136,0.35);color:var(--green);">&#10003; Grade Yesterday</button>
+        <button class="refresh-picks-btn" id="fix-btn" onclick="openFixRecord()" style="background:rgba(224,112,112,0.08);border-color:rgba(224,112,112,0.35);color:var(--red);">&#9998; Fix Record</button>
       </div>
     </div>
     <div class="picks-meta">
@@ -726,5 +727,37 @@ async function loadPicks() {
 loadPicks();
 loadSports();
 </script>
+<!-- FIX RECORD MODAL -->
+<div id="fix-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#0c1c30;border:1px solid rgba(255,255,255,0.1);border-radius:14px;width:100%;max-width:400px;overflow:hidden;">
+    <div style="padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);background:#112238;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:'Playfair Display',serif;font-size:17px;color:#f8f6f2;">Fix Record</div>
+      <button onclick="closeFixRecord()" style="background:transparent;border:none;color:#8a8880;font-size:17px;cursor:pointer;padding:2px 7px;">x</button>
+    </div>
+    <div style="padding:20px;">
+      <p style="font-size:12px;color:#8a8880;margin-bottom:16px;">Manually add wins, losses, or pushes to the all-time record. Use this to correct grading errors.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8a8880;margin-bottom:5px;">Wins to Add</label>
+          <input id="fix-wins" type="number" min="0" max="20" value="0" style="width:100%;background:#112238;border:1px solid rgba(255,255,255,0.09);border-radius:7px;padding:9px 12px;color:#f8f6f2;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;outline:none;text-align:center;"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8a8880;margin-bottom:5px;">Losses to Add</label>
+          <input id="fix-losses" type="number" min="0" max="20" value="0" style="width:100%;background:#112238;border:1px solid rgba(255,255,255,0.09);border-radius:7px;padding:9px 12px;color:#f8f6f2;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;outline:none;text-align:center;"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8a8880;margin-bottom:5px;">Pushes to Add</label>
+          <input id="fix-pushes" type="number" min="0" max="20" value="0" style="width:100%;background:#112238;border:1px solid rgba(255,255,255,0.09);border-radius:7px;padding:9px 12px;color:#f8f6f2;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;outline:none;text-align:center;"/>
+        </div>
+      </div>
+      <div id="fix-current" style="font-size:12px;color:#8a8880;margin-bottom:16px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center;">Loading current record...</div>
+      <div id="fix-msg" style="font-size:12px;margin-bottom:10px;min-height:16px;text-align:center;"></div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid rgba(255,255,255,0.07);display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="closeFixRecord()" style="font-size:12px;font-weight:600;padding:9px 18px;border:1px solid rgba(255,255,255,0.1);color:#8a8880;background:transparent;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Cancel</button>
+      <button onclick="submitFixRecord()" style="background:#c9973a;color:#07111f;border:none;border-radius:8px;padding:9px 20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">Apply Changes</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
