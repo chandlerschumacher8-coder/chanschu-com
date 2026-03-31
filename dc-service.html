@@ -129,6 +129,79 @@
     .prio-low .prio-dot{background:var(--green);}
 
 
+
+
+    /* ATTACHMENTS & ACTIVITY LOG */
+    .job-tabs{display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:14px;}
+    .job-tab{font-size:11px;font-weight:600;padding:8px 16px;border:none;background:transparent;color:var(--gray-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .job-tab.active{color:var(--gold-light);border-bottom-color:var(--gold);}
+    .job-tab:hover:not(.active){color:var(--gray-1);}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+
+    /* ACTIVITY LOG */
+    .log-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:220px;overflow-y:auto;}
+    .log-entry{background:var(--navy-2);border-radius:8px;padding:10px 13px;border-left:3px solid;}
+    .log-entry.call{border-color:var(--blue);}
+    .log-entry.text{border-color:var(--green);}
+    .log-entry.note{border-color:var(--gold);}
+    .log-entry.email{border-color:var(--orange);}
+    .log-meta{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+    .log-type-badge{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;padding:2px 7px;border-radius:100px;}
+    .badge-call{background:rgba(91,159,212,0.15);color:var(--blue);}
+    .badge-text{background:rgba(82,183,136,0.15);color:var(--green);}
+    .badge-note{background:rgba(201,151,58,0.15);color:var(--gold);}
+    .badge-email{background:rgba(224,144,80,0.15);color:var(--orange);}
+    .log-time{font-size:10px;color:var(--gray-3);}
+    .log-user{font-size:10px;color:var(--gray-2);}
+    .log-content{font-size:12px;color:var(--gray-1);line-height:1.6;}
+    .add-log-row{display:flex;gap:8px;align-items:flex-end;}
+    .log-type-select{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;flex-shrink:0;}
+    .log-textarea{flex:1;background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:8px 12px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;resize:none;outline:none;min-height:38px;}
+    .log-textarea:focus{border-color:rgba(201,151,58,0.4);}
+    .log-add-btn{background:var(--gold);border:none;border-radius:8px;padding:8px 14px;color:var(--navy);font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;flex-shrink:0;}
+    .log-add-btn:hover{background:var(--gold-light);}
+
+    /* ATTACHMENTS */
+    .attach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+    .attach-item{background:var(--navy-2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;position:relative;cursor:pointer;transition:all 0.2s;}
+    .attach-item:hover{border-color:rgba(255,255,255,0.2);}
+    .attach-img{width:100%;height:80px;object-fit:cover;display:block;}
+    .attach-pdf{height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.03);}
+    .attach-pdf-icon{font-size:24px;}
+    .attach-pdf-name{font-size:10px;color:var(--gray-2);margin-top:4px;text-align:center;padding:0 6px;word-break:break-all;}
+    .attach-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);border:none;border-radius:50%;width:20px;height:20px;color:var(--white);font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1;}
+    .attach-item:hover .attach-del{display:flex;}
+    .upload-area{border:2px dashed rgba(255,255,255,0.12);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
+    .upload-area:hover{border-color:rgba(201,151,58,0.4);background:rgba(201,151,58,0.04);}
+    .upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+    .upload-area-text{font-size:12px;color:var(--gray-2);}
+    .upload-area-sub{font-size:10px;color:var(--gray-3);margin-top:3px;}
+    .uploading-bar{font-size:11px;color:var(--gold);margin-top:6px;}
+    /* USER MANAGER MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+    .modal-overlay.open{display:flex;}
+    .modal-box{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:16px;width:100%;max-width:560px;overflow:hidden;}
+    .modal-hdr{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;background:var(--navy-3);}
+    .modal-hdr-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);}
+    .modal-close-btn{background:transparent;border:none;color:var(--gray-2);font-size:18px;cursor:pointer;padding:2px 8px;}
+    .modal-close-btn:hover{color:var(--white);}
+    .modal-body{padding:22px;}
+    .user-row{display:grid;grid-template-columns:1fr 1fr 100px 80px 40px;gap:8px;align-items:center;margin-bottom:8px;}
+    .user-row-hdr{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;display:grid;grid-template-columns:1fr 1fr 100px 80px 40px;gap:8px;}
+    .u-input{background:var(--navy-3);border:1px solid rgba(255,255,255,0.09);border-radius:6px;padding:8px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;width:100%;}
+    .u-input:focus{border-color:rgba(201,151,58,0.4);}
+    .u-select{background:var(--navy-3);border:1px solid rgba(255,255,255,0.09);border-radius:6px;padding:8px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;width:100%;}
+    .u-del-btn{background:rgba(224,112,112,0.08);border:1px solid rgba(224,112,112,0.2);color:var(--red);border-radius:6px;padding:7px;cursor:pointer;font-size:13px;width:100%;transition:all 0.2s;}
+    .u-del-btn:hover{background:rgba(224,112,112,0.18);}
+    .add-user-btn{font-size:12px;font-weight:600;padding:8px 16px;background:rgba(201,151,58,0.08);border:1px solid rgba(201,151,58,0.25);color:var(--gold);border-radius:8px;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .add-user-btn:hover{background:rgba(201,151,58,0.15);}
+    .save-users-btn{font-size:12px;font-weight:700;padding:10px 20px;background:var(--gold);border:none;color:var(--navy);border-radius:8px;cursor:pointer;transition:all 0.2s;font-family:'Plus Jakarta Sans',sans-serif;}
+    .save-users-btn:hover{background:var(--gold-light);}
+    .modal-footer{padding:14px 22px;border-top:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+    .modal-msg{font-size:12px;}
+    .modal-msg.ok{color:var(--green);}
+    .modal-msg.err{color:var(--red);}
     /* AI CHAT */
     .chat-toggle{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 20px rgba(201,151,58,0.4);transition:all 0.2s;z-index:200;}
     .chat-toggle:hover{background:var(--gold-light);transform:scale(1.05);}
@@ -177,7 +250,8 @@
   <header>
     <div class="h-logo">DC <span>Appliance</span> — Service</div>
     <div class="h-right">
-      <div class="h-date" id="h-date"></div>
+      <div style="display:flex;align-items:center;gap:10px;"><div style="font-size:12px;font-weight:600;color:var(--gold);" id="h-user"></div><div class="h-date" id="h-date"></div></div>
+      <button class="logout-btn" id="manage-users-btn" onclick="openUserManager()" style="display:none;border-color:rgba(201,151,58,0.3);color:var(--gold);">⚙ Users</button>
       <button class="logout-btn" onclick="doLogout()">Sign Out</button>
     </div>
   </header>
@@ -328,6 +402,28 @@
     </div>
   </div>
   <footer>DC Appliance Service Portal &nbsp;·&nbsp; Dodge City, KS &nbsp;·&nbsp; (620) 371-6417</footer>
+  <!-- USER MANAGER MODAL -->
+  <div class="modal-overlay" id="user-modal">
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="modal-hdr-title">Manage Users</div>
+        <button class="modal-close-btn" onclick="closeUserManager()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="user-row-hdr">
+          <span>Name</span><span>Password</span><span>Role</span><span>Tech Name</span><span></span>
+        </div>
+        <div id="user-rows"></div>
+        <button class="add-user-btn" onclick="addUserRow()" style="margin-top:8px;">+ Add User</button>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-msg" id="user-modal-msg"></div>
+        <button class="save-users-btn" onclick="saveUsers()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+
   <!-- AI CHAT BUTTON -->
   <button class="chat-toggle" onclick="toggleChat()" title="AI Job Assistant">🤖</button>
 
@@ -351,18 +447,52 @@
 </div>
 
 <script>
-var PASSWORD = 'DCAppliance2026';
+// ── USERS ──
+var USERS = {}; // loaded from server
+var currentUser = null;
 window.ANTHROPIC_KEY = ''; // Set your Anthropic API key here
+
+async function loadUsers() {
+  try {
+    var res = await fetch('/api/dc-users-get');
+    var data = await res.json();
+    USERS = {};
+    (data.users || []).forEach(function(u) { USERS[u.username] = u; });
+  } catch(e) {
+    // fallback defaults
+    USERS = {
+      'DCAppliance2026': { name:'Admin', role:'admin', tech:null },
+      'Jeff2026':        { name:'Jeff',  role:'tech',  tech:'Jeff' },
+      'Justin2026':      { name:'Justin',role:'tech',  tech:'Justin'},
+    };
+  }
+}
 var FILTER = 'all';
 var jobs = [];
 var nextId = 1;
 
 // ── AUTH ──
-function doLogin() {
+async function doLogin() {
+  await loadUsers();
   var pw = document.getElementById('login-pw').value;
-  if (pw === PASSWORD) {
+  var user = USERS[pw];
+  if (user) {
+    currentUser = user;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    // Show user name in header
+    document.getElementById('h-user').textContent = user.name;
+    if (user.role === 'admin') document.getElementById('manage-users-btn').style.display = 'inline-block';
+    // Hide form, AI chat, assign controls for techs
+    if (user.role === 'tech') {
+      var newJobPanel = document.querySelector('.two-col > .panel:first-child');
+      if (newJobPanel) newJobPanel.style.display = 'none';
+      document.querySelector('.chat-toggle').style.display = 'none';
+      // Make two-col single col
+      document.querySelector('.two-col').style.gridTemplateColumns = '1fr';
+      // Hide filter tabs for other techs
+      document.querySelectorAll('.ftab[data-filter="Jeff"], .ftab[data-filter="Justin"]').forEach(function(b){ b.style.display='none'; });
+    }
     loadJobs();
     updateDate();
   } else {
@@ -371,9 +501,19 @@ function doLogin() {
   }
 }
 function doLogout() {
+  currentUser = null;
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-pw').value = '';
+  document.getElementById('h-user').textContent = '';
+  document.getElementById('manage-users-btn').style.display = 'none';
+  // Reset layout for next login
+  var newJobPanel = document.querySelector('.two-col > .panel:first-child');
+  if (newJobPanel) newJobPanel.style.display = '';
+  var chatBtn = document.querySelector('.chat-toggle');
+  if (chatBtn) chatBtn.style.display = '';
+  document.querySelector('.two-col').style.gridTemplateColumns = '';
+  document.querySelectorAll('.ftab').forEach(function(b){ b.style.display=''; });
 }
 function updateDate() {
   var el = document.getElementById('h-date');
@@ -465,6 +605,10 @@ function setFilter(f, btn) {
 function renderJobs() {
   var search = (document.getElementById('search-input')?.value || '').toLowerCase();
   var filtered = jobs.filter(function(j) {
+    // Tech users only see their own jobs
+    if (currentUser && currentUser.role === 'tech') {
+      if (j.tech !== currentUser.tech) return false;
+    }
     var matchFilter = FILTER === 'all' || j.status === FILTER || j.tech === FILTER;
     var matchSearch = !search ||
       j.name.toLowerCase().includes(search) ||
@@ -509,12 +653,14 @@ function renderJobs() {
         '<div class="job-meta-item">📍 ' + j.address.split(',')[0] + '</div>' +
       '</div>' +
       '<div class="job-detail" id="detail-' + j.id + '">' +
-        '<div class="assign-row">' +
-          '<label>Assign to:</label>' +
-          '<select class="assign-select" onchange="assignTech(\'' + j.id + '\',this.value)" onclick="event.stopPropagation()">' +
-            ['Unassigned','Jeff','Justin','DC Appliance'].map(function(t){ return '<option value="' + t + '"' + (j.tech===t?' selected':'') + '>' + t + '</option>'; }).join('') +
-          '</select>' +
-        '</div>' +
+        (currentUser && currentUser.role === 'admin' ?
+          '<div class="assign-row">' +
+            '<label>Assign to:</label>' +
+            '<select class="assign-select" onchange="assignTech(\'' + j.id + '\',this.value)" onclick="event.stopPropagation()">' +
+              ['Unassigned','Jeff','Justin','DC Appliance'].map(function(t){ return '<option value="' + t + '"' + (j.tech===t?' selected':'') + '>' + t + '</option>'; }).join('') +
+            '</select>' +
+          '</div>'
+        : '') +
         '<div class="detail-grid">' +
           '<div class="detail-field"><label>Phone</label><div class="dval"><a href="tel:' + j.phone + '" style="color:var(--blue);text-decoration:none;" onclick="event.stopPropagation()">' + j.phone + '</a></div></div>' +
           (j.email ? '<div class="detail-field"><label>Email</label><div class="dval"><a href="mailto:' + j.email + '" style="color:var(--blue);text-decoration:none;" onclick="event.stopPropagation()">' + j.email + '</a></div></div>' : '<div class="detail-field"><label>Email</label><div class="dval" style="color:var(--gray-2)">—</div></div>') +
@@ -581,18 +727,229 @@ async function deleteJob(id) {
 
 function updateStats() {
   var today = new Date().toISOString().slice(0,10);
-  var open  = jobs.filter(function(j){ return j.status==='Open'; }).length;
-  var prog  = jobs.filter(function(j){ return j.status==='In Progress'; }).length;
-  var done  = jobs.filter(function(j){ return j.status==='Completed'; }).length;
-  var tod   = jobs.filter(function(j){ return j.date===today; }).length;
+  var myJobs = (currentUser && currentUser.role === 'tech')
+    ? jobs.filter(function(j){ return j.tech === currentUser.tech; })
+    : jobs;
+  var open  = myJobs.filter(function(j){ return j.status==='Open'; }).length;
+  var prog  = myJobs.filter(function(j){ return j.status==='In Progress'; }).length;
+  var done  = myJobs.filter(function(j){ return j.status==='Completed'; }).length;
+  var tod   = myJobs.filter(function(j){ return j.date===today; }).length;
   document.getElementById('s-open').textContent    = open;
   document.getElementById('s-progress').textContent= prog;
   document.getElementById('s-done').textContent    = done;
   document.getElementById('s-today').textContent   = tod;
-  document.getElementById('s-total').textContent   = jobs.length;
+  document.getElementById('s-total').textContent   = myJobs.length;
 }
 
 
+
+function renderLogEntries(j) {
+  var entries = j.activityLog || [];
+  if (entries.length === 0) return '<div style="font-size:12px;color:var(--gray-3);padding:8px 0;">No activity yet. Log a call, text, or note above.</div>';
+  return entries.slice().reverse().map(function(e) {
+    var typeClass = 'badge-' + e.type;
+    var icons = {call:'📞', text:'💬', note:'📝', email:'✉️'};
+    return '<div class="log-entry ' + e.type + '">' +
+      '<div class="log-meta">' +
+        '<span class="log-type-badge ' + typeClass + '">' + (icons[e.type]||'') + ' ' + e.type + '</span>' +
+        '<span class="log-time">' + new Date(e.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) + '</span>' +
+        '<span class="log-user">— ' + e.by + '</span>' +
+      '</div>' +
+      '<div class="log-content">' + e.text + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderAttachments(j) {
+  var files = j.files || [];
+  if (files.length === 0) return '';
+  return files.map(function(f, i) {
+    var isPdf = f.filename && f.filename.toLowerCase().endsWith('.pdf');
+    return '<a href="' + f.url + '" target="_blank" class="attach-item">' +
+      (isPdf
+        ? '<div class="attach-pdf"><div class="attach-pdf-icon">📄</div><div class="attach-pdf-name">' + f.filename + '</div></div>'
+        : '<img class="attach-img" src="' + f.url + '" alt="' + (f.filename||'photo') + '"/>') +
+      (currentUser ? '<button class="attach-del" onclick="event.preventDefault();event.stopPropagation();deleteFile(\'' + j.id + '\',' + i + ')">✕</button>' : '') +
+    '</a>';
+  }).join('');
+}
+
+function switchTab(jobId, tab, btn) {
+  var logPanel   = document.getElementById('tab-log-'   + jobId);
+  var filesPanel = document.getElementById('tab-files-' + jobId);
+  var tabs = btn.closest('.job-tabs').querySelectorAll('.job-tab');
+  tabs.forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  if (tab === 'log') {
+    logPanel.classList.add('active'); filesPanel.classList.remove('active');
+  } else {
+    filesPanel.classList.add('active'); logPanel.classList.remove('active');
+  }
+}
+
+async function addLogEntry(jobId) {
+  var typeEl = document.getElementById('log-type-' + jobId);
+  var textEl = document.getElementById('log-text-' + jobId);
+  var text = textEl.value.trim();
+  if (!text) return;
+  var job = jobs.find(function(j){return j.id===jobId;});
+  if (!job) return;
+  if (!job.activityLog) job.activityLog = [];
+  job.activityLog.push({
+    type: typeEl.value,
+    text: text,
+    by:   currentUser ? currentUser.name : 'Unknown',
+    at:   new Date().toISOString(),
+  });
+  textEl.value = '';
+  await saveJobs();
+  // Re-render just the log list
+  var logList = document.getElementById('log-list-' + jobId);
+  if (logList) logList.innerHTML = renderLogEntries(job);
+}
+
+async function handleUpload(jobId, files) {
+  var job = jobs.find(function(j){return j.id===jobId;});
+  if (!job || !files || files.length === 0) return;
+  if (!job.files) job.files = [];
+  var uploadingEl = document.getElementById('uploading-' + jobId);
+  if (uploadingEl) uploadingEl.style.display = 'block';
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    try {
+      var base64 = await fileToBase64(file);
+      var res = await fetch('/api/dc-upload', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          data: base64,
+          jobId: jobId,
+        }),
+      });
+      var data = await res.json();
+      if (data.ok) {
+        job.files.push({ url: data.url, filename: file.name, type: file.type, uploadedAt: new Date().toISOString() });
+      }
+    } catch(e) { console.error('Upload failed:', e); }
+  }
+
+  await saveJobs();
+  if (uploadingEl) uploadingEl.style.display = 'none';
+  var grid = document.getElementById('attach-grid-' + jobId);
+  if (grid) grid.innerHTML = renderAttachments(job);
+}
+
+async function deleteFile(jobId, index) {
+  if (!confirm('Remove this file?')) return;
+  var job = jobs.find(function(j){return j.id===jobId;});
+  if (!job || !job.files) return;
+  job.files.splice(index, 1);
+  await saveJobs();
+  var grid = document.getElementById('attach-grid-' + jobId);
+  if (grid) grid.innerHTML = renderAttachments(job);
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function(){ resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── USER MANAGER ──
+var editUsers = [];
+
+function openUserManager() {
+  editUsers = Object.entries(USERS).map(function(e) {
+    return { username: e[0], name: e[1].name, role: e[1].role, tech: e[1].tech || '' };
+  });
+  renderUserRows();
+  document.getElementById('user-modal').classList.add('open');
+  document.getElementById('user-modal-msg').textContent = '';
+}
+
+function closeUserManager() {
+  document.getElementById('user-modal').classList.remove('open');
+}
+
+function renderUserRows() {
+  var container = document.getElementById('user-rows');
+  container.innerHTML = editUsers.map(function(u, i) {
+    return '<div class="user-row">' +
+      '<input class="u-input" placeholder="Name" value="' + u.name + '" oninput="editUsers[' + i + '].name=this.value"/>' +
+      '<input class="u-input" placeholder="Password" value="' + u.username + '" oninput="editUsers[' + i + '].username=this.value"/>' +
+      '<select class="u-select" onchange="editUsers[' + i + '].role=this.value;editUsers[' + i + '].tech=this.value==='admin'?null:editUsers[' + i + '].name;renderUserRows();">' +
+        '<option value="admin"' + (u.role==='admin'?' selected':'') + '>Admin</option>' +
+        '<option value="tech"'  + (u.role==='tech' ?' selected':'') + '>Tech</option>' +
+      '</select>' +
+      '<input class="u-input" placeholder="Tech name" value="' + (u.tech||'') + '" ' + (u.role==='admin'?'disabled style="opacity:0.3"':'') + ' oninput="editUsers[' + i + '].tech=this.value"/>' +
+      '<button class="u-del-btn" onclick="removeUser(' + i + ')">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function addUserRow() {
+  editUsers.push({ username: '', name: '', role: 'tech', tech: '' });
+  renderUserRows();
+}
+
+function removeUser(i) {
+  if (editUsers[i].role === 'admin' && editUsers.filter(function(u){return u.role==='admin';}).length <= 1) {
+    alert('Must keep at least one admin.');
+    return;
+  }
+  editUsers.splice(i, 1);
+  renderUserRows();
+}
+
+async function saveUsers() {
+  var msgEl = document.getElementById('user-modal-msg');
+  // Validate
+  for (var i = 0; i < editUsers.length; i++) {
+    if (!editUsers[i].name || !editUsers[i].username) {
+      msgEl.textContent = 'All users need a name and password.';
+      msgEl.className = 'modal-msg err';
+      return;
+    }
+    if (editUsers[i].role === 'tech' && !editUsers[i].tech) {
+      editUsers[i].tech = editUsers[i].name;
+    }
+  }
+  var hasAdmin = editUsers.some(function(u){return u.role==='admin';});
+  if (!hasAdmin) {
+    msgEl.textContent = 'Must have at least one admin.';
+    msgEl.className = 'modal-msg err';
+    return;
+  }
+
+  try {
+    var res = await fetch('/api/dc-users-save', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ users: editUsers, adminKey: currentUser.username })
+    });
+    var data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+
+    // Reload users locally
+    USERS = {};
+    editUsers.forEach(function(u) {
+      USERS[u.username] = { name: u.name, role: u.role, tech: u.tech || null };
+    });
+
+    msgEl.textContent = '✓ Users saved successfully!';
+    msgEl.className = 'modal-msg ok';
+    setTimeout(function(){ closeUserManager(); }, 1200);
+  } catch(e) {
+    msgEl.textContent = 'Error: ' + e.message;
+    msgEl.className = 'modal-msg err';
+  }
+}
 // ── AI CHAT ──
 var chatHistory = [];
 
