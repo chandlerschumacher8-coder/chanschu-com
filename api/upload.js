@@ -21,6 +21,7 @@ export default async function handler(req, res) {
     const safeName = `service/${companyId}/${jobId}/${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
  
     const blob = await put(safeName, buffer, {
+      access: 'public',
       contentType: contentType || 'application/octet-stream',
       addRandomSuffix: false,
     });
