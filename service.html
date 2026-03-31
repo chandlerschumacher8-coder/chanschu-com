@@ -118,7 +118,7 @@
     .assign-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
     .assign-row label{font-size:11px;color:var(--gray-2);white-space:nowrap;}
     .assign-sel{background:var(--navy-2);border:1px solid rgba(255,255,255,0.1);border-radius:7px;padding:6px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;flex:1;}
-
+ 
     /* CUSTOMER STATUS EXPANDED */
     .status-section{background:rgba(224,144,80,0.06);border:1px solid rgba(224,144,80,0.2);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
     .status-section-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--orange);margin-bottom:12px;}
@@ -215,7 +215,7 @@
       .print-header p{font-size:12px;color:#666;margin-top:4px;}
       .tab-panel.active{display:block!important;}
     }
-
+ 
     /* EDIT MODAL */
     .edit-modal-body{padding:18px 20px;max-height:70vh;overflow-y:auto;}
     .edit-section-title{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin:14px 0 8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px;}
@@ -289,7 +289,7 @@
   </style>
 </head>
 <body>
-
+ 
 <!-- LOGIN -->
 <div class="login-screen" id="login-screen">
   <div class="login-box">
@@ -300,7 +300,7 @@
     <div class="login-err" id="login-err">Incorrect password.</div>
   </div>
 </div>
-
+ 
 <!-- APP -->
 <div class="app" id="app">
   <header>
@@ -315,7 +315,7 @@
       <button class="hbtn danger" onclick="doLogout()">Sign Out</button>
     </div>
   </header>
-
+ 
   <div class="main">
     <div class="stats-bar">
       <div class="stat-card sc-open"><div class="stat-val" id="s-open">0</div><div class="stat-key">Open</div></div>
@@ -324,7 +324,7 @@
       <div class="stat-card sc-today"><div class="stat-val" id="s-today">0</div><div class="stat-key">Today</div></div>
       <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-key">Total</div></div>
     </div>
-
+ 
     <div class="two-col" id="two-col">
       <!-- FORM -->
       <div class="panel" id="form-panel">
@@ -401,7 +401,7 @@
           <button class="submit-btn" onclick="addJob()">+ Schedule Job</button>
         </div>
       </div>
-
+ 
       <!-- JOBS LIST -->
       <div class="panel">
         <div class="panel-hdr" style="flex-direction:column;align-items:stretch;gap:8px;">
@@ -422,7 +422,7 @@
   </div>
   <footer id="footer-bar">Service Portal</footer>
 </div>
-
+ 
 <!-- EDIT JOB MODAL -->
 <div class="modal-bg" id="edit-modal">
   <div class="modal" style="max-width:620px;">
@@ -492,8 +492,8 @@
     </div>
   </div>
 </div>
-
-
+ 
+ 
 <!-- COMPANIES MODAL -->
 <div class="modal-bg" id="companies-modal">
   <div class="modal" style="max-width:560px;">
@@ -512,7 +512,7 @@
     <div class="modal-footer"><div class="modal-msg" id="co-msg"></div></div>
   </div>
 </div>
-
+ 
 <!-- USERS MODAL -->
 <div class="modal-bg" id="users-modal">
   <div class="modal" style="max-width:640px;">
@@ -528,7 +528,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- APPLIANCE PICKER MODAL -->
 <div class="modal-bg" id="ap-modal">
   <div class="ap-box">
@@ -538,7 +538,7 @@
     <button class="ap-cancel" onclick="closeModal('ap-modal')">Cancel</button>
   </div>
 </div>
-
+ 
 <!-- AI CHAT -->
 <button class="chat-fab" id="chat-fab" onclick="toggleChat()" style="display:none;" title="AI Job Assistant">🤖</button>
 <div class="chat-win" id="chat-win">
@@ -554,10 +554,10 @@
     <button class="chat-send" id="chat-send" onclick="sendChat()">Send</button>
   </div>
 </div>
-
+ 
 <script>
 var currentUser=null,companies=[],jobs=[],nextId=1,techList=['Unassigned'],editUsers=[],editCompanyId=null,FILTER='all',chatHistory=[],pendingInvoiceFile=null;
-
+ 
 // ── AUTH ──
 async function doLogin(){
   var pw=document.getElementById('login-pw').value;if(!pw)return;
@@ -593,7 +593,7 @@ function doLogout(){
   document.getElementById('form-panel').style.display='';document.getElementById('two-col').style.gridTemplateColumns='';
   document.getElementById('chat-fab').style.display='none';
 }
-
+ 
 // ── COMPANIES ──
 async function loadCompanies(){var res=await fetch('/api/companies-get');var data=await res.json();companies=data.companies||[];}
 function renderSuperAdminView(){
@@ -633,7 +633,7 @@ async function deleteCompany(id,name){
   if(data.ok){companies=companies.filter(function(c){return c.id!==id;});renderCompaniesModal();renderSuperAdminView();}
   else alert('Error: '+data.error);
 }
-
+ 
 // ── USERS ──
 async function loadTechs(){
   if(!currentUser.companyId)return;
@@ -680,7 +680,7 @@ async function saveUsers(){
     await loadTechs();setTimeout(function(){closeModal('users-modal');},1000);
   }catch(e){msg.textContent='Error: '+e.message;msg.className='modal-msg err';}
 }
-
+ 
 // ── JOBS ──
 async function loadJobs(){
   var res=await fetch('/api/jobs-get?companyId='+currentUser.companyId);var data=await res.json();
@@ -702,7 +702,7 @@ async function addJob(){
   if(!name||!phone||!address||!city||!appliance||!issue||!date){alert('Please fill in all required fields.');return;}
   var job={id:'JOB-'+String(nextId).padStart(4,'0'),name:name,phone:phone,email:email,address:address,city:city,appliance:appliance,brand:brand,model:model,serial:serial,warranty:warranty,invoice:invoice,claim:claim,delivery:delivery,issue:issue,date:date,time:time,tech:tech,priority:priority,notes:notes,status:'Open',partOnOrder:false,partNumber:'',customerContacted:false,activityLog:[],files:[],createdAt:new Date().toISOString(),completedAt:null};
   nextId++;jobs.unshift(job);await saveJobs();
-
+ 
   // Attach pending invoice if present
   if(pendingInvoiceFile){
     try{
@@ -714,7 +714,7 @@ async function addJob(){
     pendingInvoiceFile=null;
     var preview=document.getElementById('invoice-drop-zone').querySelector('.idz-preview');if(preview)preview.remove();
   }
-
+ 
   renderJobs();updateStats();
   ['f-name','f-phone','f-email','f-address','f-city','f-brand','f-model','f-serial','f-invoice','f-claim','f-issue','f-notes'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('f-appliance').value='';document.getElementById('f-warranty').value='Out of Warranty';document.getElementById('f-delivery').value='';
@@ -722,9 +722,9 @@ async function addJob(){
   document.getElementById('f-date').valueAsDate=new Date();
   alert('Job '+job.id+' scheduled for '+name+'!'+(job.files&&job.files.length?' Invoice attached.':''));
 }
-
+ 
 function setFilter(f,btn){FILTER=f;document.querySelectorAll('.ftab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderJobs();}
-
+ 
 function renderJobs(){
   var search=(document.getElementById('search')&&document.getElementById('search').value||'').toLowerCase();
   var filtered=jobs.filter(function(j){
@@ -797,7 +797,7 @@ function renderJobs(){
     '</div>';
   }).join('');
 }
-
+ 
 function toggleJob(id){
   var d=document.getElementById('detail-'+id),c=document.getElementById('card-'+id);
   var open=d.classList.contains('open');
@@ -828,14 +828,14 @@ function formatSchedDate(j) {
   }
   return dateStr;
 }
-
+ 
 function setSchedType(id, type, btn) {
   btn.closest('.sched-type-row').querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('active');});
   btn.classList.add('active');
   var j = jobs.find(function(x){return x.id===id;}); if(!j)return;
   j.schedType = type;
 }
-
+ 
 async function toggleScheduled(id, checked) {
   var j=jobs.find(function(x){return x.id===id;}); if(!j)return;
   j.customerScheduled = checked;
@@ -843,7 +843,7 @@ async function toggleScheduled(id, checked) {
   var sf=document.getElementById('sched-fields-'+id); if(sf)sf.classList.toggle('show',checked);
   await saveJobs();
 }
-
+ 
 async function saveScheduled(id) {
   var j=jobs.find(function(x){return x.id===id;}); if(!j)return;
   j.schedDate = document.getElementById('sched-date-'+id).value;
@@ -854,7 +854,7 @@ async function saveScheduled(id) {
   renderJobs(); updateStats();
   setTimeout(function(){ toggleJob(id); }, 50);
 }
-
+ 
 async function togglePartOrder(id,checked){
   var j=jobs.find(function(x){return x.id===id;});if(!j)return;
   j.partOnOrder=checked;
@@ -883,7 +883,7 @@ function updateStats(){
   document.getElementById('s-today').textContent=mine.filter(function(j){return j.date===today;}).length;
   document.getElementById('s-total').textContent=mine.length;
 }
-
+ 
 // ── LOG ──
 function renderLogEntries(j){
   var e=j.activityLog||[];if(e.length===0)return '<div style="font-size:12px;color:var(--gray-3);padding:6px 0;">No activity yet.</div>';
@@ -900,7 +900,7 @@ async function addLog(id){
   document.getElementById('ltxt-'+id).value='';await saveJobs();
   var ll=document.getElementById('log-list-'+id);if(ll)ll.innerHTML=renderLogEntries(j);
 }
-
+ 
 // ── FILES ──
 function renderFiles(j){
   var f=j.files||[];if(f.length===0)return '';
@@ -933,7 +933,7 @@ async function handleUpload(jobId,files){
 }
 async function deleteFile(id,i){if(!confirm('Remove this file?'))return;var j=jobs.find(function(x){return x.id===id;});if(!j||!j.files)return;j.files.splice(i,1);await saveJobs();var g=document.getElementById('agrid-'+id);if(g)g.innerHTML=renderFiles(j);}
 function toB64(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});}
-
+ 
 // ── INVOICE READER ──
 function handleInvoiceDrop(e){e.preventDefault();document.getElementById('invoice-drop-zone').classList.remove('drag-over');var file=e.dataTransfer.files[0];if(file)handleInvoiceFile(file);}
 async function handleInvoiceFile(file){
@@ -977,7 +977,7 @@ function showAppliancePicker(appliances){
   }).join('');
   document.getElementById('ap-modal').classList.add('open');
 }
-
+ 
 // ── AI CHAT ──
 function toggleChat(){var w=document.getElementById('chat-win');w.classList.toggle('open');if(w.classList.contains('open'))document.getElementById('chat-inp').focus();}
 function addMsg(role,html){var m=document.getElementById('chat-msgs'),d=document.createElement('div');d.className='cmsg '+role;d.innerHTML=html;m.appendChild(d);m.scrollTop=m.scrollHeight;return d;}
@@ -1006,15 +1006,15 @@ async function sendChat(){
   }catch(e){typing.remove();addMsg('ai','Connection error: '+e.message);}
   btn.disabled=false;document.getElementById('chat-inp').focus();
 }
-
+ 
 // ── EDIT JOB ──
 var editingJobId = null;
-
+ 
 function openEditJob(id) {
   var j = jobs.find(function(x){return x.id===id;});
   if (!j) return;
   editingJobId = id;
-
+ 
   // Fill all fields
   document.getElementById('e-name').value    = j.name    || '';
   document.getElementById('e-phone').value   = j.phone   || '';
@@ -1030,7 +1030,7 @@ function openEditJob(id) {
   document.getElementById('e-issue').value   = j.issue   || '';
   document.getElementById('e-date').value    = j.date    || '';
   document.getElementById('e-notes').value   = j.notes   || '';
-
+ 
   // Selects
   var appSel = document.getElementById('e-appliance');
   for(var i=0;i<appSel.options.length;i++){if(appSel.options[i].value===j.appliance){appSel.selectedIndex=i;break;}}
@@ -1040,20 +1040,20 @@ function openEditJob(id) {
   for(var i=0;i<timeSel.options.length;i++){if(timeSel.options[i].value===j.time){timeSel.selectedIndex=i;break;}}
   var priSel = document.getElementById('e-priority');
   for(var i=0;i<priSel.options.length;i++){if(priSel.options[i].value===j.priority){priSel.selectedIndex=i;break;}}
-
+ 
   // Tech dropdown — rebuild from current techList
   var techSel = document.getElementById('e-tech');
   techSel.innerHTML = techList.map(function(t){return '<option value="'+t+'"'+(j.tech===t?' selected':'')+'>'+t+'</option>';}).join('');
-
+ 
   document.getElementById('edit-msg').textContent = '';
   document.getElementById('edit-modal').classList.add('open');
 }
-
+ 
 async function saveEditJob() {
   var msg = document.getElementById('edit-msg');
   var j = jobs.find(function(x){return x.id===editingJobId;});
   if (!j) return;
-
+ 
   var name    = document.getElementById('e-name').value.trim();
   var phone   = document.getElementById('e-phone').value.trim();
   var address = document.getElementById('e-address').value.trim();
@@ -1061,13 +1061,13 @@ async function saveEditJob() {
   var appliance = document.getElementById('e-appliance').value;
   var issue   = document.getElementById('e-issue').value.trim();
   var date    = document.getElementById('e-date').value;
-
+ 
   if (!name||!phone||!address||!city||!appliance||!issue||!date) {
     msg.textContent = 'Please fill in all required fields.';
     msg.className = 'modal-msg err';
     return;
   }
-
+ 
   // Update job fields
   j.name     = name;
   j.phone    = phone;
@@ -1088,7 +1088,7 @@ async function saveEditJob() {
   j.tech     = document.getElementById('e-tech').value;
   j.priority = document.getElementById('e-priority').value;
   j.notes    = document.getElementById('e-notes').value.trim();
-
+ 
   msg.textContent = 'Saving...';
   msg.className = 'modal-msg';
   await saveJobs();
@@ -1102,8 +1102,8 @@ async function saveEditJob() {
     setTimeout(function(){ toggleJob(editingJobId); }, 100);
   }, 800);
 }
-
-
+ 
+ 
 function closeModal(id){document.getElementById(id).classList.remove('open');document.querySelectorAll('.modal-msg').forEach(function(m){m.textContent='';});}
 </script>
 </body>
