@@ -99,6 +99,11 @@
     /* GAME ROWS */
     .games-list{display:flex;flex-direction:column;}
     .game-row{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid rgba(255,255,255,0.05);transition:background 0.15s;}
+    .game-row.result-w{background:rgba(82,183,136,0.04);border-left:3px solid rgba(82,183,136,0.4);}
+    .game-row.result-l{background:rgba(224,112,112,0.04);border-left:3px solid rgba(224,112,112,0.3);}
+    .result-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:100px;}
+    .result-badge.rw{background:rgba(82,183,136,0.15);border:1px solid rgba(82,183,136,0.4);color:var(--green);}
+    .result-badge.rl{background:rgba(224,112,112,0.1);border:1px solid rgba(224,112,112,0.3);color:var(--red);}
     .game-row:hover{background:rgba(255,255,255,0.02);}
     .game-row:last-child{border-bottom:none;}
     .game-date{display:flex;flex-direction:column;align-items:center;}
@@ -452,14 +457,15 @@ function renderGames(containerId, recordId, games, teamName, leagueLabel, schedu
   el.innerHTML = html;
 }
 
-// ── MLB Royals via MLB Stats API (free, no key, CORS friendly) ──
+// ── MLB Royals via MLB Stats API ──
 async function fetchRoyals() {
   var today = new Date();
-  var end   = new Date(today); end.setDate(end.getDate() + 60);
+  var start = new Date(today); start.setDate(start.getDate() - 7);
+  var end   = new Date(today); end.setDate(end.getDate() + 30);
   var fmt   = function(d){ return d.toISOString().slice(0,10); };
   var url   = 'https://statsapi.mlb.com/api/v1/schedule?sportId=1&teamId=118' +
-              '&startDate=' + fmt(today) + '&endDate=' + fmt(end) +
-              '&hydrate=team&gameType=R';
+              '&startDate=' + fmt(start) + '&endDate=' + fmt(end) +
+              '&hydrate=team,linescore&gameType=R';
   var res   = await fetch(url);
   if (!res.ok) throw new Error('MLB API ' + res.status);
   var data  = await res.json();
@@ -467,17 +473,78 @@ async function fetchRoyals() {
   var games = [];
   (data.dates || []).forEach(function(d) {
     (d.games || []).forEach(function(g) {
-      var isHome = g.teams.home.team.id === 118;
+      var status   = g.status.abstractGameState; // 'Final','Live','Preview'
+      var kcHome   = g.teams.home.team.id === 118;
+      var kcScore  = kcHome ? (g.teams.home.score||0) : (g.teams.away.score||0);
+      var oppScore = kcHome ? (g.teams.away.score||0) : (g.teams.home.score||0);
+      var won      = status === 'Final' && kcScore > oppScore;
+      var lost     = status === 'Final' && kcScore < oppScore;
       games.push({
         commence_time: g.gameDate,
         home_team: g.teams.home.team.name,
         away_team: g.teams.away.team.name,
+        status: status,
+        kcScore: kcScore,
+        oppScore: oppScore,
+        won: won,
+        lost: lost,
       });
     });
   });
 
-  renderGames('royals-games','royals-record', games, 'Kansas City Royals',
-    'MLB', 'https://www.mlb.com/royals/schedule');
+  // Sort chronologically, show recent past + upcoming
+  games.sort(function(a,b){ return new Date(a.commence_time)-new Date(b.commence_time); });
+
+  renderRoyalsGames(games);
+}
+
+function renderRoyalsGames(games) {
+  var el  = document.getElementById('royals-games');
+  var rec = document.getElementById('royals-record');
+  if (!el) return;
+  if (!games || games.length === 0) {
+    el.innerHTML = '<div class="no-games">No games scheduled.</div>';
+    return;
+  }
+
+  var wins   = games.filter(function(g){ return g.won; }).length;
+  var losses = games.filter(function(g){ return g.lost; }).length;
+  if (rec) rec.textContent = 'MLB · ' + wins + '-' + losses + ' this stretch';
+
+  var html = '';
+  games.slice(0, 12).forEach(function(game) {
+    var isHome = game.home_team === 'Kansas City Royals';
+    var opp    = shortenTeam(isHome ? game.away_team : game.home_team);
+    var dt     = fmtGameTime(game.commence_time);
+    var isFinal = game.status === 'Final';
+    var resultClass = game.won ? 'result-w' : game.lost ? 'result-l' : '';
+    var resultBadge = '';
+    if (isFinal) {
+      resultBadge = '<span class="result-badge ' + (game.won?'rw':'rl') + '">' +
+        (game.won?'W':'L') + ' ' + game.kcScore + '-' + game.oppScore +
+      '</span>';
+    }
+
+    html +=
+      '<div class="game-row' + (resultClass?' '+resultClass:'') + '">' +
+        '<div class="game-date">' +
+          '<div class="game-month">' + dt.month + '</div>' +
+          '<div class="game-day">'   + dt.day   + '</div>' +
+          '<div class="game-dow">'   + dt.dow   + '</div>' +
+        '</div>' +
+        '<div class="game-info">' +
+          '<div class="game-matchup">' + (isHome ? 'vs ' : '@ ') + opp + '</div>' +
+          '<div class="game-meta">' + (isFinal ? 'Final' : dt.time) + '</div>' +
+        '</div>' +
+        '<div class="game-status">' +
+          (isFinal ? resultBadge :
+            '<span class="status-pill ' + (isHome?'pill-home':'pill-away') + '">' +
+            (isHome?'Home':'Away') + '</span>') +
+        '</div>' +
+      '</div>';
+  });
+
+  el.innerHTML = html;
 }
 
 // ── NFL Chiefs via ESPN API (free, no key) ──
@@ -622,7 +689,7 @@ function renderPicks(data) {
         '<div class="pick-rank">' + pick.rank + '</div>' +
         '<div class="pick-body">' +
           '<div class="pick-sport">' + (pick.sport || '') + '</div>' +
-          '<div class="pick-game">' + (pick.game || '') + '</div>' +
+          '<div class="pick-game">' + (pick.game || '') + (pick.game_time ? ' <span style="font-size:11px;color:var(--gray-3);">· ' + pick.game_time + '</span>' : '') + '</div>' +
           '<div class="pick-selection">' + (pick.pick || '') + '</div>' +
           '<div class="pick-reasoning">' + (pick.reasoning || '') + '</div>' +
 
