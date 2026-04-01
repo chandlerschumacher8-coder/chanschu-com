@@ -773,7 +773,7 @@ function openEditDelivery(id){
   document.getElementById('f-name').value=d.name||'';document.getElementById('f-phone').value=d.phone||'';
   document.getElementById('f-email').value=d.email||'';document.getElementById('f-address').value=d.address||'';
   document.getElementById('f-city').value=d.city||'';document.getElementById('f-invoice').value=d.invoice||'';
-  document.getElementById('f-notes').value=d.notes||'';document.getElementById('f-stop').value=d.stopOrder||'';
+  document.getElementById('f-notes').value=d.notes||'';var fStop=document.getElementById('f-stop');if(fStop)fStop.value=d.stopOrder||'';
   document.getElementById('f-date').value=d.date||'';document.getElementById('f-duration').value=d.duration||'60';
   document.getElementById('f-team').value=d.team||'Main Delivery Team';
   var ts=document.getElementById('f-time');for(var i=0;i<ts.options.length;i++){if(ts.options[i].value===d.time){ts.selectedIndex=i;break;}}
