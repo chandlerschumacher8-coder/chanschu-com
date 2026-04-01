@@ -543,13 +543,18 @@ async function loadData(){
   try{
     var r=await fetch('/api/deliveries-get');var d=await r.json();
     deliveries=d.deliveries||[];nextDelId=d.nextId||1;
-    notes=d.notes||[];nextNoteId=d.nextNoteId||1;
+    notes=Array.isArray(d.notes)?d.notes:[];
+    nextNoteId=d.nextNoteId||1;
   }catch(e){deliveries=[];notes=[];nextDelId=1;nextNoteId=1;}
   renderCalendar();
 }
 async function saveData(){
-  try{await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries,nextId:nextDelId,notes,nextNoteId})});}
-  catch(e){console.warn('Save failed',e);}
+  try{
+    var payload={deliveries:deliveries,nextId:nextDelId,notes:notes,nextNoteId:nextNoteId};
+    var res=await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var data=await res.json();
+    if(!data.ok)console.error('Save error:',data.error);
+  }catch(e){console.error('Save failed:',e);}
 }
 
 // ═══ DATE UTILS ═══
