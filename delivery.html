@@ -100,11 +100,18 @@
     .ev-sub{font-size:10px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
     .ev-time-lbl{font-size:9px;opacity:0.65;margin-top:1px;}
 
-    /* DELIVERY COLORS */
+    /* DELIVERY COLORS — Main Team (Blue) */
     .dc-scheduled{background:#dbeafe;border-left:3px solid #2563b0;color:#1e3a5f;}
-    .dc-out{background:#ffedd5;border-left:3px solid #c2410c;color:#7c2d12;}
+    .dc-out{background:#bfdbfe;border-left:3px solid #1d4ed8;color:#1e3a8a;}
     .dc-delivered{background:#dcfce7;border-left:3px solid #16a34a;color:#14532d;}
-    .dc-rescheduled{background:#f3e8ff;border-left:3px solid #7c3aed;color:#4c1d95;}
+    .dc-rescheduled{background:#e0e7ff;border-left:3px solid #4338ca;color:#312e81;}
+    /* DELIVERY COLORS — Other Team (Black scheduled, Orange delivered) */
+    .dc-other-scheduled{background:#1f2937;border-left:3px solid #111827;color:#f9fafb;}
+    .dc-other-out{background:#374151;border-left:3px solid #1f2937;color:#f3f4f6;}
+    .dc-other-delivered{background:#ffedd5;border-left:3px solid #ea580c;color:#7c2d12;}
+    .dc-other-rescheduled{background:#6b7280;border-left:3px solid #374151;color:#f9fafb;}
+    /* Main team delivered = orange too */
+    .dc-delivered{background:#ffedd5;border-left:3px solid #ea580c;color:#7c2d12;}
 
     /* NOTE COLORS */
     .nc-red{background:#fee2e2;border-left:3px solid #dc2626;color:#7f1d1d;}
@@ -210,6 +217,16 @@
     .sb-delivered{background:#dcfce7;color:#14532d;}
     .sb-rescheduled{background:#f3e8ff;color:#4c1d95;}
 
+
+    /* CONTEXT MENU */
+    .ctx-menu{position:fixed;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:300;min-width:180px;overflow:hidden;display:none;}
+    .ctx-menu.open{display:block;}
+    .ctx-header{padding:7px 12px;font-size:10px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border);}
+    .ctx-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:var(--text);transition:background 0.1s;}
+    .ctx-item:hover{background:var(--bg3);}
+    .ctx-item-icon{font-size:16px;width:20px;text-align:center;}
+    .ctx-item-label{font-weight:600;}
+    .ctx-item-sub{font-size:10px;color:var(--text3);margin-top:1px;}
     /* LEGEND */
     .legend-row{display:flex;align-items:center;gap:14px;padding:5px 14px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
     .legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);}
@@ -265,11 +282,18 @@
       </div>
     </div>
     <div class="legend-row">
+      <span style="font-size:10px;font-weight:700;color:#1d4ed8;letter-spacing:0.04em;">MAIN TEAM:</span>
       <div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border:1px solid #2563b0;"></div>Scheduled</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;border:1px solid #c2410c;"></div>Out for Delivery</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#dcfce7;border:1px solid #16a34a;"></div>Delivered</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#f3e8ff;border:1px solid #7c3aed;"></div>Rescheduled</div>
-      <div class="legend-item" style="margin-left:8px;color:#999;">|</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#bfdbfe;border:1px solid #1d4ed8;"></div>Out for Delivery</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;border:1px solid #ea580c;"></div>Delivered</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e0e7ff;border:1px solid #4338ca;"></div>Rescheduled</div>
+      <div class="legend-item" style="margin-left:8px;color:#ccc;">|</div>
+      <span style="font-size:10px;font-weight:700;color:#374151;letter-spacing:0.04em;">OTHER TEAM:</span>
+      <div class="legend-item"><div class="legend-dot" style="background:#1f2937;border:1px solid #111827;"></div>Scheduled</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#374151;border:1px solid #1f2937;"></div>Out for Delivery</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;border:1px solid #ea580c;"></div>Delivered</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#6b7280;border:1px solid #374151;"></div>Rescheduled</div>
+      <div class="legend-item" style="margin-left:8px;color:#ccc;">|</div>
       <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;border:1px solid #ca8a04;"></div>Note / Event</div>
     </div>
   </div>
@@ -345,13 +369,10 @@
           </select>
         </div>
       </div>
-      <div class="frow">
-        <div class="field"><label>Team</label>
-          <select class="sel" id="f-team">
-            <option>Main Delivery Team</option><option>Other Delivery Team</option>
-          </select>
-        </div>
-        <div class="field"><label>Stop #</label><input class="inp" id="f-stop" type="number" min="1" placeholder="1"/></div>
+      <div class="field"><label>Team</label>
+        <select class="sel" id="f-team">
+          <option>Main Delivery Team</option><option>Other Delivery Team</option>
+        </select>
       </div>
       <div class="field"><label>Notes</label><textarea class="txta" id="f-notes" placeholder="Access codes, floor, special instructions..."></textarea></div>
     </div>
@@ -429,6 +450,25 @@
     <div class="modal-footer" style="justify-content:space-between;">
       <div class="act-row" id="det-actions"></div>
       <button class="ghost-btn" onclick="closeModal('detail-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctx-menu">
+  <div class="ctx-header" id="ctx-header">Add to Calendar</div>
+  <div class="ctx-item" onclick="ctxAddDelivery()">
+    <div class="ctx-item-icon">🚛</div>
+    <div>
+      <div class="ctx-item-label">Add Delivery</div>
+      <div class="ctx-item-sub">Schedule a customer delivery stop</div>
+    </div>
+  </div>
+  <div class="ctx-item" onclick="ctxAddNote()">
+    <div class="ctx-item-icon">📌</div>
+    <div>
+      <div class="ctx-item-label">Add Note / Event</div>
+      <div class="ctx-item-sub">Trucks, staff schedules, reminders</div>
     </div>
   </div>
 </div>
@@ -543,24 +583,66 @@ function renderEvents(){
   document.querySelectorAll('.cal-event').forEach(function(e){e.remove();});
   var days=[];for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
 
-  // Deliveries
-  deliveries.filter(function(d){return days.indexOf(d.date)>=0&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);}).forEach(function(d){
-    var col=document.getElementById('col-'+d.date);if(!col)return;
-    var sm=timeToMins(d.time),dur=parseInt(d.duration)||60;
-    var top=(sm-HOURS_START*60),height=Math.max(dur,22);
+  // Deliveries — group by day, then calculate columns for overlapping events
+  days.forEach(function(dayStr){
+    var col=document.getElementById('col-'+dayStr); if(!col)return;
+    var dayDeliveries=deliveries.filter(function(d){
+      return d.date===dayStr&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);
+    });
+    if(dayDeliveries.length===0)return;
+
+    // Assign columns to handle overlaps
     var maxH=(HOURS_END-HOURS_START)*60;
-    if(top<0)top=0;if(top>=maxH)return;if(top+height>maxH)height=maxH-top;
-    var sc=d.status==='Delivered'?'dc-delivered':d.status==='Out for Delivery'?'dc-out':d.status==='Rescheduled'?'dc-rescheduled':'dc-scheduled';
-    var apps=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
-    var endTime=minsToTime(sm+dur);
-    var ev=document.createElement('div');
-    ev.className='cal-event '+sc+(d.status==='Delivered'?' ev-delivered':'');
-    ev.style.cssText='top:'+top+'px;height:'+height+'px;';
-    ev.innerHTML='<div class="ev-name">'+(d.stopOrder?d.stopOrder+'. ':'')+d.name+'</div>'+
-      (height>28?'<div class="ev-sub">'+apps+(d.city?' · '+d.city:'')+'</div>':'')+
-      (height>46?'<div class="ev-time-lbl">'+d.time+(dur?' – '+endTime:'')+'</div>':'');
-    ev.onclick=function(e){e.stopPropagation();openDeliveryDetail(d.id);};
-    col.appendChild(ev);
+    var slots=[]; // each slot is an array of non-overlapping events
+
+    dayDeliveries.forEach(function(d){
+      var sm=timeToMins(d.time),dur=parseInt(d.duration)||60;
+      var top=Math.max(0,sm-HOURS_START*60);
+      var bottom=top+dur;
+      if(top>=maxH)return;
+
+      // Find first slot where this event doesn't overlap
+      var placed=false;
+      for(var s=0;s<slots.length;s++){
+        var conflict=false;
+        for(var e=0;e<slots[s].length;e++){
+          var ex=slots[s][e];
+          if(top<ex.bottom&&bottom>ex.top){conflict=true;break;}
+        }
+        if(!conflict){slots[s].push({d:d,top:top,bottom:bottom});placed=true;break;}
+      }
+      if(!placed)slots.push([{d:d,top:top,bottom:bottom}]);
+    });
+
+    var totalCols=slots.length;
+    slots.forEach(function(slot,colIdx){
+      slot.forEach(function(item){
+        var d=item.d;
+        var sm=timeToMins(d.time),dur=parseInt(d.duration)||60;
+        var top=item.top,height=Math.max(dur,24);
+        if(top+height>maxH)height=maxH-top;
+
+        var isOther=d.team==='Other Delivery Team';
+        var sc=isOther?
+          (d.status==='Delivered'?'dc-other-delivered':d.status==='Out for Delivery'?'dc-other-out':d.status==='Rescheduled'?'dc-other-rescheduled':'dc-other-scheduled'):
+          (d.status==='Delivered'?'dc-delivered':d.status==='Out for Delivery'?'dc-out':d.status==='Rescheduled'?'dc-rescheduled':'dc-scheduled');
+        var apps=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
+        var endTime=minsToTime(sm+dur);
+
+        // Calculate left/width for column layout
+        var colW=100/totalCols;
+        var leftPct=colIdx*colW;
+
+        var ev=document.createElement('div');
+        ev.className='cal-event '+sc+(d.status==='Delivered'?' ev-delivered':'');
+        ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;';
+        ev.innerHTML='<div class="ev-name">'+d.name+'</div>'+
+          (height>28?'<div class="ev-sub">'+apps+(d.city?' · '+d.city:'')+'</div>':'')+
+          (height>46?'<div class="ev-time-lbl">'+d.time+(dur?' – '+endTime:'')+'</div>':'');
+        ev.onclick=(function(id){return function(e){e.stopPropagation();openDeliveryDetail(id);};})(d.id);
+        col.appendChild(ev);
+      });
+    });
   });
 
   // Notes
@@ -585,7 +667,7 @@ function renderEvents(){
 function openAddDelivery(date,time){
   document.getElementById('edit-del-id').value='';
   document.getElementById('del-modal-title').textContent='Add Delivery Stop';
-  ['f-name','f-phone','f-email','f-address','f-city','f-invoice','f-notes','f-stop'].forEach(function(id){document.getElementById(id).value='';});
+  ['f-name','f-phone','f-email','f-address','f-city','f-invoice','f-notes'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('f-date').value=date||ds(new Date());
   document.getElementById('f-duration').value='60';
   document.getElementById('f-team').value='Main Delivery Team';
@@ -622,7 +704,7 @@ async function saveDelivery(){
   var city=document.getElementById('f-city').value.trim(),invoice=document.getElementById('f-invoice').value.trim();
   var notes=document.getElementById('f-notes').value.trim(),date=document.getElementById('f-date').value;
   var time=document.getElementById('f-time').value,duration=document.getElementById('f-duration').value;
-  var team=document.getElementById('f-team').value,stopOrder=parseInt(document.getElementById('f-stop').value)||null;
+  var team=document.getElementById('f-team').value,stopOrder=null;
   var deliveryType=document.querySelector('input[name="dtype"]:checked').value;
   var apps=[];
   document.querySelectorAll('.app-row').forEach(function(row){var a=row.querySelector('.app-sel').value,m=row.querySelector('.app-model').value.trim();if(a)apps.push({a:a,m:m});});
@@ -656,7 +738,15 @@ function openAddNote(date,time){
   document.getElementById('note-modal-title').textContent='Add Note / Event';
   document.getElementById('n-title').value='';document.getElementById('n-details').value='';
   document.getElementById('n-date').value=date||ds(new Date());
-  document.getElementById('n-allday').value='yes';document.getElementById('note-time-fields').style.display='none';
+  if(time){
+    document.getElementById('n-allday').value='no';
+    document.getElementById('note-time-fields').style.display='block';
+    var ts=document.getElementById('n-time');
+    for(var i=0;i<ts.options.length;i++){if(ts.options[i].value===time){ts.selectedIndex=i;break;}}
+  } else {
+    document.getElementById('n-allday').value='yes';
+    document.getElementById('note-time-fields').style.display='none';
+  }
   selectedColor='yellow';buildColorGrid('yellow');
   document.getElementById('note-modal').classList.add('open');
 }
@@ -793,6 +883,30 @@ async function handleInvoiceFile(file){
 function showFileAttach(name,url){document.getElementById('file-attach-name').textContent=name;document.getElementById('file-attach-link').href=url;document.getElementById('file-attach-wrap').style.display='block';}
 function removePendingFile(){pendingFile=null;document.getElementById('file-attach-wrap').style.display='none';}
 function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(f);});}
+
+// ═══ CONTEXT MENU ═══
+var ctxDate=null,ctxTime=null;
+
+function showCtxMenu(e,date,time){
+  e.stopPropagation();
+  ctxDate=date; ctxTime=time;
+  var menu=document.getElementById('ctx-menu');
+  var hdr=document.getElementById('ctx-header');
+  // Format header label
+  var dt=new Date(date+'T12:00:00');
+  var label=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  if(time)label+=' at '+time;
+  hdr.textContent=label;
+  // Position near click but keep on screen
+  var x=e.clientX,y=e.clientY;
+  menu.style.left=x+'px'; menu.style.top=y+'px';
+  menu.classList.add('open');
+  // Auto-close on outside click
+  setTimeout(function(){document.addEventListener('click',closeCtxMenu,{once:true});},10);
+}
+function closeCtxMenu(){document.getElementById('ctx-menu').classList.remove('open');}
+function ctxAddDelivery(){closeCtxMenu();openAddDelivery(ctxDate,ctxTime);}
+function ctxAddNote(){closeCtxMenu();openAddNote(ctxDate,ctxTime);}
 
 // ═══ PRINT ═══
 function printManifest(printTeam){
