@@ -619,12 +619,12 @@ async function doLogin(){
     }else{
       if(currentUser.role==='admin'){document.getElementById('btn-users').style.display='inline-block';document.getElementById('chat-fab').style.display='flex';}
       else{document.getElementById('form-panel').style.display='none';document.getElementById('two-col').style.gridTemplateColumns='1fr';document.getElementById('chat-fab').style.display='none';}
-      await loadTechs();await loadJobs();
+      await loadTechs();await loadJobs();startPolling();
     }
     document.getElementById('f-date').valueAsDate=new Date();
   }catch(e){document.getElementById('login-err').style.display='block';document.getElementById('login-err').textContent='Connection error: '+e.message;}
 }
-function doLogout(){
+function doLogout(){stopPolling();
   currentUser=null;jobs=[];nextId=1;techList=['Unassigned'];
   document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';
   document.getElementById('login-pw').value='';document.getElementById('login-err').style.display='none';
