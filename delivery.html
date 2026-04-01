@@ -756,7 +756,7 @@ async function saveDelivery(){
   var name=document.getElementById('f-name').value.trim(),phone=document.getElementById('f-phone').value.trim();
   var email=document.getElementById('f-email').value.trim(),address=document.getElementById('f-address').value.trim();
   var city=document.getElementById('f-city').value.trim(),invoice=document.getElementById('f-invoice').value.trim();
-  var notes=document.getElementById('f-notes').value.trim(),date=document.getElementById('f-date').value;
+  var delivNotes=document.getElementById('f-notes').value.trim(),date=document.getElementById('f-date').value;
   var time=document.getElementById('f-time').value,duration=document.getElementById('f-duration').value;
   var team=document.getElementById('f-team').value,stopOrder=null;
   var deliveryType=document.querySelector('input[name="dtype"]:checked').value;
@@ -767,9 +767,9 @@ async function saveDelivery(){
   var appStr=apps.map(function(x){return x.a;}).join(', ');
   if(editId){
     var d=deliveries.find(function(x){return x.id===editId;}); if(!d)return;
-    Object.assign(d,{name,phone,email,address,city,invoice,notes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile});
+    Object.assign(d,{name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile});
   } else {
-    deliveries.unshift({id:'DEL-'+String(nextDelId).padStart(4,'0'),name,phone,email,address,city,invoice,notes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
+    deliveries.unshift({id:'DEL-'+String(nextDelId).padStart(4,'0'),name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
     nextDelId++;
   }
   await saveData();closeModal('delivery-modal');renderEvents();
