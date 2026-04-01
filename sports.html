@@ -40,21 +40,8 @@
     .sec-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:400;color:var(--white);white-space:nowrap;}
     .sec-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,255,255,0.1),transparent);}
 
-
-
     /* WIN/LOSS TRACKER */
-    .tracker-bar{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:center;}
-    .tracker-stat{text-align:center;}
-    .tracker-stat .ts-val{font-family:'Playfair Display',serif;font-size:28px;color:var(--white);line-height:1;}
-    .tracker-stat .ts-key{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-top:4px;}
-    .tracker-stat.win .ts-val{color:var(--green);}
-    .tracker-stat.loss .ts-val{color:var(--red);}
-    .tracker-stat.push .ts-val{color:var(--gold);}
-    .tracker-stat.pct .ts-val{color:var(--white);}
-    .tracker-divider{width:1px;height:40px;background:rgba(255,255,255,0.07);margin:0 auto;}
-    .pick-card.result-win{border-color:rgba(82,183,136,0.35);background:rgba(82,183,136,0.04);}
-    .pick-card.result-loss{border-color:rgba(224,112,112,0.35);background:rgba(224,112,112,0.04);}
-    .pick-card.result-push{border-color:rgba(201,151,58,0.35);background:rgba(201,151,58,0.04);}
+
     /* AI PICKS */
     .picks-grid{display:flex;flex-direction:column;gap:12px;}
     .pick-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:20px 24px;display:grid;grid-template-columns:36px 1fr auto;gap:16px;align-items:start;transition:all 0.2s;}
@@ -128,10 +115,6 @@
     .pill-live{background:rgba(224,112,112,0.15);border:1px solid rgba(224,112,112,0.3);color:#ff9090;animation:blink 1.5s ease infinite;}
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.6;}}
 
-
-
-
-
     /* NO GAMES */
     .no-games{padding:24px;text-align:center;color:var(--gray-2);font-size:13px;}
 
@@ -140,7 +123,6 @@
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
 
     /* ODDS NOTE */
-
 
     footer{border-top:1px solid rgba(255,255,255,0.06);padding:28px 56px;display:flex;justify-content:space-between;align-items:center;color:var(--gray-2);font-size:12px;}
     footer .f-logo{font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;}
@@ -183,8 +165,6 @@
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="refresh-picks-btn" onclick="loadPicks()">&#8635; Refresh</button>
         <button class="refresh-picks-btn" id="generate-btn" onclick="generatePicks()" style="background:rgba(201,151,58,0.1);border-color:rgba(201,151,58,0.5);">&#9889; Generate New Picks</button>
-        <button class="refresh-picks-btn" id="grade-btn" onclick="gradeYesterday()" style="background:rgba(82,183,136,0.08);border-color:rgba(82,183,136,0.35);color:var(--green);">&#10003; Grade Yesterday</button>
-        <button class="refresh-picks-btn" id="fix-btn" onclick="openFixRecord()" style="background:rgba(224,112,112,0.08);border-color:rgba(224,112,112,0.35);color:var(--red);">&#9998; Fix Record</button>
       </div>
     </div>
     <div class="picks-meta">
@@ -192,12 +172,7 @@
       <div class="picks-analyzed" id="picks-analyzed"></div>
     </div>
     <!-- WIN/LOSS TRACKER -->
-    <div class="tracker-bar" id="tracker-bar">
-      <div class="tracker-stat win"><div class="ts-val" id="t-wins">0</div><div class="ts-key">Wins</div></div>
-      <div class="tracker-stat loss"><div class="ts-val" id="t-losses">0</div><div class="ts-key">Losses</div></div>
-      <div class="tracker-stat push"><div class="ts-val" id="t-pushes">0</div><div class="ts-key">Pushes</div></div>
-      <div class="tracker-stat pct"><div class="ts-val" id="t-pct">--</div><div class="ts-key">Win %</div></div>
-    </div>
+
     <div style="font-size:11px;color:var(--gray-2);margin-bottom:16px;">Results are graded automatically each morning by Claude based on actual game scores.</div>
 
     <div class="picks-grid" id="picks-grid">
@@ -376,7 +351,6 @@
 
     </div>
 
-
   </section>
 
   <footer>
@@ -549,41 +523,6 @@ async function loadSports() {
 }
 
 // ── MANUALLY TRIGGER NEW PICKS ──
-async function gradeYesterday() {
-  var btn = document.getElementById('grade-btn');
-  var pass = prompt('Enter password to grade picks:');
-  if (!pass || pass !== 'chanschu2026') { alert('Incorrect password.'); return; }
-
-  if (btn) { btn.textContent = '⏳ Grading...'; btn.disabled = true; }
-
-  try {
-    var res = await fetch('/api/grade-picks');
-    var data = await res.json();
-
-    if (!data.ok) {
-      alert('Could not grade: ' + (data.message || data.error || 'Unknown error'));
-      return;
-    }
-
-    // Show results
-    var summary = data.graded.map(function(g) {
-      var icon = g.result === 'win' ? '✓' : g.result === 'loss' ? '✗' : '~';
-      return icon + ' Pick ' + g.rank + ': ' + g.pick + ' — ' + g.result.toUpperCase();
-    }).join('\n');
-
-    alert('Picks graded!\n\n' + summary + '\n\nAll-time record: ' + data.totals.wins + 'W - ' + data.totals.losses + 'L - ' + data.totals.pushes + 'P');
-
-    // Refresh tracker display
-    trackerCache = null;
-    await updateTrackerDisplay();
-
-  } catch(e) {
-    alert('Error: ' + e.message);
-  } finally {
-    if (btn) { btn.textContent = '✓ Grade Yesterday'; btn.disabled = false; }
-  }
-}
-
 
 async function generatePicks() {
   var pass = prompt('Enter password to generate picks:');
@@ -619,14 +558,12 @@ async function generatePicks() {
   }
 }
 
-
 // ── TRACKER ──
 var trackerCache = null;
 
 async function getTracker() {
   if (trackerCache) return trackerCache;
   try {
-    var res = await fetch('/api/get-results');
     var data = await res.json();
     trackerCache = data.results || {};
     return trackerCache;
@@ -647,9 +584,6 @@ async function updateTrackerDisplay() {
   document.getElementById('t-pushes').textContent = pushes;
   document.getElementById('t-pct').textContent = total > 0 ? Math.round((wins/total)*100) + '%' : '--';
 }
-
-
-
 
 function renderPicks(data) {
   var grid = document.getElementById('picks-grid');
@@ -703,7 +637,6 @@ function renderPicks(data) {
   if (grid) grid.innerHTML = html;
   updateTrackerDisplay();
 }
-
 
 updateTrackerDisplay();
 // ── AI DAILY PICKS ──
