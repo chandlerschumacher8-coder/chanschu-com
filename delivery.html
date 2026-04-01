@@ -321,18 +321,13 @@
       <div style="margin-bottom:12px;">
         <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gold-d);margin-bottom:6px;">Auto-Fill from Invoice</div>
         <div class="idz" id="invoice-dz" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleInvoiceDrop(event)">
-          <input type="file" accept="image/*,.pdf" onchange="handleInvoiceFile(this.files[0])"/>
+          <input type="file" accept="image/*,.pdf" multiple onchange="Array.from(this.files).forEach(function(f){handleInvoiceFile(f);})"/>
           <div class="idz-txt">📎 Drop invoice or click to upload</div>
           <div class="idz-sub">PDF or image — Claude reads and fills the form</div>
           <div class="idz-loading" id="idz-loading">Reading invoice...</div>
         </div>
         <div id="file-attach-wrap" style="display:none;">
-          <div class="file-attach">
-            <span style="font-size:16px;">📄</span>
-            <div class="file-attach-name" id="file-attach-name"></div>
-            <a class="file-attach-open" id="file-attach-link" href="#" target="_blank">Open</a>
-            <button class="file-attach-rm" onclick="removePendingFile()">&#x2715;</button>
-          </div>
+          <div id="file-attach-list"></div>
         </div>
       </div>
       <div class="field"><label>Customer Name <span class="req">*</span></label><input class="inp" id="f-name" placeholder="John Smith"/></div>
@@ -516,7 +511,7 @@
 // ═══ CONFIG ═══
 var PASSWORD='DCDelivery2026';
 var HOURS_START=7,HOURS_END=20;
-var APP_OPTIONS=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Microwave','Freezer','Ice Maker','TV','Mattress','Grill','Other'];
+var APP_OPTIONS=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker','TV','Mattress','Grill','Other'];
 var NOTE_COLORS=[
   {key:'yellow',label:'Yellow',bg:'#fef9c3',bd:'#ca8a04',txt:'#713f12'},
   {key:'red',label:'Red',bg:'#fee2e2',bd:'#dc2626',txt:'#7f1d1d'},
@@ -535,7 +530,7 @@ var selectedColor='yellow';
 var deliveries=[],notes=[],nextDelId=1,nextNoteId=1;
 var weekStart=getWeekStart(new Date());
 var TEAM_FILTER='all';
-var pendingFile=null;
+var pendingFiles=[];
 
 // ═══ AUTH ═══
 function doLogin(){
@@ -766,7 +761,7 @@ function openAddDelivery(date,time){
   document.querySelector('input[name="dtype"][value="Full Install"]').checked=true;
   if(time){var s=document.getElementById('f-time');for(var i=0;i<s.options.length;i++){if(s.options[i].value===time){s.selectedIndex=i;break;}}}
   else{document.getElementById('f-time').selectedIndex=2;}
-  pendingFile=null;document.getElementById('file-attach-wrap').style.display='none';
+  pendingFiles=[];document.getElementById('file-attach-list').innerHTML='';document.getElementById('file-attach-wrap').style.display='none';
   initAppRows([{a:'',m:''}]);
   document.getElementById('delivery-modal').classList.add('open');
 }
@@ -785,8 +780,8 @@ function openEditDelivery(id){
   var dt=d.deliveryType||'Full Install';document.querySelectorAll('input[name="dtype"]').forEach(function(r){r.checked=r.value===dt;});
   var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
   initAppRows(apps);
-  pendingFile=d.invoiceFile||null;
-  if(pendingFile&&pendingFile.url){showFileAttach(pendingFile.filename,pendingFile.url);}else{document.getElementById('file-attach-wrap').style.display='none';}
+  pendingFiles=d.invoiceFiles||( d.invoiceFile?[d.invoiceFile]:[]);
+  renderPendingFiles();
   document.getElementById('delivery-modal').classList.add('open');
 }
 async function saveDelivery(){
@@ -801,13 +796,14 @@ async function saveDelivery(){
   var apps=[];
   document.querySelectorAll('.app-row').forEach(function(row){var a=row.querySelector('.app-sel').value,m=row.querySelector('.app-model').value.trim();if(a)apps.push({a:a,m:m});});
   if(!name||!phone||!address||!city||!date||apps.length===0){alert('Fill in all required fields and at least one appliance.');return;}
-  var invoiceFile=pendingFile&&pendingFile.url?{url:pendingFile.url,filename:pendingFile.filename}:null;
+  var invoiceFiles=pendingFiles.filter(function(f){return f&&f.url;});
+  var invoiceFile=invoiceFiles.length?invoiceFiles[0]:null;
   var appStr=apps.map(function(x){return x.a;}).join(', ');
   if(editId){
     var d=deliveries.find(function(x){return x.id===editId;}); if(!d)return;
-    Object.assign(d,{name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile});
+    Object.assign(d,{name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles});
   } else {
-    deliveries.unshift({id:'DEL-'+String(nextDelId).padStart(4,'0'),name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
+    deliveries.unshift({id:'DEL-'+String(nextDelId).padStart(4,'0'),name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
     nextDelId++;
   }
   await saveData();closeModal('delivery-modal');renderEvents();
@@ -896,7 +892,7 @@ function openDeliveryDetail(id){
     '</div>'+
     (d.notes?'<div class="dl" style="margin-bottom:4px;">Notes</div><div class="notes-blk">'+d.notes+'</div>':'')+
     (d.deliveredAt?'<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered: '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>':'')+
-    (d.invoiceFile&&d.invoiceFile.url?'<div class="file-attach" style="margin-top:8px;"><span style="font-size:16px;">📄</span><div class="file-attach-name">'+d.invoiceFile.filename+'</div><a class="file-attach-open" href="'+d.invoiceFile.url+'" target="_blank">Open Invoice</a></div>':'');
+    ((d.invoiceFiles&&d.invoiceFiles.length?d.invoiceFiles:(d.invoiceFile&&d.invoiceFile.url?[d.invoiceFile]:[])).map(function(f){return '<div class="file-attach" style="margin-top:8px;"><span style="font-size:16px;">📄</span><div class="file-attach-name">'+f.filename+'</div><a class="file-attach-open" href="'+f.url+'" target="_blank">Open Invoice</a></div>';}).join(''));
   document.getElementById('det-body').innerHTML=body;
   var acts='';
   if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="abtn orange" onclick="setStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
@@ -948,7 +944,7 @@ function addAppRow(av,mv){
 function removeAppRow(btn){btn.closest('.app-row').remove();document.querySelectorAll('.app-row-title').forEach(function(t,i){t.textContent='Appliance '+(i+1);});}
 
 // ═══ INVOICE ═══
-function handleInvoiceDrop(e){e.preventDefault();document.getElementById('invoice-dz').classList.remove('drag-over');var f=e.dataTransfer.files[0];if(f)handleInvoiceFile(f);}
+function handleInvoiceDrop(e){e.preventDefault();document.getElementById('invoice-dz').classList.remove('drag-over');var files=e.dataTransfer.files;for(var i=0;i<files.length;i++)handleInvoiceFile(files[i]);}
 async function handleInvoiceFile(file){
   if(!file)return;
   document.getElementById('idz-loading').style.display='block';
@@ -968,12 +964,22 @@ async function handleInvoiceFile(file){
     if(apps.length>0){if(apps[0].invoice)document.getElementById('f-invoice').value=apps[0].invoice;initAppRows(apps);}
     var upR=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
     var upD=await upR.json();
-    if(upD.ok){pendingFile={url:upD.url,filename:file.name};showFileAttach(file.name,upD.url);}
+    if(upD.ok){pendingFiles.push({url:upD.url,filename:file.name});renderPendingFiles();}
   }catch(e){alert('Could not read invoice: '+e.message);}
   finally{document.getElementById('idz-loading').style.display='none';}
 }
-function showFileAttach(name,url){document.getElementById('file-attach-name').textContent=name;document.getElementById('file-attach-link').href=url;document.getElementById('file-attach-wrap').style.display='block';}
-function removePendingFile(){pendingFile=null;document.getElementById('file-attach-wrap').style.display='none';}
+function renderPendingFiles(){
+  var wrap=document.getElementById('file-attach-wrap'),list=document.getElementById('file-attach-list');
+  list.innerHTML='';
+  if(!pendingFiles.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  pendingFiles.forEach(function(f,i){
+    var div=document.createElement('div');div.className='file-attach';
+    div.innerHTML='<span style="font-size:16px;">📄</span><div class="file-attach-name">'+f.filename+'</div><a class="file-attach-open" href="'+f.url+'" target="_blank">Open</a><button class="file-attach-rm" onclick="removePendingFile('+i+')">&#x2715;</button>';
+    list.appendChild(div);
+  });
+}
+function removePendingFile(idx){pendingFiles.splice(idx,1);renderPendingFiles();}
 function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(f);});}
 
 // ═══ CONTEXT MENU ═══
