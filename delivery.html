@@ -433,6 +433,28 @@
   </div>
 </div>
 
+<!-- PRINT TEAM MODAL -->
+<div class="modal-bg" id="print-team-modal">
+  <div class="modal" style="max-width:340px;">
+    <div class="modal-hdr">
+      <div class="modal-title">Print Manifest For</div>
+      <button class="modal-close" onclick="closeModal('print-team-modal')">&#x2715;</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
+      <button class="primary-btn" style="padding:12px;font-size:13px;text-align:left;display:flex;align-items:center;gap:10px;" onclick="closeModal('print-team-modal');printManifest('all')">
+        <span style="font-size:18px;">🚛</span><div><div style="font-weight:700;">All Teams</div><div style="font-size:11px;opacity:0.7;font-weight:400;">Both Main &amp; Other delivery teams</div></div>
+      </button>
+      <button class="primary-btn" style="padding:12px;font-size:13px;text-align:left;display:flex;align-items:center;gap:10px;background:#1d4ed8;" onclick="closeModal('print-team-modal');printManifest('Main Delivery Team')">
+        <span style="font-size:18px;">🔵</span><div><div style="font-weight:700;">Main Delivery Team</div><div style="font-size:11px;opacity:0.7;font-weight:400;">Main team stops only</div></div>
+      </button>
+      <button class="primary-btn" style="padding:12px;font-size:13px;text-align:left;display:flex;align-items:center;gap:10px;background:#6d28d9;" onclick="closeModal('print-team-modal');printManifest('Other Delivery Team')">
+        <span style="font-size:18px;">🟣</span><div><div style="font-weight:700;">Other Delivery Team</div><div style="font-size:11px;opacity:0.7;font-weight:400;">Other team stops only</div></div>
+      </button>
+    </div>
+    <div class="modal-footer"><button class="ghost-btn" onclick="closeModal('print-team-modal')">Cancel</button></div>
+  </div>
+</div>
+
 <script>
 // ═══ CONFIG ═══
 var PASSWORD='DCDelivery2026';
@@ -773,14 +795,15 @@ function removePendingFile(){pendingFile=null;document.getElementById('file-atta
 function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(f);});}
 
 // ═══ PRINT ═══
-function printManifest(){
+function printManifest(printTeam){
+  if(!printTeam){document.getElementById('print-team-modal').classList.add('open');return;}
   var days=[];for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
-  var stops=deliveries.filter(function(d){return days.indexOf(d.date)>=0&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);});
+  var stops=deliveries.filter(function(d){return days.indexOf(d.date)>=0&&(printTeam==='all'||d.team===printTeam);});
   stops.sort(function(a,b){return a.date!==b.date?a.date<b.date?-1:1:(a.stopOrder||99)-(b.stopOrder||99);});
   var daysWithStops=[...new Set(stops.map(function(d){return d.date;}))];
   var win=window.open('','_blank');
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Delivery Manifest</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:10px;}.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:7px;margin-bottom:8px;}.hdr h1{font-size:15px;font-weight:700;}.day-hdr{background:#222;color:white;font-size:11px;font-weight:700;padding:4px 8px;margin-bottom:4px;margin-top:10px;}table{width:100%;border-collapse:collapse;}th{background:#555;color:white;font-size:9px;font-weight:700;text-transform:uppercase;padding:4px 6px;text-align:left;}td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top;font-size:11px;}tr:nth-child(even)td{background:#fafafa;}.nm{font-weight:700;}.sn{border-bottom:1px solid #999;width:90px;display:inline-block;height:12px;vertical-align:bottom;}.badge{border:1px solid #999;border-radius:3px;padding:1px 5px;font-size:9px;color:#555;}@media print{@page{margin:6mm;}body{padding:4px;}}</style></head><body>';
-  html+='<div class="hdr"><div><h1>DC Appliance — Delivery Manifest</h1><div style="font-size:10px;color:#555;margin-top:2px;">'+(TEAM_FILTER==='all'?'All Teams':TEAM_FILTER)+' · '+new Date(weekStart).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+(function(){var e=new Date(weekStart);e.setDate(e.getDate()+6);return e.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}())+'</div></div><div style="font-size:10px;text-align:right;color:#555;">(620) 371-6417 · Dodge City, KS<br/>'+stops.length+' total stops</div></div>';
+  html+='<div class="hdr"><div><h1>DC Appliance — Delivery Manifest</h1><div style="font-size:10px;color:#555;margin-top:2px;">'+(printTeam==='all'?'All Teams':printTeam)+' · '+new Date(weekStart).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+(function(){var e=new Date(weekStart);e.setDate(e.getDate()+6);return e.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}())+'</div></div><div style="font-size:10px;text-align:right;color:#555;">(620) 371-6417 · Dodge City, KS<br/>'+stops.length+' total stops</div></div>';
   if(stops.length===0){html+='<p style="text-align:center;padding:20px;color:#999;">No deliveries this week.</p>';}
   else{
     daysWithStops.forEach(function(d){
