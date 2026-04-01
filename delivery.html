@@ -267,7 +267,7 @@
         <button class="tpill" id="tf-other" onclick="setTeam('Other Delivery Team',this)">Other Team</button>
       </div>
       <div class="sep"></div>
-      <button class="hbtn gold" onclick="openAddDelivery(null,null)">+ Delivery</button>
+      <span id="del-sync-badge" style="font-size:10px;color:#16a34a;font-weight:600;padding:3px 8px;background:rgba(22,163,74,0.1);border-radius:100px;transition:opacity 1s;opacity:0;">↻ Updated</span><button class="hbtn gold" onclick="openAddDelivery(null,null)">+ Delivery</button>
       <button class="hbtn gold" onclick="openAddNote(null,null)">+ Note</button>
       <button class="hbtn" onclick="printManifest()">Print</button>
       <button class="hbtn" onclick="doLogout()">Sign Out</button>
@@ -540,10 +540,10 @@ var pendingFile=null;
 // ═══ AUTH ═══
 function doLogin(){
   var pw=document.getElementById('login-pw').value;
-  if(pw===PASSWORD){document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='flex';loadData();}
+  if(pw===PASSWORD){document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='flex';loadData().then(function(){startPolling();});}
   else{document.getElementById('login-err').style.display='block';document.getElementById('login-pw').value='';}
 }
-function doLogout(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('login-pw').value='';document.getElementById('login-err').style.display='none';}
+function doLogout(){stopPolling();document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('login-pw').value='';document.getElementById('login-err').style.display='none';}
 
 // ═══ DATA ═══
 async function loadData(){
@@ -553,6 +553,7 @@ async function loadData(){
     notes=Array.isArray(d.notes)?d.notes:[];
     nextNoteId=d.nextNoteId||1;
   }catch(e){deliveries=[];notes=[];nextDelId=1;nextNoteId=1;}
+  _lastDelHash=JSON.stringify({d:deliveries,n:notes});
   renderCalendar();
 }
 async function saveData(){
@@ -562,6 +563,34 @@ async function saveData(){
     var data=await res.json();
     if(!data.ok)console.error('Save error:',data.error);
   }catch(e){console.error('Save failed:',e);}
+}
+
+// ── REAL-TIME POLLING ──
+var _delPollTimer=null,_lastDelHash='';
+function startPolling(){
+  if(_delPollTimer)clearInterval(_delPollTimer);
+  _delPollTimer=setInterval(pollDeliveries,15000);
+}
+function stopPolling(){if(_delPollTimer){clearInterval(_delPollTimer);_delPollTimer=null;}}
+async function pollDeliveries(){
+  try{
+    var res=await fetch('/api/deliveries-get?t='+Date.now());
+    var data=await res.json();
+    if(!data.ok)return;
+    var hash=JSON.stringify({d:data.deliveries,n:data.notes});
+    if(hash===_lastDelHash)return;
+    _lastDelHash=hash;
+    deliveries=data.deliveries||[];nextDelId=data.nextId||1;
+    notes=Array.isArray(data.notes)?data.notes:[];nextNoteId=data.nextNoteId||1;
+    renderEvents();
+    showDelSyncBadge();
+  }catch(e){}
+}
+function showDelSyncBadge(){
+  var b=document.getElementById('del-sync-badge');
+  if(!b)return;
+  b.style.opacity='1';
+  setTimeout(function(){b.style.opacity='0';},2000);
 }
 
 // ═══ DATE UTILS ═══
@@ -1136,12 +1165,12 @@ function runPrintManifest(printTeam){
     '.addr{font-size:11px;color:#444;margin-top:1px;}'+
     '.inv{font-size:10px;color:#888;margin-top:2px;}'+
     '.badge{border:1px solid #aaa;border-radius:3px;padding:2px 6px;font-size:10px;color:#444;margin-top:4px;display:inline-block;}'+
-    '.app-block{margin-bottom:6px;}'+
-    '.app-name{font-weight:700;font-size:12px;}'+
-    '.app-model{font-size:11px;color:#555;}'+
-    '.sn-row{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:11px;color:#666;}'+
-    '.sn-line{border-bottom:1.5px solid #555;flex:1;min-width:120px;height:14px;}'+
-    '.notes-box{margin-top:5px;padding:4px 7px;background:#f5f5f5;border-left:3px solid #aaa;font-size:11px;color:#333;border-radius:2px;}'+
+    '.app-row{display:flex;align-items:baseline;gap:8px;margin-bottom:5px;}'+
+    '.app-name{font-weight:700;font-size:12px;white-space:nowrap;}'+
+    '.app-model{font-size:11px;color:#555;white-space:nowrap;}'+
+    '.sn-label{font-size:11px;color:#555;white-space:nowrap;}'+
+    '.sn-line{border-bottom:1.5px solid #555;flex:1;min-width:100px;height:14px;display:inline-block;vertical-align:bottom;}'+
+    '.notes-box{margin-top:6px;padding:4px 7px;background:#f5f5f5;border-left:3px solid #aaa;font-size:11px;color:#333;border-radius:2px;grid-column:1/-1;}'+
     '@media print{'+
       '@page{margin:8mm;size:letter;}'+
       'body{padding:4px;font-size:12px;}'+
@@ -1159,13 +1188,15 @@ function runPrintManifest(printTeam){
         var apps=s.appliances&&s.appliances.length?s.appliances:[{a:s.appliance||'',m:s.model||''}];
         var dur=parseInt(s.duration)||60;
         var tstr=s.time==='Call Ahead'?'Call Ahead':(s.time+(s.duration?' – '+minsToTime(timeToMins(s.time)+dur):''));
+        var notesStr=s.delivNotes||s.notes||'';
         var appsHtml=apps.map(function(a){
-          return '<div class="app-block">'+
-            '<div class="app-name">'+a.a+(a.m?' <span class="app-model">'+a.m+'</span>':'')+'</div>'+
-            '<div class="sn-row">SN: <span class="sn-line"></span></div>'+
+          return '<div class="app-row">'+
+            '<span class="app-name">'+a.a+'</span>'+
+            (a.m?'<span class="app-model">'+a.m+'</span>':'')+
+            '<span class="sn-label">SN#</span>'+
+            '<span class="sn-line"></span>'+
           '</div>';
         }).join('');
-        var notesHtml=s.delivNotes?'<div class="notes-box">'+s.delivNotes+'</div>':(s.notes?'<div class="notes-box">'+s.notes+'</div>':'');
         html+='<tr>'+
           '<td style="width:24px;font-weight:700;font-size:14px;color:#555;vertical-align:top;">'+(s.stopOrder||i+1)+'</td>'+
           '<td style="width:28%;vertical-align:top;">'+
@@ -1174,9 +1205,10 @@ function runPrintManifest(printTeam){
             '<div class="addr">'+s.address+'<br/>'+s.city+'</div>'+
             (s.invoice?'<div class="inv">'+s.invoice+'</div>':'')+
             '<span class="badge">'+s.deliveryType+'</span>'+
+            (notesStr?'<div class="notes-box" style="margin-top:6px;">'+notesStr+'</div>':'')+
           '</td>'+
           '<td style="width:14%;white-space:nowrap;font-size:12px;vertical-align:top;">'+tstr+'</td>'+
-          '<td style="vertical-align:top;">'+appsHtml+notesHtml+'</td>'+
+          '<td style="vertical-align:top;">'+appsHtml+'</td>'+
         '</tr>';
       });
     html+='</tbody></table>';
