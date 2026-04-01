@@ -1159,7 +1159,25 @@ function runPrintManifest(printTeam){
         var apps=s.appliances&&s.appliances.length?s.appliances:[{a:s.appliance||'',m:s.model||''}];
         var dur=parseInt(s.duration)||60;
         var tstr=s.time==='Call Ahead'?'Call Ahead':(s.time+(s.duration?' – '+minsToTime(timeToMins(s.time)+dur):''));
-        html+='<tr><td style="font-weight:700;color:#666;width:20px;">'+(s.stopOrder||i+1)+'</td><td style="min-width:130px;"><div class="nm">'+s.name+'</div><div style="color:#555;">'+s.phone+'</div><div>'+s.address+', '+s.city+'</div>'+(s.invoice?'<div style="font-size:9px;color:#888;">'+s.invoice+'</div>':'')+'<div style="margin-top:2px;"><span class="badge">'+s.deliveryType+'</span></div></td><td style="white-space:nowrap;width:90px;">'+tstr+'</td><td>'+apps.map(function(a){return '<div style="margin-bottom:3px;"><b>'+a.a+'</b>'+(a.m?' <span style="color:#777;font-size:10px;">'+a.m+'</span>':'')+'&nbsp;SN:<span class="sn"></span></div>';}).join('')+'</td><td style="color:#444;min-width:80px;">'+(s.notes||'')+'</td></tr>';
+        var appsHtml=apps.map(function(a){
+          return '<div class="app-block">'+
+            '<div class="app-name">'+a.a+(a.m?' <span class="app-model">'+a.m+'</span>':'')+'</div>'+
+            '<div class="sn-row">SN: <span class="sn-line"></span></div>'+
+          '</div>';
+        }).join('');
+        var notesHtml=s.delivNotes?'<div class="notes-box">'+s.delivNotes+'</div>':(s.notes?'<div class="notes-box">'+s.notes+'</div>':'');
+        html+='<tr>'+
+          '<td style="width:24px;font-weight:700;font-size:14px;color:#555;vertical-align:top;">'+(s.stopOrder||i+1)+'</td>'+
+          '<td style="width:28%;vertical-align:top;">'+
+            '<div class="nm">'+s.name+'</div>'+
+            '<div class="contact">'+s.phone+'</div>'+
+            '<div class="addr">'+s.address+'<br/>'+s.city+'</div>'+
+            (s.invoice?'<div class="inv">'+s.invoice+'</div>':'')+
+            '<span class="badge">'+s.deliveryType+'</span>'+
+          '</td>'+
+          '<td style="width:14%;white-space:nowrap;font-size:12px;vertical-align:top;">'+tstr+'</td>'+
+          '<td style="vertical-align:top;">'+appsHtml+notesHtml+'</td>'+
+        '</tr>';
       });
     html+='</tbody></table>';
   }
