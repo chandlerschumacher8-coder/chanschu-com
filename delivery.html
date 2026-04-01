@@ -23,7 +23,7 @@
     }
     html,body{height:100%;overflow:hidden;background:var(--bg);}
     body{color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;display:flex;flex-direction:column;}
-
+ 
     /* LOGIN */
     .login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:1000;}
     .login-box{background:#0c1c30;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:48px 40px;width:100%;max-width:380px;text-align:center;}
@@ -35,10 +35,10 @@
     .login-btn{width:100%;background:#c9973a;color:#07111f;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
     .login-btn:hover{background:#e4b96a;}
     .login-err{font-size:12px;color:#e07070;margin-top:8px;display:none;}
-
+ 
     /* APP */
     .app{display:none;flex-direction:column;height:100%;}
-
+ 
     /* HEADER */
     header{background:var(--navy);padding:9px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;}
     .h-logo{font-family:'Playfair Display',serif;font-size:15px;color:#f8f7f5;white-space:nowrap;}
@@ -50,7 +50,7 @@
     .hbtn.gold:hover{background:rgba(201,151,58,0.2);}
     .hbtn.active{background:rgba(201,151,58,0.15);border-color:#c9973a;color:#e4b96a;}
     .sep{width:1px;height:18px;background:rgba(255,255,255,0.15);}
-
+ 
     /* CALENDAR */
     .cal-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
     .week-nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
@@ -63,7 +63,7 @@
     .tpill{font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;border:1px solid var(--border);color:var(--text2);background:transparent;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;transition:all 0.15s;}
     .tpill:hover{background:var(--bg3);}
     .tpill.active{background:var(--navy);border-color:var(--navy);color:#fff;}
-
+ 
     /* GRID */
     .cal-grid{flex:1;display:flex;overflow:hidden;}
     .time-col{width:52px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);}
@@ -91,7 +91,7 @@
     .hour-half{position:absolute;top:50%;left:0;right:0;border-top:1px dashed var(--border);}
     .add-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text3);opacity:0;transition:opacity 0.15s;}
     .hour-cell:hover .add-hint{opacity:1;}
-
+ 
     /* EVENTS */
     .cal-event{position:absolute;left:2px;right:2px;border-radius:4px;padding:3px 6px;cursor:pointer;overflow:hidden;z-index:10;transition:filter 0.1s;font-size:11px;}
     .cal-event:hover{filter:brightness(0.92);z-index:20;}
@@ -99,7 +99,7 @@
     .ev-name{font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .ev-sub{font-size:10px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
     .ev-time-lbl{font-size:9px;opacity:0.65;margin-top:1px;}
-
+ 
     /* DELIVERY COLORS — Main Team (Blue) */
     .dc-scheduled{background:#dbeafe;border-left:3px solid #2563b0;color:#1e3a5f;}
     .dc-out{background:#bfdbfe;border-left:3px solid #1d4ed8;color:#1e3a8a;}
@@ -112,7 +112,7 @@
     .dc-other-rescheduled{background:#6b7280;border-left:3px solid #374151;color:#f9fafb;}
     /* Main team delivered = orange too */
     .dc-delivered{background:#ffedd5;border-left:3px solid #ea580c;color:#7c2d12;}
-
+ 
     /* NOTE COLORS */
     .nc-red{background:#fee2e2;border-left:3px solid #dc2626;color:#7f1d1d;}
     .nc-blue{background:#dbeafe;border-left:3px solid #1d4ed8;color:#1e3a8a;}
@@ -124,7 +124,7 @@
     .nc-gray{background:#f3f4f6;border-left:3px solid #6b7280;color:#1f2937;}
     .nc-pink{background:#fce7f3;border-left:3px solid #be185d;color:#831843;}
     .nc-navy{background:#e0e7ff;border-left:3px solid #3730a3;color:#1e1b4b;}
-
+ 
     /* MODAL */
     .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:none;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto;}
     .modal-bg.open{display:flex;}
@@ -149,17 +149,17 @@
     .ghost-btn:hover{background:var(--bg3);}
     .danger-btn{background:transparent;border:1px solid #fca5a5;color:var(--red);border-radius:6px;padding:8px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
     .danger-btn:hover{background:#fef2f2;}
-
+ 
     /* TAB SWITCHER */
     .tab-row{display:flex;border-bottom:1px solid var(--border);margin-bottom:14px;}
     .tab-btn{font-size:12px;font-weight:600;padding:8px 16px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'Plus Jakarta Sans',sans-serif;transition:all 0.15s;}
     .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);}
-
+ 
     /* COLOR PICKER */
     .color-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:10px;}
     .color-swatch{width:100%;aspect-ratio:1;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;}
     .color-swatch.selected{border-color:#111;transform:scale(1.15);}
-
+ 
     /* INVOICE DROP */
     .idz{border:2px dashed var(--border2);border-radius:7px;padding:11px;text-align:center;cursor:pointer;position:relative;background:var(--bg3);margin-bottom:10px;transition:all 0.15s;}
     .idz:hover,.idz.drag-over{border-color:var(--gold);background:#fdf8ef;}
@@ -172,7 +172,7 @@
     .file-attach-open{font-size:10px;font-weight:600;padding:3px 9px;border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:4px;cursor:pointer;text-decoration:none;font-family:'Plus Jakarta Sans',sans-serif;}
     .file-attach-rm{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:13px;}
     .file-attach-rm:hover{color:var(--red);}
-
+ 
     /* APPLIANCE ROWS */
     .app-row{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:7px;}
     .app-row-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
@@ -181,14 +181,14 @@
     .app-row-remove:hover{color:var(--red);}
     .add-app-btn{width:100%;background:transparent;border:1px dashed var(--border2);color:var(--text3);border-radius:6px;padding:7px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin-bottom:10px;}
     .add-app-btn:hover{border-color:var(--gold);color:var(--gold-d);}
-
+ 
     /* DTYPE */
     .dtype-wrap{background:var(--blue-bg);border:1px solid #bdd3f5;border-radius:6px;padding:9px 12px;margin-bottom:11px;}
     .dtype-title{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--blue);margin-bottom:7px;}
     .dtype-opts{display:flex;gap:12px;flex-wrap:wrap;}
     .dtype-opt{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text);cursor:pointer;}
     .dtype-opt input{accent-color:var(--blue);cursor:pointer;}
-
+ 
     /* DETAIL */
     .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
     .dl{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:2px;}
@@ -209,16 +209,16 @@
     .abtn.red:hover{background:#fee2e2;}
     .abtn.gray{border-color:var(--border2);color:var(--text2);background:var(--bg3);}
     .abtn.gray:hover{background:var(--border);}
-
+ 
     /* STATUS BADGE */
     .status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;}
     .sb-scheduled{background:#dbeafe;color:#1e3a8a;}
     .sb-out{background:#ffedd5;color:#7c2d12;}
     .sb-delivered{background:#dcfce7;color:#14532d;}
     .sb-rescheduled{background:#f3e8ff;color:#4c1d95;}
-
-
-
+ 
+ 
+ 
     /* DRAG & DROP */
     .cal-event.dragging{opacity:0.5;cursor:grabbing!important;}
     .cal-event{cursor:grab;}
@@ -240,7 +240,7 @@
   </style>
 </head>
 <body>
-
+ 
 <!-- LOGIN -->
 <div class="login-screen" id="login-screen">
   <div class="login-box">
@@ -251,7 +251,7 @@
     <div class="login-err" id="login-err">Incorrect password.</div>
   </div>
 </div>
-
+ 
 <!-- APP -->
 <div class="app" id="app">
   <header>
@@ -269,7 +269,7 @@
       <button class="hbtn" onclick="doLogout()">Sign Out</button>
     </div>
   </header>
-
+ 
   <div class="cal-wrap">
     <div class="week-nav">
       <button class="week-nav-btn" onclick="changeWeek(-1)">&#8592;</button>
@@ -304,7 +304,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ADD DELIVERY MODAL -->
 <div class="modal-bg" id="delivery-modal">
   <div class="modal">
@@ -388,7 +388,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ADD NOTE MODAL -->
 <div class="modal-bg" id="note-modal">
   <div class="modal" style="max-width:420px;">
@@ -441,7 +441,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- DETAIL MODAL -->
 <div class="modal-bg" id="detail-modal">
   <div class="modal">
@@ -459,7 +459,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- CONTEXT MENU -->
 <div class="ctx-menu" id="ctx-menu">
   <div class="ctx-header" id="ctx-header">Add to Calendar</div>
@@ -478,7 +478,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- PRINT TEAM MODAL -->
 <div class="modal-bg" id="print-team-modal">
   <div class="modal" style="max-width:340px;">
@@ -500,7 +500,7 @@
     <div class="modal-footer"><button class="ghost-btn" onclick="closeModal('print-team-modal')">Cancel</button></div>
   </div>
 </div>
-
+ 
 <script>
 // ═══ CONFIG ═══
 var PASSWORD='DCDelivery2026';
@@ -519,13 +519,13 @@ var NOTE_COLORS=[
   {key:'navy',label:'Navy',bg:'#e0e7ff',bd:'#3730a3',txt:'#1e1b4b'},
 ];
 var selectedColor='yellow';
-
+ 
 // ═══ STATE ═══
 var deliveries=[],notes=[],nextDelId=1,nextNoteId=1;
 var weekStart=getWeekStart(new Date());
 var TEAM_FILTER='all';
 var pendingFile=null;
-
+ 
 // ═══ AUTH ═══
 function doLogin(){
   var pw=document.getElementById('login-pw').value;
@@ -533,7 +533,7 @@ function doLogin(){
   else{document.getElementById('login-err').style.display='block';document.getElementById('login-pw').value='';}
 }
 function doLogout(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('login-pw').value='';document.getElementById('login-err').style.display='none';}
-
+ 
 // ═══ DATA ═══
 async function loadData(){
   try{
@@ -547,7 +547,7 @@ async function saveData(){
   try{await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries,nextId:nextDelId,notes,nextNoteId})});}
   catch(e){console.warn('Save failed',e);}
 }
-
+ 
 // ═══ DATE UTILS ═══
 function getWeekStart(d){var dt=new Date(d);dt.setDate(dt.getDate()-dt.getDay());dt.setHours(0,0,0,0);return dt;}
 function ds(d){return d.toISOString().slice(0,10);}
@@ -557,7 +557,7 @@ function changeWeek(delta){weekStart=new Date(weekStart);weekStart.setDate(weekS
 function goToday(){weekStart=getWeekStart(new Date());renderCalendar();}
 function setTeam(team,btn){TEAM_FILTER=team;document.querySelectorAll('.tpill').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderEvents();}
 function toggleNoteTime(){var v=document.getElementById('n-allday').value;document.getElementById('note-time-fields').style.display=v==='no'?'block':'none';}
-
+ 
 // ═══ CALENDAR RENDER ═══
 function renderCalendar(){
   var days=[];for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(d);}
@@ -594,11 +594,11 @@ function renderCalendar(){
   renderEvents();
   setTimeout(function(){var db2=document.getElementById('days-body');if(db2)db2.scrollTop=(8-HOURS_START)*60;},50);
 }
-
+ 
 function renderEvents(){
   document.querySelectorAll('.cal-event').forEach(function(e){e.remove();});
   var days=[];for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
-
+ 
   // Deliveries — group by day, then calculate columns for overlapping events
   days.forEach(function(dayStr){
     var col=document.getElementById('col-'+dayStr); if(!col)return;
@@ -606,17 +606,17 @@ function renderEvents(){
       return d.date===dayStr&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);
     });
     if(dayDeliveries.length===0)return;
-
+ 
     // Assign columns to handle overlaps
     var maxH=(HOURS_END-HOURS_START)*60;
     var slots=[]; // each slot is an array of non-overlapping events
-
+ 
     dayDeliveries.forEach(function(d){
       var sm=timeToMins(d.time),dur=parseInt(d.duration)||60;
       var top=Math.max(0,sm-HOURS_START*60);
       var bottom=top+dur;
       if(top>=maxH)return;
-
+ 
       // Find first slot where this event doesn't overlap
       var placed=false;
       for(var s=0;s<slots.length;s++){
@@ -629,7 +629,7 @@ function renderEvents(){
       }
       if(!placed)slots.push([{d:d,top:top,bottom:bottom}]);
     });
-
+ 
     var totalCols=slots.length;
     slots.forEach(function(slot,colIdx){
       slot.forEach(function(item){
@@ -637,18 +637,18 @@ function renderEvents(){
         var sm=timeToMins(d.time),dur=parseInt(d.duration)||60;
         var top=item.top,height=Math.max(dur,24);
         if(top+height>maxH)height=maxH-top;
-
+ 
         var isOther=d.team==='Other Delivery Team';
         var sc=isOther?
           (d.status==='Delivered'?'dc-other-delivered':d.status==='Out for Delivery'?'dc-other-out':d.status==='Rescheduled'?'dc-other-rescheduled':'dc-other-scheduled'):
           (d.status==='Delivered'?'dc-delivered':d.status==='Out for Delivery'?'dc-out':d.status==='Rescheduled'?'dc-rescheduled':'dc-scheduled');
         var apps=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
         var endTime=minsToTime(sm+dur);
-
+ 
         // Calculate left/width for column layout
         var colW=100/totalCols;
         var leftPct=colIdx*colW;
-
+ 
         var ev=document.createElement('div');
         ev.className='cal-event '+sc+(d.status==='Delivered'?' ev-delivered':'');
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;';
@@ -669,7 +669,7 @@ function renderEvents(){
       });
     });
   });
-
+ 
   // Notes
   notes.filter(function(n){return days.indexOf(n.date)>=0;}).forEach(function(n){
     var col=document.getElementById('col-'+n.date);if(!col)return;
@@ -687,7 +687,7 @@ function renderEvents(){
     col.appendChild(ev);
   });
 }
-
+ 
 // ═══ ADD DELIVERY ═══
 function openAddDelivery(date,time){
   document.getElementById('edit-del-id').value='';
@@ -745,7 +745,7 @@ async function saveDelivery(){
   }
   await saveData();closeModal('delivery-modal');renderEvents();
 }
-
+ 
 // ═══ ADD NOTE ═══
 function buildColorGrid(selected){
   var g=document.getElementById('color-grid');
@@ -806,7 +806,7 @@ async function saveNote(){
   }
   await saveData();closeModal('note-modal');renderEvents();
 }
-
+ 
 // ═══ DETAIL MODALS ═══
 function openDeliveryDetail(id){
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
@@ -868,7 +868,7 @@ async function deleteNote(id){
   notes=notes.filter(function(x){return x.id!==id;});
   await saveData();closeModal('detail-modal');renderEvents();
 }
-
+ 
 // ═══ APPLIANCE ROWS ═══
 function initAppRows(list){document.getElementById('app-list').innerHTML='';list.forEach(function(x){addAppRow(x.a||x.appliance||'',x.m||x.model||'');});}
 function addAppRow(av,mv){
@@ -879,7 +879,7 @@ function addAppRow(av,mv){
   c.appendChild(div);
 }
 function removeAppRow(btn){btn.closest('.app-row').remove();document.querySelectorAll('.app-row-title').forEach(function(t,i){t.textContent='Appliance '+(i+1);});}
-
+ 
 // ═══ INVOICE ═══
 function handleInvoiceDrop(e){e.preventDefault();document.getElementById('invoice-dz').classList.remove('drag-over');var f=e.dataTransfer.files[0];if(f)handleInvoiceFile(f);}
 async function handleInvoiceFile(file){
@@ -908,10 +908,10 @@ async function handleInvoiceFile(file){
 function showFileAttach(name,url){document.getElementById('file-attach-name').textContent=name;document.getElementById('file-attach-link').href=url;document.getElementById('file-attach-wrap').style.display='block';}
 function removePendingFile(){pendingFile=null;document.getElementById('file-attach-wrap').style.display='none';}
 function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(f);});}
-
+ 
 // ═══ CONTEXT MENU ═══
 var ctxDate=null,ctxTime=null;
-
+ 
 function showCtxMenu(e,date,time){
   e.stopPropagation();
   ctxDate=date; ctxTime=time;
@@ -932,7 +932,7 @@ function showCtxMenu(e,date,time){
 function closeCtxMenu(){document.getElementById('ctx-menu').classList.remove('open');}
 function ctxAddDelivery(){closeCtxMenu();openAddDelivery(ctxDate,ctxTime);}
 function ctxAddNote(){closeCtxMenu();openAddNote(ctxDate,ctxTime);}
-
+ 
 // ═══ DRAG & DROP ═══
 function handleDragOver(e,col){
   e.preventDefault();
@@ -946,7 +946,7 @@ function handleDragOver(e,col){
   var di=document.getElementById('di-'+col.dataset.date);
   if(di){di.style.top=snapPx+'px';di.style.display='block';}
 }
-
+ 
 async function handleDrop(e,col){
   e.preventDefault();
   col.classList.remove('drag-over');
@@ -955,7 +955,7 @@ async function handleDrop(e,col){
   var di=document.getElementById('di-'+col.dataset.date);
   if(di)di.style.display='none';
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
-
+ 
   var rect=col.getBoundingClientRect();
   var relY=e.clientY-rect.top-offsetY+col.closest('.days-body').scrollTop;
   var totalMins=HOURS_START*60+Math.max(0,Math.round(relY/30)*30);
@@ -964,14 +964,14 @@ async function handleDrop(e,col){
   var maxStart=(HOURS_END-1)*60;
   if(snappedMins<HOURS_START*60)snappedMins=HOURS_START*60;
   if(snappedMins>maxStart)snappedMins=maxStart;
-
+ 
   d.date=col.dataset.date;
   d.time=minsToTime(snappedMins);
   await saveData();
   renderEvents();
 }
-
-
+ 
+ 
 // ═══ PRINT ═══
 function printManifest(printTeam){
   if(!printTeam){document.getElementById('print-team-modal').classList.add('open');return;}
@@ -1000,9 +1000,9 @@ function printManifest(printTeam){
   html+='</body></html>';
   win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
 }
-
+ 
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-
+ 
 // Init color grid
 buildColorGrid('yellow');
 </script>
