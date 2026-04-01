@@ -1153,7 +1153,7 @@ function runPrintManifest(printTeam){
   closeModal('print-team-modal');
   var selectedDate=document.getElementById('print-date').value||ds(new Date());
   var stops=deliveries.filter(function(d){return d.date===selectedDate&&(printTeam==='all'||d.team===printTeam);});
-  stops.sort(function(a,b){return (a.stopOrder||99)-(b.stopOrder||99);});
+  stops.sort(function(a,b){return timeToMins(a.time)-timeToMins(b.time);});
   var daysWithStops=stops.length>0?[selectedDate]:[];
   var win=window.open('','_blank');
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Delivery Manifest</title><style>'+
