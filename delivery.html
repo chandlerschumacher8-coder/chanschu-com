@@ -1121,13 +1121,40 @@ function runPrintManifest(printTeam){
   stops.sort(function(a,b){return (a.stopOrder||99)-(b.stopOrder||99);});
   var daysWithStops=stops.length>0?[selectedDate]:[];
   var win=window.open('','_blank');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Delivery Manifest</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:11px;color:#111;padding:10px;}.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:7px;margin-bottom:8px;}.hdr h1{font-size:15px;font-weight:700;}.day-hdr{background:#222;color:white;font-size:11px;font-weight:700;padding:4px 8px;margin-bottom:4px;margin-top:10px;}table{width:100%;border-collapse:collapse;}th{background:#555;color:white;font-size:9px;font-weight:700;text-transform:uppercase;padding:4px 6px;text-align:left;}td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top;font-size:11px;}tr:nth-child(even)td{background:#fafafa;}.nm{font-weight:700;}.sn{border-bottom:1px solid #999;width:90px;display:inline-block;height:12px;vertical-align:bottom;}.badge{border:1px solid #999;border-radius:3px;padding:1px 5px;font-size:9px;color:#555;}@media print{@page{margin:6mm;}body{padding:4px;}}</style></head><body>';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Delivery Manifest</title><style>'+
+    '*{box-sizing:border-box;margin:0;padding:0;}'+
+    'body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:10px;}'+
+    '.hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:10px;}'+
+    '.hdr h1{font-size:16px;font-weight:700;}'+
+    '.hdr .meta{font-size:11px;color:#555;margin-top:3px;}'+
+    'table{width:100%;border-collapse:collapse;table-layout:fixed;}'+
+    'th{background:#222;color:white;font-size:10px;font-weight:700;text-transform:uppercase;padding:5px 8px;text-align:left;}'+
+    'td{padding:7px 8px;border-bottom:1px solid #ddd;vertical-align:top;font-size:12px;}'+
+    'tr:nth-child(even)td{background:#f9f9f9;}'+
+    '.nm{font-weight:700;font-size:13px;}'+
+    '.contact{font-size:11px;color:#444;margin-top:2px;}'+
+    '.addr{font-size:11px;color:#444;margin-top:1px;}'+
+    '.inv{font-size:10px;color:#888;margin-top:2px;}'+
+    '.badge{border:1px solid #aaa;border-radius:3px;padding:2px 6px;font-size:10px;color:#444;margin-top:4px;display:inline-block;}'+
+    '.app-block{margin-bottom:6px;}'+
+    '.app-name{font-weight:700;font-size:12px;}'+
+    '.app-model{font-size:11px;color:#555;}'+
+    '.sn-row{display:flex;align-items:center;gap:4px;margin-top:3px;font-size:11px;color:#666;}'+
+    '.sn-line{border-bottom:1.5px solid #555;flex:1;min-width:120px;height:14px;}'+
+    '.notes-box{margin-top:5px;padding:4px 7px;background:#f5f5f5;border-left:3px solid #aaa;font-size:11px;color:#333;border-radius:2px;}'+
+    '@media print{'+
+      '@page{margin:8mm;size:letter;}'+
+      'body{padding:4px;font-size:12px;}'+
+      'table{page-break-inside:auto;}'+
+      'tr{page-break-inside:avoid;}'+
+    '}'+
+  '</style></head><body>';
   var selDt=new Date(selectedDate+'T12:00:00');
   var selDtStr=selDt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   html+='<div class="hdr"><div><h1>DC Appliance — Delivery Manifest</h1><div style="font-size:10px;color:#555;margin-top:2px;">'+(printTeam==='all'?'All Teams':printTeam)+' · '+selDtStr+'</div></div><div style="font-size:10px;text-align:right;color:#555;">(620) 371-6417 · Dodge City, KS<br/>'+stops.length+' total stops</div></div>';
   if(stops.length===0){html+='<p style="text-align:center;padding:20px;color:#999;">No deliveries for this date.</p>';}
   else{
-    html+='<table><thead><tr><th>#</th><th>Customer</th><th>Time</th><th>Appliances & Serial #</th><th>Notes</th></tr></thead><tbody>';
+    html+='<table><thead><tr><th style="width:28px;">#</th><th style="width:28%;">Customer</th><th style="width:14%;">Time</th><th>Appliances, Serial # &amp; Notes</th></tr></thead><tbody>';
     stops.forEach(function(s,i){
         var apps=s.appliances&&s.appliances.length?s.appliances:[{a:s.appliance||'',m:s.model||''}];
         var dur=parseInt(s.duration)||60;
