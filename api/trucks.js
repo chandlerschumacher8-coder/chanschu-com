@@ -1,7 +1,7 @@
 // api/trucks.js — Fetch live vehicle locations from Verizon Connect
 
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
-const TOKEN_URL = 'https://fim.us.fleetmatics.com/token';
+const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
 const VEHICLES_URL = 'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
@@ -11,11 +11,8 @@ let tokenExpiresAt = 0;
 async function getToken(secret) {
   if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
 
-  const res = await fetch(TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `client_id=${APP_ID}&client_secret=${encodeURIComponent(secret)}&grant_type=client_credentials`
-  });
+  const url = `${TOKEN_URL}?client_id=${APP_ID}&client_secret=${encodeURIComponent(secret)}&grant_type=client_credentials`;
+  const res = await fetch(url);
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error('Token request failed: ' + res.status + ' ' + body);
