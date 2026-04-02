@@ -1,7 +1,7 @@
-// api/users-get.js — Get users for a company
+// api/employees-get.js — Unified employee/tech GET endpoint
 import { Redis } from '@upstash/redis';
 const redis = Redis.fromEnv();
- 
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');

@@ -66,7 +66,7 @@ async function adminLoad(){
 // POS-only fields: posRole, pin, email, phone, permissions
 async function _loadUnifiedUsers(){
   try{
-    var res=await fetch('/api/users-get?companyId='+SVC_COMPANY_ID);
+    var res=await fetch('/api/employees-get?companyId='+SVC_COMPANY_ID);
     var data=await res.json();
     if(data.users&&data.users.length){adminUsers=data.users;}
   }catch(e){}
@@ -107,7 +107,7 @@ async function saveAllUsers(){
     toast('Must have at least one service admin','error');return false;
   }
   try{
-    var res=await fetch('/api/users-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,users:adminUsers,requesterPassword:'DCA123'})});
+    var res=await fetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,users:adminUsers,requesterPassword:'DCA123'})});
     var data=await res.json();
     if(!data.ok)throw new Error(data.error);
     // Update svcTechList

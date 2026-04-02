@@ -678,7 +678,7 @@ async function deleteCompany(id,name){
 // ── USERS ──
 async function loadTechs(){
   if(!currentUser.companyId)return;
-  var res=await fetch('/api/users-get?companyId='+currentUser.companyId);var data=await res.json();
+  var res=await fetch('/api/employees-get?companyId='+currentUser.companyId);var data=await res.json();
   var techUsers=(data.users||[]).filter(function(u){return u.role==='tech';}).map(function(u){return u.tech||u.name;}).filter(function(t){return t;});
   // Also gather tech names from existing jobs
   var jobTechs=jobs.map(function(j){return j.tech;}).filter(function(t){return t&&t!=='Unassigned';});
@@ -693,7 +693,7 @@ async function loadTechs(){
 function openUsers(){openUsersForCompany(currentUser.companyId,currentUser.companyName);}
 async function openUsersForCompany(companyId,companyName){
   editCompanyId=companyId;document.getElementById('users-modal-title').textContent='Users - '+companyName;
-  var res=await fetch('/api/users-get?companyId='+companyId);var data=await res.json();
+  var res=await fetch('/api/employees-get?companyId='+companyId);var data=await res.json();
   editUsers=(data.users||[]).map(function(u){return Object.assign({},u);});
   renderUserRows();document.getElementById('users-modal').classList.add('open');
 }
@@ -722,7 +722,7 @@ async function saveUsers(){
   if(!editUsers.some(function(u){return u.role==='admin';})){msg.textContent='Must have at least one admin.';msg.className='modal-msg err';return;}
   var requesterPw=currentUser.role==='superadmin'?prompt('Enter super admin password:'):prompt('Re-enter your password:');
   try{
-    var res=await fetch('/api/users-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:editCompanyId,users:editUsers,requesterPassword:requesterPw})});
+    var res=await fetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:editCompanyId,users:editUsers,requesterPassword:requesterPw})});
     var data=await res.json();if(!data.ok)throw new Error(data.error);
     msg.textContent='Saved!';msg.className='modal-msg ok';
     await loadTechs();setTimeout(function(){closeModal('users-modal');},1000);
