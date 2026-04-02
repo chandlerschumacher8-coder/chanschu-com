@@ -3,7 +3,8 @@
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
 const VEHICLES_URL = 'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles';
-const RAD_BASE = 'https://fim.api.us.fleetmatics.com:443/rad/v1';
+// RAD = Real-time Aggregated Data - vehicle GPS/location API
+const RAD_LOCATIONS_URL = 'https://fim.api.us.fleetmatics.com:443/rad/v1/vehicles/locations';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
 let cachedToken = null;
@@ -46,7 +47,7 @@ export default async function handler(req, res) {
     const authHeader = `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token}`;
     const headers = { 'Authorization': authHeader, 'Accept': 'application/json' };
 
-    // 1. Fetch vehicle metadata
+    // 1. Fetch vehicle metadata (names, IDs)
     let vRes = await fetch(VEHICLES_URL, { headers });
     if (vRes.status === 401) {
       cachedToken = null; tokenExpiresAt = 0;
@@ -57,28 +58,29 @@ export default async function handler(req, res) {
     const vehicleData = await vRes.json();
     const vehicles = vehicleData.Vehicles || vehicleData.vehicles || (Array.isArray(vehicleData) ? vehicleData : []);
 
-    // 2. Build vehicle number list - use VehicleNumber if not null, else VehicleId as string
+    // 2. Fetch GPS locations via RAD API (POST with array of vehicle numbers)
+    // VehicleNumber is the user-defined ID in Verizon Connect; falls back to VehicleId string
     const vehicleNumbers = vehicles.map(v => v.VehicleNumber || String(v.VehicleId));
-    let locationMap = {};
-    let radDebug = null;
+    let locationMap = {}; // keyed by vehicleNumber string
 
     if (vehicleNumbers.length > 0) {
-      const radRes = await fetch(`${RAD_BASE}/vehicles/locations`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(vehicleNumbers)
-      });
-      const radBody = await radRes.text();
-      radDebug = { status: radRes.status, vehicleNumbers, body: radBody.substring(0, 1000) };
-      if (radRes.ok) {
-        try {
-          const radData = JSON.parse(radBody);
+      try {
+        const radRes = await fetch(RAD_LOCATIONS_URL, {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify(vehicleNumbers)
+        });
+        if (radRes.ok) {
+          const radData = await radRes.json();
+          // Response: [{ VehicleNumber, StatusCode, ContentResource: { Value: { Latitude, Longitude, Speed, Heading, DriverNumber, UpdateUTC } } }]
           (Array.isArray(radData) ? radData : []).forEach(entry => {
-            if (entry.VehicleNumber && entry.ContentResource && entry.ContentResource.Value) {
+            if (entry.VehicleNumber && entry.StatusCode === 200 && entry.ContentResource && entry.ContentResource.Value) {
               locationMap[entry.VehicleNumber] = entry.ContentResource.Value;
             }
           });
-        } catch(e) {}
+        }
+      } catch (locErr) {
+        // Location fetch failed - continue with 0,0 coords
       }
     }
 
@@ -91,12 +93,12 @@ export default async function handler(req, res) {
         lat: parseFloat(loc.Latitude || 0),
         lng: parseFloat(loc.Longitude || 0),
         speed: parseFloat(loc.Speed || 0),
-        heading: loc.Heading || String(loc.Direction || ''),
+        heading: loc.Heading || String(loc.Direction || 0),
         lastUpdated: loc.UpdateUTC || null
       };
     });
 
-    return res.status(200).json({ ok: true, source: 'live', trucks, radDebug });
+    return res.status(200).json({ ok: true, source: 'live', trucks });
 
   } catch (e) {
     return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
@@ -108,4 +110,4 @@ function mockTrucks() {
     { name: 'Truck 1 - DC Appliance', driver: 'Jeff', lat: 37.753, lng: -100.017, speed: 0, heading: 0, lastUpdated: null },
     { name: 'Truck 2 - DC Appliance', driver: 'Justin', lat: 37.748, lng: -100.005, speed: 0, heading: 0, lastUpdated: null }
   ];
-        }
+}
