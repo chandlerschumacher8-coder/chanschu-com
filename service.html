@@ -679,7 +679,11 @@ async function deleteCompany(id,name){
 async function loadTechs(){
   if(!currentUser.companyId)return;
   var res=await fetch('/api/users-get?companyId='+currentUser.companyId);var data=await res.json();
-  techList=['Unassigned'].concat((data.users||[]).filter(function(u){return u.role==='tech';}).map(function(u){return u.tech||u.name;}));
+  var techUsers=(data.users||[]).filter(function(u){return u.role==='tech';}).map(function(u){return u.tech||u.name;}).filter(function(t){return t;});
+  // Also gather tech names from existing jobs
+  var jobTechs=jobs.map(function(j){return j.tech;}).filter(function(t){return t&&t!=='Unassigned';});
+  var allTechs={};techUsers.forEach(function(t){allTechs[t]=1;});jobTechs.forEach(function(t){allTechs[t]=1;});
+  techList=['Unassigned'].concat(Object.keys(allTechs).sort());
   var sel=document.getElementById('f-tech');
   sel.innerHTML=techList.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
   // Populate tech filter dropdown
