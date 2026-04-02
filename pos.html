@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DC Appliance - ApexPOS</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -273,6 +275,18 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .ood-btn.blue:hover{background:#dbeafe;}
 .ood-btn.red{border-color:#fca5a5;color:#dc2626;background:#fef2f2;}
 .ood-btn.red:hover{background:#fee2e2;}
+
+/* ═══ TRUCK MAP ═══ */
+.truck-map-panel{flex-shrink:0;border-bottom:1px solid #e2ddd8;position:relative;}
+.truck-map-hdr{background:#1a2332;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;}
+.truck-map-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#93c5fd;}
+.truck-map-title svg{width:14px;height:14px;fill:#60a5fa;vertical-align:-2px;margin-right:5px;}
+.truck-map-badge{font-size:9px;font-weight:600;padding:2px 8px;border-radius:100px;color:#93c5fd;border:1px solid rgba(96,165,250,0.3);background:rgba(37,99,235,0.15);}
+.truck-map-toggle{font-size:10px;font-weight:600;padding:3px 10px;border-radius:100px;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);background:transparent;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.truck-map-toggle:hover{color:#fff;border-color:rgba(255,255,255,0.35);}
+#truck-map{height:300px;width:100%;background:#1a2332;}
+#truck-map .leaflet-popup-content-wrapper{border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+#truck-map .leaflet-popup-content{margin:10px 14px;}
 
 /* ═══ DELIVERY SCHEDULE (Light Theme) ═══ */
 #view-delivery{background:#f8f7f5;color:#1a1814;}
@@ -1193,6 +1207,16 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <button class="del-add-btn" onclick="delOpenAddDelivery(null,null)">+ Delivery</button>
 <button class="del-add-btn" onclick="delOpenAddNote(null,null)">+ Note</button>
 <button class="del-add-btn" onclick="delPrintManifest()">Print</button>
+</div>
+<div class="truck-map-panel" id="truck-map-panel">
+<div class="truck-map-hdr">
+<span class="truck-map-title"><svg viewBox="0 0 24 24"><path d="M18 18.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm1.5-9H17V12h4.46L19.5 9.5zM6 18.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zM20 8l3 4v5h-2a3 3 0 0 1-6 0H9a3 3 0 0 1-6 0H1V6c0-1.1.9-2 2-2h14v4h3z"/></svg>Live Trucks</span>
+<div style="display:flex;align-items:center;gap:8px;">
+<span class="truck-map-badge" id="truck-map-status">Loading...</span>
+<button class="truck-map-toggle" onclick="truckMapToggle()">Hide Map</button>
+</div>
+</div>
+<div id="truck-map"></div>
 </div>
 <div class="del-cal">
 <div class="del-time-col">
@@ -4264,7 +4288,7 @@ function nav(viewId,tabEl){
   if(tabEl)tabEl.classList.add('active');
   else{document.querySelectorAll('.tb-tab').forEach(function(t){if(t.textContent.trim()==='Inventory')t.classList.add('active');});}
   updateAIChips();
-  if(viewId==='delivery'){delLoadData();}
+  if(viewId==='delivery'){delLoadData();truckMapInit();}
   if(viewId==='service'){svcLoadJobs();}
   if(viewId==='inventory'){renderInventory();if(invSubTab==='ordering')renderReorder();if(invSubTab==='receiving')renderReceiving();}
   if(viewId==='dashboard'){renderDashboard();}

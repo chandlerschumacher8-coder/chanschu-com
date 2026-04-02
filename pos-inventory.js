@@ -255,6 +255,74 @@ function printShipperTicket(id){
 }
 
 // ══════════════════════════════════════════════
+// TRUCK MAP
+// ══════════════════════════════════════════════
+var _truckMap=null,_truckMarkers=[],_truckTimer=null,_truckMapVisible=true;
+
+function truckMapInit(){
+  if(_truckMap)return;
+  var el=document.getElementById('truck-map');if(!el)return;
+  _truckMap=L.map('truck-map',{zoomControl:true,attributionControl:false}).setView([37.753,-100.017],13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_truckMap);
+  truckMapLoad();
+  _truckTimer=setInterval(truckMapLoad,60000);
+}
+
+async function truckMapLoad(){
+  var badge=document.getElementById('truck-map-status');
+  try{
+    var res=await fetch('/api/trucks');var data=await res.json();
+    if(!data.ok)throw new Error(data.error||'API error');
+    // Clear old markers
+    _truckMarkers.forEach(function(m){_truckMap.removeLayer(m);});
+    _truckMarkers=[];
+    var trucks=data.trucks||[];
+    var bounds=[];
+    trucks.forEach(function(t){
+      var icon=L.divIcon({
+        className:'',
+        html:'<div style="background:#1a2332;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #60a5fa;font-family:\'Plus Jakarta Sans\',sans-serif;">'+
+          '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:4px;"></span>'+
+          (t.name||'Truck')+'</div>',
+        iconSize:[null,null],
+        iconAnchor:[12,12]
+      });
+      var popup='<div style="font-family:\'Plus Jakarta Sans\',sans-serif;">'
+        +'<div style="font-weight:700;font-size:13px;color:#1f2937;margin-bottom:4px;">'+(t.name||'Truck')+'</div>'
+        +(t.driver?'<div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Driver: <b>'+t.driver+'</b></div>':'')
+        +(t.speed?'<div style="font-size:11px;color:#6b7280;">Speed: '+t.speed+' mph</div>':'')
+        +(t.lastUpdated?'<div style="font-size:10px;color:#9ca3af;margin-top:4px;">Updated: '+new Date(t.lastUpdated).toLocaleTimeString()+'</div>':'')
+        +'</div>';
+      var m=L.marker([t.lat,t.lng],{icon:icon}).addTo(_truckMap).bindPopup(popup);
+      _truckMarkers.push(m);
+      bounds.push([t.lat,t.lng]);
+    });
+    if(bounds.length>1)_truckMap.fitBounds(bounds,{padding:[30,30],maxZoom:14});
+    else if(bounds.length===1)_truckMap.setView(bounds[0],14);
+    var src=data.source==='live'?'Live':'Mock';
+    if(badge)badge.textContent=trucks.length+' truck'+(trucks.length!==1?'s':'')+' \u00B7 '+src;
+  }catch(e){
+    if(badge)badge.textContent='Error';
+  }
+}
+
+function truckMapToggle(){
+  _truckMapVisible=!_truckMapVisible;
+  var mapEl=document.getElementById('truck-map');
+  var btn=document.querySelector('.truck-map-toggle');
+  if(_truckMapVisible){
+    mapEl.style.display='';
+    if(btn)btn.textContent='Hide Map';
+    if(_truckMap)_truckMap.invalidateSize();
+    if(!_truckTimer)_truckTimer=setInterval(truckMapLoad,60000);
+  }else{
+    mapEl.style.display='none';
+    if(btn)btn.textContent='Show Map';
+    if(_truckTimer){clearInterval(_truckTimer);_truckTimer=null;}
+  }
+}
+
+// ══════════════════════════════════════════════
 // DELIVERY TAB - FULL IMPLEMENTATION
 // ══════════════════════════════════════════════
 function delInit(){delWeekStart=getWeekStart(new Date());delLoadData();}
