@@ -73,8 +73,8 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .danger-btn:hover{background:#fef2f2;}
 
 /* ═══ NEW SALE ═══ */
-.sale-wrap{display:flex;flex:1;overflow:hidden;}
-.sale-left{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);}
+.sale-wrap{display:flex;flex:1;overflow:hidden;position:relative;}
+.sale-left{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);padding-bottom:60px;}
 .sale-toolbar{padding:10px 16px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
 .sale-search{flex:1;min-width:120px;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:7px 12px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;}
 .sale-search:focus{border-color:#2563eb;}
@@ -117,9 +117,15 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .cart-shipto-toggle{margin-bottom:4px;}
 .cart-shipto-toggle summary{list-style:none;}
 .cart-shipto-toggle summary::-webkit-details-marker{display:none;}
-.cart-install-bar{display:flex;gap:3px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid #e5e7eb;margin-bottom:4px;}
-.ci-add-btn{font-size:9px;font-weight:600;padding:3px 7px;border:1px solid #bbf7d0;color:#16a34a;background:#f0fdf4;border-radius:4px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
+/* Quick-add fixed bar */
+.sale-quickadd{position:absolute;bottom:0;left:0;right:380px;display:flex;gap:6px;padding:10px 14px;background:#fff;border-top:1px solid #e5e7eb;flex-wrap:wrap;z-index:10;flex-shrink:0;}
+.ci-add-btn{font-size:14px;font-weight:700;padding:14px 24px;border:1px solid #bbf7d0;color:#16a34a;background:#f0fdf4;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
 .ci-add-btn:hover{background:#dcfce7;border-color:#86efac;}
+/* Dept tile */
+.dept-tile{background:#fff;border:1px solid #e5e7eb;border-radius:var(--radius);padding:22px 16px;cursor:pointer;transition:all .15s;text-align:center;}
+.dept-tile:hover{border-color:#2563eb;background:#eff6ff;}
+.dept-tile-name{font-size:14px;font-weight:700;color:#1f2937;}
+.dept-tile-count{font-size:11px;color:#6b7280;margin-top:4px;}
 .ci-serial{width:100%;background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:3px 7px;color:#374151;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;outline:none;margin-top:2px;}
 .ci-serial:focus{border-color:#2563eb;}
 .ci-serial::placeholder{color:#9ca3af;}
@@ -178,6 +184,17 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .alert-card{background:#fff;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;margin-bottom:8px;}
 .alert-card-name{font-size:12px;font-weight:600;color:#1f2937;}
 .alert-card-meta{font-size:10px;color:#ea580c;margin-top:3px;}
+.inv-active-toggle{display:flex;gap:0;margin-left:12px;border:1px solid #d1d5db;border-radius:6px;overflow:hidden;}
+.inv-toggle-btn{font-size:10px;font-weight:700;padding:5px 14px;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;background:#fff;color:#6b7280;}
+.inv-toggle-btn.active{background:#2563eb;color:#fff;}
+.inv-active-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:100px;margin-left:6px;}
+.inv-active-badge.active-badge{background:#dcfce7;color:#16a34a;}
+.inv-active-badge.inactive-badge{background:#f3f4f6;color:#9ca3af;}
+.inv-act-btn{font-size:9px;font-weight:600;padding:2px 8px;border-radius:4px;border:1px solid;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
+.inv-act-btn.activate{border-color:#86efac;color:#16a34a;background:#f0fdf4;}
+.inv-act-btn.activate:hover{background:#dcfce7;}
+.inv-act-btn.deactivate{border-color:#fca5a5;color:#dc2626;background:#fef2f2;}
+.inv-act-btn.deactivate:hover{background:#fee2e2;}
 .status-pill{font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;letter-spacing:.04em;}
 .sp-in{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.25);color:var(--green);}
 .sp-low{background:rgba(224,144,80,0.12);border:1px solid rgba(224,144,80,0.25);color:var(--orange);}
@@ -725,6 +742,24 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .pos-login-box button{width:100%;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
 .pos-login-box button:hover{background:#3b82f6;}
 .pos-login-err{font-size:12px;color:#dc2626;margin-top:8px;display:none;}
+/* Employee Select Screen */
+.emp-select{position:fixed;inset:0;background:#f3f4f6;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:24px;}
+.emp-select.show{display:flex;}
+.emp-select-title{font-family:'Playfair Display',serif;font-size:20px;color:#1f2937;margin-bottom:4px;}
+.emp-select-sub{font-size:12px;color:#6b7280;margin-bottom:24px;}
+.emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;max-width:600px;width:100%;margin-bottom:20px;}
+.emp-tile{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .15s;font-size:13px;font-weight:600;color:#1f2937;}
+.emp-tile:hover{border-color:#2563eb;background:#eff6ff;}
+.emp-pin-prompt{display:none;text-align:center;}
+.emp-pin-prompt.show{display:block;}
+.emp-pin-name{font-size:16px;font-weight:700;color:#1f2937;margin-bottom:12px;}
+.emp-pin-input{width:160px;text-align:center;font-size:22px;letter-spacing:10px;padding:10px;background:#fff;border:2px solid #e5e7eb;border-radius:8px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;outline:none;}
+.emp-pin-input:focus{border-color:#2563eb;}
+.emp-pin-err{font-size:12px;color:#dc2626;margin-top:8px;display:none;}
+.emp-pin-back{font-size:12px;color:#6b7280;margin-top:12px;cursor:pointer;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;}
+.emp-pin-back:hover{color:#2563eb;}
+.tb-user-badge{font-size:10px;font-weight:600;color:#93c5fd;margin-right:6px;padding:3px 10px;background:rgba(37,99,235,0.15);border:1px solid rgba(96,165,250,0.3);border-radius:100px;cursor:pointer;}
+.tb-user-badge:hover{background:rgba(37,99,235,0.25);}
 /* ═══ TIME CLOCK ═══ */
 .tc-wrap{display:flex;flex:1;overflow:hidden;}
 .tc-punch{width:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #e5e7eb;background:#fff;padding:24px;flex-shrink:0;}
@@ -772,6 +807,20 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 </div>
 
+<!-- EMPLOYEE SELECT -->
+<div class="emp-select" id="emp-select">
+<div class="emp-select-title">DC <span style="color:#2563eb;">Appliance</span></div>
+<div class="emp-select-sub">Select your name to continue</div>
+<div class="emp-grid" id="emp-grid"></div>
+<div class="emp-pin-prompt" id="emp-pin-prompt">
+<div class="emp-pin-name" id="emp-pin-name"></div>
+<input class="emp-pin-input" id="emp-pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="PIN" onkeydown="if(event.key==='Enter')empPinSubmit()"/>
+<div class="emp-pin-err" id="emp-pin-err">Incorrect PIN</div>
+<button class="emp-pin-back" onclick="empBackToGrid()">&#8592; Back</button>
+</div>
+<button class="emp-pin-back" onclick="empLogoutMaster()" style="position:absolute;bottom:20px;font-size:11px;">Lock POS</button>
+</div>
+
 <!-- TOPBAR -->
 <div class="topbar">
 <div class="tb-logo">DC <span>Appliance</span></div>
@@ -785,6 +834,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <button class="tb-tab" onclick="nav('admin',this)"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.44.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>Admin</button>
 </div>
 <div class="tb-right">
+<span class="tb-user-badge" id="tb-user-badge" onclick="empSwitchUser()" style="display:none;"></span>
 <span class="del-sync" id="pos-sync-badge">Updated</span>
 <button class="tb-ai-btn" onclick="toggleAI()"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>AI Assistant</button>
 </div>
@@ -846,18 +896,6 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="cart-tax-dd" id="cart-tax-dd"></div>
 </div>
 </div>
-<!-- Install Quick-Adds -->
-<div class="cart-install-bar" id="cart-install-bar">
-<button class="ci-add-btn" onclick="addInstallItem('Delivery Charge',adminDeliveryPrice)">+ Delivery</button>
-<button class="ci-add-btn" onclick="addInstallItem('Fridge Install',149.99)">+ Fridge</button>
-<button class="ci-add-btn" onclick="addInstallItem('Washer/Dryer Install',149.99)">+ W/D</button>
-<button class="ci-add-btn" onclick="addInstallItem('Dishwasher Install',169.99)">+ DW</button>
-<button class="ci-add-btn" onclick="addInstallItem('Microwave Install',149.99)">+ Micro</button>
-<button class="ci-add-btn" onclick="addInstallItem('Range Install',89.99)">+ Range</button>
-<button class="ci-add-btn" onclick="addInstallItem('Full Kitchen Install',499.99)">+ Full Kit</button>
-<button class="ci-add-btn" onclick="addInstallItem('TV Install (up to 55in)',199.99)">+ TV ≤55</button>
-<button class="ci-add-btn" onclick="addInstallItem('TV Install (56in+)',299.99)">+ TV 56+</button>
-</div>
 <div id="cart-items"></div>
 <div class="cart-notes-wrap">
 <label class="cart-notes-label">Invoice Notes</label>
@@ -880,6 +918,18 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 </div>
 </div>
+<!-- Quick-Add Fixed Bar -->
+<div class="sale-quickadd">
+<button class="ci-add-btn" onclick="addInstallItem('Delivery Charge',adminDeliveryPrice)">+ Delivery</button>
+<button class="ci-add-btn" onclick="addInstallItem('Fridge Install',149.99)">+ Fridge</button>
+<button class="ci-add-btn" onclick="addInstallItem('Washer/Dryer Install',149.99)">+ W/D</button>
+<button class="ci-add-btn" onclick="addInstallItem('Dishwasher Install',169.99)">+ DW</button>
+<button class="ci-add-btn" onclick="addInstallItem('Microwave Install',149.99)">+ Micro</button>
+<button class="ci-add-btn" onclick="addInstallItem('Range Install',89.99)">+ Range</button>
+<button class="ci-add-btn" onclick="addInstallItem('Full Kitchen Install',499.99)">+ Full Kit</button>
+<button class="ci-add-btn" onclick="addInstallItem('TV Install (up to 55in)',199.99)">+ TV ≤55</button>
+<button class="ci-add-btn" onclick="addInstallItem('TV Install (56in+)',299.99)">+ TV 56+</button>
+</div>
 </div>
 </div>
 
@@ -896,14 +946,18 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="inv-wrap">
 <div class="inv-main">
 <div class="inv-toolbar">
-<input id="inv-search" placeholder="Search inventory..." oninput="renderInventory()"/>
+<input id="inv-search" placeholder="Search all inventory (active &amp; inactive)..." oninput="renderInventory()"/>
+<div class="inv-active-toggle">
+<button class="inv-toggle-btn active" id="inv-tog-active" onclick="invSetView('active')">Active</button>
+<button class="inv-toggle-btn" id="inv-tog-inactive" onclick="invSetView('inactive')">Inactive</button>
+</div>
 <button class="inv-btn" onclick="exportCSV()">Export CSV</button>
 <button class="inv-btn" onclick="openModal('csv-upload-modal')">Upload CSV</button>
 <button class="inv-btn" onclick="openModal('add-product-modal')">+ Add Product</button>
 </div>
 <div class="inv-table-wrap">
 <table class="inv-table">
-<thead><tr><th>SKU</th><th>Product</th><th>Brand</th><th>Stock</th><th>Reorder Pt.</th><th>Reorder Qty</th><th>Status</th><th>Retail</th><th>Cost</th><th>Serial</th><th>Warranty</th></tr></thead>
+<thead><tr><th>SKU</th><th>Product</th><th>Brand</th><th>Dept</th><th>Category</th><th>Stock</th><th>Status</th><th>Retail</th><th>Cost</th><th style="width:70px;"></th></tr></thead>
 <tbody id="inv-tbody"></tbody>
 </table>
 </div>
@@ -1112,7 +1166,7 @@ Price Update
 </div>
 <div class="admin-menu-item" onclick="selectAdminSection('users')">
 <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-Users
+Employees
 </div>
 <div class="admin-menu-item" onclick="selectAdminSection('timeclockadmin')">
 <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
@@ -1192,11 +1246,10 @@ POS Settings
 </div>
 </div>
 <div class="admin-panel" id="admin-panel-users">
-<div class="admin-content-title">Users</div>
+<div class="admin-content-title">Employee Management</div>
 <div class="admin-toolbar">
-<button class="admin-add-btn" onclick="adminAddUser()">+ Add User</button>
+<button class="admin-add-btn" onclick="adminAddUser()">+ Add Employee</button>
 </div>
-<div id="admin-inline-user" style="display:none;"></div>
 <div id="admin-users-list"></div>
 </div>
 <div class="admin-panel" id="admin-panel-timeclockadmin">
@@ -2327,6 +2380,10 @@ function nav(viewId,tabEl){
   if(viewId==='reorder'){viewId='inventory';tabEl=null;
     setTimeout(function(){switchInvTab('ordering');},0);
   }
+  // If no employee logged in and going to sale, prompt
+  if(viewId==='sale'&&!currentEmployee){
+    showEmpSelect();return;
+  }
   currentTab=viewId;
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
   document.getElementById('view-'+viewId).classList.add('active');
@@ -2382,14 +2439,21 @@ function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.
 // ══════════════════════════════════════════════
 // NEW SALE TAB
 // ══════════════════════════════════════════════
-var SALE_CATS=['Refrigerators','Washers','Dryers','Dishwashers','Ranges/Ovens','Microwaves','Freezers','Ice Makers','TVs','Mattresses','Grills','Dining Room','Living Room','Patio','Kitchen','Other'];
-var saleViewMode='categories'; // 'categories' or 'products'
+var DEPARTMENTS=[
+  {name:'DC Appliance',cats:['Refrigerators','Washers','Dryers','Dishwashers','Ranges','Wall Ovens','Microwaves','Freezers','Ice Makers','Other Appliances']},
+  {name:'DC Furniture',cats:['Dining Room','Living Room','Bedroom','Patio Furniture','Other Furniture']},
+  {name:'DC Mattress',cats:['Stearns Mattresses','Sealy Mattresses','Tempurpedic Mattresses','Mattress Accessories','Adjustable Bases','Other Mattress']},
+  {name:'DC Outdoor',cats:['Grills','Sauces & Spices','BBQ Accessories','Other Outdoor']},
+  {name:'DC Electronics',cats:['TVs','Audio','Other Electronics']}
+];
+var saleViewMode='departments';
+var saleActiveDept='';
 var saleActiveCat='';
 
 var cartTaxRate=0.09;
 var cartTaxName='Dodge City';
 function initSale(){
-  renderSaleCategories();renderCart();
+  renderSaleDepartments();renderCart();
 }
 function cartTaxOpen(){
   var inp=document.getElementById('cart-tax-input');
@@ -2418,45 +2482,67 @@ function cartTaxSelect(idx){
 }
 function saleSearch(){
   var q=(document.getElementById('sale-search')||{}).value||'';
-  if(q.trim()){saleViewMode='search';renderSaleProducts(null,q);}
-  else if(saleViewMode==='search'){saleViewMode='categories';renderSaleCategories();}
-}
-function saleCatCount(cat){
-  return PRODUCTS.filter(function(p){return saleCatMatch(p,cat);}).reduce(function(s,p){return s+p.stock;},0);
+  if(q.trim()){saleViewMode='search';renderSaleProductList(null,q);}
+  else if(saleViewMode==='search'){saleViewMode='departments';renderSaleDepartments();}
 }
 function saleCatMatch(p,cat){
   var c=p.cat||'';
   if(cat==='Washers') return c==='Washers & Dryers'&&p.name.toLowerCase().indexOf('washer')!==-1;
   if(cat==='Dryers') return c==='Washers & Dryers'&&p.name.toLowerCase().indexOf('dryer')!==-1;
-  if(cat==='Ranges/Ovens') return c==='Ovens & Ranges';
-  if(cat==='Freezers'||cat==='Ice Makers'||cat==='TVs'||cat==='Mattresses'||cat==='Grills'||cat==='Dining Room'||cat==='Living Room'||cat==='Patio'||cat==='Kitchen') return c===cat;
-  if(cat==='Other') return !['Refrigerators','Washers & Dryers','Dishwashers','Ovens & Ranges','Microwaves','Freezers','Ice Makers','TVs','Mattresses','Grills','Dining Room','Living Room','Patio','Kitchen'].includes(c);
+  if(cat==='Ranges') return c==='Ovens & Ranges'&&p.name.toLowerCase().indexOf('range')!==-1;
+  if(cat==='Wall Ovens') return c==='Ovens & Ranges'&&p.name.toLowerCase().indexOf('oven')!==-1;
+  if(cat==='Other Appliances') return !['Refrigerators','Washers & Dryers','Dishwashers','Ovens & Ranges','Microwaves','Freezers','Ice Makers'].includes(c)&&getDeptForCat(cat)==='DC Appliance';
   return c===cat;
 }
-function renderSaleCategories(){
-  saleViewMode='categories';saleActiveCat='';
-  document.getElementById('sale-toolbar').innerHTML='<input class="sale-search" id="sale-search" placeholder="Search products..." oninput="saleSearch()"/>';
+function getDeptForCat(cat){
+  for(var i=0;i<DEPARTMENTS.length;i++){if(DEPARTMENTS[i].cats.indexOf(cat)!==-1)return DEPARTMENTS[i].name;}
+  return '';
+}
+function deptItemCount(dept){
+  var d=DEPARTMENTS.find(function(x){return x.name===dept;});if(!d)return 0;
+  return d.cats.reduce(function(s,cat){return s+PRODUCTS.filter(function(p){return p.active!==false&&saleCatMatch(p,cat);}).reduce(function(a,p){return a+p.stock;},0);},0);
+}
+function catItemCount(cat){
+  return PRODUCTS.filter(function(p){return p.active!==false&&saleCatMatch(p,cat);}).reduce(function(s,p){return s+p.stock;},0);
+}
+function renderSaleDepartments(){
+  saleViewMode='departments';saleActiveDept='';saleActiveCat='';
+  document.getElementById('sale-toolbar').innerHTML='<input class="sale-search" id="sale-search" placeholder="Search all products..." oninput="saleSearch()"/>';
   var h='<div class="cat-grid">';
-  SALE_CATS.forEach(function(cat){
-    var count=saleCatCount(cat);
-    h+='<div class="cat-tile" onclick="saleOpenCat(\''+cat+'\')"><div class="cat-tile-name">'+cat+'</div><div class="cat-tile-count">'+count+' in stock</div></div>';
+  DEPARTMENTS.forEach(function(d){
+    var count=deptItemCount(d.name);
+    h+='<div class="dept-tile" onclick="saleOpenDept(\''+d.name.replace(/'/g,"\\'")+'\')"><div class="dept-tile-name">'+d.name+'</div><div class="dept-tile-count">'+count+' in stock &middot; '+d.cats.length+' categories</div></div>';
+  });
+  h+='</div>';
+  document.getElementById('sale-browse').innerHTML=h;
+}
+function saleOpenDept(deptName){
+  saleViewMode='categories';saleActiveDept=deptName;saleActiveCat='';
+  var dept=DEPARTMENTS.find(function(d){return d.name===deptName;});if(!dept)return;
+  document.getElementById('sale-toolbar').innerHTML='<button class="sale-back-btn" onclick="renderSaleDepartments()">&#8592; Back</button><span class="sale-cat-title">'+deptName+'</span><input class="sale-search" id="sale-search" placeholder="Search in '+deptName+'..." oninput="saleSearch()" style="margin-left:auto;"/>';
+  var h='<div class="cat-grid">';
+  dept.cats.forEach(function(cat){
+    var count=catItemCount(cat);
+    h+='<div class="cat-tile" onclick="saleOpenCat(\''+cat.replace(/'/g,"\\'")+'\')"><div class="cat-tile-name">'+cat+'</div><div class="cat-tile-count">'+count+' in stock</div></div>';
   });
   h+='</div>';
   document.getElementById('sale-browse').innerHTML=h;
 }
 function saleOpenCat(cat){
   saleViewMode='products';saleActiveCat=cat;
-  renderSaleProducts(cat,'');
+  renderSaleProductList(cat,'');
 }
-function renderSaleProducts(cat,searchQ){
+function renderSaleProductList(cat,searchQ){
   var q=(searchQ||'').toLowerCase();
   var tb=document.getElementById('sale-toolbar');
   if(cat){
-    tb.innerHTML='<button class="sale-back-btn" onclick="renderSaleCategories()">&#8592; Back</button><span class="sale-cat-title">'+cat+'</span><input class="sale-search" id="sale-search" placeholder="Search in '+cat+'..." oninput="saleSearch()" style="margin-left:auto;"/>';
+    var backTarget=saleActiveDept?'saleOpenDept(\''+saleActiveDept.replace(/'/g,"\\'")+'\')':'renderSaleDepartments()';
+    tb.innerHTML='<button class="sale-back-btn" onclick="'+backTarget+'">&#8592; Back</button><span class="sale-cat-title">'+cat+'</span><input class="sale-search" id="sale-search" placeholder="Search in '+cat+'..." oninput="saleSearch()" style="margin-left:auto;"/>';
   } else {
-    tb.innerHTML='<button class="sale-back-btn" onclick="document.getElementById(\'sale-search\').value=\'\';renderSaleCategories();">&#8592; Back</button><span class="sale-cat-title">Search Results</span><input class="sale-search" id="sale-search" placeholder="Search products..." oninput="saleSearch()" value="'+q.replace(/"/g,'&quot;')+'"/>';
+    tb.innerHTML='<button class="sale-back-btn" onclick="document.getElementById(\'sale-search\').value=\'\';'+(saleActiveDept?'saleOpenDept(\''+saleActiveDept.replace(/'/g,"\\'")+'\')':'renderSaleDepartments()')+';">&#8592; Back</button><span class="sale-cat-title">Search Results</span><input class="sale-search" id="sale-search" placeholder="Search products..." oninput="saleSearch()" value="'+q.replace(/"/g,'&quot;')+'"/>';
   }
   var filtered=PRODUCTS.filter(function(p){
+    if(p.active===false)return false;
     if(cat) return saleCatMatch(p,cat);
     return !q||p.name.toLowerCase().includes(q)||p.brand.toLowerCase().includes(q)||p.sku.toLowerCase().includes(q);
   });
@@ -2469,7 +2555,7 @@ function renderSaleProducts(cat,searchQ){
   h+='</div>';
   document.getElementById('sale-browse').innerHTML=h;
 }
-function refreshSaleView(){if(saleViewMode==='categories')renderSaleCategories();else if(saleViewMode==='products'&&saleActiveCat)renderSaleProducts(saleActiveCat,'');else if(saleViewMode==='search'){var q=(document.getElementById('sale-search')||{}).value||'';renderSaleProducts(null,q);}}
+function refreshSaleView(){if(saleViewMode==='departments')renderSaleDepartments();else if(saleViewMode==='categories'&&saleActiveDept)saleOpenDept(saleActiveDept);else if(saleViewMode==='products'&&saleActiveCat)renderSaleProductList(saleActiveCat,'');else if(saleViewMode==='search'){var q=(document.getElementById('sale-search')||{}).value||'';renderSaleProductList(null,q);}}
 function addToCart(pid){
   var p=PRODUCTS.find(function(x){return x.id===pid;});if(!p)return;
   var ci=cart.find(function(x){return x.id===pid;});
@@ -2509,7 +2595,7 @@ function getSaleFields(){
   return {
     soldTo:{name:(document.getElementById('cart-sold-name')||{}).value||'',addr:(document.getElementById('cart-sold-addr')||{}).value||'',city:(document.getElementById('cart-sold-city')||{}).value||'',state:(document.getElementById('cart-sold-state')||{}).value||'',zip:(document.getElementById('cart-sold-zip')||{}).value||'',phone:(document.getElementById('cart-sold-phone')||{}).value||''},
     shipTo:{name:(document.getElementById('cart-ship-name')||{}).value||'',addr:(document.getElementById('cart-ship-addr')||{}).value||'',city:(document.getElementById('cart-ship-city')||{}).value||'',state:(document.getElementById('cart-ship-state')||{}).value||'',zip:(document.getElementById('cart-ship-zip')||{}).value||''},
-    clerk:(document.getElementById('cart-clerk')||{}).value||'',
+    clerk:(document.getElementById('cart-clerk')||{}).value||(currentEmployee?currentEmployee.name:'')||'',
     po:(document.getElementById('cart-po')||{}).value||'',
     job:(document.getElementById('cart-job')||{}).value||'',
     invoiceNotes:((document.getElementById('cart-invoice-notes')||{}).value||'').trim(),
@@ -2654,20 +2740,67 @@ function delPreFillFromSale(sale){
 // ══════════════════════════════════════════════
 // INVENTORY TAB
 // ══════════════════════════════════════════════
+var invViewMode='active';
+function invSetView(mode){
+  invViewMode=mode;
+  document.getElementById('inv-tog-active').classList.toggle('active',mode==='active');
+  document.getElementById('inv-tog-inactive').classList.toggle('active',mode==='inactive');
+  renderInventory();
+}
+function getProductDept(p){
+  var cat=p.cat||'';
+  for(var i=0;i<DEPARTMENTS.length;i++){
+    for(var j=0;j<DEPARTMENTS[i].cats.length;j++){
+      if(DEPARTMENTS[i].cats[j]===cat)return DEPARTMENTS[i].name;
+      // fuzzy match for legacy category names
+      if(cat==='Washers & Dryers'&&(DEPARTMENTS[i].cats[j]==='Washers'||DEPARTMENTS[i].cats[j]==='Dryers'))return DEPARTMENTS[i].name;
+      if(cat==='Ovens & Ranges'&&(DEPARTMENTS[i].cats[j]==='Ranges'||DEPARTMENTS[i].cats[j]==='Wall Ovens'))return DEPARTMENTS[i].name;
+    }
+  }
+  return p.dept||'';
+}
 function renderInventory(){
   var s=(document.getElementById('inv-search')||{}).value||'';s=s.toLowerCase();
-  var filtered=PRODUCTS.filter(function(p){return !s||p.name.toLowerCase().includes(s)||p.brand.toLowerCase().includes(s)||p.sku.toLowerCase().includes(s);});
+  var hasSearch=s.length>0;
+  var filtered=PRODUCTS.filter(function(p){
+    var isActive=p.active!==false;
+    var matchesSearch=!s||p.name.toLowerCase().includes(s)||p.brand.toLowerCase().includes(s)||p.sku.toLowerCase().includes(s);
+    if(hasSearch) return matchesSearch; // search shows both
+    return matchesSearch&&(invViewMode==='active'?isActive:!isActive);
+  });
   var tb=document.getElementById('inv-tbody');
   tb.innerHTML=filtered.map(function(p){
+    var isActive=p.active!==false;
     var sc=p.stock<=0?'sp-out':p.stock<=p.reorderPt?'sp-low':'sp-in';
     var sl=p.stock<=0?'Out of Stock':p.stock<=p.reorderPt?'Low Stock':'In Stock';
-    return '<tr><td>'+p.sku+'</td><td>'+p.name+'</td><td>'+p.brand+'</td><td>'+p.stock+'</td><td>'+p.reorderPt+'</td><td>'+p.reorderQty+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+'</td><td>'+fmt(p.cost)+'</td><td style="font-size:10px;">'+p.serial+'</td><td style="font-size:10px;">'+p.warranty+'</td></tr>';
+    var dept=getProductDept(p);
+    var badge=hasSearch?'<span class="inv-active-badge '+(isActive?'active-badge':'inactive-badge')+'">'+(isActive?'Active':'Inactive')+'</span>':'';
+    var actBtn=isActive?
+      '<button class="inv-act-btn deactivate" onclick="invDeactivate('+p.id+')">Deactivate</button>':
+      '<button class="inv-act-btn activate" onclick="invActivate('+p.id+')">Activate</button>';
+    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+p.sku+'</td><td>'+p.name+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td>'+p.stock+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
   }).join('');
-  // Low stock alerts
-  var alerts=PRODUCTS.filter(function(p){return p.stock<=p.reorderPt;});
+  // Low stock alerts — active items only
+  var alerts=PRODUCTS.filter(function(p){return p.active!==false&&p.stock<=p.reorderPt;});
   document.getElementById('inv-alerts-list').innerHTML=alerts.length?alerts.map(function(p){
     return '<div class="alert-card"><div class="alert-card-name">'+p.name+'</div><div class="alert-card-meta">'+(p.stock<=0?'OUT OF STOCK':'Only '+p.stock+' left')+' (reorder at '+p.reorderPt+')</div></div>';
   }).join(''):'<div style="color:var(--gray-2);font-size:12px;text-align:center;padding:20px;">All stock levels OK</div>';
+}
+function invActivate(pid){
+  var p=PRODUCTS.find(function(x){return x.id===pid;});if(!p)return;
+  var qty=prompt('Qty on hand for '+p.name+':',p.stock||'0');
+  if(qty===null)return;
+  p.active=true;
+  p.stock=parseInt(qty)||0;
+  renderInventory();refreshSaleView();
+  toast(p.name+' activated with '+p.stock+' in stock','success');
+}
+function invDeactivate(pid){
+  var p=PRODUCTS.find(function(x){return x.id===pid;});if(!p)return;
+  if(!confirm('Deactivate '+p.name+'? It will be hidden from sales.'))return;
+  p.active=false;
+  renderInventory();refreshSaleView();
+  toast(p.name+' deactivated','info');
 }
 function exportCSV(){
   var rows=[['SKU','Product','Brand','Stock','Reorder Pt','Reorder Qty','Retail','Cost','Serial','Warranty']];
@@ -3570,7 +3703,13 @@ async function aiSend(){
 // ══════════════════════════════════════════════
 var adminSection='categories';
 var adminDataLoaded=false;
-var adminCategories=['Refrigerators','Washers & Dryers','Dishwashers','Ovens & Ranges','Microwaves','Freezers','Wall Ovens'];
+var adminCategories=[
+  {name:'Refrigerators',dept:'DC Appliance'},{name:'Washers',dept:'DC Appliance'},{name:'Dryers',dept:'DC Appliance'},{name:'Dishwashers',dept:'DC Appliance'},{name:'Ranges',dept:'DC Appliance'},{name:'Wall Ovens',dept:'DC Appliance'},{name:'Microwaves',dept:'DC Appliance'},{name:'Freezers',dept:'DC Appliance'},{name:'Ice Makers',dept:'DC Appliance'},{name:'Other Appliances',dept:'DC Appliance'},
+  {name:'Dining Room',dept:'DC Furniture'},{name:'Living Room',dept:'DC Furniture'},{name:'Bedroom',dept:'DC Furniture'},{name:'Patio Furniture',dept:'DC Furniture'},{name:'Other Furniture',dept:'DC Furniture'},
+  {name:'Stearns Mattresses',dept:'DC Mattress'},{name:'Sealy Mattresses',dept:'DC Mattress'},{name:'Tempurpedic Mattresses',dept:'DC Mattress'},{name:'Mattress Accessories',dept:'DC Mattress'},{name:'Adjustable Bases',dept:'DC Mattress'},{name:'Other Mattress',dept:'DC Mattress'},
+  {name:'Grills',dept:'DC Outdoor'},{name:'Sauces & Spices',dept:'DC Outdoor'},{name:'BBQ Accessories',dept:'DC Outdoor'},{name:'Other Outdoor',dept:'DC Outdoor'},
+  {name:'TVs',dept:'DC Electronics'},{name:'Audio',dept:'DC Electronics'},{name:'Other Electronics',dept:'DC Electronics'}
+];
 var adminBrands=['Samsung','LG','Whirlpool','Bosch','GE','KitchenAid','Blomberg','Maytag','Frigidaire'];
 var adminCommissions={defaults:{},overrides:[]};
 var adminTaxZones=[
@@ -3581,9 +3720,9 @@ var adminTaxZones=[
   {name:'Ford County',counties:['Ford'],stateRate:6.5,countyRate:1.5,cityRate:0.65}
 ];
 var adminUsers=[
-  {name:'Admin User',role:'Admin',email:'admin@dcappliance.com',phone:'785-555-0100',pin:'1234'},
-  {name:'John Tech',role:'Technician',email:'john@dcappliance.com',phone:'785-555-0101',pin:'5678'},
-  {name:'Jane Sales',role:'Salesperson',email:'jane@dcappliance.com',phone:'785-555-0102',pin:'9012'}
+  {name:'Admin User',role:'Owner/Admin',email:'admin@dcappliance.com',phone:'785-555-0100',pin:'1234',commission:0},
+  {name:'John Tech',role:'Tech',email:'john@dcappliance.com',phone:'785-555-0101',pin:'5678',commission:0},
+  {name:'Jane Sales',role:'Sales',email:'jane@dcappliance.com',phone:'785-555-0102',pin:'9012',commission:5}
 ];
 
 async function adminLoad(){
@@ -3642,44 +3781,56 @@ function renderAdminSection(){
 function renderAdminCategories(){
   var wrap=document.getElementById('admin-categories-list');
   if(!adminCategories.length){wrap.innerHTML='<div class="admin-empty">No categories yet.</div>';return;}
-  var h='';
+  // Group by department
+  var byDept={};
   adminCategories.forEach(function(cat,i){
-    h+='<div class="admin-card"><span class="admin-card-name">'+cat+'</span><div class="admin-card-actions">'
-      +'<button class="admin-card-btn edit" onclick="adminEditCategory('+i+')">Edit</button>'
-      +'<button class="admin-card-btn delete" onclick="adminDeleteCategory('+i+')">Delete</button>'
-      +'</div></div>';
+    var d=(typeof cat==='string')?'Uncategorized':(cat.dept||'Uncategorized');
+    var n=(typeof cat==='string')?cat:cat.name;
+    if(!byDept[d])byDept[d]=[];
+    byDept[d].push({name:n,idx:i});
+  });
+  var h='';
+  Object.keys(byDept).forEach(function(dept){
+    h+='<div style="font-size:12px;font-weight:700;color:#2563eb;margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid #e5e7eb;">'+dept+'</div>';
+    byDept[dept].forEach(function(c){
+      h+='<div class="admin-card"><span class="admin-card-name">'+c.name+'</span><div class="admin-card-actions">'
+        +'<button class="admin-card-btn edit" onclick="adminEditCategory('+c.idx+')">Edit</button>'
+        +'<button class="admin-card-btn delete" onclick="adminDeleteCategory('+c.idx+')">Delete</button>'
+        +'</div></div>';
+    });
   });
   wrap.innerHTML=h;
 }
 function adminAddCategory(){
-  var wrap=document.getElementById('admin-inline-cat');
-  wrap.style.display='block';
-  wrap.innerHTML='<div class="admin-inline-input"><input class="inp" id="admin-new-cat" placeholder="Category name..." autofocus/>'
-    +'<button class="admin-save-btn" onclick="adminSaveNewCategory()">Save</button>'
-    +'<button class="admin-cancel-btn" onclick="document.getElementById(\'admin-inline-cat\').style.display=\'none\'">Cancel</button></div>';
-  document.getElementById('admin-new-cat').focus();
-}
-function adminSaveNewCategory(){
-  var v=document.getElementById('admin-new-cat').value.trim();
-  if(!v){toast('Enter a name','error');return;}
-  adminCategories.push(v);
-  document.getElementById('admin-inline-cat').style.display='none';
+  var deptNames=DEPARTMENTS.map(function(d){return d.name;});
+  var dept=prompt('Department:\n'+deptNames.join(', '),'DC Appliance');
+  if(!dept)return;
+  var name=prompt('Category name:');
+  if(!name||!name.trim())return;
+  adminCategories.push({name:name.trim(),dept:dept.trim()});
+  // Also add to DEPARTMENTS if not there
+  var d=DEPARTMENTS.find(function(x){return x.name===dept.trim();});
+  if(d&&d.cats.indexOf(name.trim())===-1)d.cats.push(name.trim());
+  else if(!d)DEPARTMENTS.push({name:dept.trim(),cats:[name.trim()]});
   renderAdminCategories();
   adminSave('admin-categories',adminCategories);
 }
 function adminEditCategory(i){
-  var newName=prompt('Edit category:',adminCategories[i]);
-  if(newName!==null&&newName.trim()){
-    adminCategories[i]=newName.trim();
-    renderAdminCategories();
-    adminSave('admin-categories',adminCategories);
-  }
+  var cat=adminCategories[i];
+  var oldName=(typeof cat==='string')?cat:cat.name;
+  var oldDept=(typeof cat==='string')?'':cat.dept;
+  var newName=prompt('Category name:',oldName);
+  if(!newName||!newName.trim())return;
+  var newDept=prompt('Department:',oldDept);
+  adminCategories[i]={name:newName.trim(),dept:(newDept||oldDept).trim()};
+  renderAdminCategories();adminSave('admin-categories',adminCategories);
 }
 function adminDeleteCategory(i){
-  if(!confirm('Delete "'+adminCategories[i]+'"?')) return;
+  var cat=adminCategories[i];
+  var name=(typeof cat==='string')?cat:cat.name;
+  if(!confirm('Delete "'+name+'"?'))return;
   adminCategories.splice(i,1);
-  renderAdminCategories();
-  adminSave('admin-categories',adminCategories);
+  renderAdminCategories();adminSave('admin-categories',adminCategories);
 }
 
 // --- Brands ---
@@ -3847,14 +3998,22 @@ function adminDeleteTaxZone(i){
 }
 
 // --- Users ---
+var ROLE_PERMS={
+  'Owner/Admin':['sale','inventory','orders','delivery','service','timeclock','admin'],
+  'Manager':['sale','inventory','orders','delivery','service','timeclock'],
+  'Sales':['sale','orders','timeclock'],
+  'Delivery':['delivery','timeclock'],
+  'Tech':['service','timeclock']
+};
 function renderAdminUsers(){
   var wrap=document.getElementById('admin-users-list');
-  if(!adminUsers.length){wrap.innerHTML='<div class="admin-empty">No users.</div>';return;}
-  var h='<table class="admin-table"><thead><tr><th>Name</th><th>Role</th><th>Email</th><th>Phone</th><th style="width:100px;"></th></tr></thead><tbody>';
+  if(!adminUsers.length){wrap.innerHTML='<div class="admin-empty">No employees.</div>';return;}
+  var h='<table class="admin-table"><thead><tr><th>Name</th><th>Role</th><th>PIN</th><th>Commission</th><th>Email</th><th>Phone</th><th style="width:140px;"></th></tr></thead><tbody>';
   adminUsers.forEach(function(u,i){
-    h+='<tr><td>'+u.name+'</td><td>'+u.role+'</td><td>'+u.email+'</td><td>'+u.phone+'</td>'
+    h+='<tr><td style="font-weight:600;">'+u.name+'</td><td>'+u.role+'</td><td>'+(u.pin||'—')+'</td><td>'+(u.commission||0)+'%</td><td>'+u.email+'</td><td>'+u.phone+'</td>'
       +'<td><div class="admin-card-actions">'
       +'<button class="admin-card-btn edit" onclick="adminEditUser('+i+')">Edit</button>'
+      +'<button class="admin-card-btn edit" onclick="adminResetPin('+i+')">PIN</button>'
       +'<button class="admin-card-btn delete" onclick="adminDeleteUser('+i+')">Delete</button>'
       +'</div></td></tr>';
   });
@@ -3862,33 +4021,38 @@ function renderAdminUsers(){
   wrap.innerHTML=h;
 }
 function adminAddUser(){
-  var name=prompt('Name:');
-  if(!name||!name.trim()) return;
-  var role=prompt('Role (Admin, Technician, Salesperson):','Salesperson');
-  if(!role) return;
-  var email=prompt('Email:','');
-  var phone=prompt('Phone:','');
-  adminUsers.push({name:name.trim(),role:role.trim(),email:(email||'').trim(),phone:(phone||'').trim()});
-  renderAdminUsers();
-  adminSave('admin-users',adminUsers);
+  var name=prompt('Employee name:');if(!name||!name.trim())return;
+  var role=prompt('Role (Owner/Admin, Manager, Sales, Delivery, Tech):','Sales');if(!role)return;
+  var pin=prompt('4-digit PIN:','');
+  if(pin&&(pin.length!==4||isNaN(pin))){toast('PIN must be 4 digits','error');return;}
+  if(pin&&adminUsers.find(function(u){return u.pin===pin;})){toast('PIN already in use','error');return;}
+  var commission=parseFloat(prompt('Commission %:','0'))||0;
+  var email=prompt('Email:','')||'';
+  var phone=prompt('Phone:','')||'';
+  adminUsers.push({name:name.trim(),role:role.trim(),pin:pin||'',commission:commission,email:email.trim(),phone:phone.trim()});
+  renderAdminUsers();adminSave('admin-users',adminUsers);
 }
 function adminEditUser(i){
   var u=adminUsers[i];
-  var name=prompt('Name:',u.name);
-  if(!name||!name.trim()) return;
-  var role=prompt('Role (Admin, Technician, Salesperson):',u.role);
-  if(!role) return;
-  var email=prompt('Email:',u.email);
-  var phone=prompt('Phone:',u.phone);
-  adminUsers[i]={name:name.trim(),role:role.trim(),email:(email||'').trim(),phone:(phone||'').trim()};
-  renderAdminUsers();
-  adminSave('admin-users',adminUsers);
+  var name=prompt('Name:',u.name);if(!name||!name.trim())return;
+  var role=prompt('Role (Owner/Admin, Manager, Sales, Delivery, Tech):',u.role);if(!role)return;
+  var commission=parseFloat(prompt('Commission %:',u.commission||0));
+  var email=prompt('Email:',u.email)||'';
+  var phone=prompt('Phone:',u.phone)||'';
+  u.name=name.trim();u.role=role.trim();u.commission=commission||0;u.email=email.trim();u.phone=phone.trim();
+  renderAdminUsers();adminSave('admin-users',adminUsers);
+}
+function adminResetPin(i){
+  var u=adminUsers[i];
+  var pin=prompt('New 4-digit PIN for '+u.name+':',u.pin||'');
+  if(!pin)return;
+  if(pin.length!==4||isNaN(pin)){toast('PIN must be 4 digits','error');return;}
+  if(adminUsers.find(function(x,j){return j!==i&&x.pin===pin;})){toast('PIN already in use','error');return;}
+  u.pin=pin;renderAdminUsers();adminSave('admin-users',adminUsers);toast(u.name+' PIN updated','success');
 }
 function adminDeleteUser(i){
-  if(!confirm('Delete "'+adminUsers[i].name+'"?')) return;
-  adminUsers.splice(i,1);
-  renderAdminUsers();
-  adminSave('admin-users',adminUsers);
+  if(!confirm('Delete "'+adminUsers[i].name+'"?'))return;
+  adminUsers.splice(i,1);renderAdminUsers();adminSave('admin-users',adminUsers);
 }
 
 // --- POS Settings ---
@@ -3984,18 +4148,111 @@ function renderPriceHistory(){
 // ══════════════════════════════════════════════
 // LOGIN
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// AUTH & PERMISSIONS
+// ══════════════════════════════════════════════
+var currentEmployee=null;
+var _inactivityTimer=null;
+var PIN_TIMEOUT_MS=5*60*1000;
+
 function posLogin(){
   var pw=document.getElementById('pos-pw').value;
   if(pw==='DCA123'){
     localStorage.setItem('pos-auth','1');
     document.getElementById('pos-login').style.display='none';
+    showEmpSelect();
   } else {
     document.getElementById('pos-login-err').style.display='block';
     document.getElementById('pos-pw').value='';
   }
 }
-if(localStorage.getItem('pos-auth')==='1'){document.getElementById('pos-login').style.display='none';}
-else{document.getElementById('pos-pw').focus();}
+function showEmpSelect(){
+  adminLoad().then(function(){
+    var grid=document.getElementById('emp-grid');
+    grid.innerHTML=adminUsers.map(function(u,i){
+      return '<div class="emp-tile" onclick="empSelectUser('+i+')">'+u.name+'<div style="font-size:10px;color:#6b7280;font-weight:400;margin-top:3px;">'+u.role+'</div></div>';
+    }).join('');
+    document.getElementById('emp-pin-prompt').classList.remove('show');
+    document.getElementById('emp-grid').style.display='';
+    document.getElementById('emp-select').classList.add('show');
+  });
+}
+var _empSelectedIdx=-1;
+function empSelectUser(i){
+  _empSelectedIdx=i;
+  var u=adminUsers[i];
+  if(!u.pin){empLoginAs(u);return;}
+  document.getElementById('emp-grid').style.display='none';
+  document.getElementById('emp-pin-name').textContent=u.name;
+  document.getElementById('emp-pin-input').value='';
+  document.getElementById('emp-pin-err').style.display='none';
+  document.getElementById('emp-pin-prompt').classList.add('show');
+  setTimeout(function(){document.getElementById('emp-pin-input').focus();},100);
+}
+function empPinSubmit(){
+  var u=adminUsers[_empSelectedIdx];if(!u)return;
+  var pin=document.getElementById('emp-pin-input').value;
+  if(pin===u.pin){empLoginAs(u);}
+  else{document.getElementById('emp-pin-err').style.display='block';document.getElementById('emp-pin-input').value='';document.getElementById('emp-pin-input').focus();}
+}
+function empBackToGrid(){
+  document.getElementById('emp-pin-prompt').classList.remove('show');
+  document.getElementById('emp-grid').style.display='';
+}
+function empLoginAs(user){
+  currentEmployee=user;
+  document.getElementById('emp-select').classList.remove('show');
+  document.getElementById('tb-user-badge').textContent=user.name;
+  document.getElementById('tb-user-badge').style.display='';
+  applyPermissions();
+  // Auto-set clerk on cart
+  var cl=document.getElementById('cart-clerk');
+  if(cl){for(var i=0;i<cl.options.length;i++){if(cl.options[i].value===user.name){cl.selectedIndex=i;break;}}}
+  resetInactivity();
+}
+function empSwitchUser(){
+  currentEmployee=null;
+  showEmpSelect();
+}
+function empLogoutMaster(){
+  currentEmployee=null;
+  localStorage.removeItem('pos-auth');
+  document.getElementById('emp-select').classList.remove('show');
+  document.getElementById('pos-login').style.display='flex';
+  document.getElementById('pos-pw').value='';
+  document.getElementById('pos-pw').focus();
+}
+function applyPermissions(){
+  var tabs=document.querySelectorAll('.tb-tab');
+  if(!currentEmployee){tabs.forEach(function(t){t.style.display='';});return;}
+  var role=currentEmployee.role;
+  var allowed=ROLE_PERMS[role]||currentEmployee.tabs||['sale','timeclock'];
+  var tabMap={'New Sale':'sale','Inventory':'inventory','Open Orders':'orders','Delivery':'delivery','Service':'service','Time Clock':'timeclock','Admin':'admin'};
+  tabs.forEach(function(t){
+    var label=t.textContent.trim();
+    var viewKey=tabMap[label];
+    if(!viewKey)return;
+    t.style.display=allowed.includes(viewKey)?'':'none';
+  });
+}
+// Inactivity timeout
+function resetInactivity(){
+  if(_inactivityTimer)clearTimeout(_inactivityTimer);
+  _inactivityTimer=setTimeout(function(){
+    if(currentEmployee){currentEmployee=null;showEmpSelect();}
+  },PIN_TIMEOUT_MS);
+}
+document.addEventListener('click',resetInactivity);
+document.addEventListener('keydown',resetInactivity);
+
+// Init auth
+if(localStorage.getItem('pos-auth')==='1'){
+  document.getElementById('pos-login').style.display='none';
+  // Load users then show emp select
+  setTimeout(function(){showEmpSelect();},100);
+} else {
+  document.getElementById('pos-pw').focus();
+}
 
 // ══════════════════════════════════════════════
 // TIME CLOCK
