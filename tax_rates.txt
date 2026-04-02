@@ -1,0 +1,1061 @@
+﻿Abbyville|ABBRN|7.500%|6.500%|1.000%|0.000%|0.000%
+Abilene|ABIDK|9.350%|6.500%|1.750%|1.100%|0.000%
+Abilene Family Dollar CID |ABIC4|11.350%|6.500%|1.750%|1.100%|2.000%
+Abilene Holiday Inn Express CID|ABIC3|11.350%|6.500%|1.750%|1.100%|2.000%
+Abilene Legacy Kansas CID|ABIC5|11.350%|6.500%|1.750%|1.100%|2.000%
+Abilene Property 6 CID|ABIC1|11.350%|6.500%|1.750%|1.100%|2.000%
+Abilene Roserock Holdings CID|ABIC2|11.350%|6.500%|1.750%|1.100%|2.000%
+Admire|ADMLY|7.500%|6.500%|1.000%|0.000%|0.000%
+Agenda|AGERP|8.500%|6.500%|2.000%|0.000%|0.000%
+Agra|AGRPL|7.000%|6.500%|0.500%|0.000%|0.000%
+Albert|ALBBT|7.500%|6.500%|1.000%|0.000%|0.000%
+Alden|ALDRC|8.500%|6.500%|1.000%|1.000%|0.000%
+Alexander|ALERH|6.500%|6.500%|0.000%|0.000%|0.000%
+Allen|ALLLY|7.500%|6.500%|1.000%|0.000%|0.000%
+Allen County|ALLCO|7.750%|6.500%|1.250%|0.000%|0.000%
+Alma|ALMWB|9.000%|6.500%|1.500%|1.000%|0.000%
+Almena|ALMNT|8.750%|6.500%|1.750%|0.500%|0.000%
+Alta Vista|ALTWB|8.000%|6.500%|1.500%|0.000%|0.000%
+Altamont|ALTLB|9.250%|6.500%|1.250%|1.500%|0.000%
+Alton|ALTOB|8.000%|6.500%|1.500%|0.000%|0.000%
+Altoona|ALTWL|7.500%|6.500%|1.000%|0.000%|0.000%
+Americus|AMELY|8.500%|6.500%|1.000%|1.000%|0.000%
+Andale|ANDSG|7.500%|6.500%|1.000%|0.000%|0.000%
+Anderson County|ANDCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Andover|ANDBU|8.500%|6.500%|0.000%|2.000%|0.000%
+Andover Red Bud Trail CID|ANDC1|10.500%|6.500%|0.000%|2.000%|2.000%
+Andover Heritage CID|ANDC2|10.500%|6.500%|0.000%|2.000%|2.000%
+Anthony|ANTHP|7.000%|6.500%|0.000%|0.500%|0.000%
+Arcadia|ARCCR|7.500%|6.500%|1.000%|0.000%|0.000%
+Argonia|ARGSU|8.500%|6.500%|1.000%|1.000%|0.000%
+Arkansas City|ARKCL|8.500%|6.500%|0.000%|2.000%|0.000%
+Arkansas City Summit Plaza CID|ARKC1|9.500%|6.500%|0.000%|2.000%|1.000%
+Arlington|ARLRN|8.500%|6.500%|1.000%|1.000%|0.000%
+Arma|ARMCR|8.500%|6.500%|1.000%|1.000%|0.000%
+Ashland|ASHCA|7.500%|6.500%|0.000%|1.000%|0.000%
+Assaria|ASSSA|8.000%|6.500%|1.500%|0.000%|0.000%
+Atchison|ATCAT|8.500%|6.500%|1.000%|1.000%|0.000%
+Atchison AE Museum/Farmers Market STAR Bond|ATCAE|8.500%|6.500%|1.000%|1.000%|0.000%
+Atchison B&M Freight Depot CID |ATCC3|10.500%|6.500%|1.000%|1.000%|2.000%
+Atchison County|ATCCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Atchison Fox Theatre CID|ATCC2|10.500%|6.500%|1.000%|1.000%|2.000%
+Atchison Taco Bell CID and STAR Bond|ATCC1|9.500%|6.500%|1.000%|1.000%|1.000%
+Athol|ATHSM|8.500%|6.500%|2.000%|0.000%|0.000%
+Atlanta|ATLCL|6.500%|6.500%|0.000%|0.000%|0.000%
+Attica|ATTHP|8.500%|6.500%|0.000%|2.000%|0.000%
+Atwood|ATWRA|8.500%|6.500%|2.000%|0.000%|0.000%
+Auburn|AUBSN|9.350%|6.500%|1.350%|1.500%|0.000%
+Augusta|AUGBU|8.500%|6.500%|0.000%|2.000%|0.000%
+Augusta Comfort Inn CID|AUGC1|10.500%|6.500%|0.000%|2.000%|2.000%
+Augusta Holiday Bowl CID |AUGC3|10.500%|6.500%|0.000%|2.000%|2.000%
+Augusta Sugar Shane's Café CID|AUGC2|10.500%|6.500%|0.000%|2.000%|2.000%
+Aurora|AURCD|7.500%|6.500%|1.000%|0.000%|0.000%
+Axtell|AXTMS|8.000%|6.500%|0.500%|1.000%|0.000%
+Baldwin City|BALDG|9.250%|6.500%|1.250%|1.500%|0.000%
+Barber County|BABCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Barnard|BARLC|7.500%|6.500%|1.000%|0.000%|0.000%
+Barnes|BARWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Bartlett|BARLB|7.750%|6.500%|1.250%|0.000%|0.000%
+Barton County|BATCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Basehor|BASLV|9.000%|6.500%|1.000%|1.500%|0.000%
+Basehor One58 Plaza CID|BASC1|10.500%|6.500%|1.000%|1.500%|1.500%
+Basehor Wolf Creek Junction TDD|BASTD|9.750%|6.500%|1.000%|1.500%|0.750%
+Bassett|BASAL|7.750%|6.500%|1.250%|0.000%|0.000%
+Baxter Springs|BAXCK|10.000%|6.500%|1.500%|2.000%|0.000%
+Bazine|BAZNS|6.500%|6.500%|0.000%|0.000%|0.000%
+Beattie|BEAMS|7.000%|6.500%|0.500%|0.000%|0.000%
+Bel Aire|BELSG|7.500%|6.500%|1.000%|0.000%|0.000%
+Belle Plaine|BELSU|8.500%|6.500%|1.000%|1.000%|0.000%
+Belleville|BELRP|9.000%|6.500%|2.000%|0.500%|0.000%
+Beloit|BELMC|8.500%|6.500%|1.000%|1.000%|0.000%
+Belpre|BELED|7.875%|6.500%|1.375%|0.000%|0.000%
+Belvue|BELPT|7.500%|6.500%|1.000%|0.000%|0.000%
+Benedict|BENWL|7.500%|6.500%|1.000%|0.000%|0.000%
+Bennington|BENOT|8.500%|6.500%|1.000%|1.000%|0.000%
+Bentley|BENSG|7.500%|6.500%|1.000%|0.000%|0.000%
+Benton|BENBU|8.500%|6.500%|0.000%|2.000%|0.000%
+Bern|BERNM|8.000%|6.500%|1.500%|0.000%|0.000%
+Beverly|BEVLC|8.500%|6.500%|1.000%|1.000%|0.000%
+Bird City|BIRCN|8.500%|6.500%|2.000%|0.000%|0.000%
+Bison|BISRH|6.500%|6.500%|0.000%|0.000%|0.000%
+Blue Mound|BLULN|7.500%|6.500%|1.000%|0.000%|0.000%
+Blue Rapids|BLUMS|9.000%|6.500%|0.500%|2.000%|0.000%
+Bluff City|BLUHP|6.500%|6.500%|0.000%|0.000%|0.000%
+Bogue|BOGGH|7.500%|6.500%|1.000%|0.000%|0.000%
+Bonner Springs (Johnson County)|BONJO|9.725%|6.500%|1.475%|1.750%|0.000%
+Bonner Springs (Leavenworth County)|BONLV|9.250%|6.500%|1.000%|1.750%|0.000%
+Bonner Springs (Wyandotte County)|BONWY|9.250%|6.500%|1.000%|1.750%|0.000%
+Bonner Springs Center CID|BONC1|10.250%|6.500%|1.000%|1.750%|1.000%
+Bourbon County|BOUCO|8.150%|6.500%|1.650%|0.000%|0.000%
+Brewster|BRETH|8.250%|6.500%|1.750%|0.000%|0.000%
+Bronson|BROBB|9.150%|6.500%|1.650%|1.000%|0.000%
+Brookville|BROSA|8.000%|6.500%|1.500%|0.000%|0.000%
+Brown County|BROCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Brownell|BRONS|6.500%|6.500%|0.000%|0.000%|0.000%
+Bucklin|BUCFO|8.500%|6.500%|1.000%|1.000%|0.000%
+Buffalo|BUFWL|7.500%|6.500%|1.000%|0.000%|0.000%
+Buhler|BUHRN|8.500%|6.500%|1.000%|1.000%|0.000%
+Bunker Hill|BUNRS|8.500%|6.500%|2.000%|0.000%|0.000%
+Burden|BURCL|7.500%|6.500%|0.000%|1.000%|0.000%
+Burdett|BURPN|8.500%|6.500%|2.000%|0.000%|0.000%
+Burlingame|BUROS|9.500%|6.500%|1.500%|1.500%|0.000%
+Burlington|BURCF|8.500%|6.500%|0.000%|2.000%|0.000%
+Burns|BURMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Burr Oak|BURJW|7.500%|6.500%|1.000%|0.000%|0.000%
+Burrton|BURHV|9.500%|6.500%|2.000%|1.000%|0.000%
+Bushong|BUSLY|7.500%|6.500%|1.000%|0.000%|0.000%
+Bushton|BUSRC|7.500%|6.500%|1.000%|0.000%|0.000%
+Butler County|BUTCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Byers|BYEPR|8.250%|6.500%|1.750%|0.000%|0.000%
+Caldwell|CALSU|8.500%|6.500%|1.000%|1.000%|0.000%
+Cambridge|CAMCL|6.500%|6.500%|0.000%|0.000%|0.000%
+Caney|CANMG|9.500%|6.500%|0.000%|3.000%|0.000%
+Canton|CANMP|9.500%|6.500%|2.000%|1.000%|0.000%
+Carbondale|CAROS|10.000%|6.500%|1.500%|2.000%|0.000%
+Carlton|CARDK|8.250%|6.500%|1.750%|0.000%|0.000%
+Cassoday|CASBU|6.500%|6.500%|0.000%|0.000%|0.000%
+Cawker City|CAWMC|8.500%|6.500%|1.000%|1.000%|0.000%
+Cedar|CEDSM|8.500%|6.500%|2.000%|0.000%|0.000%
+Cedar Point|CEDCS|7.500%|6.500%|1.000%|0.000%|0.000%
+Cedar Vale|CEDCQ|8.500%|6.500%|1.000%|1.000%|0.000%
+Centralia|CENNM|8.000%|6.500%|1.500%|0.000%|0.000%
+Chanute|CHANO|9.500%|6.500%|1.750%|1.250%|0.000%
+Chanute Love's Travel Stop CID|CHAC2|11.500%|6.500%|1.750%|1.250%|2.000%
+Chanute Santa Fe Ave CID|CHAC1|10.500%|6.500%|1.750%|1.250%|1.000%
+Chanute Square CID|CHAC3|10.500%|6.500%|1.750%|1.250%|1.000%
+Chapman|CHADK|9.250%|6.500%|1.750%|1.000%|0.000%
+Chase|CHARC|8.000%|6.500%|1.000%|0.500%|0.000%
+Chase County|CHSCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Chautauqua|CHACQ|7.500%|6.500%|1.000%|0.000%|0.000%
+Chautauqua County|CHQCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Cheney|CHESG|7.500%|6.500%|1.000%|0.000%|0.000%
+Cherokee (Cherokee County)|CHECK|9.500%|6.500%|1.500%|1.500%|0.000%
+Cherokee (Crawford County)|CHECR|9.000%|6.500%|1.000%|1.500%|0.000%
+Cherokee County|CHKCO|8.000%|6.500%|1.500%|0.000%|0.000%
+Cherryvale|CHEMG|9.500%|6.500%|0.000%|3.000%|0.000%
+Chetopa|CHELB|9.250%|6.500%|1.250%|1.500%|0.000%
+Cheyenne County|CHYCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Cimarron|CIMGY|8.750%|6.500%|1.000%|1.250%|0.000%
+Circleville|CIRJA|8.150%|6.500%|1.650%|0.000%|0.000%
+Claflin|CLABT|8.250%|6.500%|1.000%|0.750%|0.000%
+Clark County|CLACO|6.500%|6.500%|0.000%|0.000%|0.000%
+Clay Center|CLACY|9.500%|6.500%|1.000%|2.000%|0.000%
+Clay County|CLYCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Clayton (Decatur County) |CLADC|7.500%|6.500%|1.000%|0.000%|0.000%
+Clayton (Norton County)|CLANT|8.250%|6.500%|1.750%|0.000%|0.000%
+Clearwater|CLESG|8.500%|6.500%|1.000%|1.000%|0.000%
+Clifton (Clay County)|CLICY|8.500%|6.500%|1.000%|1.000%|0.000%
+Clifton (Washington County) |CLIWS|8.500%|6.500%|1.000%|1.000%|0.000%
+Climax|CLIGW|7.500%|6.500%|1.000%|0.000%|0.000%
+Cloud County|CLOCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Clyde|CLYCD|7.500%|6.500%|1.000%|0.000%|0.000%
+Coats|COAPR|8.250%|6.500%|1.750%|0.000%|0.000%
+Coffey County|COFCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Coffeyville|COFMG|9.500%|6.500%|0.000%|3.000%|0.000%
+Coffey County Beto Junction CID |COYC1|8.500%|6.500%|0.000%|0.000%|2.000%
+Coffeyville Holiday Inn CID|COFC1|11.500%|6.500%|0.000%|3.000%|2.000%
+Coffeyville Plaza CID|COFC2|10.500%|6.500%|0.000%|3.000%|1.000%
+Colby|COLTH|9.000%|6.500%|1.750%|0.750%|0.000%
+Colby Arena CID|COLC2|11.000%|6.500%|1.750%|0.750%|2.000%
+Colby 24/7 Triplett CID|COLC1|11.000%|6.500%|1.750%|0.750%|2.000%
+Coldwater|COLCM|8.500%|6.500%|0.000%|2.000%|0.000%
+Collyer|COLTR|8.500%|6.500%|1.000%|1.000%|0.000%
+Colony|COLAN|8.000%|6.500%|1.000%|0.500%|0.000%
+Columbus|COLCK|9.000%|6.500%|1.500%|1.000%|0.000%
+Colwich|COLSG|7.500%|6.500%|1.000%|0.000%|0.000%
+Comanche County|COMCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Concordia|CONCD|8.500%|6.500%|1.000%|1.000%|0.000%
+Conway Springs|CONSU|10.500%|6.500%|1.000%|3.000%|0.000%
+Coolidge|COLHM|8.000%|6.500%|1.500%|0.000%|0.000%
+Copeland|COPGY|7.500%|6.500%|1.000%|0.000%|0.000%
+Corning|CORNM|8.000%|6.500%|1.500%|0.000%|0.000%
+Cottonwood Falls|COTCS|8.500%|6.500%|1.000%|1.000%|0.000%
+Council Grove|COUMR|9.200%|6.500%|1.000%|1.700%|0.000%
+Courtland|COURP|8.500%|6.500%|2.000%|0.000%|0.000%
+Cowley County|COWCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Coyville|COYWL|7.500%|6.500%|1.000%|0.000%|0.000%
+Crawford County|CRACO|7.500%|6.500%|1.000%|0.000%|0.000%
+Cuba|CUBRP|8.500%|6.500%|2.000%|0.000%|0.000%
+Cullison|CULPR|8.250%|6.500%|1.750%|0.000%|0.000%
+Culver|CULOT|7.500%|6.500%|1.000%|0.000%|0.000%
+Cunningham|CUNKM|9.000%|6.500%|1.500%|1.000%|0.000%
+Cunningham CID|CUNC1|11.000%|6.500%|1.500%|1.000%|2.000%
+Damar|DAMRO|7.000%|6.500%|0.500%|0.000%|0.000%
+Danville|DANHP|7.500%|6.500%|0.000%|1.000%|0.000%
+Dearing|DEAMG|8.500%|6.500%|0.000%|2.000%|0.000%
+Decatur County|DECCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Deerfield|DEEKE|8.500%|6.500%|1.000%|1.000%|0.000%
+Delia|DELJA|8.150%|6.500%|1.650%|0.000%|0.000%
+Delphos|DELOT|8.500%|6.500%|1.000%|1.000%|0.000%
+Denison|DENJA|8.150%|6.500%|1.650%|0.000%|0.000%
+Denton|DENDP|8.500%|6.500%|2.000%|0.000%|0.000%
+Derby|DERSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Derby Field Station 2 STAR Bond|DERF2|8.500%|6.500%|1.000%|1.000%|0.000%
+Derby Field Station STAR Bond|DERFS|8.500%|6.500%|1.000%|1.000%|0.000%
+De Soto (Johnson County)|DESJO|9.725%|6.500%|1.475%|1.750%|0.000%
+De Soto (Leavenworth County)|DESLV|9.250%|6.500%|1.000%|1.750%|0.000%
+Dexter|DEXCL|6.500%|6.500%|0.000%|0.000%|0.000%
+Dickinson County|DICCO|8.250%|6.500%|1.750%|0.000%|0.000%
+Dighton|DIGLE|8.500%|6.500%|1.000%|1.000%|0.000%
+Dodge City|DODFO|9.000%|6.500%|1.000%|1.500%|0.000%
+Dodge City Boot Hill Museum CID|DODC8|10.000%|6.500%|1.000%|1.500%|1.000%
+Dodge City Boot Hill Museum CID and Heritage Area STAR Bond|DODC7|10.000%|6.500%|1.000%|1.500%|1.000%
+Dodge City Capital Group Nevada CID|DODC9|10.000%|6.500%|1.000%|1.500%|1.000%
+Dodge City Casa Mariachi CID |DOC11|11.000%|6.500%|1.000%|1.500%|2.000%
+Dodge City Heritage Area STAR Bond|DODHA|9.000%|6.500%|1.000%|1.500%|0.000%
+Dodge City IHOP CID|DODC1|10.000%|6.500%|1.000%|1.500%|1.000%
+Dodge City Leisure Development CID|DODC3|10.000%|6.500%|1.000%|1.500%|1.000%
+Dodge City McDonalds 2 CID|DODC4|9.500%|6.500%|1.000%|1.500%|0.500%
+Dodge City McDonalds CID|DODC2|9.500%|6.500%|1.000%|1.500%|0.500%
+Dodge City Power Center STAR Bond|DODPC|9.000%|6.500%|1.000%|1.500%|0.000%
+Dodge City Sutherlands High Plains CID and STAR Bond|DODC5|10.000%|6.500%|1.000%|1.500%|1.000%
+Dodge City Tommy's Express Car Wash CID and Power Center STAR Bond|DOC12|10.000%|6.500%|1.000%|1.500%|1.000%
+Dodge City Village Square Mall CID|DOC10|10.000%|6.500%|1.000%|1.500%|1.000%
+Doniphan County|DONCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Dorrance|DORRS|8.500%|6.500%|2.000%|0.000%|0.000%
+Douglas County|DOUCO|7.750%|6.500%|1.250%|0.000%|0.000%
+Douglass|DOUBU|8.500%|6.500%|0.000%|2.000%|0.000%
+Downs|DOWOB|8.500%|6.500%|1.500%|0.500%|0.000%
+Dresden|DREDC|7.500%|6.500%|1.000%|0.000%|0.000%
+Dunlap|DUNMR|7.500%|6.500%|1.000%|0.000%|0.000%
+Durham|DURMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Dwight|DWIMR|7.500%|6.500%|1.000%|0.000%|0.000%
+Earlton|EARNO|8.250%|6.500%|1.750%|0.000%|0.000%
+Eastborough|EASSG|7.500%|6.500%|1.000%|0.000%|0.000%
+Easton|EASLV|8.500%|6.500%|1.000%|1.000%|0.000%
+Edgerton|EDGJO|8.975%|6.500%|1.475%|1.000%|0.000%
+Edgerton – Crossing Woodstone CID|EDGC2|9.975%|6.500%|1.475%|1.000%|1.000%
+Edgerton – Kansas City Intermodal Facility|KCIMF|8.975%|6.500%|1.475%|1.000%|0.000%
+Edgerton On-the-Go Travel Plaza CID|EDGC1|9.975%|6.500%|1.475%|1.000%|1.000%
+Edmond|EDMNT|8.250%|6.500%|1.750%|0.000%|0.000%
+Edna|EDNLB|9.750%|6.500%|1.250%|2.000%|0.000%
+Edwards County|EDWCO|7.875%|6.500%|1.375%|0.000%|0.000%
+Edwardsville|EDWWY|10.000%|6.500%|1.000%|2.500%|0.000%
+Edwardsville Village South 1 CID|EDWC4|11.000%|6.500%|1.000%|2.500%|1.000%
+Edwardsville Village South 2 CID|EDWC2|11.000%|6.500%|1.000%|2.500%|1.000%
+Edwardsville Village South 3 CID|EDWC3|11.000%|6.500%|1.000%|2.500%|1.000%
+Effingham|EFFAT|9.500%|6.500%|1.000%|2.000%|0.000%
+El Dorado|ELDBU|7.500%|6.500%|0.000%|1.000%|0.000%
+El Dorado CID|ELDC2|8.500%|6.500%|0.000%|1.000%|1.000%
+El Dorado Days Inn Hotel CID    |ELDC1|9.500%|6.500%|0.000%|1.000%|2.000%
+El Dorado Plaza CID|ELDC6|8.500%|6.500%|0.000%|1.000%|1.000%
+El Dorado Red Coach Inn CID|ELDC4|9.500%|6.500%|0.000%|1.000%|2.000%
+El Dorado Super 8 CID |ELDC5|9.500%|6.500%|0.000%|1.000%|2.000%
+Elbing|ELBBU|6.500%|6.500%|0.000%|0.000%|0.000%
+Elgin|ELGCQ|7.500%|6.500%|1.000%|0.000%|0.000%
+Elk City|ELKMG|6.500%|6.500%|0.000%|0.000%|0.000%
+Elk County|ELKCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Elk Falls|ELKEK|7.500%|6.500%|1.000%|0.000%|0.000%
+Elkhart|ELKMT|8.500%|6.500%|1.000%|1.000%|0.000%
+Ellinwood|ELLBT|8.500%|6.500%|1.000%|1.000%|0.000%
+Ellis|ELLEL|9.000%|6.500%|0.500%|2.000%|0.000%
+Ellis County|ELICO|7.000%|6.500%|0.500%|0.000%|0.000%
+Ellis County BBJ CID|ELLC1|9.000%|6.500%|0.500%|0.000%|2.000%
+Ellsworth|ELLEW|8.750%|6.500%|1.000%|1.250%|0.000%
+Ellsworth County|ELSCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Elmdale|ELMCS|7.500%|6.500%|1.000%|0.000%|0.000%
+Elsmore|ELSAL|7.750%|6.500%|1.250%|0.000%|0.000%
+Elwood|ELWDP|9.500%|6.500%|2.000%|1.000%|0.000%
+Emmett|EMMPT|7.500%|6.500%|1.000%|0.000%|0.000%
+Emporia|EMPLY|8.500%|6.500%|1.000%|1.000%|0.000%
+Emporia Fairview Hotels CID|EMPC4|10.500%|6.500%|1.000%|1.000%|2.000%
+Emporia Flint Hills Mall CID|EMPC1|9.500%|6.500%|1.000%|1.000%|1.000%
+Emporia Pavilions CID|EMPC2|10.500%|6.500%|1.000%|1.000%|2.000%
+Emporia West Plaza CID|EMPC5|10.500%|6.500%|1.000%|1.000%|2.000%
+Englewood|ENGCA|6.500%|6.500%|0.000%|0.000%|0.000%
+Ensign|ENSGY|7.500%|6.500%|1.000%|0.000%|0.000%
+Enterprise|ENTDK|8.250%|6.500%|1.750%|0.000%|0.000%
+Erie|ERINO|9.750%|6.500%|1.750%|1.500%|0.000%
+Esbon|ESBJW|7.500%|6.500%|1.000%|0.000%|0.000%
+Eskridge|ESKWB|9.000%|6.500%|1.500%|1.000%|0.000%
+Eudora|EUDDG|9.500%|6.500%|1.250%|1.750%|0.000%
+Eureka|EURGW|9.500%|6.500%|1.000%|2.000%|0.000%
+Everest|EVEBR|7.500%|6.500%|1.000%|0.000%|0.000%
+Fairview|FAIBR|8.000%|6.500%|1.000%|0.500%|0.000%
+Fairview West Old Highway 75 CID |FARC1|9.500%|6.500%|1.000%|0.500%|1.500%
+Fairway|FAIJO|9.975%|6.500%|1.475%|2.000%|0.000%
+Fairway 55th and Parkway CID |FAIC1|11.475%|6.500%|1.475%|2.000%|1.500%
+Fall River|FALGW|7.500%|6.500%|1.000%|0.000%|0.000%
+Finney County|FINCO|8.300%|6.500%|1.800%|0.000%|0.000%
+Florence|FLOMN|8.500%|6.500%|1.000%|1.000%|0.000%
+Fontana|FONMI|8.500%|6.500%|1.500%|0.500%|0.000%
+Ford|FORFO|7.500%|6.500%|1.000%|0.000%|0.000%
+Ford County|FORCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Formoso|FORJW|7.500%|6.500%|1.000%|0.000%|0.000%
+Fort Scott|FORBB|9.650%|6.500%|1.650%|1.500%|0.000%
+Fort Scott Dollar Tree CID|FORC3|10.650%|6.500%|1.650%|1.500%|1.000%
+Fort Scott EMD CID|FORC1|10.650%|6.500%|1.650%|1.500%|1.000%
+Fort Scott Price Chopper CID|FORC2|10.150%|6.500%|1.650%|1.500%|0.500%
+Fowler|FOWME|8.500%|6.500%|1.000%|1.000%|0.000%
+Frankfort|FRAMS|8.500%|6.500%|0.500%|1.500%|0.000%
+Franklin County|FRACO|8.000%|6.500%|1.500%|0.000%|0.000%
+Frederick|FRERC|7.500%|6.500%|1.000%|0.000%|0.000%
+Fredonia|FREWL|10.000%|6.500%|1.000%|2.500%|0.000%
+Frontenac|FROCR|8.750%|6.500%|1.000%|1.250%|0.000%
+Frontenac Harbor Freight CID|FROC1|10.000%|6.500%|1.000%|1.250%|1.250%
+Fulton|FULBB|8.150%|6.500%|1.650%|0.000%|0.000%
+Galatia|GALBT|7.500%|6.500%|1.000%|0.000%|0.000%
+Galena|GALCK|9.000%|6.500%|1.500%|1.000%|0.000%
+Galesburg|GALNO|8.250%|6.500%|1.750%|0.000%|0.000%
+Galva|GALMP|8.500%|6.500%|2.000%|0.000%|0.000%
+Garden City|GARFI|9.450%|6.500%|1.800%|1.150%|0.000%
+Garden City 4-A's Properties CID|GARC7|11.450%|6.500%|1.800%|1.150%|2.000%
+Garden City Campus and Kansas CID|GARC6|10.450%|6.500%|1.800%|1.150%|1.000%
+Garden City Fulton's Founders Brewery CID|GARC2|10.450%|6.500%|1.800%|1.150%|1.000%
+Garden City Plaza CID|GARC4|10.450%|6.500%|1.800%|1.150%|1.000%
+Garden City Plaza II CID|GARC5|11.450%|6.500%|1.800%|1.150%|2.000%
+Garden City Schulman Crossing CID and Sports of the World STAR Bond|GARC3|10.450%|6.500%|1.800%|1.150%|1.000%
+Garden City Sports of the World STAR Bond|GARS1|9.450%|6.500%|1.800%|1.150%|0.000%
+Garden City Sports of the World STAR Bond and Stone Development CID|GARS2|10.450%|6.500%|1.800%|1.150%|1.000%
+Garden City Stone Development CID|GARC1|10.450%|6.500%|1.800%|1.150%|1.000%
+Garden Plain|GARSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Gardner|GARJO|9.475%|6.500%|1.475%|1.500%|0.000%
+Gardner Main Street Market Place CID|GADC1|10.475%|6.500%|1.475%|1.500%|1.000%
+Gardner Plaza South CID|GADC2|10.475%|6.500%|1.475%|1.500%|1.000%
+Garfield|GARPN|8.500%|6.500%|2.000%|0.000%|0.000%
+Garnett|GARAN|9.000%|6.500%|1.000%|1.500%|0.000%
+Garnett Guffey Properties CID |GANC1|11.000%|6.500%|1.000%|1.500%|2.000%
+Gas|GASAL|8.750%|6.500%|1.250%|1.000%|0.000%
+Gaylord|GAYSM|8.500%|6.500%|2.000%|0.000%|0.000%
+Geary County|GEACO|7.750%|6.500%|1.250%|0.000%|0.000%
+Gem|GEMTH|8.250%|6.500%|1.750%|0.000%|0.000%
+Geneseo|GENRC|9.500%|6.500%|1.000%|2.000%|0.000%
+Geuda Springs (Cowley County)|GEUCL|6.500%|6.500%|0.000%|0.000%|0.000%
+Geuda Springs (Sumner County)|GEUSU|7.500%|6.500%|1.000%|0.000%|0.000%
+Girard|GIRCR|9.000%|6.500%|1.000%|1.500%|0.000%
+Glade|GLAPL|9.000%|6.500%|0.500%|2.000%|0.000%
+Glasco|GLACD|8.500%|6.500%|1.000%|1.000%|0.000%
+Glen Elder|GLEMC|8.500%|6.500%|1.000%|1.000%|0.000%
+Goddard|GODSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Goddard Olympic Park CID, TDD & STAR|GODC1|10.000%|6.500%|1.000%|1.000%|1.500%
+Goddard Olympic Park STAR Bond|GODOP|8.500%|6.500%|1.000%|1.000%|0.000%
+Goddard Tanganyika Wildlife Park CID & TDD|GODC2|11.500%|6.500%|1.000%|1.000%|3.000%
+Goessel|GOEMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Goff|GOFNM|8.000%|6.500%|1.500%|0.000%|0.000%
+Goodland|GOOSH|9.000%|6.500%|2.250%|0.250%|0.000%
+Goodland 24/7 Travel Store CID |GOOC3|11.000%|6.500%|2.250%|0.250%|2.000%
+Goodland Holiday Inn Express CID|GOOC2|11.000%|6.500%|2.250%|0.250%|2.000%
+Gorham|GORRS|8.500%|6.500%|2.000%|0.000%|0.000%
+Gove|GOVGO|8.500%|6.500%|2.000%|0.000%|0.000%
+Gove County|GOVCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Graham County|GRHCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Grainfield|GRAGO|8.500%|6.500%|2.000%|0.000%|0.000%
+Grandview Plaza|GRAGE|9.750%|6.500%|1.250%|2.000%|0.000%
+Grant County|GRNCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Gray County|GRYCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Great Bend|GREBT|8.700%|6.500%|1.000%|1.200%|0.000%
+Great Bend Golden Belt Cinema 6 CID|GREC2|10.700%|6.500%|1.000%|1.200%|2.000%
+Great Bend Holiday Inn Express CID|GREC3|10.700%|6.500%|1.000%|1.200%|2.000%
+Great Bend Lodging CID|GREC4|10.700%|6.500%|1.000%|1.200%|2.000%
+Great Bend Sutherlands CID|GREC1|9.700%|6.500%|1.000%|1.200%|1.000%
+Greeley|GREAN|7.500%|6.500%|1.000%|0.000%|0.000%
+Greeley County|GRLCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Green|GRECY|7.500%|6.500%|1.000%|0.000%|0.000%
+Greenleaf|GREWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Greensburg|GREKW|8.500%|6.500%|1.000%|1.000%|0.000%
+Greenwood County|GRWCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Grenola|GREEK|7.500%|6.500%|1.000%|0.000%|0.000%
+Gridley|GRICF|8.500%|6.500%|0.000%|2.000%|0.000%
+Grinnell|GRIGO|8.750%|6.500%|2.000%|0.250%|0.000%
+Gypsum|GYPSA|8.000%|6.500%|1.500%|0.000%|0.000%
+Haddam|HADWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Halstead|HALHV|8.500%|6.500%|2.000%|0.000%|0.000%
+Hamilton|HAMGW|7.500%|6.500%|1.000%|0.000%|0.000%
+Hamilton County|HAMCO|8.000%|6.500%|1.500%|0.000%|0.000%
+Hamlin|HAMBR|7.500%|6.500%|1.000%|0.000%|0.000%
+Hanover|HANWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Hanston|HANHG|7.500%|6.500%|1.000%|0.000%|0.000%
+Hardtner|HARBA|7.500%|6.500%|1.000%|0.000%|0.000%
+Harper|HARHP|8.500%|6.500%|0.000%|2.000%|0.000%
+Harper Cobblestone Inn CID|HARC3|10.500%|6.500%|0.000%|2.000%|2.000%
+Harper County|HARCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Harper County CID|HARC2|8.500%|6.500%|0.000%|0.000%|2.000%
+Harper County Downtown Anthony CID|HARC1|9.000%|6.500%|0.000%|0.500%|2.000%
+Hartford|HARLY|8.500%|6.500%|1.000%|1.000%|0.000%
+Harvey County|HAYCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Harveyville|HARWB|8.000%|6.500%|1.500%|0.000%|0.000%
+Haskell County|HASCO|7.000%|6.500%|0.500%|0.000%|0.000%
+Havana|HAVMG|6.500%|6.500%|0.000%|0.000%|0.000%
+Haven|HAVRN|7.500%|6.500%|1.000%|0.000%|0.000%
+Havensville|HAVPT|7.500%|6.500%|1.000%|0.000%|0.000%
+Haviland|HAVKW|7.500%|6.500%|1.000%|0.000%|0.000%
+Hays|HAYEL|9.250%|6.500%|0.500%|2.250%|0.000%
+Hays 48th & Roth Avenue CID|HAYC1|11.250%|6.500%|0.500%|2.250%|2.000%
+Hays Cervs CID|HAC10|10.750%|6.500%|0.500%|2.250%|1.500%
+Hays Extended Stay Hotel Partners 1 & 2 CID|HAYC3|11.250%|6.500%|0.500%|2.250%|2.000%
+Hays Extended Stay Hotel Partners 2 CID|HAYC4|10.250%|6.500%|0.500%|2.250%|1.000%
+Hays Hilton Garden Inn CID|HAYC6|11.250%|6.500%|0.500%|2.250%|2.000%
+Hays Investors CID|HAYC5|10.250%|6.500%|0.500%|2.250%|1.000%
+Hays Mall CID|HAYC2|10.250%|6.500%|0.500%|2.250%|1.000%
+Hays Saffron West 43rd Street|HAYC7|11.250%|6.500%|0.500%|2.250%|2.000%
+Hays Travel Plaza CID|HAYC8|11.250%|6.500%|0.500%|2.250%|2.000%
+Hays Vernie's CID|HAYC9|11.250%|6.500%|0.500%|2.250%|2.000%
+Haysville|HAYSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Hazelton|HAZBA|7.500%|6.500%|1.000%|0.000%|0.000%
+Hepler|HEPCR|7.500%|6.500%|1.000%|0.000%|0.000%
+Herington (Dickinson County)|HERDK|9.250%|6.500%|1.750%|1.000%|0.000%
+Herington (Morris County)|HERMR|8.500%|6.500%|1.000%|1.000%|0.000%
+Herndon|HERRA|8.500%|6.500%|2.000%|0.000%|0.000%
+Hesston|HESHV|8.500%|6.500%|2.000%|0.000%|0.000%
+Hiawatha|HIABR|9.000%|6.500%|1.000%|1.500%|0.000%
+Hiawatha Hotel CID|HIAC1|11.000%|6.500%|1.000%|1.500%|2.000%
+Highland|HIGDP|9.500%|6.500%|2.000%|1.000%|0.000%
+Hill City|HILGH|8.500%|6.500%|1.000%|1.000%|0.000%
+Hillsboro|HILMN|8.500%|6.500%|1.000%|1.000%|0.000%
+Hodgeman County|HODCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Hoisington|HOIBT|8.250%|6.500%|1.000%|0.750%|0.000%
+Hoisington Cheyenne Bottoms Inn CID|HOIC1|10.250%|6.500%|1.000%|0.750%|2.000%
+Hoisington Kindscher CID|HOIC2|8.750%|6.500%|1.000%|0.750%|0.500%
+Hoisington Subway CID|HOIC3|10.250%|6.500%|1.000%|0.750%|2.000%
+Holcomb|HOLFI|8.800%|6.500%|1.800%|0.500%|0.000%
+Hollenberg|HOLWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Holton|HOLJA|8.900%|6.500%|1.650%|0.750%|0.000%
+Holyrood|HOLEW|7.500%|6.500%|1.000%|0.000%|0.000%
+Hope|HOPDK|8.250%|6.500%|1.750%|0.000%|0.000%
+Horace|HORGL|7.500%|6.500%|1.000%|0.000%|0.000%
+Horton|HORBR|9.500%|6.500%|1.000%|2.000%|0.000%
+Howard|HOWEK|8.500%|6.500%|1.000%|1.000%|0.000%
+Hoxie|HOXSD|8.500%|6.500%|2.000%|0.000%|0.000%
+Hoyt|HOYJA|8.150%|6.500%|1.650%|0.000%|0.000%
+Hudson|HUDSF|7.500%|6.500%|1.000%|0.000%|0.000%
+Hugoton|HUGSV|9.000%|6.500%|1.000%|1.500%|0.000%
+Hugoton Sunrise Hospitality CID|HUGC1|11.000%|6.500%|1.000%|1.500%|2.000%
+Humboldt|HUMAL|9.500%|6.500%|1.250%|1.750%|0.000%
+Hunnewell|HUNSU|7.500%|6.500%|1.000%|0.000%|0.000%
+Hunter|HUNMC|7.500%|6.500%|1.000%|0.000%|0.000%
+Huron|HURAT|7.500%|6.500%|1.000%|0.000%|0.000%
+Hutchinson|HUTRN|8.250%|6.500%|1.000%|0.750%|0.000%
+Hutchinson Amber Hotel CID|HUTC6|10.250%|6.500%|1.000%|0.750%|2.000%
+Hutchinson Hobby Lobby/Orschlen CID|HUTC1|9.250%|6.500%|1.000%|0.750%|1.000%
+Hutchinson Holiday Inn Express CID|HUTC4|10.250%|6.500%|1.000%|0.750%|2.000%
+Hutchinson Kansas State Fairgrounds|HUTSF|8.250%|6.500%|1.000%|0.750%|0.000%
+Hutchinson Mall CID|HUTC5|9.250%|6.500%|1.000%|0.750%|1.000%
+Hutchinson Mall Outlot CID|HUTC3|9.250%|6.500%|1.000%|0.750%|1.000%
+Independence|INDMG|9.500%|6.500%|0.000%|3.000%|0.000%
+Ingalls|INGGY|7.500%|6.500%|1.000%|0.000%|0.000%
+Inman|INMMP|8.500%|6.500%|2.000%|0.000%|0.000%
+Iola|IOLAL|8.750%|6.500%|1.250%|1.000%|0.000%
+Isabel|ISABA|7.500%|6.500%|1.000%|0.000%|0.000%
+Iuka|IUKPR|8.250%|6.500%|1.750%|0.000%|0.000%
+Jackson County|JACCO|8.150%|6.500%|1.650%|0.000%|0.000%
+Jamestown|JAMCD|7.500%|6.500%|1.000%|0.000%|0.000%
+Jefferson County|JEFCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Jennings|JENDC|7.500%|6.500%|1.000%|0.000%|0.000%
+Jetmore|JETHG|10.500%|6.500%|1.000%|3.000%|0.000%
+Jewell|JEWJW|7.500%|6.500%|1.000%|0.000%|0.000%
+Jewell County|JEWCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Johnson City|JOHST|7.500%|6.500%|1.000%|0.000%|0.000%
+Johnson County|JOHCO|7.975%|6.500%|1.475%|0.000%|0.000%
+Junction City|JUNGE|9.750%|6.500%|1.250%|2.000%|0.000%
+Junction City Burke's CID|JUNC2|11.500%|6.500%|1.250%|2.000%|1.750%
+Junction City Goody's Plaza CID|JUNC1|11.500%|6.500%|1.250%|2.000%|1.750%
+Kanopolis|KANEW|8.500%|6.500%|1.000%|1.000%|0.000%
+Kanorado|KANSH|10.750%|6.500%|2.250%|2.000%|0.000%
+Kansas City|KANWY|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City 39th & Rainbow #1 CID|KANC3|10.125%|6.500%|1.000%|1.625%|1.000%
+Kansas City 39th & Rainbow #2 CID|KANC8|10.375%|6.500%|1.000%|1.625%|1.250%
+Kansas City Downtown Hotel CID|KANC6|11.125%|6.500%|1.000%|1.625%|2.000%
+Kansas City Homefield - Menards STAR Bond|KANMN|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Homefield STAR BOND|KANHF|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Homefield STAR Bond & Homefield CID|KANHC|11.125%|6.500%|1.000%|1.625%|2.000%
+Kansas City Kaw River Bridge CID |KAN15|11.125%|6.500%|1.000%|1.625%|2.000%
+Kansas City Legends CID & TDD|WRACT|10.725%|6.500%|1.000%|1.625%|1.600%
+Kansas City Legends Hotel CID and Homefield Star|KAN14|10.625%|6.500%|1.000%|1.625%|1.500%
+Kansas City Legends Garage and Lawn CID and Race Track STAR Bond|WYRTC|10.125%|6.500%|1.000%|1.625%|1.000%
+Kansas City Legends Garage and Lawn CID and Village West TDD|KANCT|10.725%|6.500%|1.000%|1.625%|1.600%
+Kansas City Legends TDD|WRATD|9.725%|6.500%|1.000%|1.625%|0.600%
+Kansas City Metropolitan Avenue CID (Terminated 3-31-2026)|KANWY|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Northwest Speedway (American Royal) STAR Bond 1|KAAR1|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Northwest Speedway (American Royal) STAR Bond 2|KAAR2|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Northwood Shopping Center CID|KANC9|10.225%|6.500%|1.000%|1.625%|1.100%
+Kansas City Plaza at Speedway #1 TDD|KANT5|9.725%|6.500%|1.000%|1.625%|0.600%
+Kansas City Plaza at Speedway #2 TDD|KANT6|10.125%|6.500%|1.000%|1.625%|1.000%
+Kansas City Plaza at Speedway #3 TDD|KANT7|9.725%|6.500%|1.000%|1.625%|0.600%
+Kansas City Race Track STAR Bond|WYART|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Rainbow Village Hotel CID|KAN11|10.375%|6.500%|1.000%|1.625%|1.250%
+Kansas City Schlitterbahn STAR Bond |KANWP|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Schlitterbahn STAR Bond & Homefield CID|KANWC|11.125%|6.500%|1.000%|1.625%|2.000%
+Kansas City Shawnee Plaza CID|KANC2|10.125%|6.500%|1.000%|1.625%|1.000%
+Kansas City Speedway STAR Bond|WYSPE|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City Sporting CID |KANC1|10.125%|6.500%|1.000%|1.625%|1.000%
+Kansas City US Soccer STAR Bond|KANSO|9.125%|6.500%|1.000%|1.625%|0.000%
+Kansas City US Soccer STAR Bond & Homefield CID|KANSC|11.125%|6.500%|1.000%|1.625%|2.000%
+Kansas City Village West-West End TDD |KANTD|9.725%|6.500%|1.000%|1.625%|0.600%
+Kansas City Wyandotte Plaza CID|KANC4|10.125%|6.500%|1.000%|1.625%|1.000%
+Kearny County|KEACO|7.500%|6.500%|1.000%|0.000%|0.000%
+Kechi|KECSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Kensington|KENSM|9.250%|6.500%|2.000%|0.750%|0.000%
+Kincaid|KINAN|8.500%|6.500%|1.000%|1.000%|0.000%
+Kingman|KINKM|9.000%|6.500%|1.500%|1.000%|0.000%
+Kingman County|KINCO|8.000%|6.500%|1.500%|0.000%|0.000%
+Kinsley|KINED|8.875%|6.500%|1.375%|1.000%|0.000%
+Kiowa|KIOBA|8.250%|6.500%|1.000%|0.750%|0.000%
+Kiowa County|KIOCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Kirwin|KIRPL|7.000%|6.500%|0.500%|0.000%|0.000%
+Kismet|KISSW|7.750%|6.500%|1.250%|0.000%|0.000%
+Labette|LABLB|7.750%|6.500%|1.250%|0.000%|0.000%
+Labette County|LABCO|7.750%|6.500%|1.250%|0.000%|0.000%
+La Crosse|LACRH|9.500%|6.500%|0.000%|3.000%|0.000%
+La Cygne|LACLN|9.500%|6.500%|1.000%|2.000%|0.000%
+La Harpe|LAHAL|9.250%|6.500%|1.250%|1.500%|0.000%
+Lake Quivira (Johnson County)|LAKJO|7.975%|6.500%|1.475%|0.000%|0.000%
+Lake Quivira (Wyandotte County)|LAKWY|7.500%|6.500%|1.000%|0.000%|0.000%
+Lakin|LAKKE|8.500%|6.500%|1.000%|1.000%|0.000%
+Lancaster|LANAT|7.500%|6.500%|1.000%|0.000%|0.000%
+Lane|LANFR|9.000%|6.500%|1.500%|1.000%|0.000%
+Lane County     |LANCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Langdon|LANRN|7.500%|6.500%|1.000%|0.000%|0.000%
+Lansing|LANLV|9.400%|6.500%|1.000%|1.900%|0.000%
+Lansing Speedway CID|LANC1|10.400%|6.500%|1.000%|1.900%|1.000%
+Larned|LARPN|9.000%|6.500%|2.000%|0.500%|0.000%
+Latham|LATBU|7.000%|6.500%|0.000%|0.500%|0.000%
+Latimer|LATMR|7.500%|6.500%|1.000%|0.000%|0.000%
+Lawrence|LAWDG|9.350%|6.500%|1.250%|1.600%|0.000%
+Lawrence 9th & New Hampshire TDD|LAWT3|10.350%|6.500%|1.250%|1.600%|1.000%
+Lawrence Free State TDD|LAWTD|10.350%|6.500%|1.250%|1.600%|1.000%
+Lawrence KU Gateway CID and STAR|LAWC2|11.350%|6.500%|1.250%|1.600%|2.000%
+Lawrence KU Gateway CID|LAWC3|11.350%|6.500%|1.250%|1.600%|2.000%
+Lawrence Oread  TDD|LAWT2|10.350%|6.500%|1.250%|1.600%|1.000%
+Lawrence The Crossing CID |LAWC1|10.850%|6.500%|1.250%|1.600%|1.500%
+Le Roy|LERCF|7.500%|6.500%|0.000%|1.000%|0.000%
+Leavenworth|LEALV|9.500%|6.500%|1.000%|2.000%|0.000%
+Leavenworth County|LEACO|7.500%|6.500%|1.000%|0.000%|0.000%
+Leavenworth Downtown Hotel CID|LEVC2|11.500%|6.500%|1.000%|2.000%|2.000%
+Leavenworth First City Hotel CID|LEVC3|11.500%|6.500%|1.000%|2.000%|2.000%
+Leavenworth Fort Gate CID|LEVC6|10.750%|6.500%|1.000%|2.000%|1.250%
+Leavenworth Luxury & Imports CID|LEVC4|9.900%|6.500%|1.000%|2.000%|0.400%
+Leavenworth Price Chopper CID |LEVC5|9.900%|6.500%|1.000%|2.000%|0.400%
+Leavenworth Zeck Ford CID|LEVC1|10.250%|6.500%|1.000%|2.000%|0.750%
+Leawood|LEAJO|9.100%|6.500%|1.475%|1.125%|0.000%
+Leawood Camelot Court CID|LEAC1|10.100%|6.500%|1.475%|1.125%|1.000%
+Leawood Park Place TDD|LEATD|10.100%|6.500%|1.475%|1.125%|1.000%
+Leawood Ranch Mart North CID|LEAC2|10.100%|6.500%|1.475%|1.125%|1.000%
+Lebanon|LEBSM|8.500%|6.500%|2.000%|0.000%|0.000%
+Lebo|LEBCF|8.500%|6.500%|0.000%|2.000%|0.000%
+Lecompton|LECDG|9.500%|6.500%|1.250%|1.750%|0.000%
+Lehigh|LEHMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Lenexa|LENJO|9.350%|6.500%|1.475%|1.375%|0.000%
+Lenexa Candlewood Suites CID|LENC8|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa City Center Area E CID|LEC10|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa City Center East Village I CID|LENC5|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa City Center East Village 2 CID|LENC6|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Central Green CID|LEC17|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Greystone South Plaza CID|LENC4|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Holiday Inn CID|LENC9|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Jayhawk Ridge CID|LEC14|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Living Spaces CID|LEC15|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Midas Dual Hotel CID|LEC20|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Midas Springhill Suites CID|LENC7|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Orchard Corners CID|LENC1|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Point Shopping Center CID|LEC11|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Prairie Creek CID|LENC2|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Renner 87 CID |LEC18|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Restaurant Row CID |LEC19|11.350%|6.500%|1.475%|1.375%|2.000%
+Lenexa Retreat on the Prairie CID |LEC16|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Quivira 95 CID|LENC3|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Sonoma Plaza CID|LEC12|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenexa Ten Ridge CID|LEC13|10.350%|6.500%|1.475%|1.375%|1.000%
+Lenora|LENNT|8.250%|6.500%|1.750%|0.000%|0.000%
+Leon|LEOBU|7.500%|6.500%|0.000%|1.000%|0.000%
+Leona|LEODP|8.500%|6.500%|2.000%|0.000%|0.000%
+Leonardville|LEORL|8.200%|6.500%|0.700%|1.000%|0.000%
+Leoti|LEOWH|8.500%|6.500%|2.000%|0.000%|0.000%
+Lewis|LEWED|7.875%|6.500%|1.375%|0.000%|0.000%
+Liberal|LIBSW|9.250%|6.500%|1.250%|1.500%|0.000%
+Liberal CID|LIBC1|11.250%|6.500%|1.250%|1.500%|2.000%
+Liberal IHOP CID|LIBC2|11.250%|6.500%|1.250%|1.500%|2.000%
+Liberal North Liberal One CID|LIBC3|10.250%|6.500%|1.250%|1.500%|1.000%
+Liberal Plaza CID|LIBC5|10.250%|6.500%|1.250%|1.500%|1.000%
+Liberal Southgate Mall CID|LIBC4|10.250%|6.500%|1.250%|1.500%|1.000%
+Liberal Venture Kansas CID|LIBC6|10.250%|6.500%|1.250%|1.500%|1.000%
+Liberty|LIBMG|6.500%|6.500%|0.000%|0.000%|0.000%
+Liebenthal|LIERH|8.000%|6.500%|0.000%|1.500%|0.000%
+Lincoln Center|LINLC|8.500%|6.500%|1.000%|1.000%|0.000%
+Lincoln County|LICCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Lincolnville|LINMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Lindsborg|LINMP|10.000%|6.500%|2.000%|1.500%|0.000%
+Linn|LINWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Linn County|LINCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Linn Valley|LINLN|8.500%|6.500%|1.000%|1.000%|0.000%
+Linwood|LINLV|8.500%|6.500%|1.000%|1.000%|0.000%
+Little River|LITRC|8.500%|6.500%|1.000%|1.000%|0.000%
+Logan|LOGPL|8.000%|6.500%|0.500%|1.000%|0.000%
+Logan County|LOGCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Lone Elm|LONAN|7.500%|6.500%|1.000%|0.000%|0.000%
+Long Island|LONPL|7.000%|6.500%|0.500%|0.000%|0.000%
+Longford|LONCY|8.500%|6.500%|1.000%|1.000%|0.000%
+Longton|LONEK|7.500%|6.500%|1.000%|0.000%|0.000%
+Lorraine|LOREW|7.500%|6.500%|1.000%|0.000%|0.000%
+Lost Springs|LOSMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Louisburg|LOUMI|9.500%|6.500%|1.500%|1.500%|0.000%
+Louisville|LOUPT|7.500%|6.500%|1.000%|0.000%|0.000%
+Lucas|LUCRS|9.500%|6.500%|2.000%|1.000%|0.000%
+Luray|LURRS|10.500%|6.500%|2.000%|2.000%|0.000%
+Lyndon|LYNOS|9.500%|6.500%|1.500%|1.500%|0.000%
+Lyon County|LYOCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Lyons|LYORC|8.500%|6.500%|1.000%|1.000%|0.000%
+Macksville|MACSF|7.500%|6.500%|1.000%|0.000%|0.000%
+Madison|MADGW|7.500%|6.500%|1.000%|0.000%|0.000%
+Mahaska|MAHWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Maize|MAISG|8.500%|6.500%|1.000%|1.000%|0.000%
+Manchester|MANDK|8.250%|6.500%|1.750%|0.000%|0.000%
+Manhattan (Pottawatomie County)|MANPT|9.450%|6.500%|1.000%|1.950%|0.000%
+Manhattan (Riley County)|MANRL|9.150%|6.500%|0.700%|1.950%|0.000%
+Manhattan Art and Light Star Bond|MANAL|9.150%|6.500%|0.700%|1.950%|0.000%
+Manhattan Blueville Addition TDD|MANT7|9.650%|6.500%|0.700%|1.950%|0.500%
+Manhattan Blueville Unit 2 TDD|MANT9|9.650%|6.500%|0.700%|1.950%|0.500%
+Manhattan Flint Hills Discovery Center STAR Bond– North|MANSN|9.150%|6.500%|0.700%|1.950%|0.000%
+Manhattan Flint Hills Discovery Center STAR Bond– South|MANSS|9.150%|6.500%|0.700%|1.950%|0.000%
+Manhattan Flint Hills South TDD and Flint Hills South Star Bond|MANT5|9.650%|6.500%|0.700%|1.950%|0.500%
+Manhattan Marketplace TDD and Flint Hills North Star Bond|MANT2|9.650%|6.500%|0.700%|1.950%|0.500%
+Manhattan McD's Addition TDD|MANT6|9.650%|6.500%|0.700%|1.950%|0.500%
+Manhattan Scenic Crossing Addition TDD|MANT8|9.650%|6.500%|0.700%|1.950%|0.500%
+Manhattan Town Center CID|MANC1|9.900%|6.500%|0.700%|1.950%|0.750%
+Mankato|MANJW|8.250%|6.500%|1.000%|0.750%|0.000%
+Manter|MANST|7.500%|6.500%|1.000%|0.000%|0.000%
+Maple Hill|MAPWB|8.750%|6.500%|1.500%|0.750%|0.000%
+Mapleton|MAPBB|9.150%|6.500%|1.650%|1.000%|0.000%
+Marion|MARMN|8.250%|6.500%|1.000%|0.750%|0.000%
+Marion County|MANCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Marquette|MARMP|9.500%|6.500%|2.000%|1.000%|0.000%
+Marshall County|MALCO|7.000%|6.500%|0.500%|0.000%|0.000%
+Marysville|MARMS|8.600%|6.500%|0.500%|1.600%|0.000%
+Matfield Green|MATCS|7.500%|6.500%|1.000%|0.000%|0.000%
+Mayetta|MAYJA|9.650%|6.500%|1.650%|1.500%|0.000%
+Mayfield|MAYSU|8.000%|6.500%|1.000%|0.500%|0.000%
+McCracken|MCCRH|6.500%|6.500%|0.000%|0.000%|0.000%
+McCune|MCCCR|8.500%|6.500%|1.000%|1.000%|0.000%
+McDonald|MCDRA|8.500%|6.500%|2.000%|0.000%|0.000%
+McFarland|MCFWB|8.000%|6.500%|1.500%|0.000%|0.000%
+McLouth|MCLJF|8.500%|6.500%|1.000%|1.000%|0.000%
+McPherson|MCPMP|9.500%|6.500%|2.000%|1.000%|0.000%
+McPherson County|MCPCO|8.500%|6.500%|2.000%|0.000%|0.000%
+McPherson Candlewood Suites CID|MCPC3|11.500%|6.500%|2.000%|1.000%|2.000%
+McPherson North Champlin Street CID|MCPC2|11.500%|6.500%|2.000%|1.000%|2.000%
+McPherson Plaza East Place CID|MCPC1|11.500%|6.500%|2.000%|1.000%|2.000%
+Meade|MEAME|8.500%|6.500%|1.000%|1.000%|0.000%
+Meade County|MEACO|7.500%|6.500%|1.000%|0.000%|0.000%
+Medicine Lodge|MEDBA|8.250%|6.500%|1.000%|0.750%|0.000%
+Medicine Lodge Streetscape CID|MEDC1|9.250%|6.500%|1.000%|0.750%|1.000%
+Melvern|MELOS|9.000%|6.500%|1.500%|1.000%|0.000%
+Menlo|MENTH|8.250%|6.500%|1.750%|0.000%|0.000%
+Meriden|MERJF|8.000%|6.500%|1.000%|0.500%|0.000%
+Merriam |MERJO|9.475%|6.500%|1.475%|1.500%|0.000%
+Merriam North CID|MERC1|10.475%|6.500%|1.475%|1.500%|1.000%
+Miami County|MIACO|8.000%|6.500%|1.500%|0.000%|0.000%
+Milan|MILSU|7.500%|6.500%|1.000%|0.000%|0.000%
+Milford|MILGE|7.750%|6.500%|1.250%|0.000%|0.000%
+Miltonvale|MILCD|8.500%|6.500%|1.000%|1.000%|0.000%
+Minneapolis|MINOT|8.500%|6.500%|1.000%|1.000%|0.000%
+Minneola|MINCA|7.500%|6.500%|0.000%|1.000%|0.000%
+Mission|MISJO|9.725%|6.500%|1.475%|1.750%|0.000%
+Mission Commons Community CID|MISC2|10.725%|6.500%|1.475%|1.750%|1.000%
+Mission Crossing CID|MISC1|10.725%|6.500%|1.475%|1.750%|1.000%
+Mission Mart CID|MISC4|10.725%|6.500%|1.475%|1.750%|1.000%
+Mission Hills|MIHJO|9.225%|6.500%|1.475%|1.250%|0.000%
+Mission Woods|MIWJO|8.975%|6.500%|1.475%|1.000%|0.000%
+Mitchell County|MITCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Moline|MOLEK|7.500%|6.500%|1.000%|0.000%|0.000%
+Montezuma|MONGY|9.500%|6.500%|1.000%|2.000%|0.000%
+Montgomery County|MONCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Moran|MORAL|8.250%|6.500%|1.250%|0.500%|0.000%
+Morganville|MORCY|7.500%|6.500%|1.000%|0.000%|0.000%
+Morland|MORGH|8.500%|6.500%|1.000%|1.000%|0.000%
+Morrill|MORBR|7.500%|6.500%|1.000%|0.000%|0.000%
+Morris County|MOSCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Morrowville|MORWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Morton County|MOTCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Moscow|MOSSV|9.500%|6.500%|1.000%|2.000%|0.000%
+Mound City|MOULN|8.500%|6.500%|1.000%|1.000%|0.000%
+Mound Valley|MOULB|8.250%|6.500%|1.250%|0.500%|0.000%
+Moundridge|MOUMP|9.500%|6.500%|2.000%|1.000%|0.000%
+Mount Hope|MOUSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Mulberry|MULCR|7.500%|6.500%|1.000%|0.000%|0.000%
+Mullinville|MULKW|8.500%|6.500%|1.000%|1.000%|0.000%
+Mulvane (Sedgwick County)|MULSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Mulvane (Sumner County)|MULSU|8.500%|6.500%|1.000%|1.000%|0.000%
+Munden|MUNRP|8.500%|6.500%|2.000%|0.000%|0.000%
+Muscotah|MUSAT|7.500%|6.500%|1.000%|0.000%|0.000%
+Narka|NARRP|8.500%|6.500%|2.000%|0.000%|0.000%
+Nashville|NASKM|8.000%|6.500%|1.500%|0.000%|0.000%
+Natoma|NATOB|8.000%|6.500%|1.500%|0.000%|0.000%
+Nemaha County|NEMCO|8.000%|6.500%|1.500%|0.000%|0.000%
+Neodesha|NEOWL|10.500%|6.500%|1.000%|3.000%|0.000%
+Neosho County|NEOCO|8.250%|6.500%|1.750%|0.000%|0.000%
+Neosho Falls|NEOWO|7.500%|6.500%|1.000%|0.000%|0.000%
+Neosho Rapids|NEOLY|8.500%|6.500%|1.000%|1.000%|0.000%
+Ness City|NESNS|8.500%|6.500%|0.000%|2.000%|0.000%
+Ness County|NESCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Netawaka|NETJA|8.150%|6.500%|1.650%|0.000%|0.000%
+New Albany|NEWWL|7.500%|6.500%|1.000%|0.000%|0.000%
+New Cambria|NEWSA|8.000%|6.500%|1.500%|0.000%|0.000%
+New Strawn|NEWCF|6.500%|6.500%|0.000%|0.000%|0.000%
+Newton|NEWHV|8.500%|6.500%|2.000%|0.000%|0.000%
+Newton Holiday Inn Express CID|NEWC1|10.500%|6.500%|2.000%|0.000%|2.000%
+Nickerson|NICRN|8.500%|6.500%|1.000%|1.000%|0.000%
+Niotaze|NIOCQ|7.500%|6.500%|1.000%|0.000%|0.000%
+Norcatur|NORDC|7.500%|6.500%|1.000%|0.000%|0.000%
+North Newton|NORHV|8.500%|6.500%|2.000%|0.000%|0.000%
+Norton|NORNT|9.500%|6.500%|1.750%|1.250%|0.000%
+Norton County|NORCO|8.250%|6.500%|1.750%|0.000%|0.000%
+Nortonville|NORJF|7.500%|6.500%|1.000%|0.000%|0.000%
+Norwich|NORKM|8.000%|6.500%|1.500%|0.000%|0.000%
+Oak Hill|OAKCY|8.500%|6.500%|1.000%|1.000%|0.000%
+Oakley (Gove County)|OAKGO|10.000%|6.500%|2.000%|1.500%|0.000%
+Oakley Mittens CID|OAKC1|12.000%|6.500%|2.000%|1.500%|2.000%
+Oakley (Logan County)|OAKLG|10.000%|6.500%|2.000%|1.500%|0.000%
+Oakley (Thomas County)|OAKTH|9.750%|6.500%|1.750%|1.500%|0.000%
+Oberlin|OBEDC|9.000%|6.500%|1.000%|1.500%|0.000%
+Offerle|OFFED|7.875%|6.500%|1.375%|0.000%|0.000%
+Ogden|OGDRL|8.200%|6.500%|0.700%|1.000%|0.000%
+Oketo|OKEMS|7.000%|6.500%|0.500%|0.000%|0.000%
+Olathe|OLAJO|9.475%|6.500%|1.475%|1.500%|0.000%
+Olathe Conference Center Hotel CID|OLAC3|11.475%|6.500%|1.475%|1.500%|2.000%
+Olathe Entertainment District Phase 3 TDD|OLAT3|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Gateway No. 1a TDD |OLAT4|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Gateway No. 1b TDD |OLAT5|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Heart of America CID |OLAC2|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Indian Creek Crossing CID|OLAC9|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Pizza 51 South CID|OLC10|11.475%|6.500%|1.475%|1.500%|2.000%
+Olathe Pointe TDD|OLATD|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Ridgeview Falls TDD|OLAT6|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Ridgeview Marketplace CID|OLAC7|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Santa Fe Square CID|OLAC5|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Station CID|OLAC6|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Station North CID|OLC12|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe Third Street Social CID|OLC11|11.475%|6.500%|1.475%|1.500%|2.000%
+Olathe West Market CID|OLAC8|10.475%|6.500%|1.475%|1.500%|1.000%
+Olathe WIN CID|OLAC4|10.475%|6.500%|1.475%|1.500%|1.000%
+Olivet|OLIOS|8.000%|6.500%|1.500%|0.000%|0.000%
+Olmitz|OLMBT|7.500%|6.500%|1.000%|0.000%|0.000%
+Olpe|OLPLY|8.500%|6.500%|1.000%|1.000%|0.000%
+Olsburg|OLSPT|8.500%|6.500%|1.000%|1.000%|0.000%
+Onaga|ONAPT|8.500%|6.500%|1.000%|1.000%|0.000%
+Oneida|ONENM|8.000%|6.500%|1.500%|0.000%|0.000%
+Osage City|OSAOS|9.500%|6.500%|1.500%|1.500%|0.000%
+Osage County|OSACO|8.000%|6.500%|1.500%|0.000%|0.000%
+Osawatomie|OSAMI|9.750%|6.500%|1.500%|1.750%|0.000%
+Osborne|OSBOB|8.000%|6.500%|1.500%|0.000%|0.000%
+Osborne County|OSBCO|8.000%|6.500%|1.500%|0.000%|0.000%
+Oskaloosa|OSKJF|8.500%|6.500%|1.000%|1.000%|0.000%
+Oswego (Labette County)|OSWLB|9.250%|6.500%|1.250%|1.500%|0.000%
+Oswego (Cherokee County)|OSWCK|9.500%|6.500%|1.500%|1.500%|0.000%
+Otis|OTIRH|6.500%|6.500%|0.000%|0.000%|0.000%
+Ottawa|OTTFR|9.500%|6.500%|1.500%|1.500%|0.000%
+Ottawa 21st and Princeton CID|OTTC2|10.250%|6.500%|1.500%|1.500%|0.750%
+Ottawa Center CID|OTTC1|9.800%|6.500%|1.500%|1.500%|0.300%
+Ottawa County|OTTCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Ottawa Holiday Inn Express 1 CID|OTTC3|10.500%|6.500%|1.500%|1.500%|1.000%
+Ottawa Holiday Inn Express 2 CID|OTTC4|11.500%|6.500%|1.500%|1.500%|2.000%
+Overbrook|OVEOS|9.000%|6.500%|1.500%|1.000%|0.000%
+Overland Park |OVEJO|9.350%|6.500%|1.475%|1.375%|0.000%
+Overland Park 91st Street & Metcalf CID|OVEC2|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Bluhawk CID, TDD and Star Bond|OVC15|10.850%|6.500%|1.475%|1.375%|1.500%
+Overland Park Bluhawk Star Bond|OVEBH|9.350%|6.500%|1.475%|1.375%|0.000%
+Overland Park Bluhawk TDD and Star Bond|OVET5|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Brookridge 1 CID|OVC20|9.350%|6.500%|1.475%|1.375%|0.000%
+Overland Park Brookridge 2 CID|OVC22|10.850%|6.500%|1.475%|1.375%|1.500%
+Overland Park City Place TDD|OVET7|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Corbin Park CID|OVEC8|10.850%|6.500%|1.475%|1.375%|1.500%
+Overland Park Deer Creek TDD|OVETD|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Edison CID|OVC16|11.350%|6.500%|1.475%|1.375%|2.000%
+Overland Park Galleria 115 CID|OVC19|10.850%|6.500%|1.475%|1.375%|1.500%
+Overland Park Hawthorne Plaza CID|OVEC7|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Highlands Village TDD|OVET4|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Jack Stack CID|OVC14|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Metcalf 108 CID|OVC21|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Metcalf Crossing CID|OVC17|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Mission Farms West TDD|OVET6|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Nall Hills CID|OVC10|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Prairiefire Phase I CID|OVEC4|10.850%|6.500%|1.475%|1.375%|1.500%
+Overland Park Prairiefire STAR Bond and Phase I CID|OVEC5|10.850%|6.500%|1.475%|1.375%|1.500%
+Overland Park Prairiefire STAR Bond and Phase II CID|OVEC6|10.850%|6.500%|1.475%|1.375%|1.500%
+Overland Park Promontory CID|OVC13|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Quivira 95 Shops CID|OVEC1|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Ranch Mart South CID|OVEC9|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Regency Park CID|OVC11|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park Stanley Square CID|OVC23|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park The Vue CID|OVC12|10.350%|6.500%|1.475%|1.375%|1.000%
+Overland Park West Park CID|OVEC3|10.350%|6.500%|1.475%|1.375%|1.000%
+Oxford|OXFSU|8.500%|6.500%|1.000%|1.000%|0.000%
+Ozawkie|OZAJF|8.500%|6.500%|1.000%|1.000%|0.000%
+Palco|PALRO|8.000%|6.500%|0.500%|1.000%|0.000%
+Palmer|PALWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Paola|PAOMI|9.250%|6.500%|1.500%|1.250%|0.000%
+Paola Crossing No. 1 CID|PAOC1|10.500%|6.500%|1.500%|1.250%|1.250%
+Paradise|PARRS|8.500%|6.500%|2.000%|0.000%|0.000%
+Park|PARGO|8.500%|6.500%|2.000%|0.000%|0.000%
+Park City|PARSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Park City I-135 Arena CID|PAKC1|10.500%|6.500%|1.000%|1.000%|2.000%
+Parker|PARLN|9.500%|6.500%|1.000%|2.000%|0.000%
+Parkerfield|PARCL|6.500%|6.500%|0.000%|0.000%|0.000%
+Parkerville|PARMR|7.500%|6.500%|1.000%|0.000%|0.000%
+Parsons|PARLB|9.250%|6.500%|1.250%|1.500%|0.000%
+Parsons Hospitality CID|PARC1|11.250%|6.500%|1.250%|1.500%|2.000%
+Partridge|PARRN|7.500%|6.500%|1.000%|0.000%|0.000%
+Pawnee County|PAWCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Pawnee Rock|PAWBT|7.500%|6.500%|1.000%|0.000%|0.000%
+Paxico|PAXWB|9.000%|6.500%|1.500%|1.000%|0.000%
+Peabody|PEAMN|8.500%|6.500%|1.000%|1.000%|0.000%
+Penalosa|PENKM|8.000%|6.500%|1.500%|0.000%|0.000%
+Perry|PERJF|8.500%|6.500%|1.000%|1.000%|0.000%
+Peru|PERCQ|7.500%|6.500%|1.000%|0.000%|0.000%
+Phillips County|PHICO|7.000%|6.500%|0.500%|0.000%|0.000%
+Phillipsburg|PHIPL|9.000%|6.500%|0.500%|2.000%|0.000%
+Pittsburg|PITCR|9.000%|6.500%|1.000%|1.500%|0.000%
+Pittsburg Northgate Plaza CID|PITC1|9.900%|6.500%|1.000%|1.500%|0.900%
+Pittsburg TDD|PITTD|9.300%|6.500%|1.000%|1.500%|0.300%
+Pittsburg Town Center CID & TDD|PITC2|10.000%|6.500%|1.000%|1.500%|1.000%
+Plains|PLAME|7.500%|6.500%|1.000%|0.000%|0.000%
+Plainville|PLARO|9.000%|6.500%|0.500%|2.000%|0.000%
+Pleasanton|PLELN|9.500%|6.500%|1.000%|2.000%|0.000%
+Plevna|PLERN|7.500%|6.500%|1.000%|0.000%|0.000%
+Pomona|POMFR|10.000%|6.500%|1.500%|2.000%|0.000%
+Portis|POROB|8.000%|6.500%|1.500%|0.000%|0.000%
+Pottawatomie County|POTCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Potwin|POTBU|7.500%|6.500%|0.000%|1.000%|0.000%
+Powhattan|POWBR|7.500%|6.500%|1.000%|0.000%|0.000%
+Prairie View|PRAPL|7.000%|6.500%|0.500%|0.000%|0.000%
+Prairie Village|PRAJO|8.975%|6.500%|1.475%|1.000%|0.000%
+Prairie Village "The Village" CID|PRAC1|9.975%|6.500%|1.475%|1.000%|1.000%
+Prairie Village Corinth Square CID|PRAC2|9.975%|6.500%|1.475%|1.000%|1.000%
+Pratt|PRAPR|9.000%|6.500%|1.750%|0.750%|0.000%
+Pratt County|PRACO|8.250%|6.500%|1.750%|0.000%|0.000%
+Prescott|PRELN|7.500%|6.500%|1.000%|0.000%|0.000%
+Preston|PREPR|8.250%|6.500%|1.750%|0.000%|0.000%
+Pretty Prairie|PRERN|8.500%|6.500%|1.000%|1.000%|0.000%
+Princeton|PRIFR|9.500%|6.500%|1.500%|1.500%|0.000%
+Protection|PROCM|8.000%|6.500%|0.000%|1.500%|0.000%
+Quenemo|QUEOS|8.000%|6.500%|1.500%|0.000%|0.000%
+Quinter|QUIGO|9.500%|6.500%|2.000%|1.000%|0.000%
+Radium|RADSF|7.500%|6.500%|1.000%|0.000%|0.000%
+Ramona|RAMMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Randall|RANJW|7.500%|6.500%|1.000%|0.000%|0.000%
+Randolph|RANRL|8.200%|6.500%|0.700%|1.000%|0.000%
+Ransom|RANNS|7.000%|6.500%|0.000%|0.500%|0.000%
+Rantoul|RANFR|8.000%|6.500%|1.500%|0.000%|0.000%
+Rawlins County|RAWCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Raymond|RAYRC|7.500%|6.500%|1.000%|0.000%|0.000%
+Reading|REALY|7.500%|6.500%|1.000%|0.000%|0.000%
+Redfield|REDBB|8.150%|6.500%|1.650%|0.000%|0.000%
+Reno County|RENCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Republic|REPRP|8.500%|6.500%|2.000%|0.000%|0.000%
+Republic County|REPCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Reserve|RESBR|7.500%|6.500%|1.000%|0.000%|0.000%
+Rexford|REXTH|8.250%|6.500%|1.750%|0.000%|0.000%
+Rice County|RICCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Richfield|RICMT|7.500%|6.500%|1.000%|0.000%|0.000%
+Richmond|RICFR|8.250%|6.500%|1.500%|0.250%|0.000%
+Riley|RILRL|8.200%|6.500%|0.700%|1.000%|0.000%
+Riley County|RILCO|7.200%|6.500%|0.700%|0.000%|0.000%
+Robinson|ROBBR|7.500%|6.500%|1.000%|0.000%|0.000%
+Roeland Park|ROEJO|9.475%|6.500%|1.475%|1.500%|0.000%
+Roeland Park Shopping Center #1 TDD|ROETD|10.475%|6.500%|1.475%|1.500%|1.000%
+Roeland Park Shopping Center #2 TDD|ROET2|9.975%|6.500%|1.475%|1.500%|0.500%
+Roeland Park The Rocks CID|ROEC2|11.475%|6.500%|1.475%|1.500%|2.000%
+Rolla|ROLMT|9.500%|6.500%|1.000%|2.000%|0.000%
+Rooks County|ROOCO|7.000%|6.500%|0.500%|0.000%|0.000%
+Rose Hill                  |ROSBU|7.500%|6.500%|0.000%|1.000%|0.000%
+Roseland|ROSCK|8.000%|6.500%|1.500%|0.000%|0.000%
+Rossville|ROSSN|8.850%|6.500%|1.350%|1.000%|0.000%
+Rozel|ROZPN|8.500%|6.500%|2.000%|0.000%|0.000%
+Rush Center|RUSRH|6.500%|6.500%|0.000%|0.000%|0.000%
+Rush County|RUHCO|6.500%|6.500%|0.000%|0.000%|0.000%
+Russell|RUSRS|9.250%|6.500%|2.000%|0.750%|0.000%
+Russell 24/7 Travel Store CID|RUSC1|11.250%|6.500%|2.000%|0.750%|2.000%
+Russell County|RULCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Russell Springs|RUSLG|8.500%|6.500%|2.000%|0.000%|0.000%
+Sabetha (Brown County)|SABBR|8.500%|6.500%|1.000%|1.000%|0.000%
+Sabetha (Nemaha County)|SABNM|9.000%|6.500%|1.500%|1.000%|0.000%
+Salina|SALSA|9.250%|6.500%|1.500%|1.250%|0.000%
+Salina Alley CID|SALC4|11.250%|6.500%|1.500%|1.250%|2.000%
+Saline County|SALCO|8.000%|6.500%|1.500%|0.000%|0.000%
+Salina Downtown Hotel CID|SALC3|11.250%|6.500%|1.500%|1.250%|2.000%
+Salina Downtown STAR Bond|SALDT|9.250%|6.500%|1.500%|1.250%|0.000%
+Salina Downtown STAR Bond and Downtown CID|SALC2|10.250%|6.500%|1.500%|1.250%|1.000%
+Salina North 9th Street HPSA CID|SALC5|11.250%|6.500%|1.500%|1.250%|2.000%
+Salina S&B South Ninth CID|SALC1|11.250%|6.500%|1.500%|1.250%|2.000%
+Satanta|SATHS|8.000%|6.500%|0.500%|1.000%|0.000%
+Savonburg|SAVAL|7.750%|6.500%|1.250%|0.000%|0.000%
+Sawyer|SAWPR|8.250%|6.500%|1.750%|0.000%|0.000%
+Scammon|SCACK|9.000%|6.500%|1.500%|1.000%|0.000%
+Scandia|SCARP|8.500%|6.500%|2.000%|0.000%|0.000%
+Schoenchen|SCHEL|7.000%|6.500%|0.500%|0.000%|0.000%
+Scott City|SCOSC|9.000%|6.500%|2.000%|0.500%|0.000%
+Scott County|SCOCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Scottsville|SCOMC|7.500%|6.500%|1.000%|0.000%|0.000%
+Scranton|SCROS|9.000%|6.500%|1.500%|1.000%|0.000%
+Sedan|SEDCQ|9.000%|6.500%|1.000%|1.500%|0.000%
+Sedgwick (Harvey County)|SEDHV|9.000%|6.500%|2.000%|0.500%|0.000%
+Sedgwick (Sedgwick County)|SEDSG|8.000%|6.500%|1.000%|0.500%|0.000%
+Sedgwick County|SEDCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Selden|SELSD|8.500%|6.500%|2.000%|0.000%|0.000%
+Seneca|SENNM|9.000%|6.500%|1.500%|1.000%|0.000%
+Severance|SEVDP|8.500%|6.500%|2.000%|0.000%|0.000%
+Severy|SEVGW|8.500%|6.500%|1.000%|1.000%|0.000%
+Seward|SEWSF|7.500%|6.500%|1.000%|0.000%|0.000%
+Seward County|SEWCO|7.750%|6.500%|1.250%|0.000%|0.000%
+Sharon|SHABA|7.500%|6.500%|1.000%|0.000%|0.000%
+Sharon Springs|SHAWA|7.500%|6.500%|1.000%|0.000%|0.000%
+Shawnee|SHAJO|9.600%|6.500%|1.475%|1.625%|0.000%
+Shawnee County|SHACO|7.850%|6.500%|1.350%|0.000%|0.000%
+Shawnee Plaza TDD|SHATD|10.600%|6.500%|1.475%|1.625%|1.000%
+Shawnee Westbrooke Village CID|SHAC3|11.100%|6.500%|1.475%|1.625%|1.500%
+Sheridan County|SHDCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Sherman County|SHMCO|8.750%|6.500%|2.250%|0.000%|0.000%
+Silver Lake|SILSN|8.850%|6.500%|1.350%|1.000%|0.000%
+Simpson (Cloud County)|SIMCD|7.500%|6.500%|1.000%|0.000%|0.000%
+Simpson (Mitchell County)|SIMMC|7.500%|6.500%|1.000%|0.000%|0.000%
+Smith Center|SMISM|9.500%|6.500%|2.000%|1.000%|0.000%
+Smith County|SMICO|8.500%|6.500%|2.000%|0.000%|0.000%
+Smolan|SMOSA|8.000%|6.500%|1.500%|0.000%|0.000%
+Soldier|SOLJA|8.150%|6.500%|1.650%|0.000%|0.000%
+Solomon (Dickinson County)|SOLDK|9.250%|6.500%|1.750%|1.000%|0.000%
+Solomon (Saline County)|SOLSA|9.000%|6.500%|1.500%|1.000%|0.000%
+South Haven|SOUSU|7.500%|6.500%|1.000%|0.000%|0.000%
+South Hutchinson|SOURN|8.250%|6.500%|1.000%|0.750%|0.000%
+South Hutchinson Love's Travel CID|SOUC1|9.250%|6.500%|1.000%|0.750%|1.000%
+Spearville|SPEFO|7.500%|6.500%|1.000%|0.000%|0.000%
+Speed|SPEPL|8.000%|6.500%|0.500%|1.000%|0.000%
+Spivey|SPIKM|9.000%|6.500%|1.500%|1.000%|0.000%
+Spring Hill (Johnson County)|SPRJO|9.475%|6.500%|1.475%|1.500%|0.000%
+Spring Hill (Miami County)|SPRMI|9.500%|6.500%|1.500%|1.500%|0.000%
+St Francis|SAICN|9.500%|6.500%|2.000%|1.000%|0.000%
+St George|SAGPT|9.000%|6.500%|1.000%|1.500%|0.000%
+St John|SAISF|8.500%|6.500%|1.000%|1.000%|0.000%
+St Marys (Pottawatomie County)|SAMPT|8.500%|6.500%|1.000%|1.000%|0.000%
+St Marys (Wabaunsee County)|SAMWB|9.000%|6.500%|1.500%|1.000%|0.000%
+St Paul|SAINO|9.250%|6.500%|1.750%|1.000%|0.000%
+Stafford|STASF|9.500%|6.500%|1.000%|2.000%|0.000%
+Stafford County|STFCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Stanton County|STNCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Stark|STANO|8.250%|6.500%|1.750%|0.000%|0.000%
+Sterling|STERC|8.500%|6.500%|1.000%|1.000%|0.000%
+Stevens County|STECO|7.500%|6.500%|1.000%|0.000%|0.000%
+Stockton|STORO|9.500%|6.500%|0.500%|2.500%|0.000%
+Strong City|STRCS|9.500%|6.500%|1.000%|2.000%|0.000%
+Sublette|SUBHS|8.250%|6.500%|0.500%|1.250%|0.000%
+Summerfield|SUMMS|7.000%|6.500%|0.500%|0.000%|0.000%
+Sumner County|SUMCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Sun City|SUNBA|7.500%|6.500%|1.000%|0.000%|0.000%
+Susank|SUSBT|7.500%|6.500%|1.000%|0.000%|0.000%
+Sylvan Grove|SYLLC|7.500%|6.500%|1.000%|0.000%|0.000%
+Sylvia|SYLRN|8.000%|6.500%|1.000%|0.500%|0.000%
+Syracuse|SYRHM|9.000%|6.500%|1.500%|1.000%|0.000%
+Tampa|TAMMN|7.500%|6.500%|1.000%|0.000%|0.000%
+Tescott|TESOT|7.500%|6.500%|1.000%|0.000%|0.000%
+Thayer|THANO|9.500%|6.500%|1.750%|1.250%|0.000%
+The Highlands|THERN|7.500%|6.500%|1.000%|0.000%|0.000%
+Thomas County|THOCO|8.250%|6.500%|1.750%|0.000%|0.000%
+Timken|TIMRH|6.500%|6.500%|0.000%|0.000%|0.000%
+Tipton|TIPMC|8.500%|6.500%|1.000%|1.000%|0.000%
+Tonganoxie|TONLV|9.250%|6.500%|1.000%|1.750%|0.000%
+Topeka|TOPSN|9.350%|6.500%|1.350%|1.500%|0.000%
+Topeka Crosswinds Common CID|TOPC2|10.350%|6.500%|1.350%|1.500%|1.000%
+Topeka Cyrus Hotel CID|TOPC3|11.350%|6.500%|1.350%|1.500%|2.000%
+Topeka Downtown Ramada Inn CID |TOPC8|11.350%|6.500%|1.350%|1.500%|2.000%
+Topeka Heartland Park Redevelopment District STAR Bond|TOPHP|9.350%|6.500%|1.350%|1.500%|0.000%
+Topeka Holliday Square CID|TOPC1|10.350%|6.500%|1.350%|1.500%|1.000%
+Topeka SE 29th Street CID|TOPC4|10.350%|6.500%|1.350%|1.500%|1.000%
+Topeka Sherwood Crossing/Villa West CID|TOPC6|10.350%|6.500%|1.350%|1.500%|1.000%
+Topeka South Topeka CID|TOPC9|11.350%|6.500%|1.350%|1.500%|2.000%
+Topeka Wanamaker Hills CID|TOPC7|10.350%|6.500%|1.350%|1.500%|1.000%
+Topeka Wheatfield Village CID|TOPC5|11.350%|6.500%|1.350%|1.500%|2.000%
+Toronto|TORWO|8.000%|6.500%|1.000%|0.500%|0.000%
+Towanda|TOWBU|8.500%|6.500%|0.000%|2.000%|0.000%
+Trego County|TRECO|7.500%|6.500%|1.000%|0.000%|0.000%
+Tribune|TRIGL|7.500%|6.500%|1.000%|0.000%|0.000%
+Troy|TRODP|9.500%|6.500%|2.000%|1.000%|0.000%
+Turon|TURRN|7.500%|6.500%|1.000%|0.000%|0.000%
+Tyro|TYRMG|6.500%|6.500%|0.000%|0.000%|0.000%
+Udall|UDACL|7.500%|6.500%|0.000%|1.000%|0.000%
+Ulysses|ULYGT|8.500%|6.500%|0.000%|2.000%|0.000%
+Uniontown|UNIBB|9.150%|6.500%|1.650%|1.000%|0.000%
+Utica|UTINS|7.500%|6.500%|0.000%|1.000%|0.000%
+Valley Center|VALSG|8.500%|6.500%|1.000%|1.000%|0.000%
+Valley Falls|VALJF|9.500%|6.500%|1.000%|2.000%|0.000%
+Vermillion|VERMS|7.000%|6.500%|0.500%|0.000%|0.000%
+Victoria|VICEL|8.000%|6.500%|0.500%|1.000%|0.000%
+Vining (Clay County)|VINCY|7.500%|6.500%|1.000%|0.000%|0.000%
+Vining (Washington County)|VINWS|7.500%|6.500%|1.000%|0.000%|0.000%
+Viola|VIOSG|7.500%|6.500%|1.000%|0.000%|0.000%
+Virgil|VIRGW|7.500%|6.500%|1.000%|0.000%|0.000%
+Wabaunsee County|WABCO|8.000%|6.500%|1.500%|0.000%|0.000%
+Wabaunsee County Maple Hill Travel Store CID|WABC1|10.000%|6.500%|1.500%|0.000%|2.000%
+WaKeeney|WAKTR|8.500%|6.500%|1.000%|1.000%|0.000%
+WaKeeney Travel Plaza CID|WAKC1|10.500%|6.500%|1.000%|1.000%|2.000%
+Wakefield|WAKCY|8.500%|6.500%|1.000%|1.000%|0.000%
+Waldo|WALRS|8.500%|6.500%|2.000%|0.000%|0.000%
+Waldron|WALHP|6.500%|6.500%|0.000%|0.000%|0.000%
+Wallace|WALWA|7.500%|6.500%|1.000%|0.000%|0.000%
+Wallace County|WALCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Walnut|WALCR|7.500%|6.500%|1.000%|0.000%|0.000%
+Walton|WALHV|8.500%|6.500%|2.000%|0.000%|0.000%
+Wamego|WAMPT|9.250%|6.500%|1.000%|1.750%|0.000%
+Washington|WASWS|8.500%|6.500%|1.000%|1.000%|0.000%
+Washington County|WASCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Waterville|WATMS|8.500%|6.500%|0.500%|1.500%|0.000%
+Wathena|WATDP|9.500%|6.500%|2.000%|1.000%|0.000%
+Waverly|WAVCF|7.500%|6.500%|0.000%|1.000%|0.000%
+Webber|WEBJW|7.500%|6.500%|1.000%|0.000%|0.000%
+Weir|WEICK|9.000%|6.500%|1.500%|1.000%|0.000%
+Wellington|WELSU|8.500%|6.500%|1.000%|1.000%|0.000%
+Wellsville|WELFR|9.500%|6.500%|1.500%|1.500%|0.000%
+Wellsville Poplar Street CID|WELC1|10.750%|6.500%|1.500%|1.500%|1.250%
+West Mineral|WESCK|8.000%|6.500%|1.500%|0.000%|0.000%
+Westmoreland|WESPT|10.000%|6.500%|1.000%|2.500%|0.000%
+Westphalia|WESAN|7.500%|6.500%|1.000%|0.000%|0.000%
+Westwood|WESJO|9.475%|6.500%|1.475%|1.500%|0.000%
+Westwood Hills|WEHJO|8.975%|6.500%|1.475%|1.000%|0.000%
+Westwood South Woodside CID|WESC2|11.475%|6.500%|1.475%|1.500%|2.000%
+Westwood Woodside CID|WESC1|10.575%|6.500%|1.475%|1.500%|1.100%
+Wetmore|WETNM|8.000%|6.500%|1.500%|0.000%|0.000%
+Wheaton|WHEPT|7.500%|6.500%|1.000%|0.000%|0.000%
+White City|WHIMR|7.500%|6.500%|1.000%|0.000%|0.000%
+White Cloud|WHIDP|9.500%|6.500%|2.000%|1.000%|0.000%
+Whitewater|WHIBU|7.500%|6.500%|0.000%|1.000%|0.000%
+Whiting|WHIJA|8.150%|6.500%|1.650%|0.000%|0.000%
+Wichita|WICSG|7.500%|6.500%|1.000%|0.000%|0.000%
+Wichita 333 English CID|WIC19|9.000%|6.500%|1.000%|0.000%|1.500%
+Wichita Broadview Hotel CID|WICC2|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita Central & Oliver CID|WICC3|8.500%|6.500%|1.000%|0.000%|1.000%
+Wichita Chicken N Pickle CID|WICC9|9.000%|6.500%|1.000%|0.000%|1.500%
+Wichita County|WICCO|8.500%|6.500%|2.000%|0.000%|0.000%
+Wichita Douglas & Broadway CID|WICC5|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita Douglas & Emporia CID|WIC16|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita Douglas Market Development CID|WIC17|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita Downtown Hilton CID|WICC8|9.000%|6.500%|1.000%|0.000%|1.500%
+Wichita Greenwich & K-96 CID|WICC4|8.700%|6.500%|1.000%|0.000%|1.200%
+Wichita K-96 Greenwich STAR Bond District|WICGR|7.500%|6.500%|1.000%|0.000%|0.000%
+Wichita Kellogg and West CID|WICC7|8.500%|6.500%|1.000%|0.000%|1.000%
+Wichita Multi-Sport Stadium CID|WIC13|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita River District Stadium STAR Bond|WICRD|7.500%|6.500%|1.000%|0.000%|0.000%
+Wichita River District Stadium STAR and Multi-Sport Stadium CID|WIC11|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita River District Stadium STAR Bond and Wichita Delano Catalyst CID|WIC15|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita River Walk STAR and Multi-Sport Stadium CID|WIC12|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita River Walk STAR Bond Project|WICRW|7.500%|6.500%|1.000%|0.000%|0.000%
+Wichita Saddle Creek Crossing CID|WIC18|9.000%|6.500%|1.000%|0.000%|1.500%
+Wichita SoCe Corner CID|WIC20|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita Spaghetti Works CID|WIC10|9.500%|6.500%|1.000%|0.000%|2.000%
+Wichita WaterWalk Hotel CID|WICC1|9.500%|6.500%|1.000%|0.000%|2.000%
+ |WICC1|9.500%|6.500%|1.000%|0.000%|2.000%
+Willard (Shawnee County)|WILSN|8.600%|6.500%|1.350%|0.750%|0.000%
+Willard (Wabaunsee County)|WILWB|8.750%|6.500%|1.500%|0.750%|0.000%
+Williamsburg|WILFR|9.000%|6.500%|1.500%|1.000%|0.000%
+Willis|WILBR|7.500%|6.500%|1.000%|0.000%|0.000%
+Willowbrook|WILRN|7.500%|6.500%|1.000%|0.000%|0.000%
+Wilmore|WILCM|7.500%|6.500%|0.000%|1.000%|0.000%
+Wilsey|WILMR|7.500%|6.500%|1.000%|0.000%|0.000%
+Wilson|WILEW|8.500%|6.500%|1.000%|1.000%|0.000%
+Wilson County|WILCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Winchester|WINJF|8.000%|6.500%|1.000%|0.500%|0.000%
+Windom|WINMP|8.500%|6.500%|2.000%|0.000%|0.000%
+Winfield|WINCL|8.500%|6.500%|0.000%|2.000%|0.000%
+Winona|WINLG|8.500%|6.500%|2.000%|0.000%|0.000%
+Woodbine|WOODK|8.250%|6.500%|1.750%|0.000%|0.000%
+Woodson County|WOOCO|7.500%|6.500%|1.000%|0.000%|0.000%
+Woodston|WOORO|7.000%|6.500%|0.500%|0.000%|0.000%
+Wyandotte County|WYACO|7.500%|6.500%|1.000%|0.000%|0.000%
+Yates Center|YATWO|9.500%|6.500%|1.000%|2.000%|0.000%
+Zenda|ZENKM|8.000%|6.500%|1.500%|0.000%|0.000%
+Zurich|ZURRO|7.000%|6.500%|0.500%|0.000%|0.000%
