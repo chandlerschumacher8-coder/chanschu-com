@@ -96,10 +96,31 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .pl-qty.out{color:var(--red);}
 .pl-qty.low{color:var(--orange);}
 .pl-qty.in{color:var(--green);}
-.cart{width:340px;display:flex;flex-direction:column;background:var(--bg2);flex-shrink:0;}
-.cart-hdr{padding:12px 16px;border-bottom:1px solid var(--border);font-family:'Playfair Display',serif;font-size:15px;}
-.cart-body{flex:1;overflow-y:auto;padding:10px 14px;}
-.cart-cust select,.cart-cust input{width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:7px 10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;margin-bottom:6px;}
+.cart{width:380px;display:flex;flex-direction:column;background:var(--bg2);flex-shrink:0;}
+.cart-hdr{padding:8px 14px;border-bottom:1px solid var(--border);font-family:'Playfair Display',serif;font-size:14px;display:flex;align-items:center;justify-content:space-between;}
+.cart-hdr-actions{display:flex;gap:4px;}
+.cart-action-btn{font-size:9px;font-weight:700;letter-spacing:.04em;padding:4px 8px;border:1px solid rgba(255,255,255,0.12);color:var(--gray-2);background:transparent;border-radius:5px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;position:relative;}
+.cart-action-btn:hover{color:var(--white);border-color:rgba(255,255,255,0.3);}
+.cart-action-btn.warn:hover{color:var(--red);border-color:rgba(224,112,112,0.4);}
+.hold-badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:8px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;line-height:1;}
+.cart-body{flex:1;overflow-y:auto;padding:8px 12px;}
+.cart-cust select,.cart-cust input{width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:5px 8px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;outline:none;margin-bottom:4px;}
+.cart-cust select{-webkit-appearance:none;appearance:none;}
+.cart-sel{background:var(--bg3);border:1px solid rgba(255,255,255,0.08);border-radius:5px;padding:5px 8px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;outline:none;flex:1;min-width:0;}
+.cart-sm-inp{flex:1;min-width:0;}
+.cart-field-row{display:flex;gap:4px;margin-bottom:4px;}
+.cart-field-row input,.cart-field-row select{margin-bottom:0;}
+.cart-addr-block{margin-bottom:4px;}
+.cart-addr-label{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-3);margin-bottom:2px;}
+.cart-shipto-toggle{margin-bottom:4px;}
+.cart-shipto-toggle summary{list-style:none;}
+.cart-shipto-toggle summary::-webkit-details-marker{display:none;}
+.cart-install-bar{display:flex;gap:3px;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:4px;}
+.ci-add-btn{font-size:9px;font-weight:600;padding:3px 7px;border:1px solid rgba(82,183,136,0.2);color:var(--green);background:rgba(82,183,136,0.04);border-radius:4px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
+.ci-add-btn:hover{background:rgba(82,183,136,0.12);border-color:rgba(82,183,136,0.4);}
+.ci-serial{width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:3px 7px;color:var(--gray-1);font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;outline:none;margin-top:2px;}
+.ci-serial:focus{border-color:rgba(201,151,58,0.3);}
+.ci-serial::placeholder{color:var(--gray-3);}
 .cart-tax-search{cursor:pointer;}
 .cart-tax-search:focus{border-color:rgba(201,151,58,0.4);}
 .cart-tax-dd{display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid rgba(255,255,255,0.12);border-radius:7px;max-height:220px;overflow-y:auto;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,0.4);margin-top:2px;}
@@ -128,6 +149,13 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .pay-btn:hover{border-color:var(--gold);color:var(--gold);}
 .pay-btn.primary{background:var(--gold);color:var(--bg);border-color:var(--gold);grid-column:1/-1;}
 .pay-btn.primary:hover{background:var(--gold-light);}
+.pay-btn.quote{border-color:rgba(91,159,212,0.3);color:var(--blue);grid-column:1/-1;}
+.pay-btn.quote:hover{border-color:var(--blue);background:rgba(91,159,212,0.08);}
+.cart-notes-wrap{padding:8px 0 0;}
+.cart-notes-label{display:block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);margin-bottom:3px;}
+.cart-notes{width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:6px 9px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;resize:none;outline:none;margin-bottom:4px;}
+.cart-notes:focus{border-color:rgba(201,151,58,0.4);}
+.oo-quote-badge{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:100px;background:rgba(91,159,212,0.15);color:var(--blue);border:1px solid rgba(91,159,212,0.25);}
 
 /* ═══ INVENTORY ═══ */
 .inv-wrap{display:flex;flex:1;overflow:hidden;}
@@ -735,16 +763,71 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div id="sale-browse"></div>
 </div>
 <div class="cart">
-<div class="cart-hdr">Shopping Cart</div>
+<div class="cart-hdr">
+<span>Current Sale</span>
+<div class="cart-hdr-actions">
+<button class="cart-action-btn" onclick="holdSale()" title="Hold Sale">HOLD <span class="hold-badge" id="hold-badge" style="display:none;">0</span></button>
+<button class="cart-action-btn" onclick="retrieveHeld()" title="Retrieve Held">HELD</button>
+<button class="cart-action-btn warn" onclick="voidSale()" title="Void Sale">VOID</button>
+<button class="cart-action-btn" onclick="startReturn()" title="Return/Exchange">RETURN</button>
+</div>
+</div>
 <div class="cart-body">
 <div class="cart-cust">
-<input id="cart-customer" placeholder="Customer name..." />
-<div style="position:relative;">
+<!-- Clerk & Reference -->
+<div class="cart-field-row">
+<select id="cart-clerk" class="cart-sel"><option value="">Clerk...</option></select>
+<input id="cart-po" placeholder="PO #" class="cart-sm-inp"/>
+<input id="cart-job" placeholder="Job #" class="cart-sm-inp"/>
+</div>
+<!-- Sold To -->
+<div class="cart-addr-block">
+<div class="cart-addr-label">SOLD TO</div>
+<input id="cart-sold-name" placeholder="Customer name *"/>
+<input id="cart-sold-addr" placeholder="Address"/>
+<div class="cart-field-row">
+<input id="cart-sold-city" placeholder="City"/>
+<input id="cart-sold-state" placeholder="ST" style="max-width:40px;"/>
+<input id="cart-sold-zip" placeholder="Zip" style="max-width:60px;"/>
+</div>
+<input id="cart-sold-phone" placeholder="Phone"/>
+</div>
+<!-- Ship To -->
+<details class="cart-shipto-toggle">
+<summary class="cart-addr-label" style="cursor:pointer;margin:4px 0;">SHIP TO <span style="font-weight:400;color:var(--gray-3);font-size:8px;">(if different)</span></summary>
+<input id="cart-ship-name" placeholder="Name"/>
+<input id="cart-ship-addr" placeholder="Address"/>
+<div class="cart-field-row">
+<input id="cart-ship-city" placeholder="City"/>
+<input id="cart-ship-state" placeholder="ST" style="max-width:40px;"/>
+<input id="cart-ship-zip" placeholder="Zip" style="max-width:60px;"/>
+</div>
+</details>
+<!-- Tax -->
+<div style="position:relative;margin-top:4px;">
 <input id="cart-tax-input" class="cart-tax-search" placeholder="Tax rate..." value="Dodge City — 9.000%" onclick="cartTaxOpen()" oninput="cartTaxFilter()" onblur="setTimeout(cartTaxClose,200)"/>
 <div class="cart-tax-dd" id="cart-tax-dd"></div>
 </div>
 </div>
+<!-- Install Quick-Adds -->
+<div class="cart-install-bar" id="cart-install-bar">
+<button class="ci-add-btn" onclick="addInstallItem('Delivery Charge',adminDeliveryPrice)">+ Delivery</button>
+<button class="ci-add-btn" onclick="addInstallItem('Fridge Install',149.99)">+ Fridge</button>
+<button class="ci-add-btn" onclick="addInstallItem('Washer/Dryer Install',149.99)">+ W/D</button>
+<button class="ci-add-btn" onclick="addInstallItem('Dishwasher Install',169.99)">+ DW</button>
+<button class="ci-add-btn" onclick="addInstallItem('Microwave Install',149.99)">+ Micro</button>
+<button class="ci-add-btn" onclick="addInstallItem('Range Install',89.99)">+ Range</button>
+<button class="ci-add-btn" onclick="addInstallItem('Full Kitchen Install',499.99)">+ Full Kit</button>
+<button class="ci-add-btn" onclick="addInstallItem('TV Install (up to 55in)',199.99)">+ TV ≤55</button>
+<button class="ci-add-btn" onclick="addInstallItem('TV Install (56in+)',299.99)">+ TV 56+</button>
+</div>
 <div id="cart-items"></div>
+<div class="cart-notes-wrap">
+<label class="cart-notes-label">Invoice Notes</label>
+<textarea class="cart-notes" id="cart-invoice-notes" placeholder="Delivery instructions, special terms, customer message..." rows="2"></textarea>
+<label class="cart-notes-label" style="margin-top:6px;">Shipper Notes <span style="font-weight:400;color:var(--gray-3);">(internal only)</span></label>
+<textarea class="cart-notes" id="cart-shipper-notes" placeholder="Haul away, floor level, access codes, special handling..." rows="2"></textarea>
+</div>
 </div>
 <div class="cart-footer">
 <div class="cf-row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
@@ -756,6 +839,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <button class="pay-btn" onclick="checkout('Check')">Check</button>
 <button class="pay-btn" onclick="checkout('Finance')">Finance</button>
 <button class="pay-btn primary" onclick="checkout('Charge Customer')">Charge Customer</button>
+<button class="pay-btn quote" onclick="saveQuote()">Save as Quote</button>
 </div>
 </div>
 </div>
@@ -993,6 +1077,10 @@ Price Update
 <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
 Users
 </div>
+<div class="admin-menu-item" onclick="selectAdminSection('possettings')">
+<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.44.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+POS Settings
+</div>
 </div>
 <div class="admin-content" id="admin-content">
 <div class="admin-panel active" id="admin-panel-categories">
@@ -1069,6 +1157,14 @@ Users
 </div>
 <div id="admin-inline-user" style="display:none;"></div>
 <div id="admin-users-list"></div>
+</div>
+<div class="admin-panel" id="admin-panel-possettings">
+<div class="admin-content-title">POS Settings</div>
+<div style="max-width:500px;">
+<div class="field"><label>Default Invoice Message</label><textarea class="txta" id="admin-invoice-msg" rows="2" style="min-height:50px;"></textarea><div style="font-size:10px;color:var(--gray-3);margin-top:2px;">Prints at the bottom of every customer invoice</div></div>
+<div class="field"><label>Default Delivery Charge ($)</label><input class="inp" id="admin-delivery-price" type="number" step="0.01" min="0"/></div>
+<button class="primary-btn" onclick="savePosSettings()">Save Settings</button>
+</div>
 </div>
 </div>
 </div>
@@ -2094,7 +2190,11 @@ var KS_TAX=[
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
-var cart=[],orders=[],nextOrderId=1001,selectedCat='All',ooFilter='All',selectedOrder=null;
+var cart=[],orders=[],nextOrderId=1001,nextQuoteId=1,selectedCat='All',ooFilter='All',selectedOrder=null;
+var heldSales=[];
+var adminDeliveryPrice=79.99;
+var adminInvoiceMessage='THANK YOU FOR YOUR BUSINESS!';
+try{var _ap=localStorage.getItem('pos-admin-delivery-price');if(_ap)adminDeliveryPrice=parseFloat(_ap);var _am=localStorage.getItem('pos-admin-invoice-msg');if(_am)adminInvoiceMessage=_am;}catch(e){}
 var reorderQtys={};
 // Purchase Orders & Receiving state
 var purchaseOrders=[],nextPONum=1;
@@ -2283,8 +2383,13 @@ function refreshSaleView(){if(saleViewMode==='categories')renderSaleCategories()
 function addToCart(pid){
   var p=PRODUCTS.find(function(x){return x.id===pid;});if(!p)return;
   var ci=cart.find(function(x){return x.id===pid;});
-  if(ci){ci.qty++;}else{cart.push({id:p.id,name:p.name,price:p.price,qty:1,sku:p.sku});}
+  if(ci){ci.qty++;}else{cart.push({id:p.id,name:p.name,price:p.price,qty:1,sku:p.sku,serial:''});}
   renderCart();toast(p.name+' added','success');
+}
+function addInstallItem(name,price){
+  var sid=9000+cart.length;
+  cart.push({id:sid,name:name,price:price,qty:1,sku:'SVC',serial:'',isService:true});
+  renderCart();toast(name+' added','success');
 }
 function cartQty(pid,delta){
   var ci=cart.find(function(x){return x.id===pid;});if(!ci)return;
@@ -2295,30 +2400,139 @@ function cartRemove(pid){cart=cart.filter(function(x){return x.id!==pid;});rende
 function renderCart(){
   var el=document.getElementById('cart-items');
   if(cart.length===0){el.innerHTML='<div class="cart-empty">Cart is empty. Click a product to add it.</div>';document.getElementById('cart-subtotal').textContent='$0.00';document.getElementById('cart-tax').textContent='$0.00';document.getElementById('cart-total').textContent='$0.00';return;}
-  el.innerHTML=cart.map(function(c){
-    return '<div class="cart-item"><div class="ci-info"><div class="ci-name">'+c.name+'</div><div class="ci-price">'+fmt(c.price)+' x '+c.qty+'</div></div><div class="ci-qty"><button onclick="cartQty('+c.id+',-1)">-</button><span>'+c.qty+'</span><button onclick="cartQty('+c.id+',1)">+</button></div><div class="ci-total">'+fmt(c.price*c.qty)+'</div><button class="ci-rm" onclick="cartRemove('+c.id+')">&#x2715;</button></div>';
+  el.innerHTML=cart.map(function(c,idx){
+    return '<div class="cart-item" style="flex-wrap:wrap;"><div class="ci-info"><div class="ci-name">'+c.name+'</div><div class="ci-price">'+fmt(c.price)+' x '+c.qty+'</div></div><div class="ci-qty"><button onclick="cartQty('+c.id+',-1)">-</button><span>'+c.qty+'</span><button onclick="cartQty('+c.id+',1)">+</button></div><div class="ci-total">'+fmt(c.price*c.qty)+'</div><button class="ci-rm" onclick="cartRemove('+c.id+')">&#x2715;</button>'+(c.isService?'':'<input class="ci-serial" placeholder="Serial #" value="'+(c.serial||'')+'" onchange="cartSerial('+idx+',this.value)"/>')+'</div>';
   }).join('');
   var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
   var tax=sub*cartTaxRate;
   document.getElementById('cart-subtotal').textContent=fmt(sub);
   document.getElementById('cart-tax').textContent=fmt(tax);
   document.getElementById('cart-total').textContent=fmt(sub+tax);
+  // Populate clerk dropdown
+  var clerkSel=document.getElementById('cart-clerk');
+  if(clerkSel&&clerkSel.options.length<=1){
+    clerkSel.innerHTML='<option value="">Clerk...</option>'+adminUsers.map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
+  }
+}
+function cartSerial(idx,val){if(cart[idx])cart[idx].serial=val;}
+function getSaleFields(){
+  return {
+    soldTo:{name:(document.getElementById('cart-sold-name')||{}).value||'',addr:(document.getElementById('cart-sold-addr')||{}).value||'',city:(document.getElementById('cart-sold-city')||{}).value||'',state:(document.getElementById('cart-sold-state')||{}).value||'',zip:(document.getElementById('cart-sold-zip')||{}).value||'',phone:(document.getElementById('cart-sold-phone')||{}).value||''},
+    shipTo:{name:(document.getElementById('cart-ship-name')||{}).value||'',addr:(document.getElementById('cart-ship-addr')||{}).value||'',city:(document.getElementById('cart-ship-city')||{}).value||'',state:(document.getElementById('cart-ship-state')||{}).value||'',zip:(document.getElementById('cart-ship-zip')||{}).value||''},
+    clerk:(document.getElementById('cart-clerk')||{}).value||'',
+    po:(document.getElementById('cart-po')||{}).value||'',
+    job:(document.getElementById('cart-job')||{}).value||'',
+    invoiceNotes:((document.getElementById('cart-invoice-notes')||{}).value||'').trim(),
+    shipperNotes:((document.getElementById('cart-shipper-notes')||{}).value||'').trim()
+  };
+}
+function clearSaleForm(){
+  ['cart-sold-name','cart-sold-addr','cart-sold-city','cart-sold-state','cart-sold-zip','cart-sold-phone','cart-ship-name','cart-ship-addr','cart-ship-city','cart-ship-state','cart-ship-zip','cart-po','cart-job','cart-invoice-notes','cart-shipper-notes'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var cl=document.getElementById('cart-clerk');if(cl)cl.selectedIndex=0;
 }
 function checkout(method){
   if(cart.length===0){toast('Cart is empty','error');return;}
-  var cust=document.getElementById('cart-customer').value.trim()||'Walk-In Customer';
+  var f=getSaleFields();
+  var cust=f.soldTo.name.trim()||'Walk-In Customer';
   var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
   var rate=cartTaxRate;
   var tax=sub*rate;
   var zoneName=cartTaxName;
-  var order={id:'ORD-'+nextOrderId,customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,sku:c.sku,price:c.price,qty:c.qty};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:'Awaiting Delivery',date:new Date().toISOString(),notes:'',address:'',deliveryDate:''};
+  var order={id:'ORD-'+nextOrderId,customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,sku:c.sku,price:c.price,qty:c.qty,serial:c.serial||''};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:''};
   nextOrderId++;orders.unshift(order);
-  // Deduct stock
-  cart.forEach(function(c){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p)p.stock=Math.max(0,p.stock-c.qty);});
+  cart.forEach(function(c){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p&&!c.isService)p.stock=Math.max(0,p.stock-c.qty);});
   lastCompletedSale={orderId:order.id,customer:cust,items:order.items,date:new Date()};
-  cart=[];renderCart();refreshSaleView();
+  cart=[];clearSaleForm();
+  renderCart();refreshSaleView();
   toast('Order '+order.id+' placed via '+method,'success');
   showCheckoutBar(order.id);
+}
+function saveQuote(){
+  if(cart.length===0){toast('Cart is empty','error');return;}
+  var f=getSaleFields();
+  var cust=f.soldTo.name.trim()||'Walk-In Customer';
+  var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
+  var tax=sub*cartTaxRate;
+  var quote={id:'QT-'+String(nextQuoteId).padStart(4,'0'),customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,sku:c.sku,price:c.price,qty:c.qty,serial:c.serial||''};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:cartTaxName,taxRate:cartTaxRate,payment:'Quote',status:'Quote',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:'',deliveryDate:''};
+  nextQuoteId++;orders.unshift(quote);
+  try{fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'quotes',data:{quotes:orders.filter(function(o){return o.status==='Quote';}),nextQuoteId:nextQuoteId}})});}catch(e){}
+  cart=[];clearSaleForm();
+  renderCart();toast('Quote '+quote.id+' saved for '+cust,'success');
+}
+function convertQuoteToSale(quoteId){
+  var q=orders.find(function(o){return o.id===quoteId;});if(!q)return;
+  q.items.forEach(function(i){
+    var ci=cart.find(function(x){return x.id===i.id;});
+    if(ci){ci.qty+=i.qty;}else{cart.push({id:i.id,name:i.name,sku:i.sku,price:i.price,qty:i.qty,serial:i.serial||''});}
+  });
+  if(q.soldTo&&q.soldTo.name)document.getElementById('cart-sold-name').value=q.soldTo.name;
+  if(q.soldTo&&q.soldTo.phone)document.getElementById('cart-sold-phone').value=q.soldTo.phone;
+  if(q.invoiceNotes)document.getElementById('cart-invoice-notes').value=q.invoiceNotes;
+  if(q.shipperNotes)document.getElementById('cart-shipper-notes').value=q.shipperNotes;
+  orders=orders.filter(function(o){return o.id!==quoteId;});
+  selectedOrder=null;
+  renderCart();renderOrders();renderOrderDetail();
+  nav('sale',document.querySelector('.tb-tab[onclick*="sale"]'));
+  toast('Quote '+quoteId+' loaded into cart — complete the sale','success');
+}
+// ── HOLD / VOID / RETURN ──
+function holdSale(){
+  if(cart.length===0){toast('Nothing to hold','error');return;}
+  var f=getSaleFields();
+  heldSales.push({cart:JSON.parse(JSON.stringify(cart)),fields:f,heldAt:new Date().toISOString()});
+  cart=[];clearSaleForm();renderCart();
+  updateHoldBadge();toast('Sale held ('+heldSales.length+' on hold)','info');
+}
+function updateHoldBadge(){
+  var b=document.getElementById('hold-badge');
+  if(!b)return;
+  if(heldSales.length>0){b.style.display='flex';b.textContent=heldSales.length;}
+  else{b.style.display='none';}
+}
+function retrieveHeld(){
+  if(heldSales.length===0){toast('No held sales','info');return;}
+  if(cart.length>0){if(!confirm('Current cart will be replaced. Continue?'))return;}
+  var held=heldSales.pop();
+  cart=held.cart;
+  var f=held.fields;
+  if(f.soldTo&&f.soldTo.name)document.getElementById('cart-sold-name').value=f.soldTo.name;
+  if(f.soldTo&&f.soldTo.addr)document.getElementById('cart-sold-addr').value=f.soldTo.addr;
+  if(f.soldTo&&f.soldTo.city)document.getElementById('cart-sold-city').value=f.soldTo.city;
+  if(f.soldTo&&f.soldTo.state)document.getElementById('cart-sold-state').value=f.soldTo.state;
+  if(f.soldTo&&f.soldTo.zip)document.getElementById('cart-sold-zip').value=f.soldTo.zip;
+  if(f.soldTo&&f.soldTo.phone)document.getElementById('cart-sold-phone').value=f.soldTo.phone;
+  if(f.invoiceNotes)document.getElementById('cart-invoice-notes').value=f.invoiceNotes;
+  if(f.shipperNotes)document.getElementById('cart-shipper-notes').value=f.shipperNotes;
+  if(f.clerk){var cl=document.getElementById('cart-clerk');if(cl){for(var i=0;i<cl.options.length;i++){if(cl.options[i].value===f.clerk){cl.selectedIndex=i;break;}}}}
+  if(f.po)document.getElementById('cart-po').value=f.po;
+  if(f.job)document.getElementById('cart-job').value=f.job;
+  renderCart();updateHoldBadge();toast('Held sale retrieved','success');
+}
+function voidSale(){
+  if(cart.length===0){toast('Nothing to void','info');return;}
+  if(!confirm('Void the current sale? All items will be removed.'))return;
+  cart=[];clearSaleForm();renderCart();toast('Sale voided','info');
+}
+function startReturn(){
+  var inv=prompt('Enter original invoice/order number (e.g. ORD-1001):');
+  if(!inv||!inv.trim())return;
+  var o=orders.find(function(x){return x.id===inv.trim();});
+  if(!o){toast('Order '+inv+' not found','error');return;}
+  var choices=o.items.map(function(i,idx){return (idx+1)+'. '+i.name+' ('+i.sku+') x'+i.qty+' @ '+fmt(i.price);}).join('\n');
+  var sel=prompt('Items on '+o.id+':\n'+choices+'\n\nEnter item numbers to return (comma-separated), or "all":');
+  if(!sel||!sel.trim())return;
+  var returnItems=[];
+  if(sel.trim().toLowerCase()==='all'){returnItems=o.items.map(function(i){return{id:i.id,name:i.name,sku:i.sku,price:i.price,qty:i.qty};});}
+  else{sel.split(',').forEach(function(n){var idx=parseInt(n.trim())-1;if(o.items[idx])returnItems.push({id:o.items[idx].id,name:o.items[idx].name,sku:o.items[idx].sku,price:o.items[idx].price,qty:o.items[idx].qty});});}
+  if(!returnItems.length){toast('No valid items selected','error');return;}
+  // Add as negative-qty items
+  returnItems.forEach(function(ri){
+    cart.push({id:ri.id,name:'RETURN: '+ri.name,sku:ri.sku,price:-ri.price,qty:ri.qty,serial:'',isReturn:true});
+    var p=PRODUCTS.find(function(x){return x.id===ri.id;});if(p)p.stock+=ri.qty;
+  });
+  document.getElementById('cart-sold-name').value=o.customer;
+  document.getElementById('cart-invoice-notes').value='Return from '+o.id;
+  renderCart();refreshSaleView();toast(returnItems.length+' item(s) added as return from '+o.id,'success');
 }
 function showCheckoutBar(orderId){
   var existing=document.querySelector('.checkout-bar');if(existing)existing.remove();
@@ -2500,14 +2714,16 @@ function custCsvImport(){
 // OPEN ORDERS TAB
 // ══════════════════════════════════════════════
 function renderOrders(){
-  var filters=['All','Awaiting Delivery','Awaiting Product','Partial'];
+  var filters=['All','Awaiting Delivery','Awaiting Product','Partial','Quote'];
   document.getElementById('oo-toolbar').innerHTML=filters.map(function(f){
     return '<button class="oo-filter'+(f===ooFilter?' active':'')+'" onclick="ooFilter=\''+f+'\';renderOrders();">'+f+'</button>';
   }).join('');
   var filtered=orders.filter(function(o){return ooFilter==='All'||o.status===ooFilter;});
   document.getElementById('oo-list').innerHTML=filtered.length?filtered.map(function(o){
-    var sc=o.status==='Awaiting Delivery'?'del-sb-scheduled':o.status==='Awaiting Product'?'del-sb-out':'del-sb-delivered';
-    return '<div class="oo-card'+(selectedOrder&&selectedOrder.id===o.id?' active':'')+'" onclick="selectOrder(\''+o.id+'\')"><div class="oo-card-id">'+o.id+'</div><div class="oo-card-name">'+o.customer+'</div><div class="oo-card-row"><span class="del-status-badge '+sc+'">'+o.status+'</span><span class="oo-card-total">'+fmt(o.total)+'</span></div></div>';
+    var isQuote=o.status==='Quote';
+    var sc=isQuote?'':o.status==='Awaiting Delivery'?'del-sb-scheduled':o.status==='Awaiting Product'?'del-sb-out':'del-sb-delivered';
+    var badge=isQuote?'<span class="oo-quote-badge">Quote</span>':'<span class="del-status-badge '+sc+'">'+o.status+'</span>';
+    return '<div class="oo-card'+(selectedOrder&&selectedOrder.id===o.id?' active':'')+'" onclick="selectOrder(\''+o.id+'\')"><div class="oo-card-id">'+o.id+'</div><div class="oo-card-name">'+o.customer+'</div><div class="oo-card-row">'+badge+'<span class="oo-card-total">'+fmt(o.total)+'</span></div></div>';
   }).join(''):'<div style="text-align:center;color:var(--gray-2);padding:30px;font-size:12px;">No orders found</div>';
   if(selectedOrder)renderOrderDetail();
 }
@@ -2524,14 +2740,70 @@ function renderOrderDetail(){
     var inStock=p?p.stock>=i.qty:false;
     return '<div class="ood-item"><div class="ood-item-info"><div class="ood-item-name">'+i.name+'</div><div class="ood-item-meta">'+i.sku+' x '+i.qty+(inStock?' <span style="color:var(--green);">In Stock</span>':' <span style="color:var(--red);">Low/Out</span>')+'</div></div><div class="ood-item-price">'+fmt(i.price*i.qty)+'</div></div>';
   }).join('');
-  el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+'</div><div class="ood-meta">'+o.customer+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
+  var isQuote=o.status==='Quote';
+  var notesHtml='';
+  if(o.invoiceNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Invoice Notes</div><div class="ood-notes">'+o.invoiceNotes+'</div></div>';
+  if(o.shipperNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Shipper Notes <span style="font-size:9px;color:var(--gray-3);font-weight:400;">(internal)</span></div><div class="ood-notes" style="border-left:3px solid var(--orange);">'+o.shipperNotes+'</div></div>';
+  var actionsHtml='';
+  if(isQuote){
+    actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="convertQuoteToSale(\''+o.id+'\')">Convert to Sale</button><button class="ood-btn blue" onclick="printInvoice(\''+o.id+'\')">Print Quote</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+  } else {
+    actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+  }
+  el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+'</div><div class="ood-meta">'+o.customer+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
-  '<div class="ood-section"><div class="ood-section-title">Order Details</div><div class="ood-grid"><div class="ood-field"><div class="ood-label">Payment</div><div class="ood-val">'+o.payment+'</div></div><div class="ood-field"><div class="ood-label">Tax Zone</div><div class="ood-val">'+o.taxZone+'</div></div><div class="ood-field"><div class="ood-label">Subtotal</div><div class="ood-val">'+fmt(o.subtotal)+'</div></div><div class="ood-field"><div class="ood-label">Tax</div><div class="ood-val">'+fmt(o.tax)+'</div></div><div class="ood-field"><div class="ood-label">Total</div><div class="ood-val" style="color:var(--gold);font-weight:700;">'+fmt(o.total)+'</div></div><div class="ood-field"><div class="ood-label">Status</div><div class="ood-val">'+o.status+'</div></div></div></div>'+
+  '<div class="ood-section"><div class="ood-section-title">'+( isQuote?'Quote':'Order')+' Details</div><div class="ood-grid"><div class="ood-field"><div class="ood-label">Payment</div><div class="ood-val">'+o.payment+'</div></div><div class="ood-field"><div class="ood-label">Tax Zone</div><div class="ood-val">'+(o.taxZone||'')+'</div></div><div class="ood-field"><div class="ood-label">Subtotal</div><div class="ood-val">'+fmt(o.subtotal)+'</div></div><div class="ood-field"><div class="ood-label">Tax</div><div class="ood-val">'+fmt(o.tax)+'</div></div><div class="ood-field"><div class="ood-label">Total</div><div class="ood-val" style="color:var(--gold);font-weight:700;">'+fmt(o.total)+'</div></div><div class="ood-field"><div class="ood-label">Status</div><div class="ood-val">'+o.status+'</div></div></div></div>'+
+  notesHtml+
   (o.notes?'<div class="ood-notes">'+o.notes+'</div>':'')+
-  '<div class="ood-actions"><button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+  actionsHtml;
 }
 function setOrderStatus(id,status){var o=orders.find(function(x){return x.id===id;});if(o){o.status=status;renderOrders();toast('Status updated','success');}}
 function deleteOrder(id){if(!confirm('Delete this order?'))return;orders=orders.filter(function(o){return o.id!==id;});selectedOrder=null;renderOrders();renderOrderDetail();toast('Order deleted','info');}
+function printAddrBlock(label,addr){
+  if(!addr||!addr.name)return '';
+  return '<div style="margin-bottom:8px;"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:2px;">'+label+'</div><div style="font-weight:700;">'+addr.name+'</div>'+(addr.addr?'<div>'+addr.addr+'</div>':'')+(addr.city?'<div>'+addr.city+(addr.state?', '+addr.state:'')+' '+(addr.zip||'')+'</div>':'')+(addr.phone?'<div>'+addr.phone+'</div>':'')+'</div>';
+}
+function printInvoice(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  var isQuote=o.status==='Quote';
+  var itemRows=o.items.map(function(i){return '<tr><td>'+i.sku+'</td><td>'+i.name+(i.serial?'<div style="font-size:10px;color:#888;">SN: '+i.serial+'</div>':'')+'</td><td style="text-align:center;">'+i.qty+'</td><td style="text-align:right;">'+fmt(Math.abs(i.price))+'</td><td style="text-align:right;">'+fmt(i.price*i.qty)+'</td></tr>';}).join('');
+  var html='<!DOCTYPE html><html><head><title>'+(isQuote?'Quote':'Invoice')+' '+o.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:20px;max-width:800px;margin:0 auto;}h1{font-size:18px;margin-bottom:2px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{background:#222;color:#fff;font-size:10px;text-transform:uppercase;padding:6px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #ddd;}.totals{margin-top:12px;text-align:right;}.totals div{margin:3px 0;font-size:13px;}.totals .grand{font-size:16px;font-weight:700;}.notes{margin-top:16px;padding:10px;background:#f5f5f5;border-left:3px solid #999;font-size:11px;}.inv-msg{margin-top:20px;text-align:center;font-size:13px;font-weight:700;color:#555;padding:12px;border-top:1px solid #ddd;}@media print{@page{margin:10mm;}}</style></head><body>';
+  html+='<h1>DC Appliance — '+(isQuote?'Quote':'Invoice')+'</h1>';
+  html+='<div style="font-size:11px;color:#555;margin-bottom:12px;">(620) 371-6417 &middot; Dodge City, KS</div>';
+  // Header info
+  var hdrRight='<div style="text-align:right;font-size:11px;color:#555;">'+(o.taxZone?'Tax: '+o.taxZone+'<br/>':'')+(o.clerk?'Clerk: '+o.clerk+'<br/>':'')+(o.po?'PO#: '+o.po+'<br/>':'')+(o.job?'Job#: '+o.job+'<br/>':'')+'</div>';
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div style="font-size:11px;color:#555;">'+o.id+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div>'+hdrRight+'</div>';
+  // Addresses
+  html+='<div style="display:flex;gap:30px;margin-bottom:12px;">';
+  html+=printAddrBlock('Sold To',o.soldTo||{name:o.customer});
+  if(o.shipTo&&o.shipTo.name)html+=printAddrBlock('Ship To',o.shipTo);
+  html+='</div>';
+  html+='<table><thead><tr><th>Model #</th><th>Description</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Price</th><th style="text-align:right;">Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>';
+  html+='<div class="totals"><div>Subtotal: '+fmt(o.subtotal)+'</div><div>Tax: '+fmt(o.tax)+'</div><div class="grand">Total: '+fmt(o.total)+'</div></div>';
+  if(o.invoiceNotes)html+='<div class="notes"><strong>Notes:</strong> '+o.invoiceNotes+'</div>';
+  if(adminInvoiceMessage)html+='<div class="inv-msg">'+adminInvoiceMessage+'</div>';
+  html+='</body></html>';
+  var win=window.open('','_blank');win.document.write(html);win.document.close();setTimeout(function(){win.print();},300);
+}
+function printShipperTicket(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  var html='<!DOCTYPE html><html><head><title>Shipper Ticket '+o.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:20px;max-width:800px;margin:0 auto;}h1{font-size:18px;margin-bottom:2px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{background:#222;color:#fff;font-size:10px;text-transform:uppercase;padding:6px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #ddd;}.notes{margin-top:16px;padding:10px;background:#fff3e0;border-left:3px solid #e65100;font-size:11px;}.sn-line{border-bottom:1.5px solid #555;min-width:120px;display:inline-block;height:14px;margin-left:6px;}@media print{@page{margin:10mm;}}</style></head><body>';
+  html+='<h1>DC Appliance — Shipper Ticket</h1>';
+  html+='<div style="font-size:11px;color:#555;margin-bottom:12px;">INTERNAL — DO NOT GIVE TO CUSTOMER</div>';
+  // Header
+  html+='<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div style="font-size:11px;color:#555;">'+o.id+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+(o.clerk?' &middot; Clerk: '+o.clerk:'')+'</div></div>';
+  html+='<div style="display:flex;gap:30px;margin-bottom:12px;">';
+  html+=printAddrBlock('Sold To',o.soldTo||{name:o.customer});
+  if(o.shipTo&&o.shipTo.name)html+=printAddrBlock('Ship To',o.shipTo);
+  html+='</div>';
+  html+='<table><thead><tr><th>Model #</th><th>Description</th><th style="text-align:center;">Qty</th><th>Serial #</th></tr></thead><tbody>';
+  o.items.forEach(function(i){html+='<tr><td>'+i.sku+'</td><td>'+i.name+'</td><td style="text-align:center;">'+i.qty+'</td><td>'+(i.serial||'<span class="sn-line"></span>')+'</td></tr>';});
+  html+='</tbody></table>';
+  if(o.shipperNotes)html+='<div class="notes"><strong>Shipper Notes:</strong> '+o.shipperNotes+'</div>';
+  html+='<div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:11px;"><div>Delivered by: <span class="sn-line"></span></div><div>Date: <span class="sn-line"></span></div><div>Customer Signature: <span class="sn-line" style="min-width:180px;"></span></div></div>';
+  html+='</body></html>';
+  var win=window.open('','_blank');win.document.write(html);win.document.close();setTimeout(function(){win.print();},300);
+}
 
 // ══════════════════════════════════════════════
 // DELIVERY TAB - FULL IMPLEMENTATION
@@ -3272,6 +3544,7 @@ function renderAdminSection(){
   else if(adminSection==='taxzones') renderAdminTaxZones();
   else if(adminSection==='priceupdate') renderPriceHistory();
   else if(adminSection==='users') renderAdminUsers();
+  else if(adminSection==='possettings') renderPosSettings();
 }
 
 // --- Categories ---
@@ -3525,6 +3798,19 @@ function adminDeleteUser(i){
   adminUsers.splice(i,1);
   renderAdminUsers();
   adminSave('admin-users',adminUsers);
+}
+
+// --- POS Settings ---
+function renderPosSettings(){
+  document.getElementById('admin-invoice-msg').value=adminInvoiceMessage;
+  document.getElementById('admin-delivery-price').value=adminDeliveryPrice;
+}
+function savePosSettings(){
+  adminInvoiceMessage=document.getElementById('admin-invoice-msg').value.trim();
+  adminDeliveryPrice=parseFloat(document.getElementById('admin-delivery-price').value)||79.99;
+  try{localStorage.setItem('pos-admin-invoice-msg',adminInvoiceMessage);localStorage.setItem('pos-admin-delivery-price',String(adminDeliveryPrice));}catch(e){}
+  adminSave('pos-settings',{invoiceMessage:adminInvoiceMessage,deliveryPrice:adminDeliveryPrice});
+  toast('POS settings saved','success');
 }
 
 // ══════════════════════════════════════════════
