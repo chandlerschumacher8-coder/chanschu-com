@@ -4759,6 +4759,7 @@ function delPreFillFromSale(sale){
 (async function(){
   await seedProductsIfEmpty();
   await loadOrders();
+  await adminLoad();
   renderDashboard();
   initSale();
   hbLoad().then(function(){renderHotBar();});

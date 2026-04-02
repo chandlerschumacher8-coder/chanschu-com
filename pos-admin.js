@@ -43,7 +43,7 @@ var adminUsers=[
 ];
 
 async function adminLoad(){
-  var keys=['admin-categories','admin-brands','admin-commissions','admin-tax-zones','admin-users'];
+  var keys=['admin-categories','admin-brands','admin-commissions','admin-tax-zones','admin-users','pos-settings'];
   for(var i=0;i<keys.length;i++){
     try{
       var res=await fetch('/api/admin-get?key='+encodeURIComponent(keys[i]));
@@ -54,11 +54,25 @@ async function adminLoad(){
         if(keys[i]==='admin-commissions' && json.data.defaults) adminCommissions=json.data;
         if(keys[i]==='admin-tax-zones' && json.data.length) adminTaxZones=json.data;
         if(keys[i]==='admin-users' && json.data.length) adminUsers=json.data;
+        if(keys[i]==='pos-settings' && json.data){
+          if(json.data.invoiceMessage!==undefined) adminInvoiceMessage=json.data.invoiceMessage;
+          if(json.data.deliveryPrice!==undefined) adminDeliveryPrice=json.data.deliveryPrice;
+        }
       }
     }catch(e){/* use defaults */}
   }
+  // Seed hardcoded users to Redis if Redis had nothing
+  if(!_adminUsersSeeded){
+    _adminUsersSeeded=true;
+    try{var check=await fetch('/api/admin-get?key=admin-users');var cj=await check.json();
+      if(!cj||!cj.data||!cj.data.length){
+        await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-users',data:adminUsers})});
+      }
+    }catch(e){}
+  }
   adminDataLoaded=true;
 }
+var _adminUsersSeeded=false;
 
 async function adminSave(key,data){
   try{
@@ -518,12 +532,14 @@ function renderPosSettings(){
   hbRenderEditor();
   commRenderEditor();
 }
-function savePosSettings(){
+async function savePosSettings(){
   adminInvoiceMessage=document.getElementById('admin-invoice-msg').value.trim();
   adminDeliveryPrice=parseFloat(document.getElementById('admin-delivery-price').value)||79.99;
   try{localStorage.setItem('pos-admin-invoice-msg',adminInvoiceMessage);localStorage.setItem('pos-admin-delivery-price',String(adminDeliveryPrice));}catch(e){}
-  adminSave('pos-settings',{invoiceMessage:adminInvoiceMessage,deliveryPrice:adminDeliveryPrice});
-  toast('POS settings saved','success');
+  try{
+    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'pos-settings',data:{invoiceMessage:adminInvoiceMessage,deliveryPrice:adminDeliveryPrice}})});
+    toast('POS settings saved','success');
+  }catch(e){toast('Save failed','error');}
 }
 
 // ── Commission Rates (Global by Category + Brand Overrides) ──
