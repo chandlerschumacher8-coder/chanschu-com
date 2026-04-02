@@ -538,10 +538,14 @@ async function commLoad(){
   }catch(e){}
   _commLoaded=true;
 }
-function commSaveRates(){
+async function commSaveRates(){
   commReadEditor();
-  adminSave('commission-rates',{categories:commCategoryRates,brands:commBrandOverrides});
-  toast('Commission rates saved','success');
+  try{
+    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'commission-rates',data:{categories:commCategoryRates,brands:commBrandOverrides}})});
+    toast('Commission rates saved','success');
+    var btn=document.getElementById('comm-save-btn');
+    if(btn){btn.textContent='Saved!';btn.style.background='#16a34a';setTimeout(function(){btn.textContent='Save Commission Rates';btn.style.background='';},2000);}
+  }catch(e){toast('Failed to save commission rates','error');}
 }
 function commReadEditor(){
   commCategoryRates={};

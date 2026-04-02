@@ -1558,7 +1558,7 @@ POS Settings
 </div>
 <div id="comm-brand-list"></div>
 </div>
-<button class="primary-btn" onclick="commSaveRates()" style="margin-top:12px;">Save Commission Rates</button>
+<button class="primary-btn" id="comm-save-btn" onclick="commSaveRates()" style="margin-top:12px;">Save Commission Rates</button>
 </div>
 </div>
 </div>
@@ -4750,7 +4750,7 @@ function delPreFillFromSale(sale){
   renderDashboard();
   initSale();
   hbLoad().then(function(){renderHotBar();});
-  commLoad();
+  await commLoad();
   loadCustomers();
   delWeekStart=getWeekStart(new Date());
   svcInit();
