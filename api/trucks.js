@@ -1,4 +1,4 @@
-// api/trucks.js — Fetch live vehicle locations from Verizon Connect
+// api/trucks.js - Fetch live vehicle locations from Verizon Connect
 
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
       }
     });
 
-    // If 401, token may have been revoked — clear cache and retry once
+    // If 401, token may have been revoked - clear cache and retry once
     if (vRes.status === 401) {
       cachedToken = null;
       tokenExpiresAt = 0;
@@ -63,12 +63,14 @@ export default async function handler(req, res) {
       });
       if (!vRes2.ok) throw new Error('Vehicles API error after retry: ' + vRes2.status);
       const data2 = await vRes2.json();
-      return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data2) });
+      const list2 = data2.Vehicles || data2.vehicles || data2 || [];
+      return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data2), rawFirst: list2[0] || null });
     }
 
     if (!vRes.ok) throw new Error('Vehicles API error: ' + vRes.status);
     const data = await vRes.json();
-    return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data) });
+    const list = data.Vehicles || data.vehicles || data || [];
+    return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data), rawFirst: list[0] || null });
 
   } catch (e) {
     return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
