@@ -70,9 +70,40 @@ async function adminLoad(){
       }
     }catch(e){}
   }
+  // Merge service techs into adminUsers so they appear in employee select & permissions
+  await _mergeSvcTechs();
   adminDataLoaded=true;
 }
 var _adminUsersSeeded=false;
+
+async function _mergeSvcTechs(){
+  try{
+    var res=await fetch('/api/users-get?companyId='+SVC_COMPANY_ID);
+    var data=await res.json();
+    var techs=(data.users||[]);
+    techs.forEach(function(t){
+      // Check if this tech is already merged into adminUsers
+      var existing=adminUsers.find(function(u){return u._svcTech&&u._svcName===t.name;});
+      if(existing){
+        // Update password in case it changed on service side
+        existing._svcPassword=t.password;
+        existing.name=t.tech||t.name;
+      } else {
+        adminUsers.push({
+          name:t.tech||t.name,
+          role:'Service Tech',
+          email:'',
+          phone:'',
+          pin:'',
+          _svcTech:true,
+          _svcName:t.name,
+          _svcPassword:t.password,
+          permissions:null
+        });
+      }
+    });
+  }catch(e){/* service techs unavailable */}
+}
 
 async function adminSave(key,data){
   try{
@@ -337,7 +368,8 @@ var ROLE_PERMS={
   'Manager':['sale','inventory','orders','delivery','service','customers','timeclock'],
   'Sales':['sale','orders','customers','timeclock'],
   'Delivery':['delivery','timeclock'],
-  'Tech':['service','timeclock']
+  'Tech':['service','timeclock'],
+  'Service Tech':['service','timeclock']
 };
 function renderAdminUsers(){
   var wrap=document.getElementById('admin-users-list');
@@ -450,43 +482,62 @@ function renderPermEditor(){
   var wrap=document.getElementById('perm-editor');if(!wrap)return;
   if(!adminUsers.length){wrap.innerHTML='<div class="admin-empty">No employees. Add employees first.</div>';return;}
   var allPerms=PERM_TABS.concat(PERM_FEATURES);
+  var posUsers=adminUsers.filter(function(u){return !u._svcTech;});
+  var svcUsers=adminUsers.filter(function(u){return u._svcTech;});
   var h='';
-  adminUsers.forEach(function(u,idx){
+  function renderPermCard(u,idx){
     var perms=u.permissions||{};
-    // If no permissions set, derive from role
     if(!u.permissions){
-      var preset=PERM_PRESETS[u.role]||PERM_PRESETS['Sales'];
+      var preset=PERM_PRESETS[u.role]||PERM_PRESETS[u._svcTech?'Tech':'Sales'];
       perms={};allPerms.forEach(function(p){perms[p]=false;});
       preset.tabs.forEach(function(t){perms[t]=true;});
       preset.features.forEach(function(f){perms[f]=true;});
     }
-    h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:12px;">';
-    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
-    h+='<div><span style="font-size:14px;font-weight:700;color:#1f2937;">'+u.name+'</span><span style="font-size:11px;color:#6b7280;margin-left:8px;">'+u.role+'</span></div>';
-    h+='<div style="display:flex;gap:4px;flex-wrap:wrap;">';
+    var isTech=u._svcTech;
+    var borderColor=isTech?'#7c3aed':'#e5e7eb';
+    var card='<div style="background:#fff;border:1px solid '+borderColor+';border-radius:10px;padding:14px 16px;margin-bottom:12px;">';
+    card+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
+    card+='<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:14px;font-weight:700;color:#1f2937;">'+u.name+'</span>';
+    if(isTech){
+      card+='<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;background:#f3e8ff;color:#7c3aed;border:1px solid #ddd6fe;">SERVICE TECH</span>';
+    } else {
+      card+='<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">POS USER</span>';
+    }
+    card+='<span style="font-size:11px;color:#6b7280;margin-left:4px;">'+u.role+'</span></div>';
+    card+='<div style="display:flex;gap:4px;flex-wrap:wrap;">';
     Object.keys(PERM_PRESETS).forEach(function(preset){
-      h+='<button class="ghost-btn" style="padding:3px 8px;font-size:9px;" onclick="permApplyPreset('+idx+',\''+preset+'\')">'+preset+'</button>';
+      card+='<button class="ghost-btn" style="padding:3px 8px;font-size:9px;" onclick="permApplyPreset('+idx+',\''+preset+'\')">'+preset+'</button>';
     });
-    h+='</div></div>';
-    // Tabs row
-    h+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Tabs</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;">';
+    card+='</div></div>';
+    card+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Tabs</div>';
+    card+='<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;">';
     PERM_TABS.forEach(function(p){
       var checked=perms[p]?'checked':'';
-      h+='<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;cursor:pointer;"><input type="checkbox" class="perm-cb" data-emp="'+idx+'" data-perm="'+p+'" '+checked+' style="accent-color:#2563eb;"/> '+PERM_LABELS[p]+'</label>';
+      card+='<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;cursor:pointer;"><input type="checkbox" class="perm-cb" data-emp="'+idx+'" data-perm="'+p+'" '+checked+' style="accent-color:#2563eb;"/> '+PERM_LABELS[p]+'</label>';
     });
-    h+='</div>';
-    // Features row
-    h+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Features</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;">';
+    card+='</div>';
+    card+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Features</div>';
+    card+='<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px;">';
     PERM_FEATURES.forEach(function(p){
       var checked=perms[p]?'checked':'';
-      h+='<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;cursor:pointer;"><input type="checkbox" class="perm-cb" data-emp="'+idx+'" data-perm="'+p+'" '+checked+' style="accent-color:#2563eb;"/> '+PERM_LABELS[p]+'</label>';
+      card+='<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#374151;cursor:pointer;"><input type="checkbox" class="perm-cb" data-emp="'+idx+'" data-perm="'+p+'" '+checked+' style="accent-color:#2563eb;"/> '+PERM_LABELS[p]+'</label>';
     });
-    h+='</div>';
-    h+='<button class="primary-btn" style="padding:5px 14px;font-size:11px;" onclick="permSaveUser('+idx+')">Save Permissions</button>';
-    h+='</div>';
-  });
+    card+='</div>';
+    card+='<button class="primary-btn" style="padding:5px 14px;font-size:11px;" onclick="permSaveUser('+idx+')">Save Permissions</button>';
+    card+='</div>';
+    return card;
+  }
+  // POS Users section
+  if(posUsers.length){
+    h+='<div style="font-size:12px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #2563eb;">POS Employees</div>';
+    posUsers.forEach(function(u){h+=renderPermCard(u,adminUsers.indexOf(u));});
+  }
+  // Service Techs section
+  if(svcUsers.length){
+    h+='<div style="font-size:12px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #7c3aed;">Service Portal Techs</div>';
+    h+='<div style="font-size:11px;color:#6b7280;margin-bottom:12px;">These accounts are managed in the Service Portal. Grant them POS access below.</div>';
+    svcUsers.forEach(function(u){h+=renderPermCard(u,adminUsers.indexOf(u));});
+  }
   wrap.innerHTML=h;
 }
 function permApplyPreset(empIdx,presetName){
@@ -849,9 +900,21 @@ function posLogin(){
 function showEmpSelect(){
   adminLoad().then(function(){
     var grid=document.getElementById('emp-grid');
-    grid.innerHTML=adminUsers.map(function(u,i){
-      return '<div class="emp-tile" onclick="empSelectUser('+i+')">'+u.name+'<div style="font-size:10px;color:#6b7280;font-weight:400;margin-top:3px;">'+u.role+'</div></div>';
-    }).join('');
+    var posUsers=adminUsers.filter(function(u){return !u._svcTech;});
+    var svcUsers=adminUsers.filter(function(u){return u._svcTech;});
+    var h='';
+    posUsers.forEach(function(u){
+      var i=adminUsers.indexOf(u);
+      h+='<div class="emp-tile" onclick="empSelectUser('+i+')">'+u.name+'<div style="font-size:10px;color:#6b7280;font-weight:400;margin-top:3px;">'+u.role+'</div></div>';
+    });
+    if(svcUsers.length){
+      h+='<div style="grid-column:1/-1;font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em;padding:8px 0 2px;border-top:1px solid #e5e7eb;margin-top:4px;">Service Techs</div>';
+      svcUsers.forEach(function(u){
+        var i=adminUsers.indexOf(u);
+        h+='<div class="emp-tile" onclick="empSelectUser('+i+')" style="border-color:#ddd6fe;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#7c3aed;margin-right:4px;"></span>'+u.name+'<div style="font-size:10px;color:#7c3aed;font-weight:400;margin-top:3px;">Service Tech</div></div>';
+      });
+    }
+    grid.innerHTML=h;
     document.getElementById('emp-pin-prompt').classList.remove('show');
     document.getElementById('emp-grid').style.display='';
     document.getElementById('emp-select').classList.add('show');
@@ -863,22 +926,48 @@ var _empSelectedIdx=-1;
 function empSelectUser(i){
   _empSelectedIdx=i;
   var u=adminUsers[i];
+  // Service techs always require password
+  if(u._svcTech){
+    document.getElementById('emp-grid').style.display='none';
+    document.getElementById('emp-pin-name').textContent=u.name;
+    document.getElementById('emp-pin-input').value='';
+    document.getElementById('emp-pin-input').type='password';
+    document.getElementById('emp-pin-input').placeholder='Password';
+    document.getElementById('emp-pin-input').maxLength=50;
+    document.getElementById('emp-pin-err').style.display='none';
+    document.getElementById('emp-pin-prompt').classList.add('show');
+    setTimeout(function(){document.getElementById('emp-pin-input').focus();},100);
+    return;
+  }
   if(!u.pin){empLoginAs(u);return;}
   document.getElementById('emp-grid').style.display='none';
   document.getElementById('emp-pin-name').textContent=u.name;
   document.getElementById('emp-pin-input').value='';
+  document.getElementById('emp-pin-input').type='password';
+  document.getElementById('emp-pin-input').placeholder='PIN';
+  document.getElementById('emp-pin-input').maxLength=4;
   document.getElementById('emp-pin-err').style.display='none';
   document.getElementById('emp-pin-prompt').classList.add('show');
   setTimeout(function(){document.getElementById('emp-pin-input').focus();},100);
 }
 function empPinSubmit(){
   var u=adminUsers[_empSelectedIdx];if(!u)return;
-  var pin=document.getElementById('emp-pin-input').value;
-  if(pin===u.pin){empLoginAs(u);}
+  var val=document.getElementById('emp-pin-input').value;
+  // Service tech: check password
+  if(u._svcTech){
+    if(val===u._svcPassword){empLoginAs(u);}
+    else{document.getElementById('emp-pin-err').style.display='block';document.getElementById('emp-pin-input').value='';document.getElementById('emp-pin-input').focus();}
+    return;
+  }
+  // POS user: check PIN
+  if(val===u.pin){empLoginAs(u);}
   else{document.getElementById('emp-pin-err').style.display='block';document.getElementById('emp-pin-input').value='';document.getElementById('emp-pin-input').focus();}
 }
 function empBackToGrid(){
   document.getElementById('emp-pin-prompt').classList.remove('show');
+  document.getElementById('emp-pin-input').type='password';
+  document.getElementById('emp-pin-input').placeholder='PIN';
+  document.getElementById('emp-pin-input').maxLength=4;
   document.getElementById('emp-grid').style.display='';
 }
 function empLoginAs(user){
