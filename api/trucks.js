@@ -8,19 +8,24 @@ const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-async function getToken(secret) {
+async function getToken(username, password) {
   if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
 
-  const url = `${TOKEN_URL}?client_id=${APP_ID}&client_secret=${encodeURIComponent(secret)}&grant_type=client_credentials`;
-  const res = await fetch(url);
+  const b64 = Buffer.from(`${username}:${password}`).toString('base64');
+  const res = await fetch(TOKEN_URL, {
+    headers: {
+      'Authorization': `Basic ${b64}`,
+      'Accept': 'text/plain'
+    }
+  });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error('Token request failed: ' + res.status + ' ' + body);
   }
-  const data = await res.json();
-  if (!data.access_token) throw new Error('No access_token in response');
+  const token = await res.text();
+  if (!token || token.trim() === '') throw new Error('No token in response');
 
-  cachedToken = data.access_token;
+  cachedToken = token.trim();
   tokenExpiresAt = Date.now() + TOKEN_TTL_MS;
   return cachedToken;
 }
@@ -29,13 +34,14 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
 
-  const secret = process.env.VERIZON_CLIENT_SECRET;
-  if (!secret) {
+  const username = process.env.VERIZON_USERNAME;
+  const password = process.env.VERIZON_PASSWORD;
+  if (!username || !password) {
     return res.status(200).json({ ok: true, source: 'mock', trucks: mockTrucks() });
   }
 
   try {
-    const token = await getToken(secret);
+    const token = await getToken(username, password);
 
     const vRes = await fetch(VEHICLES_URL, {
       headers: {
@@ -48,39 +54,43 @@ export default async function handler(req, res) {
     if (vRes.status === 401) {
       cachedToken = null;
       tokenExpiresAt = 0;
-      const freshToken = await getToken(secret);
-      const retry = await fetch(VEHICLES_URL, {
+      const token2 = await getToken(username, password);
+      const vRes2 = await fetch(VEHICLES_URL, {
         headers: {
-          'Authorization': `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${freshToken}`,
+          'Authorization': `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token2}`,
           'Accept': 'application/json'
         }
       });
-      if (!retry.ok) throw new Error('Vehicles request failed after token refresh: ' + retry.status);
-      return res.status(200).json({ ok: true, source: 'live', trucks: parseVehicles(await retry.json()) });
+      if (!vRes2.ok) throw new Error('Vehicles API error after retry: ' + vRes2.status);
+      const data2 = await vRes2.json();
+      return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data2) });
     }
 
-    if (!vRes.ok) throw new Error('Vehicles request failed: ' + vRes.status);
-    return res.status(200).json({ ok: true, source: 'live', trucks: parseVehicles(await vRes.json()) });
-  } catch (err) {
-    return res.status(200).json({ ok: true, source: 'mock', error: err.message, trucks: mockTrucks() });
+    if (!vRes.ok) throw new Error('Vehicles API error: ' + vRes.status);
+    const data = await vRes.json();
+    return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data) });
+
+  } catch (e) {
+    return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
   }
 }
 
-function parseVehicles(vehicles) {
-  return (Array.isArray(vehicles) ? vehicles : vehicles.VehicleList || vehicles.vehicles || []).map(v => ({
-    name: v.VehicleName || v.Name || v.vehicleName || 'Unknown',
-    driver: v.DriverName || v.Driver || v.driverName || '',
-    lat: parseFloat(v.Latitude || v.latitude || (v.Position && v.Position.Latitude) || 0),
-    lng: parseFloat(v.Longitude || v.longitude || (v.Position && v.Position.Longitude) || 0),
-    speed: v.Speed || v.speed || 0,
-    heading: v.Heading || v.heading || 0,
-    lastUpdated: v.LastUpdatedUTC || v.lastUpdated || v.TimeStamp || null
-  })).filter(t => t.lat !== 0 && t.lng !== 0);
+function mapVehicles(data) {
+  const list = data.Vehicles || data.vehicles || data || [];
+  return list.map(v => ({
+    name: v.Description || v.description || v.VehicleId || 'Truck',
+    driver: v.DriverName || v.driverName || '',
+    lat: parseFloat(v.Latitude || v.latitude || 0),
+    lng: parseFloat(v.Longitude || v.longitude || 0),
+    speed: parseFloat(v.Speed || v.speed || 0),
+    heading: parseFloat(v.Heading || v.heading || 0),
+    lastUpdated: v.LastUpdated || v.lastUpdated || null
+  }));
 }
 
 function mockTrucks() {
   return [
-    { name: 'Truck 1 - DC Appliance', driver: 'Jeff', lat: 37.7530, lng: -100.0170, speed: 0, heading: 0, lastUpdated: null },
-    { name: 'Truck 2 - DC Appliance', driver: 'Justin', lat: 37.7480, lng: -100.0050, speed: 0, heading: 0, lastUpdated: null }
+    { name: 'Truck 1 - DC Appliance', driver: 'Jeff', lat: 37.753, lng: -100.017, speed: 0, heading: 0, lastUpdated: null },
+    { name: 'Truck 2 - DC Appliance', driver: 'Justin', lat: 37.748, lng: -100.005, speed: 0, heading: 0, lastUpdated: null }
   ];
 }
