@@ -1459,7 +1459,7 @@ POS Settings
 </div>
 </div>
 <div class="admin-panel" id="admin-panel-users">
-<div class="admin-content-title">Employee Management</div>
+<div class="admin-content-title">Employee Management <span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:8px;">POS Staff &mdash; DC Appliance employees</span></div>
 <div class="admin-toolbar">
 <button class="admin-add-btn" onclick="adminAddUser()">+ Add Employee</button>
 </div>
@@ -1534,8 +1534,8 @@ POS Settings
 <div id="perm-editor"></div>
 </div>
 <div class="admin-panel" id="admin-panel-serviceadmin">
-<div class="admin-content-title">Service Techs</div>
-<div style="font-size:11px;color:#6b7280;margin-bottom:12px;">Manage service technicians. Changes sync with the Service Portal (service.html) in real-time.</div>
+<div class="admin-content-title">Service Tech Management <span style="font-size:11px;font-weight:400;color:#6b7280;margin-left:8px;">Independent contractors &mdash; service portal only</span></div>
+<div style="font-size:11px;color:#6b7280;margin-bottom:12px;">These techs log into service.html with their own credentials. They do <b>not</b> appear in POS employee lists, Time Clock, or commission reports.</div>
 <div class="admin-toolbar">
 <button class="admin-add-btn" onclick="svcAdminAddTech()">+ Add Tech</button>
 <button class="ghost-btn" onclick="svcAdminLoadTechs()" style="font-size:11px;">Refresh</button>
@@ -4560,7 +4560,7 @@ function renderCart(){
   // Populate clerk dropdown
   var clerkSel=document.getElementById('cart-clerk');
   if(clerkSel&&clerkSel.options.length<=1){
-    clerkSel.innerHTML='<option value="">Clerk...</option>'+adminUsers.filter(function(u){return u.active!==false;}).map(function(u){var display=u.tech||u.name;return '<option value="'+display+'">'+display+'</option>';}).join('');
+    clerkSel.innerHTML='<option value="">Clerk...</option>'+adminUsers.filter(function(u){return u.active!==false;}).map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
   }
 }
 function cartSerial(idx,val){if(cart[idx])cart[idx].serial=val;}

@@ -677,9 +677,12 @@ async function deleteCompany(id,name){
 
 // ── USERS ──
 async function loadTechs(){
-  if(!currentUser.companyId)return;
-  var res=await fetch('/api/employees-get?companyId='+currentUser.companyId);var data=await res.json();
-  var techUsers=(data.users||[]).filter(function(u){return u.role==='tech';}).map(function(u){return u.tech||u.name;}).filter(function(t){return t;});
+  // Load service techs from dedicated service:techs Redis key
+  var techUsers=[];
+  try{
+    var res=await fetch('/api/techs-get');var data=await res.json();
+    techUsers=(data.techs||[]).filter(function(t){return t.active!==false;}).map(function(t){return t.tech||t.name;}).filter(function(t){return t;});
+  }catch(e){}
   // Also gather tech names from existing jobs
   var jobTechs=jobs.map(function(j){return j.tech;}).filter(function(t){return t&&t!=='Unassigned';});
   var allTechs={};techUsers.forEach(function(t){allTechs[t]=1;});jobTechs.forEach(function(t){allTechs[t]=1;});

@@ -12,7 +12,7 @@ function empTcRenderGrid(){
   var grid=document.getElementById('emp-tc-grid');if(!grid)return;
   if(!adminUsers||!adminUsers.length){grid.innerHTML='';return;}
   var now=new Date();
-  grid.innerHTML=adminUsers.map(function(u){
+  grid.innerHTML=adminUsers.filter(function(u){return u.active!==false;}).map(function(u){
     var active=(typeof tcPunches!=='undefined')?tcPunches.find(function(p){return p.employee===u.name&&!p.clockOut;}):null;
     var statusCls='clocked-out', statusTxt='Off', durTxt='';
     if(active){

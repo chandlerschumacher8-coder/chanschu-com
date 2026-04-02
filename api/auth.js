@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     const companies = companiesRaw ? (typeof companiesRaw === 'string' ? JSON.parse(companiesRaw) : companiesRaw) : [];
  
     for (const company of companies) {
+      // Check POS employees (users:companyId) — admins can access service portal
       const usersRaw = await redis.get('users:' + company.id);
       const users = usersRaw ? (typeof usersRaw === 'string' ? JSON.parse(usersRaw) : usersRaw) : [];
       const user = users.find(u => u.password === password && u.active !== false);
@@ -33,7 +34,7 @@ export default async function handler(req, res) {
           ok: true,
           user: {
             name: user.name,
-            role: user.role,         // 'admin' or 'tech'
+            role: user.role || 'admin',
             tech: user.tech || null,
             companyId: company.id,
             companyName: company.name,
@@ -41,7 +42,24 @@ export default async function handler(req, res) {
         });
       }
     }
- 
+
+    // Check service techs (service:techs) — independent contractors
+    const techsRaw = await redis.get('service:techs');
+    const techs = techsRaw ? (typeof techsRaw === 'string' ? JSON.parse(techsRaw) : techsRaw) : [];
+    const tech = techs.find(t => t.password === password && t.active !== false);
+    if (tech) {
+      return res.status(200).json({
+        ok: true,
+        user: {
+          name: tech.name,
+          role: 'tech',
+          tech: tech.tech || tech.name,
+          companyId: 'dc-appliance',
+          companyName: 'DC Appliance',
+        }
+      });
+    }
+
     return res.status(401).json({ ok: false, error: 'Incorrect password' });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });
