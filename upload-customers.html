@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><head><title>Upload Customers</title></head>
+<body>
+<h2>Upload Customers to Redis</h2>
+<p>Select the customers.json file to upload:</p>
+<input type="file" id="f" accept=".json"/>
+<button onclick="upload()">Upload</button>
+<div id="status"></div>
+<script>
+async function upload(){
+  var file=document.getElementById('f').files[0];
+  if(!file){alert('Select a file');return;}
+  var text=await file.text();
+  var data=JSON.parse(text);
+  document.getElementById('status').textContent='Uploading '+data.length+' customers...';
+  var res=await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'customers',data:data})});
+  var json=await res.json();
+  document.getElementById('status').textContent=json.ok?'Done! '+data.length+' customers uploaded.':'Error: '+json.error;
+}
+</script>
+</body>
+</html>
