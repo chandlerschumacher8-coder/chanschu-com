@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     for (const company of companies) {
       const usersRaw = await redis.get('users:' + company.id);
       const users = usersRaw ? (typeof usersRaw === 'string' ? JSON.parse(usersRaw) : usersRaw) : [];
-      const user = users.find(u => u.password === password);
+      const user = users.find(u => u.password === password && u.active !== false);
       if (user) {
         return res.status(200).json({
           ok: true,
