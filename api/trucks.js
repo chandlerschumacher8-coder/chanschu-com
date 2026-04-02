@@ -3,7 +3,6 @@
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
 const VEHICLES_URL = 'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles';
-// RAD = Real-time Aggregated Data - GPS/location data
 const RAD_BASE = 'https://fim.api.us.fleetmatics.com:443/rad/v1';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
@@ -47,7 +46,7 @@ export default async function handler(req, res) {
     const authHeader = `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token}`;
     const headers = { 'Authorization': authHeader, 'Accept': 'application/json' };
 
-    // 1. Fetch vehicle metadata (names, IDs, vehicle numbers)
+    // 1. Fetch vehicle metadata
     let vRes = await fetch(VEHICLES_URL, { headers });
     if (vRes.status === 401) {
       cachedToken = null; tokenExpiresAt = 0;
@@ -58,29 +57,28 @@ export default async function handler(req, res) {
     const vehicleData = await vRes.json();
     const vehicles = vehicleData.Vehicles || vehicleData.vehicles || (Array.isArray(vehicleData) ? vehicleData : []);
 
-    // 2. Fetch GPS locations via RAD API
-    // Use VehicleNumber if available, fall back to VehicleId as string
+    // 2. Build vehicle number list - use VehicleNumber if not null, else VehicleId as string
     const vehicleNumbers = vehicles.map(v => v.VehicleNumber || String(v.VehicleId));
-    let locationMap = {}; // keyed by vehicleNumber
+    let locationMap = {};
+    let radDebug = null;
 
     if (vehicleNumbers.length > 0) {
-      try {
-        const radRes = await fetch(`${RAD_BASE}/vehicles/locations`, {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify(vehicleNumbers)
-        });
-        if (radRes.ok) {
-          const radData = await radRes.json();
-          // radData is array of { VehicleNumber, StatusCode, ContentResource: { Value: { Latitude, Longitude, Speed, Heading, DriverNumber, UpdateUTC } } }
+      const radRes = await fetch(`${RAD_BASE}/vehicles/locations`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(vehicleNumbers)
+      });
+      const radBody = await radRes.text();
+      radDebug = { status: radRes.status, vehicleNumbers, body: radBody.substring(0, 1000) };
+      if (radRes.ok) {
+        try {
+          const radData = JSON.parse(radBody);
           (Array.isArray(radData) ? radData : []).forEach(entry => {
             if (entry.VehicleNumber && entry.ContentResource && entry.ContentResource.Value) {
               locationMap[entry.VehicleNumber] = entry.ContentResource.Value;
             }
           });
-        }
-      } catch (locErr) {
-        // Location fetch failed - continue with 0,0 coords
+        } catch(e) {}
       }
     }
 
@@ -98,7 +96,7 @@ export default async function handler(req, res) {
       };
     });
 
-    return res.status(200).json({ ok: true, source: 'live', trucks });
+    return res.status(200).json({ ok: true, source: 'live', trucks, radDebug });
 
   } catch (e) {
     return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
