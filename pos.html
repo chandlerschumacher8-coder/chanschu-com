@@ -74,7 +74,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 
 /* ═══ NEW SALE ═══ */
 .sale-wrap{display:flex;flex:1;overflow:hidden;position:relative;}
-.sale-left{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);padding-bottom:60px;}
+.sale-left{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border);padding-bottom:115px;}
 .sale-toolbar{padding:10px 16px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
 .sale-search{flex:1;min-width:120px;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:7px 12px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;}
 .sale-search:focus{border-color:#2563eb;}
@@ -118,6 +118,9 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .cart-shipto-toggle summary{list-style:none;}
 .cart-shipto-toggle summary::-webkit-details-marker{display:none;}
 /* Quick-add fixed bar */
+.sale-notes-bar{position:absolute;bottom:54px;left:0;right:380px;background:#fff;border-top:1px solid #e5e7eb;padding:6px 14px;z-index:10;}
+.sale-notes-row{display:flex;gap:10px;}
+.sale-note-field{flex:1;min-width:0;}
 .sale-quickadd{position:absolute;bottom:0;left:0;right:380px;display:flex;gap:6px;padding:10px 14px;background:#fff;border-top:1px solid #e5e7eb;flex-wrap:wrap;z-index:10;flex-shrink:0;}
 .ci-add-btn{font-size:14px;font-weight:700;padding:14px 24px;border:1px solid #bbf7d0;color:#16a34a;background:#f0fdf4;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
 .ci-add-btn:hover{background:#dcfce7;border-color:#86efac;}
@@ -792,6 +795,35 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .tc-daily-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:12px;color:#374151;}
 .tc-daily-hrs{font-weight:700;}
 .tc-daily-hrs.overtime{color:#dc2626;}
+/* ═══ DASHBOARD ═══ */
+.dash-wrap{flex:1;overflow-y:auto;padding:16px 20px;background:#f3f4f6;}
+.dash-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.dash-title{font-family:'Playfair Display',serif;font-size:20px;color:#1f2937;}
+.dash-date{font-size:12px;color:#6b7280;}
+.dash-refresh{font-size:10px;color:#9ca3af;}
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.dash-kpi{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;}
+.dash-kpi-val{font-family:'Playfair Display',serif;font-size:26px;color:#1f2937;line-height:1;}
+.dash-kpi-label{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;margin-top:4px;}
+.dash-kpi-cmp{font-size:10px;margin-top:4px;}
+.dash-kpi-cmp.up{color:#16a34a;}
+.dash-kpi-cmp.down{color:#dc2626;}
+.dash-kpi-cmp.flat{color:#9ca3af;}
+.dash-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.dash-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;}
+.dash-card-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;margin-bottom:10px;}
+.dash-card-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:12px;color:#374151;}
+.dash-card-row:last-child{border-bottom:none;}
+.dash-card-val{font-weight:700;color:#1f2937;}
+.dash-card-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;}
+.dash-sb-sched{background:#dbeafe;color:#1e40af;}
+.dash-sb-out{background:#fef3c7;color:#92400e;}
+.dash-sb-del{background:#dcfce7;color:#166534;}
+.dash-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.dash-dept-bar{height:6px;background:#e5e7eb;border-radius:3px;margin-top:6px;overflow:hidden;}
+.dash-dept-fill{height:100%;border-radius:3px;background:#2563eb;}
+.dash-alert-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:12px;}
+.dash-alert-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 </style>
 </head>
 <body>
@@ -825,7 +857,8 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="topbar">
 <div class="tb-logo">DC <span>Appliance</span></div>
 <div class="tb-tabs">
-<button class="tb-tab active" onclick="nav('sale',this)"><svg viewBox="0 0 24 24"><path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3z"/></svg>New Sale</button>
+<button class="tb-tab active" onclick="nav('dashboard',this)"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</button>
+<button class="tb-tab" onclick="nav('sale',this)"><svg viewBox="0 0 24 24"><path d="M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-7-3c1.66 0 3 1.34 3 3H9c0-1.66 1.34-3 3-3z"/></svg>New Sale</button>
 <button class="tb-tab" onclick="nav('inventory',this)"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1 0-2 1-2 2v3c0 .7.4 1.3 1 1.7V20c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8.7c.6-.4 1-1 1-1.7V4c0-1-1-2-2-2zm-1 18H5V9h14v11zm1-13H4V4h16v3z"/></svg>Inventory</button>
 <button class="tb-tab" onclick="nav('orders',this)"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v2H8v-2zm0 4h8v2H8v-2z"/></svg>Open Orders</button>
 <button class="tb-tab" onclick="nav('delivery',this)"><svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zM18 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>Delivery</button>
@@ -840,8 +873,13 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 </div>
 
+<!-- ═══ VIEW: DASHBOARD ═══ -->
+<div class="view active" id="view-dashboard">
+<div class="dash-wrap" id="dash-wrap"></div>
+</div>
+
 <!-- ═══ VIEW: NEW SALE ═══ -->
-<div class="view active" id="view-sale">
+<div class="view" id="view-sale">
 <div class="sale-wrap">
 <div class="sale-left">
 <div class="sale-toolbar" id="sale-toolbar">
@@ -897,12 +935,6 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 </div>
 <div id="cart-items"></div>
-<div class="cart-notes-wrap">
-<label class="cart-notes-label">Invoice Notes</label>
-<textarea class="cart-notes" id="cart-invoice-notes" placeholder="Delivery instructions, special terms, customer message..." rows="2"></textarea>
-<label class="cart-notes-label" style="margin-top:6px;">Shipper Notes <span style="font-weight:400;color:var(--gray-3);">(internal only)</span></label>
-<textarea class="cart-notes" id="cart-shipper-notes" placeholder="Haul away, floor level, access codes, special handling..." rows="2"></textarea>
-</div>
 </div>
 <div class="cart-footer">
 <div class="cf-row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
@@ -918,7 +950,13 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 </div>
 </div>
-<!-- Quick-Add Fixed Bar -->
+<!-- Notes + Quick-Add Fixed Bar -->
+<div class="sale-notes-bar">
+<div class="sale-notes-row">
+<div class="sale-note-field"><label class="cart-notes-label">Invoice Notes</label><textarea class="cart-notes" id="cart-invoice-notes" placeholder="Delivery instructions, special terms..." rows="1"></textarea></div>
+<div class="sale-note-field"><label class="cart-notes-label">Shipper Notes <span style="font-weight:400;color:#9ca3af;">(internal)</span></label><textarea class="cart-notes" id="cart-shipper-notes" placeholder="Haul away, floor level, access codes..." rows="1"></textarea></div>
+</div>
+</div>
 <div class="sale-quickadd">
 <button class="ci-add-btn" onclick="addInstallItem('Delivery Charge',adminDeliveryPrice)">+ Delivery</button>
 <button class="ci-add-btn" onclick="addInstallItem('Fridge Install',149.99)">+ Fridge</button>
@@ -2394,6 +2432,7 @@ function nav(viewId,tabEl){
   if(viewId==='delivery'){delLoadData();}
   if(viewId==='service'){svcLoadJobs();}
   if(viewId==='inventory'){renderInventory();if(invSubTab==='ordering')renderReorder();if(invSubTab==='receiving')renderReceiving();}
+  if(viewId==='dashboard'){renderDashboard();}
   if(viewId==='orders'){renderOrders();}
   if(viewId==='timeclock'){tcInit();}
   if(viewId==='admin'){renderAdmin();}
@@ -3684,7 +3723,7 @@ function taxUseForZone(idx){
 // ══════════════════════════════════════════════
 function toggleAI(){aiOpen=!aiOpen;document.getElementById('ai-drawer').classList.toggle('open',aiOpen);if(aiOpen){updateAIChips();document.getElementById('ai-inp').focus();}}
 function updateAIChips(){
-  var chips={sale:['Price check','Compare models','Customer quote','Margin calc'],inventory:['Stock report','Low stock summary','Reorder suggestions','PO status'],orders:['Order status help','Delivery scheduling'],delivery:['Route optimization','Schedule conflict check'],service:['Diagnose issue','Part lookup','Warranty check'],admin:['Tax rate lookup','Exemption rules','User management']}[currentTab]||['General help'];
+  var chips={dashboard:['Sales summary','Top sellers','Daily report'],sale:['Price check','Compare models','Customer quote','Margin calc'],inventory:['Stock report','Low stock summary','Reorder suggestions','PO status'],orders:['Order status help','Delivery scheduling'],delivery:['Route optimization','Schedule conflict check'],service:['Diagnose issue','Part lookup','Warranty check'],admin:['Tax rate lookup','Exemption rules','User management']}[currentTab]||['General help'];
   document.getElementById('ai-chips').innerHTML=chips.map(function(c){return '<button class="ai-chip" onclick="aiChip(\''+c+'\')">'+c+'</button>';}).join('');
 }
 function aiChip(text){document.getElementById('ai-inp').value=text;aiSend();}
@@ -4466,8 +4505,140 @@ function tcExportCSV(){
 }
 
 // ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+var _dashTimer=null;
+function renderDashboard(){
+  if(_dashTimer)clearInterval(_dashTimer);
+  _dashTimer=setInterval(function(){if(currentTab==='dashboard')renderDashboard();},60000);
+  var today=new Date().toISOString().slice(0,10);
+  var yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  var now=new Date();var lastWeekDay=new Date(now);lastWeekDay.setDate(lastWeekDay.getDate()-7);var lastWeek=lastWeekDay.toISOString().slice(0,10);
+
+  // Today's orders (not quotes)
+  var todayOrders=orders.filter(function(o){return o.date&&o.date.slice(0,10)===today&&o.status!=='Quote';});
+  var yestOrders=orders.filter(function(o){return o.date&&o.date.slice(0,10)===yesterday&&o.status!=='Quote';});
+  var lwOrders=orders.filter(function(o){return o.date&&o.date.slice(0,10)===lastWeek&&o.status!=='Quote';});
+  var totalSales=todayOrders.reduce(function(s,o){return s+(o.total||0);},0);
+  var totalTax=todayOrders.reduce(function(s,o){return s+(o.tax||0);},0);
+  var avgSale=todayOrders.length?totalSales/todayOrders.length:0;
+  var yestTotal=yestOrders.reduce(function(s,o){return s+(o.total||0);},0);
+  var lwTotal=lwOrders.reduce(function(s,o){return s+(o.total||0);},0);
+
+  function cmp(cur,prev){if(!prev)return{cls:'flat',txt:'—'};var d=cur-prev;var pct=prev?Math.round(d/prev*100):0;return{cls:d>=0?'up':'down',txt:(d>=0?'&#9650; +':'&#9660; ')+pct+'% vs '};}
+  var cmpY=cmp(totalSales,yestTotal);var cmpW=cmp(totalSales,lwTotal);
+
+  // Sales by department
+  var deptSales={};DEPARTMENTS.forEach(function(d){deptSales[d.name]={dollars:0,units:0};});
+  todayOrders.forEach(function(o){(o.items||[]).forEach(function(i){
+    var p=PRODUCTS.find(function(x){return x.id===i.id;});if(!p)return;
+    var dept=getProductDept(p)||'Other';
+    if(!deptSales[dept])deptSales[dept]={dollars:0,units:0};
+    deptSales[dept].dollars+=i.price*i.qty;deptSales[dept].units+=i.qty;
+  });});
+  var maxDept=Math.max.apply(null,Object.values(deptSales).map(function(d){return d.dollars;}))||1;
+
+  // Sales by clerk
+  var clerkSales={};
+  todayOrders.forEach(function(o){var c=o.clerk||'Unknown';if(!clerkSales[c])clerkSales[c]={dollars:0,count:0};clerkSales[c].dollars+=o.total||0;clerkSales[c].count++;});
+
+  // Today's deliveries
+  var todayDel=(typeof delDeliveries!=='undefined'?delDeliveries:[]).filter(function(d){return d.date===today;});
+  todayDel.sort(function(a,b){return(a.time||'').localeCompare(b.time||'');});
+
+  // Open orders/quotes/holds
+  var openQuotes=orders.filter(function(o){return o.status==='Quote';}).length;
+  var openOrders=orders.filter(function(o){return o.status!=='Quote'&&o.status!=='Complete';}).length;
+  var holdCount=(typeof heldSales!=='undefined'?heldSales:[]).length;
+  var recentOrders=orders.filter(function(o){return o.status!=='Quote';}).slice(0,5);
+
+  // Service alerts
+  var svcAlerts=(typeof svcJobs!=='undefined'?svcJobs:[]).filter(function(j){return j.status==='In Progress'||j.status==='Needs Claimed';});
+  var partsWaiting=(typeof svcJobs!=='undefined'?svcJobs:[]).filter(function(j){
+    if(!j.partOnOrder||!j.partOrderedAt)return false;
+    return(Date.now()-new Date(j.partOrderedAt).getTime())>7*86400000;
+  });
+
+  // Low stock
+  var lowStock=PRODUCTS.filter(function(p){return p.active!==false&&p.stock<=p.reorderPt;});
+  var lowByDept={};lowStock.forEach(function(p){var d=getProductDept(p)||'Other';if(!lowByDept[d])lowByDept[d]=0;lowByDept[d]++;});
+
+  // Time clock
+  var clockedIn=(typeof tcPunches!=='undefined'?tcPunches:[]).filter(function(p){return!p.clockOut;});
+  var todayHours={};(typeof tcPunches!=='undefined'?tcPunches:[]).filter(function(p){return p.date===today&&p.type!=='break';}).forEach(function(p){
+    if(!todayHours[p.employee])todayHours[p.employee]=0;
+    todayHours[p.employee]+=(p.clockOut?p.hours:tcDiffHours(p.clockIn,new Date().toISOString()));
+  });
+
+  var h='<div class="dash-hdr"><div><div class="dash-title">Dashboard</div><div class="dash-date">'+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'</div></div><div class="dash-refresh">Auto-refreshes every 60s</div></div>';
+
+  // KPI row
+  h+='<div class="dash-grid">';
+  h+='<div class="dash-kpi"><div class="dash-kpi-val">'+fmt(totalSales)+'</div><div class="dash-kpi-label">Total Sales Today</div><div class="dash-kpi-cmp '+cmpY.cls+'">'+cmpY.txt+'yesterday</div></div>';
+  h+='<div class="dash-kpi"><div class="dash-kpi-val">'+todayOrders.length+'</div><div class="dash-kpi-label">Invoices Today</div><div class="dash-kpi-cmp '+cmpW.cls+'">'+cmpW.txt+'last week</div></div>';
+  h+='<div class="dash-kpi"><div class="dash-kpi-val">'+fmt(avgSale)+'</div><div class="dash-kpi-label">Avg Sale Amount</div></div>';
+  h+='<div class="dash-kpi"><div class="dash-kpi-val">'+fmt(totalTax)+'</div><div class="dash-kpi-label">Tax Collected</div></div>';
+  h+='</div>';
+
+  // Row: Dept sales + Clerk sales
+  h+='<div class="dash-row">';
+  h+='<div class="dash-card"><div class="dash-card-title">Sales by Department</div>';
+  DEPARTMENTS.forEach(function(d){
+    var ds=deptSales[d.name]||{dollars:0,units:0};
+    var pct=maxDept?Math.round(ds.dollars/maxDept*100):0;
+    h+='<div style="margin-bottom:8px;"><div class="dash-card-row" style="border:none;padding:0;"><span>'+d.name+'</span><span class="dash-card-val">'+fmt(ds.dollars)+' <span style="font-weight:400;color:#6b7280;font-size:10px;">'+ds.units+' units</span></span></div><div class="dash-dept-bar"><div class="dash-dept-fill" style="width:'+pct+'%;"></div></div></div>';
+  });
+  h+='</div>';
+  h+='<div class="dash-card"><div class="dash-card-title">Sales by Salesperson</div>';
+  var clerks=Object.keys(clerkSales);
+  if(clerks.length){clerks.sort(function(a,b){return clerkSales[b].dollars-clerkSales[a].dollars;});clerks.forEach(function(c){h+='<div class="dash-card-row"><span>'+c+'</span><span class="dash-card-val">'+fmt(clerkSales[c].dollars)+' <span style="font-weight:400;color:#6b7280;font-size:10px;">'+clerkSales[c].count+' inv</span></span></div>';});}
+  else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No sales yet today</div>';
+  h+='</div></div>';
+
+  // Row: Deliveries + Open Orders
+  h+='<div class="dash-row">';
+  h+='<div class="dash-card"><div class="dash-card-title">Today\'s Deliveries ('+todayDel.length+')</div>';
+  if(todayDel.length){todayDel.forEach(function(d){
+    var sc=d.status==='Delivered'?'dash-sb-del':d.status==='Out for Delivery'?'dash-sb-out':'dash-sb-sched';
+    var apps=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
+    h+='<div class="dash-card-row"><div style="flex:1;min-width:0;"><div style="font-weight:600;">'+d.name+'</div><div style="font-size:10px;color:#6b7280;">'+d.time+' &middot; '+(d.city||'')+' &middot; '+apps+'</div></div><span class="dash-card-badge '+sc+'">'+d.status+'</span></div>';
+  });}else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No deliveries scheduled</div>';
+  h+='</div>';
+  h+='<div class="dash-card"><div class="dash-card-title">Open Orders</div>';
+  h+='<div class="dash-card-row"><span>Open Quotes</span><span class="dash-card-val">'+openQuotes+'</span></div>';
+  h+='<div class="dash-card-row"><span>Held Sales</span><span class="dash-card-val">'+holdCount+'</span></div>';
+  h+='<div class="dash-card-row"><span>Pending Orders</span><span class="dash-card-val">'+openOrders+'</span></div>';
+  if(recentOrders.length){h+='<div style="margin-top:8px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;">Recent</div>';recentOrders.forEach(function(o){h+='<div class="dash-card-row"><span>'+o.id+' — '+o.customer+'</span><span class="dash-card-val">'+fmt(o.total)+'</span></div>';});}
+  h+='</div></div>';
+
+  // Row: Service + Low Stock + Time Clock
+  h+='<div class="dash-row3">';
+  h+='<div class="dash-card"><div class="dash-card-title">Service Alerts</div>';
+  if(svcAlerts.length){svcAlerts.slice(0,8).forEach(function(j){h+='<div class="dash-alert-item"><div class="dash-alert-dot" style="background:'+(j.status==='Needs Claimed'?'#eab308':'#ea580c')+';"></div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:11px;">'+j.name+'</div><div style="font-size:10px;color:#6b7280;">'+j.status+' &middot; '+j.appliance+'</div></div></div>';});}
+  else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No alerts</div>';
+  if(partsWaiting.length)h+='<div style="margin-top:8px;padding:6px 8px;background:#fef2f2;border-radius:6px;font-size:11px;color:#dc2626;font-weight:600;">'+partsWaiting.length+' part(s) waiting 7+ days</div>';
+  h+='</div>';
+
+  h+='<div class="dash-card"><div class="dash-card-title">Low Stock ('+lowStock.length+')</div>';
+  if(lowStock.length){Object.keys(lowByDept).sort().forEach(function(d){h+='<div class="dash-card-row"><span>'+d+'</span><span class="dash-card-val" style="color:#dc2626;">'+lowByDept[d]+'</span></div>';});
+  lowStock.slice(0,6).forEach(function(p){h+='<div class="dash-alert-item"><div class="dash-alert-dot" style="background:'+(p.stock<=0?'#dc2626':'#ea580c')+';"></div><div style="font-size:11px;">'+p.name+' <span style="color:#6b7280;">('+p.stock+')</span></div></div>';});}
+  else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">All stock OK</div>';
+  h+='</div>';
+
+  h+='<div class="dash-card"><div class="dash-card-title">Time Clock</div>';
+  if(clockedIn.length){clockedIn.forEach(function(p){var mins=Math.floor((Date.now()-new Date(p.clockIn).getTime())/60000);var hr=Math.floor(mins/60),mn=mins%60;h+='<div class="dash-card-row"><span>'+p.employee+(p.type==='break'?' <span style="color:#ea580c;font-size:9px;">(BREAK)</span>':'')+'</span><span class="dash-card-val'+(hr>=8?' style="color:#dc2626;"':'')+'>'+hr+'h '+mn+'m</span></div>';});}
+  else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No one clocked in</div>';
+  var hrKeys=Object.keys(todayHours);
+  if(hrKeys.length){h+='<div style="margin-top:8px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;">Hours Today</div>';hrKeys.forEach(function(e){var hr=Math.round(todayHours[e]*100)/100;h+='<div class="dash-card-row"><span>'+e+'</span><span class="dash-card-val'+(hr>8?' style="color:#dc2626;"':'')+'>'+hr.toFixed(1)+'h</span></div>';});}
+  h+='</div></div>';
+
+  document.getElementById('dash-wrap').innerHTML=h;
+}
+
+// ══════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════
+renderDashboard();
 initSale();
 delWeekStart=getWeekStart(new Date());
 svcInit();
