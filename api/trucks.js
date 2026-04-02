@@ -3,6 +3,8 @@
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
 const VEHICLES_URL = 'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles';
+// RAD = Real-time Aggregated Data - GPS/location data
+const RAD_BASE = 'https://fim.api.us.fleetmatics.com:443/rad/v1';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
 let cachedToken = null;
@@ -45,7 +47,7 @@ export default async function handler(req, res) {
     const authHeader = `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token}`;
     const headers = { 'Authorization': authHeader, 'Accept': 'application/json' };
 
-    // Fetch vehicle list
+    // 1. Fetch vehicle metadata (names, IDs, vehicle numbers)
     let vRes = await fetch(VEHICLES_URL, { headers });
     if (vRes.status === 401) {
       cachedToken = null; tokenExpiresAt = 0;
@@ -56,38 +58,47 @@ export default async function handler(req, res) {
     const vehicleData = await vRes.json();
     const vehicles = vehicleData.Vehicles || vehicleData.vehicles || (Array.isArray(vehicleData) ? vehicleData : []);
 
-    // Probe multiple location endpoint formats
-    const locDebug = {};
-    const testUrls = [
-      'https://fim.api.us.fleetmatics.com/cmd/v3/vehiclelocations',
-      'https://fim.api.us.fleetmatics.com/cmd/v1/VehicleLocations',
-      'https://fim.api.us.fleetmatics.com/cmd/v3/VehicleLocations',
-      'https://fim.api.us.fleetmatics.com/v1/vehiclelocations',
-      'https://fim.api.us.fleetmatics.com/v1/locations',
-      'https://fim.api.us.fleetmatics.com/cmd/v1/locations',
-    ];
+    // 2. Fetch GPS locations via RAD API
+    // Use VehicleNumber if available, fall back to VehicleId as string
+    const vehicleNumbers = vehicles.map(v => v.VehicleNumber || String(v.VehicleId));
+    let locationMap = {}; // keyed by vehicleNumber
 
-    for (const url of testUrls) {
+    if (vehicleNumbers.length > 0) {
       try {
-        const r = await fetch(url, { headers });
-        const body = await r.text();
-        locDebug[url] = { status: r.status, body: body.substring(0, 200) };
-      } catch(err) {
-        locDebug[url] = { error: err.message };
+        const radRes = await fetch(`${RAD_BASE}/vehicles/locations`, {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify(vehicleNumbers)
+        });
+        if (radRes.ok) {
+          const radData = await radRes.json();
+          // radData is array of { VehicleNumber, StatusCode, ContentResource: { Value: { Latitude, Longitude, Speed, Heading, DriverNumber, UpdateUTC } } }
+          (Array.isArray(radData) ? radData : []).forEach(entry => {
+            if (entry.VehicleNumber && entry.ContentResource && entry.ContentResource.Value) {
+              locationMap[entry.VehicleNumber] = entry.ContentResource.Value;
+            }
+          });
+        }
+      } catch (locErr) {
+        // Location fetch failed - continue with 0,0 coords
       }
     }
 
-    const trucks = vehicles.map(v => ({
-      name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
-      driver: '',
-      lat: 0,
-      lng: 0,
-      speed: 0,
-      heading: 0,
-      lastUpdated: null
-    }));
+    const trucks = vehicles.map(v => {
+      const vNum = v.VehicleNumber || String(v.VehicleId);
+      const loc = locationMap[vNum] || {};
+      return {
+        name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
+        driver: loc.DriverNumber || '',
+        lat: parseFloat(loc.Latitude || 0),
+        lng: parseFloat(loc.Longitude || 0),
+        speed: parseFloat(loc.Speed || 0),
+        heading: loc.Heading || String(loc.Direction || ''),
+        lastUpdated: loc.UpdateUTC || null
+      };
+    });
 
-    return res.status(200).json({ ok: true, source: 'live', trucks, locDebug });
+    return res.status(200).json({ ok: true, source: 'live', trucks });
 
   } catch (e) {
     return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
@@ -99,4 +110,4 @@ function mockTrucks() {
     { name: 'Truck 1 - DC Appliance', driver: 'Jeff', lat: 37.753, lng: -100.017, speed: 0, heading: 0, lastUpdated: null },
     { name: 'Truck 2 - DC Appliance', driver: 'Justin', lat: 37.748, lng: -100.005, speed: 0, heading: 0, lastUpdated: null }
   ];
-}
+        }
