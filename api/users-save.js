@@ -13,9 +13,10 @@ export default async function handler(req, res) {
     if (!companyId || !Array.isArray(users)) {
       return res.status(400).json({ ok: false, error: 'Invalid data' });
     }
-    // Verify requester is admin of this company OR superadmin
+    // Verify requester is admin of this company, superadmin, or POS master
     const isSuperAdmin = requesterPassword === process.env.SUPER_ADMIN_PASSWORD;
-    if (!isSuperAdmin) {
+    const isPosMaster = requesterPassword === 'DCA123';
+    if (!isSuperAdmin && !isPosMaster) {
       const existingRaw = await redis.get('users:' + companyId);
       const existing = existingRaw ? (typeof existingRaw === 'string' ? JSON.parse(existingRaw) : existingRaw) : [];
       const requester = existing.find(u => u.password === requesterPassword && u.role === 'admin');

@@ -36,14 +36,10 @@ var adminTaxZones=[
   {name:'Rush County',counties:['Rush'],stateRate:6.5,countyRate:1.25,cityRate:0.5},
   {name:'Ford County',counties:['Ford'],stateRate:6.5,countyRate:1.5,cityRate:0.65}
 ];
-var adminUsers=[
-  {name:'Admin User',role:'Owner/Admin',email:'admin@dcappliance.com',phone:'785-555-0100',pin:'1234',commissions:{}},
-  {name:'John Tech',role:'Tech',email:'john@dcappliance.com',phone:'785-555-0101',pin:'5678',commissions:{}},
-  {name:'Jane Sales',role:'Sales',email:'jane@dcappliance.com',phone:'785-555-0102',pin:'9012',commissions:{}}
-];
+var adminUsers=[];
 
 async function adminLoad(){
-  var keys=['admin-categories','admin-brands','admin-commissions','admin-tax-zones','admin-users','pos-settings'];
+  var keys=['admin-categories','admin-brands','admin-commissions','admin-tax-zones','pos-settings'];
   for(var i=0;i<keys.length;i++){
     try{
       var res=await fetch('/api/admin-get?key='+encodeURIComponent(keys[i]));
@@ -53,7 +49,6 @@ async function adminLoad(){
         if(keys[i]==='admin-brands' && json.data.length) adminBrands=json.data;
         if(keys[i]==='admin-commissions' && json.data.defaults) adminCommissions=json.data;
         if(keys[i]==='admin-tax-zones' && json.data.length) adminTaxZones=json.data;
-        if(keys[i]==='admin-users' && json.data.length) adminUsers=json.data;
         if(keys[i]==='pos-settings' && json.data){
           if(json.data.invoiceMessage!==undefined) adminInvoiceMessage=json.data.invoiceMessage;
           if(json.data.deliveryPrice!==undefined) adminDeliveryPrice=json.data.deliveryPrice;
@@ -61,48 +56,63 @@ async function adminLoad(){
       }
     }catch(e){/* use defaults */}
   }
-  // Seed hardcoded users to Redis if Redis had nothing
-  if(!_adminUsersSeeded){
-    _adminUsersSeeded=true;
-    try{var check=await fetch('/api/admin-get?key=admin-users');var cj=await check.json();
-      if(!cj||!cj.data||!cj.data.length){
-        await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-users',data:adminUsers})});
-      }
-    }catch(e){}
-  }
-  // Merge service techs into adminUsers so they appear in employee select & permissions
-  await _mergeSvcTechs();
+  // Load unified user database from users:dc-appliance
+  await _loadUnifiedUsers();
   adminDataLoaded=true;
 }
-var _adminUsersSeeded=false;
 
-async function _mergeSvcTechs(){
+// Unified user database — single Redis key: users:dc-appliance
+// Every user has: name, password, role (admin/tech), tech (display name)
+// POS-only fields: posRole, pin, email, phone, permissions
+async function _loadUnifiedUsers(){
   try{
     var res=await fetch('/api/users-get?companyId='+SVC_COMPANY_ID);
     var data=await res.json();
-    var techs=(data.users||[]);
-    techs.forEach(function(t){
-      // Check if this tech is already merged into adminUsers
-      var existing=adminUsers.find(function(u){return u._svcTech&&u._svcName===t.name;});
-      if(existing){
-        // Update password in case it changed on service side
-        existing._svcPassword=t.password;
-        existing.name=t.tech||t.name;
-      } else {
-        adminUsers.push({
-          name:t.tech||t.name,
-          role:'Service Tech',
-          email:'',
-          phone:'',
-          pin:'',
-          _svcTech:true,
-          _svcName:t.name,
-          _svcPassword:t.password,
-          permissions:null
+    if(data.users&&data.users.length){adminUsers=data.users;}
+  }catch(e){}
+  // Migrate: if unified DB is empty, seed from old pos:admin-users
+  if(!adminUsers.length){
+    try{
+      var old=await fetch('/api/admin-get?key=admin-users');var oj=await old.json();
+      if(oj&&oj.data&&oj.data.length){
+        adminUsers=oj.data.map(function(u){
+          return{
+            name:u.name, password:u.pin||'changeme', role:u._svcTech?'tech':'admin',
+            tech:u.name, posRole:u.role||'Sales', pin:u.pin||'',
+            email:u.email||'', phone:u.phone||'', permissions:u.permissions||null
+          };
         });
+        await saveAllUsers();
+        console.log('Migrated '+adminUsers.length+' users to unified DB');
       }
-    });
-  }catch(e){/* service techs unavailable */}
+    }catch(e){}
+  }
+  // Ensure every user has POS fields
+  adminUsers.forEach(function(u){
+    if(!u.posRole)u.posRole=u.role==='tech'?'Service Tech':(u.role==='admin'?'Owner/Admin':'Sales');
+    if(!u.password)u.password='changeme';
+    if(u.pin===undefined)u.pin='';
+    if(u.email===undefined)u.email='';
+    if(u.phone===undefined)u.phone='';
+    if(u.tech===undefined)u.tech=u.name;
+  });
+  // Update svcTechList for POS service tab
+  svcTechList=['Unassigned'].concat(adminUsers.filter(function(u){return u.role==='tech';}).map(function(u){return u.tech||u.name;}));
+}
+
+async function saveAllUsers(){
+  // Ensure at least one admin for service portal
+  if(!adminUsers.some(function(u){return u.role==='admin';})){
+    toast('Must have at least one service admin','error');return false;
+  }
+  try{
+    var res=await fetch('/api/users-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,users:adminUsers,requesterPassword:'DCA123'})});
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error);
+    // Update svcTechList
+    svcTechList=['Unassigned'].concat(adminUsers.filter(function(u){return u.role==='tech';}).map(function(u){return u.tech||u.name;}));
+    return true;
+  }catch(e){toast('Save failed: '+e.message,'error');return false;}
 }
 
 async function adminSave(key,data){
@@ -374,12 +384,20 @@ var ROLE_PERMS={
 function renderAdminUsers(){
   var wrap=document.getElementById('admin-users-list');
   if(!adminUsers.length){wrap.innerHTML='<div class="admin-empty">No employees.</div>';return;}
-  var h='<table class="admin-table"><thead><tr><th>Name</th><th>Role</th><th>PIN</th><th>Email</th><th>Phone</th><th style="width:140px;"></th></tr></thead><tbody>';
+  var h='<table class="admin-table"><thead><tr><th>Name</th><th>Type</th><th>POS Role</th><th>Service Role</th><th>PIN</th><th>Password</th><th style="width:140px;"></th></tr></thead><tbody>';
   adminUsers.forEach(function(u,i){
-    h+='<tr><td style="font-weight:600;">'+u.name+'</td><td>'+u.role+'</td><td>'+(u.pin||'—')+'</td><td>'+u.email+'</td><td>'+u.phone+'</td>'
+    var isTech=u.role==='tech';
+    var typeBadge=isTech
+      ?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;background:#f3e8ff;color:#7c3aed;">TECH</span>'
+      :'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;background:#eff6ff;color:#2563eb;">POS</span>';
+    h+='<tr><td style="font-weight:600;">'+u.name+(u.tech&&u.tech!==u.name?' <span style="font-size:10px;color:#9ca3af;">('+u.tech+')</span>':'')+'</td>'
+      +'<td>'+typeBadge+'</td>'
+      +'<td>'+(u.posRole||'—')+'</td>'
+      +'<td>'+u.role+'</td>'
+      +'<td>'+(u.pin||'—')+'</td>'
+      +'<td style="font-family:monospace;font-size:11px;">'+(u.password||'—')+'</td>'
       +'<td><div class="admin-card-actions">'
       +'<button class="admin-card-btn edit" onclick="adminEditUser('+i+')">Edit</button>'
-      +'<button class="admin-card-btn edit" onclick="adminResetPin('+i+')">PIN</button>'
       +'<button class="admin-card-btn delete" onclick="adminDeleteUser('+i+')">Delete</button>'
       +'</div></td></tr>';
   });
@@ -387,83 +405,52 @@ function renderAdminUsers(){
   wrap.innerHTML=h;
 }
 function adminAddUser(){
-  var name=prompt('Employee name:');if(!name||!name.trim())return;
-  var role=prompt('Role (Owner/Admin, Manager, Sales, Delivery, Tech):','Sales');if(!role)return;
-  var pin=prompt('4-digit PIN:','');
-  if(pin&&(pin.length!==4||isNaN(pin))){toast('PIN must be 4 digits','error');return;}
-  if(pin&&adminUsers.find(function(u){return u.pin===pin;})){toast('PIN already in use','error');return;}
-  var email=prompt('Email:','')||'';
-  var phone=prompt('Phone:','')||'';
-  adminUsers.push({name:name.trim(),role:role.trim(),pin:pin||'',email:email.trim(),phone:phone.trim()});
-  renderAdminUsers();adminSave('admin-users',adminUsers);
-  toast('Employee added','success');
+  var type=prompt('Type: POS or TECH?','POS');if(!type)return;
+  type=type.trim().toUpperCase();
+  if(type==='TECH'){
+    var name=prompt('Tech login name:');if(!name||!name.trim())return;
+    var pw=prompt('Service portal password:');if(!pw||!pw.trim())return;
+    var techDisplay=prompt('Tech display name (shown in service portal):',name.trim())||name.trim();
+    var posRole=prompt('POS role (Service Tech, Sales, etc):','Service Tech')||'Service Tech';
+    adminUsers.push({name:name.trim(),password:pw.trim(),role:'tech',tech:techDisplay.trim(),posRole:posRole.trim(),pin:'',email:'',phone:'',permissions:null});
+  } else {
+    var name=prompt('Employee name:');if(!name||!name.trim())return;
+    var posRole=prompt('POS role (Owner/Admin, Manager, Sales, Delivery):','Sales');if(!posRole)return;
+    var svcRole=prompt('Service portal role (admin or tech, or leave blank for POS-only):','admin')||'admin';
+    var pw=prompt('Service portal password:','')||'changeme';
+    var pin=prompt('4-digit POS PIN (or leave blank):','');
+    if(pin&&(pin.length!==4||isNaN(pin))){toast('PIN must be 4 digits','error');return;}
+    if(pin&&adminUsers.find(function(u){return u.pin===pin;})){toast('PIN already in use','error');return;}
+    var email=prompt('Email:','')||'';
+    var phone=prompt('Phone:','')||'';
+    adminUsers.push({name:name.trim(),password:pw.trim(),role:svcRole.trim(),tech:name.trim(),posRole:posRole.trim(),pin:pin||'',email:email.trim(),phone:phone.trim(),permissions:null});
+  }
+  saveAllUsers().then(function(ok){if(ok!==false){renderAdminUsers();toast('User added','success');}});
 }
 function adminEditUser(i){
   var u=adminUsers[i];
   var name=prompt('Name:',u.name);if(!name||!name.trim())return;
-  var role=prompt('Role (Owner/Admin, Manager, Sales, Delivery, Tech):',u.role);if(!role)return;
-  var email=prompt('Email:',u.email)||'';
-  var phone=prompt('Phone:',u.phone)||'';
-  u.name=name.trim();u.role=role.trim();u.email=email.trim();u.phone=phone.trim();
-  renderAdminUsers();adminSave('admin-users',adminUsers);
+  var posRole=prompt('POS role (Owner/Admin, Manager, Sales, Delivery, Service Tech):',u.posRole||'');
+  var svcRole=prompt('Service portal role (admin or tech):',u.role)||u.role;
+  var pw=prompt('Service portal password:',u.password)||u.password;
+  var techDisplay=prompt('Tech display name:',u.tech||u.name)||u.name;
+  var email=prompt('Email:',u.email||'')||'';
+  var phone=prompt('Phone:',u.phone||'')||'';
+  u.name=name.trim();u.posRole=(posRole||u.posRole||'').trim();u.role=svcRole.trim();u.password=pw.trim();u.tech=techDisplay.trim();u.email=email.trim();u.phone=phone.trim();
+  saveAllUsers().then(function(ok){if(ok!==false){renderAdminUsers();toast('User updated','success');}});
 }
-// ── Service Admin (Tech Management) ──
-var _svcAdminTechs=[];
-async function svcAdminLoadTechs(){
-  try{
-    var res=await fetch('/api/users-get?companyId='+SVC_COMPANY_ID);
-    var data=await res.json();
-    _svcAdminTechs=(data.users||[]).map(function(u){return Object.assign({},u);});
-  }catch(e){_svcAdminTechs=[];}
-  svcAdminRender();
-}
+// ── Service Admin (Tech Management) — reads from unified adminUsers ──
+function svcAdminLoadTechs(){svcAdminRender();}
 function svcAdminRender(){
   var wrap=document.getElementById('svc-admin-techs');if(!wrap)return;
-  if(!_svcAdminTechs.length){wrap.innerHTML='<div class="admin-empty">No service techs configured.</div>';return;}
-  var h='<table class="admin-table"><thead><tr><th>Name</th><th>Username/Login</th><th>Password</th><th>Role</th><th>Tech Display Name</th><th style="width:120px;"></th></tr></thead><tbody>';
-  _svcAdminTechs.forEach(function(u,i){
-    h+='<tr><td style="font-weight:600;">'+u.name+'</td><td>'+u.name+'</td><td>'+u.password+'</td><td>'+u.role+'</td><td>'+(u.tech||'—')+'</td>';
-    h+='<td><div class="admin-card-actions"><button class="admin-card-btn edit" onclick="svcAdminEditTech('+i+')">Edit</button><button class="admin-card-btn delete" onclick="svcAdminDeleteTech('+i+')">Delete</button></div></td></tr>';
+  if(!adminUsers.length){wrap.innerHTML='<div class="admin-empty">No users configured. Add them in Employee Management.</div>';return;}
+  var h='<div style="font-size:11px;color:#6b7280;margin-bottom:12px;">All users are managed in <b>Employee Management</b>. This view shows service portal roles.</div>';
+  h+='<table class="admin-table"><thead><tr><th>Name</th><th>Login Name</th><th>Password</th><th>Service Role</th><th>Tech Display Name</th></tr></thead><tbody>';
+  adminUsers.forEach(function(u){
+    h+='<tr><td style="font-weight:600;">'+u.name+'</td><td>'+u.name+'</td><td style="font-family:monospace;">'+u.password+'</td><td>'+u.role+'</td><td>'+(u.tech||'—')+'</td></tr>';
   });
   h+='</tbody></table>';
   wrap.innerHTML=h;
-}
-function svcAdminAddTech(){
-  var name=prompt('Tech name:');if(!name||!name.trim())return;
-  var pw=prompt('Login password:');if(!pw||!pw.trim())return;
-  var techName=prompt('Tech display name (shown in service portal):',name.trim())||name.trim();
-  _svcAdminTechs.push({name:name.trim(),password:pw.trim(),role:'tech',tech:techName.trim()});
-  svcAdminSave();
-}
-function svcAdminEditTech(i){
-  var u=_svcAdminTechs[i];if(!u)return;
-  var name=prompt('Name:',u.name);if(!name)return;
-  var pw=prompt('Password:',u.password);if(!pw)return;
-  var role=prompt('Role (admin or tech):',u.role)||'tech';
-  var techName=prompt('Tech display name:',u.tech||u.name)||name;
-  u.name=name.trim();u.password=pw.trim();u.role=role.trim();u.tech=techName.trim();
-  svcAdminSave();
-}
-function svcAdminDeleteTech(i){
-  var u=_svcAdminTechs[i];
-  if(_svcAdminTechs.filter(function(x){return x.role==='admin';}).length<=1&&u.role==='admin'){toast('Must keep at least one admin','error');return;}
-  if(!confirm('Delete "'+u.name+'"?'))return;
-  _svcAdminTechs.splice(i,1);
-  svcAdminSave();
-}
-async function svcAdminSave(){
-  // Ensure at least one admin
-  if(!_svcAdminTechs.some(function(u){return u.role==='admin';})){toast('Must have at least one admin','error');return;}
-  // Auto-fill tech name for techs
-  _svcAdminTechs.forEach(function(u){if(u.role==='tech'&&!u.tech)u.tech=u.name;});
-  try{
-    var res=await fetch('/api/users-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,users:_svcAdminTechs,requesterPassword:prompt('Enter admin password to save:')})});
-    var data=await res.json();
-    if(!data.ok)throw new Error(data.error);
-    svcAdminRender();toast('Service techs saved','success');
-    // Also update the svcTechList used in POS service tab
-    svcTechList=['Unassigned'].concat(_svcAdminTechs.filter(function(u){return u.role==='tech';}).map(function(u){return u.tech||u.name;}));
-  }catch(e){toast('Save failed: '+e.message,'error');}
 }
 
 // ── Employee Permissions ──
@@ -482,18 +469,18 @@ function renderPermEditor(){
   var wrap=document.getElementById('perm-editor');if(!wrap)return;
   if(!adminUsers.length){wrap.innerHTML='<div class="admin-empty">No employees. Add employees first.</div>';return;}
   var allPerms=PERM_TABS.concat(PERM_FEATURES);
-  var posUsers=adminUsers.filter(function(u){return !u._svcTech;});
-  var svcUsers=adminUsers.filter(function(u){return u._svcTech;});
+  var posUsers=adminUsers.filter(function(u){return u.role!=='tech';});
+  var svcUsers=adminUsers.filter(function(u){return u.role==='tech';});
   var h='';
   function renderPermCard(u,idx){
     var perms=u.permissions||{};
     if(!u.permissions){
-      var preset=PERM_PRESETS[u.role]||PERM_PRESETS[u._svcTech?'Tech':'Sales'];
+      var preset=PERM_PRESETS[u.posRole]||PERM_PRESETS[u.role==='tech'?'Tech':'Sales'];
       perms={};allPerms.forEach(function(p){perms[p]=false;});
       preset.tabs.forEach(function(t){perms[t]=true;});
       preset.features.forEach(function(f){perms[f]=true;});
     }
-    var isTech=u._svcTech;
+    var isTech=u.role==='tech';
     var borderColor=isTech?'#7c3aed':'#e5e7eb';
     var card='<div style="background:#fff;border:1px solid '+borderColor+';border-radius:10px;padding:14px 16px;margin-bottom:12px;">';
     card+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">';
@@ -503,7 +490,7 @@ function renderPermEditor(){
     } else {
       card+='<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">POS USER</span>';
     }
-    card+='<span style="font-size:11px;color:#6b7280;margin-left:4px;">'+u.role+'</span></div>';
+    card+='<span style="font-size:11px;color:#6b7280;margin-left:4px;">'+(u.posRole||u.role)+'</span></div>';
     card+='<div style="display:flex;gap:4px;flex-wrap:wrap;">';
     Object.keys(PERM_PRESETS).forEach(function(preset){
       card+='<button class="ghost-btn" style="padding:3px 8px;font-size:9px;" onclick="permApplyPreset('+idx+',\''+preset+'\')">'+preset+'</button>';
@@ -555,8 +542,7 @@ function permSaveUser(empIdx){
   document.querySelectorAll('.perm-cb[data-emp="'+empIdx+'"]').forEach(function(cb){
     u.permissions[cb.getAttribute('data-perm')]=cb.checked;
   });
-  adminSave('admin-users',adminUsers);
-  toast(u.name+' permissions saved','success');
+  saveAllUsers().then(function(ok){if(ok!==false)toast(u.name+' permissions saved','success');});
 }
 
 // Override applyPermissions to use granular permissions
@@ -569,11 +555,11 @@ function adminResetPin(i){
   if(!pin)return;
   if(pin.length!==4||isNaN(pin)){toast('PIN must be 4 digits','error');return;}
   if(adminUsers.find(function(x,j){return j!==i&&x.pin===pin;})){toast('PIN already in use','error');return;}
-  u.pin=pin;renderAdminUsers();adminSave('admin-users',adminUsers);toast(u.name+' PIN updated','success');
+  u.pin=pin;renderAdminUsers();saveAllUsers().then(function(){toast(u.name+' PIN updated','success');});
 }
 function adminDeleteUser(i){
   if(!confirm('Delete "'+adminUsers[i].name+'"?'))return;
-  adminUsers.splice(i,1);renderAdminUsers();adminSave('admin-users',adminUsers);
+  adminUsers.splice(i,1);renderAdminUsers();saveAllUsers();
 }
 
 // --- POS Settings ---
@@ -900,18 +886,18 @@ function posLogin(){
 function showEmpSelect(){
   adminLoad().then(function(){
     var grid=document.getElementById('emp-grid');
-    var posUsers=adminUsers.filter(function(u){return !u._svcTech;});
-    var svcUsers=adminUsers.filter(function(u){return u._svcTech;});
+    var posUsers=adminUsers.filter(function(u){return u.role!=='tech';});
+    var svcUsers=adminUsers.filter(function(u){return u.role==='tech';});
     var h='';
     posUsers.forEach(function(u){
       var i=adminUsers.indexOf(u);
-      h+='<div class="emp-tile" onclick="empSelectUser('+i+')">'+u.name+'<div style="font-size:10px;color:#6b7280;font-weight:400;margin-top:3px;">'+u.role+'</div></div>';
+      h+='<div class="emp-tile" onclick="empSelectUser('+i+')">'+u.name+'<div style="font-size:10px;color:#6b7280;font-weight:400;margin-top:3px;">'+(u.posRole||u.role)+'</div></div>';
     });
     if(svcUsers.length){
       h+='<div style="grid-column:1/-1;font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.06em;padding:8px 0 2px;border-top:1px solid #e5e7eb;margin-top:4px;">Service Techs</div>';
       svcUsers.forEach(function(u){
         var i=adminUsers.indexOf(u);
-        h+='<div class="emp-tile" onclick="empSelectUser('+i+')" style="border-color:#ddd6fe;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#7c3aed;margin-right:4px;"></span>'+u.name+'<div style="font-size:10px;color:#7c3aed;font-weight:400;margin-top:3px;">Service Tech</div></div>';
+        h+='<div class="emp-tile" onclick="empSelectUser('+i+')" style="border-color:#ddd6fe;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#7c3aed;margin-right:4px;"></span>'+(u.tech||u.name)+'<div style="font-size:10px;color:#7c3aed;font-weight:400;margin-top:3px;">'+(u.posRole||'Service Tech')+'</div></div>';
       });
     }
     grid.innerHTML=h;
@@ -926,10 +912,11 @@ var _empSelectedIdx=-1;
 function empSelectUser(i){
   _empSelectedIdx=i;
   var u=adminUsers[i];
-  // Service techs always require password
-  if(u._svcTech){
+  // Techs use password, POS users use PIN
+  var usesPassword=u.role==='tech'||(!u.pin&&u.password&&u.password!=='changeme');
+  if(usesPassword){
     document.getElementById('emp-grid').style.display='none';
-    document.getElementById('emp-pin-name').textContent=u.name;
+    document.getElementById('emp-pin-name').textContent=u.tech||u.name;
     document.getElementById('emp-pin-input').value='';
     document.getElementById('emp-pin-input').type='password';
     document.getElementById('emp-pin-input').placeholder='Password';
@@ -953,14 +940,9 @@ function empSelectUser(i){
 function empPinSubmit(){
   var u=adminUsers[_empSelectedIdx];if(!u)return;
   var val=document.getElementById('emp-pin-input').value;
-  // Service tech: check password
-  if(u._svcTech){
-    if(val===u._svcPassword){empLoginAs(u);}
-    else{document.getElementById('emp-pin-err').style.display='block';document.getElementById('emp-pin-input').value='';document.getElementById('emp-pin-input').focus();}
-    return;
-  }
-  // POS user: check PIN
-  if(val===u.pin){empLoginAs(u);}
+  var usesPassword=u.role==='tech'||(!u.pin&&u.password&&u.password!=='changeme');
+  var match=usesPassword?(val===u.password):(val===u.pin);
+  if(match){empLoginAs(u);}
   else{document.getElementById('emp-pin-err').style.display='block';document.getElementById('emp-pin-input').value='';document.getElementById('emp-pin-input').focus();}
 }
 function empBackToGrid(){
@@ -1004,7 +986,7 @@ function applyPermissions(){
     // Always include dashboard
     if(allowed.indexOf('dashboard')===-1)allowed.unshift('dashboard');
   } else {
-    var role=currentEmployee.role;
+    var role=currentEmployee.posRole||currentEmployee.role;
     allowed=ROLE_PERMS[role]||['sale','timeclock'];
   }
   var tabMap={'Dashboard':'dashboard','New Sale':'sale','Inventory':'inventory','Open Orders':'orders','Delivery':'delivery','Service':'service','Customers':'customers','Time Clock':'timeclock','Admin':'admin'};

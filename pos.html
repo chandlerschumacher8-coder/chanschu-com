@@ -4536,7 +4536,7 @@ function renderCart(){
   // Populate clerk dropdown
   var clerkSel=document.getElementById('cart-clerk');
   if(clerkSel&&clerkSel.options.length<=1){
-    clerkSel.innerHTML='<option value="">Clerk...</option>'+adminUsers.map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
+    clerkSel.innerHTML='<option value="">Clerk...</option>'+adminUsers.map(function(u){var display=u.tech||u.name;return '<option value="'+display+'">'+display+'</option>';}).join('');
   }
 }
 function cartSerial(idx,val){if(cart[idx])cart[idx].serial=val;}
