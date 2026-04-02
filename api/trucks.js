@@ -3,7 +3,6 @@
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
 const VEHICLES_URL = 'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles';
-const LOCATIONS_URL = 'https://fim.api.us.fleetmatics.com/v1/vehicle-locations';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
 let cachedToken = null;
@@ -31,18 +30,6 @@ async function getToken(username, password) {
   return cachedToken;
 }
 
-async function fetchWithRetry(url, headers, getTokenFn) {
-  let res = await fetch(url, { headers });
-  if (res.status === 401) {
-    cachedToken = null;
-    tokenExpiresAt = 0;
-    const newToken = await getTokenFn();
-    headers['Authorization'] = headers['Authorization'].replace(/Bearer .+$/, `Bearer ${newToken}`);
-    res = await fetch(url, { headers });
-  }
-  return res;
-}
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
@@ -56,54 +43,75 @@ export default async function handler(req, res) {
   try {
     const token = await getToken(username, password);
     const authHeader = `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token}`;
+    const headers = { 'Authorization': authHeader, 'Accept': 'application/json' };
 
     // Fetch vehicle list (names, IDs)
-    const vRes = await fetchWithRetry(
-      VEHICLES_URL,
-      { 'Authorization': authHeader, 'Accept': 'application/json' },
-      () => getToken(username, password)
-    );
-    if (!vRes.ok) throw new Error('Vehicles API error: ' + vRes.status);
-    const vehicleData = await vRes.json();
-    const vehicles = vehicleData.Vehicles || vehicleData.vehicles || vehicleData || [];
-
-    // Try to fetch vehicle locations (GPS positions)
-    let locationMap = {};
-    try {
-      const lRes = await fetchWithRetry(
-        LOCATIONS_URL,
-        { 'Authorization': authHeader, 'Accept': 'application/json' },
-        () => getToken(username, password)
-      );
-      if (lRes.ok) {
-        const locData = await lRes.json();
-        const locs = locData.Locations || locData.locations || locData || [];
-        locs.forEach(l => {
-          locationMap[l.VehicleId] = l;
-        });
+    const vRes = await fetch(VEHICLES_URL, { headers });
+    if (!vRes.ok) {
+      // On 401, clear cache and retry
+      if (vRes.status === 401) {
+        cachedToken = null; tokenExpiresAt = 0;
+        const t2 = await getToken(username, password);
+        const h2 = { 'Authorization': `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${t2}`, 'Accept': 'application/json' };
+        const vRes2 = await fetch(VEHICLES_URL, { headers: h2 });
+        if (!vRes2.ok) throw new Error('Vehicles API error: ' + vRes2.status);
+        const vehicleData2 = await vRes2.json();
+        return buildResponse(res, vehicleData2, h2, username, password);
       }
-    } catch (locErr) {
-      // Locations endpoint failed - will use 0,0 for positions
+      throw new Error('Vehicles API error: ' + vRes.status);
     }
-
-    const trucks = vehicles.map(v => {
-      const loc = locationMap[v.VehicleId] || {};
-      return {
-        name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
-        driver: loc.DriverName || loc.driverName || v.DriverName || '',
-        lat: parseFloat(loc.Latitude || loc.latitude || 0),
-        lng: parseFloat(loc.Longitude || loc.longitude || 0),
-        speed: parseFloat(loc.Speed || loc.speed || 0),
-        heading: parseFloat(loc.Heading || loc.heading || 0),
-        lastUpdated: loc.LastUpdated || loc.lastUpdated || null
-      };
-    });
-
-    return res.status(200).json({ ok: true, source: 'live', trucks });
+    const vehicleData = await vRes.json();
+    return buildResponse(res, vehicleData, headers, username, password);
 
   } catch (e) {
     return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
   }
+}
+
+async function buildResponse(res, vehicleData, headers, username, password) {
+  const vehicles = vehicleData.Vehicles || vehicleData.vehicles || vehicleData || [];
+
+  // Try to get GPS positions from vehiclelocations endpoint
+  let locationMap = {};
+  const locEndpoints = [
+    'https://fim.api.us.fleetmatics.com/cmd/v1/vehiclelocations',
+    'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles/locations',
+  ];
+  let locDebug = {};
+  for (const url of locEndpoints) {
+    try {
+      const lRes = await fetch(url, { headers });
+      const bodyText = await lRes.text();
+      locDebug[url] = { status: lRes.status, body: bodyText.substring(0, 500) };
+      if (lRes.ok) {
+        try {
+          const locData = JSON.parse(bodyText);
+          const locs = locData.Locations || locData.locations || locData || [];
+          if (Array.isArray(locs)) {
+            locs.forEach(l => { locationMap[l.VehicleId] = l; });
+            break;
+          }
+        } catch(e) {}
+      }
+    } catch (err) {
+      locDebug[url] = { error: err.message };
+    }
+  }
+
+  const trucks = vehicles.map(v => {
+    const loc = locationMap[v.VehicleId] || {};
+    return {
+      name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
+      driver: loc.DriverName || loc.driverName || '',
+      lat: parseFloat(loc.Latitude || loc.latitude || 0),
+      lng: parseFloat(loc.Longitude || loc.longitude || 0),
+      speed: parseFloat(loc.Speed || loc.speed || 0),
+      heading: parseFloat(loc.Heading || loc.heading || 0),
+      lastUpdated: loc.LastUpdated || loc.lastUpdated || null
+    };
+  });
+
+  return res.status(200).json({ ok: true, source: 'live', trucks, locDebug });
 }
 
 function mockTrucks() {
