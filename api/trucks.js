@@ -3,6 +3,7 @@
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
 const VEHICLES_URL = 'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles';
+const LOCATIONS_URL = 'https://fim.api.us.fleetmatics.com/v1/vehicle-locations';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
 let cachedToken = null;
@@ -30,6 +31,18 @@ async function getToken(username, password) {
   return cachedToken;
 }
 
+async function fetchWithRetry(url, headers, getTokenFn) {
+  let res = await fetch(url, { headers });
+  if (res.status === 401) {
+    cachedToken = null;
+    tokenExpiresAt = 0;
+    const newToken = await getTokenFn();
+    headers['Authorization'] = headers['Authorization'].replace(/Bearer .+$/, `Bearer ${newToken}`);
+    res = await fetch(url, { headers });
+  }
+  return res;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 'no-store');
@@ -42,52 +55,55 @@ export default async function handler(req, res) {
 
   try {
     const token = await getToken(username, password);
+    const authHeader = `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token}`;
 
-    const vRes = await fetch(VEHICLES_URL, {
-      headers: {
-        'Authorization': `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token}`,
-        'Accept': 'application/json'
+    // Fetch vehicle list (names, IDs)
+    const vRes = await fetchWithRetry(
+      VEHICLES_URL,
+      { 'Authorization': authHeader, 'Accept': 'application/json' },
+      () => getToken(username, password)
+    );
+    if (!vRes.ok) throw new Error('Vehicles API error: ' + vRes.status);
+    const vehicleData = await vRes.json();
+    const vehicles = vehicleData.Vehicles || vehicleData.vehicles || vehicleData || [];
+
+    // Try to fetch vehicle locations (GPS positions)
+    let locationMap = {};
+    try {
+      const lRes = await fetchWithRetry(
+        LOCATIONS_URL,
+        { 'Authorization': authHeader, 'Accept': 'application/json' },
+        () => getToken(username, password)
+      );
+      if (lRes.ok) {
+        const locData = await lRes.json();
+        const locs = locData.Locations || locData.locations || locData || [];
+        locs.forEach(l => {
+          locationMap[l.VehicleId] = l;
+        });
       }
-    });
-
-    // If 401, token may have been revoked - clear cache and retry once
-    if (vRes.status === 401) {
-      cachedToken = null;
-      tokenExpiresAt = 0;
-      const token2 = await getToken(username, password);
-      const vRes2 = await fetch(VEHICLES_URL, {
-        headers: {
-          'Authorization': `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token2}`,
-          'Accept': 'application/json'
-        }
-      });
-      if (!vRes2.ok) throw new Error('Vehicles API error after retry: ' + vRes2.status);
-      const data2 = await vRes2.json();
-      const list2 = data2.Vehicles || data2.vehicles || data2 || [];
-      return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data2), rawFirst: list2[0] || null });
+    } catch (locErr) {
+      // Locations endpoint failed - will use 0,0 for positions
     }
 
-    if (!vRes.ok) throw new Error('Vehicles API error: ' + vRes.status);
-    const data = await vRes.json();
-    const list = data.Vehicles || data.vehicles || data || [];
-    return res.status(200).json({ ok: true, source: 'live', trucks: mapVehicles(data), rawFirst: list[0] || null });
+    const trucks = vehicles.map(v => {
+      const loc = locationMap[v.VehicleId] || {};
+      return {
+        name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
+        driver: loc.DriverName || loc.driverName || v.DriverName || '',
+        lat: parseFloat(loc.Latitude || loc.latitude || 0),
+        lng: parseFloat(loc.Longitude || loc.longitude || 0),
+        speed: parseFloat(loc.Speed || loc.speed || 0),
+        heading: parseFloat(loc.Heading || loc.heading || 0),
+        lastUpdated: loc.LastUpdated || loc.lastUpdated || null
+      };
+    });
+
+    return res.status(200).json({ ok: true, source: 'live', trucks });
 
   } catch (e) {
     return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
   }
-}
-
-function mapVehicles(data) {
-  const list = data.Vehicles || data.vehicles || data || [];
-  return list.map(v => ({
-    name: v.Description || v.description || v.VehicleId || 'Truck',
-    driver: v.DriverName || v.driverName || '',
-    lat: parseFloat(v.Latitude || v.latitude || 0),
-    lng: parseFloat(v.Longitude || v.longitude || 0),
-    speed: parseFloat(v.Speed || v.speed || 0),
-    heading: parseFloat(v.Heading || v.heading || 0),
-    lastUpdated: v.LastUpdated || v.lastUpdated || null
-  }));
 }
 
 function mockTrucks() {
