@@ -206,8 +206,8 @@ function renderOrderDetail(){
   (o.notes?'<div class="ood-notes">'+o.notes+'</div>':'')+
   actionsHtml;
 }
-function setOrderStatus(id,status){var o=orders.find(function(x){return x.id===id;});if(o){o.status=status;renderOrders();toast('Status updated','success');}}
-function deleteOrder(id){if(!confirm('Delete this order?'))return;orders=orders.filter(function(o){return o.id!==id;});selectedOrder=null;renderOrders();renderOrderDetail();toast('Order deleted','info');}
+function setOrderStatus(id,status){var o=orders.find(function(x){return x.id===id;});if(o){o.status=status;saveOrders();renderOrders();toast('Status updated','success');}}
+function deleteOrder(id){if(!confirm('Delete this order?'))return;orders=orders.filter(function(o){return o.id!==id;});selectedOrder=null;saveOrders();renderOrders();renderOrderDetail();toast('Order deleted','info');}
 function printAddrBlock(label,addr){
   if(!addr||!addr.name)return '';
   return '<div style="margin-bottom:8px;"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:2px;">'+label+'</div><div style="font-weight:700;">'+addr.name+'</div>'+(addr.addr?'<div>'+addr.addr+'</div>':'')+(addr.city?'<div>'+addr.city+(addr.state?', '+addr.state:'')+' '+(addr.zip||'')+'</div>':'')+(addr.phone?'<div>'+addr.phone+'</div>':'')+'</div>';

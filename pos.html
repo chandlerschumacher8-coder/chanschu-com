@@ -4169,16 +4169,27 @@ var KS_TAX=[
 // ══════════════════════════════════════════════
 var cart=[],orders=[],nextOrderId=1001,nextQuoteId=1,selectedCat='All',ooFilter='All',selectedOrder=null;
 var heldSales=[];
-async function loadQuotes(){
-  try{var r=await fetch('/api/admin-get?key=quotes');var d=await r.json();
+async function loadOrders(){
+  try{var r=await fetch('/api/admin-get?key=orders');var d=await r.json();
     if(d&&d.data){
-      var saved=d.data.quotes||[];
+      orders=d.data.orders||[];
+      if(d.data.nextOrderId)nextOrderId=d.data.nextOrderId;
       if(d.data.nextQuoteId)nextQuoteId=d.data.nextQuoteId;
-      saved.forEach(function(q){
-        if(!orders.find(function(o){return o.id===q.id;}))orders.push(q);
-      });
     }
-  }catch(e){console.error('Failed to load quotes:',e);}
+  }catch(e){console.error('Failed to load orders:',e);}
+  // Migrate: pull in any quotes saved under old key that aren't already in orders
+  try{var qr=await fetch('/api/admin-get?key=quotes');var qd=await qr.json();
+    if(qd&&qd.data){
+      var saved=qd.data.quotes||[];
+      var added=0;
+      saved.forEach(function(q){if(!orders.find(function(o){return o.id===q.id;})){orders.push(q);added++;}});
+      if(qd.data.nextQuoteId&&qd.data.nextQuoteId>nextQuoteId)nextQuoteId=qd.data.nextQuoteId;
+      if(added>0)await saveOrders();
+    }
+  }catch(e){}
+}
+async function saveOrders(){
+  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:orders,nextOrderId:nextOrderId,nextQuoteId:nextQuoteId}})});}catch(e){console.error('Failed to save orders:',e);}
 }
 var adminDeliveryPrice=79.99;
 var adminInvoiceMessage='THANK YOU FOR YOUR BUSINESS!';
@@ -4555,7 +4566,7 @@ function checkout(method){
   var order={id:'ORD-'+nextOrderId,customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||''};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:''};
   nextOrderId++;orders.unshift(order);
   cart.forEach(function(c){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p&&!c.isService){if(!p.sold)p.sold=0;p.sold+=c.qty;}});
-  saveProducts();
+  saveProducts();saveOrders();
   lastCompletedSale={orderId:order.id,customer:cust,items:order.items,date:new Date()};
   setTimeout(function(){custCheckAndSave(order);},300);
   cart=[];clearSaleForm();
@@ -4571,7 +4582,7 @@ function saveQuote(){
   var tax=sub*cartTaxRate;
   var quote={id:'QT-'+String(nextQuoteId).padStart(4,'0'),customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||''};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:cartTaxName,taxRate:cartTaxRate,payment:'Quote',status:'Quote',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:'',deliveryDate:''};
   nextQuoteId++;orders.unshift(quote);
-  try{fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'quotes',data:{quotes:orders.filter(function(o){return o.status==='Quote';}),nextQuoteId:nextQuoteId}})});}catch(e){}
+  saveOrders();
   cart=[];clearSaleForm();
   renderCart();toast('Quote '+quote.id+' saved for '+cust,'success');
 }
@@ -4641,6 +4652,7 @@ function convertQuoteToSale(quoteId){
   if(q.invoiceNotes)document.getElementById('cart-invoice-notes').value=q.invoiceNotes;
   if(q.shipperNotes)document.getElementById('cart-shipper-notes').value=q.shipperNotes;
   orders=orders.filter(function(o){return o.id!==quoteId;});
+  saveOrders();
   selectedOrder=null;
   renderCart();renderOrders();renderOrderDetail();
   nav('sale',document.querySelector('.tb-tab[onclick*="sale"]'));
@@ -4746,7 +4758,7 @@ function delPreFillFromSale(sale){
 // ══════════════════════════════════════════════
 (async function(){
   await seedProductsIfEmpty();
-  await loadQuotes();
+  await loadOrders();
   renderDashboard();
   initSale();
   hbLoad().then(function(){renderHotBar();});
