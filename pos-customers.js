@@ -209,6 +209,7 @@ function custCsvImport(){
     if(r.status==='error'||r.status==='update')return;
     customers.push({id:customers.length+1,name:r.name,phone:r.phone,email:r.email,address:r.address,history:r.history});added++;
   });
+  saveCustomers();custUpdateBadge();custFilterList();
   closeModal('cust-csv-modal');custCsvReset();
   toast(added+' customers imported','success');
 }
