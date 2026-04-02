@@ -981,6 +981,9 @@ function empLoginAs(user){
   document.getElementById('tb-user-badge').textContent=user.name;
   document.getElementById('tb-user-badge').style.display='';
   applyPermissions();
+  // Navigate to dashboard on login
+  var dashTab=document.querySelector('.tb-tab[onclick*="dashboard"]');
+  nav('dashboard',dashTab);
   // Auto-set clerk on cart
   var cl=document.getElementById('cart-clerk');
   if(cl){for(var i=0;i<cl.options.length;i++){if(cl.options[i].value===user.name){cl.selectedIndex=i;break;}}}
