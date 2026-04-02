@@ -87,6 +87,11 @@ async function _loadUnifiedUsers(){
       }
     }catch(e){}
   }
+  // Ensure there's at least one Owner/Admin for POS
+  if(!adminUsers.some(function(u){return u.posRole==='Owner/Admin';})){
+    adminUsers.unshift({name:'Chandler',password:'DCA123',role:'admin',tech:'Chandler',posRole:'Owner/Admin',pin:'',email:'',phone:'',permissions:null,active:true});
+    saveAllUsers();
+  }
   // Ensure every user has POS fields
   adminUsers.forEach(function(u){
     if(!u.posRole)u.posRole=u.role==='tech'?'Service Tech':(u.role==='admin'?'Owner/Admin':'Sales');
