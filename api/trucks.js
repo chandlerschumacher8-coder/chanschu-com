@@ -50,69 +50,42 @@ export default async function handler(req, res) {
     if (vRes.status === 401) {
       cachedToken = null; tokenExpiresAt = 0;
       const t2 = await getToken(username, password);
-      const h2 = `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${t2}`;
-      vRes = await fetch(VEHICLES_URL, { headers: { 'Authorization': h2, 'Accept': 'application/json' } });
+      vRes = await fetch(VEHICLES_URL, { headers: { 'Authorization': `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${t2}`, 'Accept': 'application/json' } });
     }
     if (!vRes.ok) throw new Error('Vehicles API error: ' + vRes.status);
     const vehicleData = await vRes.json();
-    const vehicles = vehicleData.Vehicles || vehicleData.vehicles || vehicleData || [];
+    const vehicles = vehicleData.Vehicles || vehicleData.vehicles || (Array.isArray(vehicleData) ? vehicleData : []);
 
-    // Try per-vehicle location endpoint with first vehicle ID
-    let locDebug = {};
-    let locationMap = {};
-    if (vehicles.length > 0) {
-      const firstId = vehicles[0].VehicleId;
-      const testUrls = [
-        `https://fim.api.us.fleetmatics.com/cmd/v1/vehicles/${firstId}/location`,
-        `https://fim.api.us.fleetmatics.com/cmd/v1/vehicles/${firstId}/locations`,
-        `https://fim.api.us.fleetmatics.com/cmd/v1/vehicles?vehicleId=${firstId}`,
-        `https://fim.api.us.fleetmatics.com/cmd/v1/vehiclelocations?vehicleId=${firstId}`,
-      ];
-      for (const url of testUrls) {
-        try {
-          const r = await fetch(url, { headers });
-          const body = await r.text();
-          locDebug[url] = { status: r.status, body: body.substring(0, 300) };
-          if (r.ok) {
-            try {
-              const locData = JSON.parse(body);
-              // If it worked, build locationMap for all vehicles
-              // Single vehicle response
-              if (locData.VehicleId || locData.vehicleId) {
-                locationMap[locData.VehicleId || locData.vehicleId] = locData;
-                // Now fetch all vehicles
-                for (const v of vehicles.slice(1)) {
-                  try {
-                    const ur2 = url.replace(String(firstId), String(v.VehicleId));
-                    const r2 = await fetch(ur2, { headers });
-                    if (r2.ok) {
-                      const d2 = await r2.json();
-                      locationMap[v.VehicleId] = d2;
-                    }
-                  } catch(e) {}
-                }
-              }
-              break;
-            } catch(e) {}
-          }
-        } catch(err) {
-          locDebug[url] = { error: err.message };
-        }
+    // Probe multiple location endpoint formats
+    const locDebug = {};
+    const testUrls = [
+      'https://fim.api.us.fleetmatics.com/cmd/v3/vehiclelocations',
+      'https://fim.api.us.fleetmatics.com/cmd/v1/VehicleLocations',
+      'https://fim.api.us.fleetmatics.com/cmd/v3/VehicleLocations',
+      'https://fim.api.us.fleetmatics.com/v1/vehiclelocations',
+      'https://fim.api.us.fleetmatics.com/v1/locations',
+      'https://fim.api.us.fleetmatics.com/cmd/v1/locations',
+    ];
+
+    for (const url of testUrls) {
+      try {
+        const r = await fetch(url, { headers });
+        const body = await r.text();
+        locDebug[url] = { status: r.status, body: body.substring(0, 200) };
+      } catch(err) {
+        locDebug[url] = { error: err.message };
       }
     }
 
-    const trucks = vehicles.map(v => {
-      const loc = locationMap[v.VehicleId] || {};
-      return {
-        name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
-        driver: loc.DriverName || loc.driverName || '',
-        lat: parseFloat(loc.Latitude || loc.latitude || 0),
-        lng: parseFloat(loc.Longitude || loc.longitude || 0),
-        speed: parseFloat(loc.Speed || loc.speed || 0),
-        heading: parseFloat(loc.Heading || loc.heading || 0),
-        lastUpdated: loc.LastUpdated || loc.lastUpdated || null
-      };
-    });
+    const trucks = vehicles.map(v => ({
+      name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
+      driver: '',
+      lat: 0,
+      lng: 0,
+      speed: 0,
+      heading: 0,
+      lastUpdated: null
+    }));
 
     return res.status(200).json({ ok: true, source: 'live', trucks, locDebug });
 
