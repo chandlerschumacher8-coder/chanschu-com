@@ -3,8 +3,7 @@
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
 const VEHICLES_URL = 'https://fim.api.us.fleetmatics.com/cmd/v1/vehicles';
-// RAD = Real-time Aggregated Data - vehicle GPS/location API
-const RAD_LOCATIONS_URL = 'https://fim.api.us.fleetmatics.com:443/rad/v1/vehicles/locations';
+const RAD_BASE = 'https://fim.api.us.fleetmatics.com:443/rad/v1';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
 let cachedToken = null;
@@ -47,7 +46,7 @@ export default async function handler(req, res) {
     const authHeader = `Atmosphere atmosphere_app_id=${APP_ID}, Bearer ${token}`;
     const headers = { 'Authorization': authHeader, 'Accept': 'application/json' };
 
-    // 1. Fetch vehicle metadata (names, IDs)
+    // 1. Fetch vehicle metadata
     let vRes = await fetch(VEHICLES_URL, { headers });
     if (vRes.status === 401) {
       cachedToken = null; tokenExpiresAt = 0;
@@ -58,47 +57,74 @@ export default async function handler(req, res) {
     const vehicleData = await vRes.json();
     const vehicles = vehicleData.Vehicles || vehicleData.vehicles || (Array.isArray(vehicleData) ? vehicleData : []);
 
-    // 2. Fetch GPS locations via RAD API (POST with array of vehicle numbers)
-    // VehicleNumber is the user-defined ID in Verizon Connect; falls back to VehicleId string
-    const vehicleNumbers = vehicles.map(v => v.VehicleNumber || String(v.VehicleId));
-    let locationMap = {}; // keyed by vehicleNumber string
+    // 2. Try multiple vehicle number formats for RAD API
+    // Build candidate lists: try VehicleNumber, then Name, then VehicleId string
+    const locationMap = {};
+    const debug = {};
 
-    if (vehicleNumbers.length > 0) {
-      try {
-        const radRes = await fetch(RAD_LOCATIONS_URL, {
-          method: 'POST',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify(vehicleNumbers)
-        });
-        if (radRes.ok) {
-          const radData = await radRes.json();
-          // Response: [{ VehicleNumber, StatusCode, ContentResource: { Value: { Latitude, Longitude, Speed, Heading, DriverNumber, UpdateUTC } } }]
-          (Array.isArray(radData) ? radData : []).forEach(entry => {
-            if (entry.VehicleNumber && entry.StatusCode === 200 && entry.ContentResource && entry.ContentResource.Value) {
-              locationMap[entry.VehicleNumber] = entry.ContentResource.Value;
-            }
+    // Try POST /vehicles/locations with all candidates
+    const candidates = [
+      vehicles.map(v => v.VehicleNumber).filter(Boolean),           // original VehicleNumber
+      vehicles.map(v => v.Name).filter(Boolean),                    // vehicle Name
+      vehicles.map(v => String(v.VehicleId)),                       // VehicleId as string
+    ];
+
+    for (const nums of candidates) {
+      if (nums.length === 0) continue;
+      const radRes = await fetch(`${RAD_BASE}/vehicles/locations`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(nums)
+      });
+      if (radRes.ok) {
+        const radData = await radRes.json();
+        debug['POST_' + nums[0]] = radData.map(e => e.VehicleNumber + ':' + e.StatusCode).join(',');
+        const working = radData.filter(e => e.StatusCode === 200 && e.ContentResource?.Value);
+        if (working.length > 0) {
+          working.forEach(entry => {
+            locationMap[entry.VehicleNumber] = entry.ContentResource.Value;
           });
+          // Map back to vehicles by finding which vehicle has this identifier
+          break;
         }
-      } catch (locErr) {
-        // Location fetch failed - continue with 0,0 coords
+      }
+    }
+
+    // Also try GET per-vehicle with vehicle Name
+    if (Object.keys(locationMap).length === 0) {
+      for (const v of vehicles.slice(0, 1)) { // test just first vehicle
+        const testNums = [v.Name, String(v.VehicleId), v.VehicleNumber].filter(Boolean);
+        for (const num of testNums) {
+          try {
+            const r = await fetch(`${RAD_BASE}/vehicles/${encodeURIComponent(num)}/location`, { headers });
+            const body = await r.text();
+            debug['GET_' + num] = r.status + ':' + body.substring(0, 100);
+            if (r.ok) {
+              const locData = JSON.parse(body);
+              locationMap[num] = locData;
+              break;
+            }
+          } catch(e) {}
+        }
+        if (Object.keys(locationMap).length > 0) break;
       }
     }
 
     const trucks = vehicles.map(v => {
-      const vNum = v.VehicleNumber || String(v.VehicleId);
-      const loc = locationMap[vNum] || {};
+      const candidates = [v.VehicleNumber, v.Name, String(v.VehicleId)].filter(Boolean);
+      const loc = candidates.map(k => locationMap[k]).find(Boolean) || {};
       return {
-        name: v.Name || v.Description || v.VehicleNumber || String(v.VehicleId),
+        name: v.Name || v.VehicleNumber || String(v.VehicleId),
         driver: loc.DriverNumber || '',
         lat: parseFloat(loc.Latitude || 0),
         lng: parseFloat(loc.Longitude || 0),
         speed: parseFloat(loc.Speed || 0),
-        heading: loc.Heading || String(loc.Direction || 0),
+        heading: loc.Heading || '',
         lastUpdated: loc.UpdateUTC || null
       };
     });
 
-    return res.status(200).json({ ok: true, source: 'live', trucks });
+    return res.status(200).json({ ok: true, source: 'live', trucks, debug });
 
   } catch (e) {
     return res.status(200).json({ ok: true, source: 'mock', error: e.message, trucks: mockTrucks() });
