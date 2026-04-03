@@ -258,6 +258,32 @@ function printShipperTicket(id){
 // TRUCK MAP
 // ══════════════════════════════════════════════
 var _truckMap=null,_truckMarkers=[],_truckTimer=null,_truckMapVisible=true,_truckData=[];
+var _truckParkState={};  // keyed by truck name: {lat,lng,parkedSince}
+
+function _truckUpdateParkState(trucks){
+  var now=Date.now();
+  trucks.forEach(function(t){
+    var key=t.name||'';
+    var prev=_truckParkState[key];
+    var moved=!prev||Math.abs(t.lat-prev.lat)>0.00005||Math.abs(t.lng-prev.lng)>0.00005;
+    if(moved){
+      _truckParkState[key]={lat:t.lat,lng:t.lng,parkedSince:now};
+    }
+    // else keep existing parkedSince
+  });
+}
+
+function _truckGetStatus(t){
+  var key=t.name||'';
+  var state=_truckParkState[key];
+  if(!state)return{moving:true,minutes:0,color:'#22c55e',label:'In Transit'};
+  var mins=Math.floor((Date.now()-state.parkedSince)/60000);
+  if(mins<1)return{moving:true,minutes:0,color:'#22c55e',label:'In Transit'};
+  var color=mins>=30?'#ef4444':'#eab308';
+  var h=Math.floor(mins/60);var m=mins%60;
+  var label='Parked '+(h>0?h+'h '+m+'m':m+'m');
+  return{moving:false,minutes:mins,color:color,label:label};
+}
 
 function truckMapInit(){
   var el=document.getElementById('truck-map');if(!el)return;
@@ -287,19 +313,22 @@ async function truckMapLoad(){
     _truckMarkers.forEach(function(m){_truckMap.removeLayer(m);});
     _truckMarkers=[];
     var trucks=data.trucks||[];
+    _truckUpdateParkState(trucks);
     var bounds=[];
     trucks.forEach(function(t){
+      var st=_truckGetStatus(t);
       var icon=L.divIcon({
         className:'',
-        html:'<div style="background:#1a2332;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid #60a5fa;font-family:\'Plus Jakarta Sans\',sans-serif;">'+
-          '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:4px;"></span>'+
-          (t.name||'Truck')+'</div>',
+        html:'<div style="background:#1a2332;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid '+(st.moving?'#60a5fa':st.color)+';font-family:\'Plus Jakarta Sans\',sans-serif;">'+
+          '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+st.color+';margin-right:4px;"></span>'+
+          (t.name||'Truck')+' <span style="font-weight:400;opacity:0.7;font-size:9px;">\u00B7 '+st.label+'</span></div>',
         iconSize:[null,null],
         iconAnchor:[12,12]
       });
       var popup='<div style="font-family:\'Plus Jakarta Sans\',sans-serif;">'
         +'<div style="font-weight:700;font-size:13px;color:#1f2937;margin-bottom:4px;">'+(t.name||'Truck')+'</div>'
         +(t.driver?'<div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Driver: <b>'+t.driver+'</b></div>':'')
+        +'<div style="font-size:11px;margin-bottom:2px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+st.color+';margin-right:4px;vertical-align:0px;"></span><b style="color:'+(st.moving?'#16a34a':st.minutes>=30?'#dc2626':'#ca8a04')+';">'+st.label+'</b></div>'
         +(t.speed?'<div style="font-size:11px;color:#6b7280;">Speed: '+t.speed+' mph</div>':'')
         +(t.lastUpdated?'<div style="font-size:10px;color:#9ca3af;margin-top:4px;">Updated: '+new Date(t.lastUpdated).toLocaleTimeString()+'</div>':'')
         +'</div>';
@@ -337,10 +366,10 @@ function truckMapToggle(){
 
 function truckRenderBadges(){
   var bar=document.getElementById('truck-badge-bar');if(!bar)return;
-  var colors=['#22c55e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
   bar.innerHTML=_truckData.map(function(t,i){
-    var c=colors[i%colors.length];
-    return '<span class="truck-name-badge" onclick="truckFlyTo('+i+')" title="Fly to '+(t.name||'Truck')+'"><span class="tnd" style="background:'+c+';"></span>'+(t.name||'Truck')+'</span>';
+    var st=_truckGetStatus(t);
+    var shortLabel=st.moving?'In Transit':st.label.replace('Parked ','');
+    return '<span class="truck-name-badge" onclick="truckFlyTo('+i+')" title="'+(t.name||'Truck')+' \u2013 '+st.label+'"><span class="tnd" style="background:'+st.color+';"></span>'+(t.name||'Truck')+' <span style="opacity:0.6;font-size:8px;">'+shortLabel+'</span></span>';
   }).join('');
 }
 
