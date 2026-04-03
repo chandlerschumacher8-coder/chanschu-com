@@ -257,21 +257,31 @@ function printShipperTicket(id){
 // ══════════════════════════════════════════════
 // TRUCK MAP
 // ══════════════════════════════════════════════
-var _truckMap=null,_truckMarkers=[],_truckTimer=null,_truckMapVisible=true;
+var _truckMap=null,_truckMarkers=[],_truckTimer=null,_truckMapVisible=true,_truckData=[];
 
 function truckMapInit(){
-  if(_truckMap)return;
   var el=document.getElementById('truck-map');if(!el)return;
-  _truckMap=L.map('truck-map',{zoomControl:true,attributionControl:false}).setView([37.753,-100.017],13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_truckMap);
+  if(!_truckMap){
+    _truckMap=L.map('truck-map',{zoomControl:true,attributionControl:false}).setView([37.753,-100.017],13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_truckMap);
+  }
+  // Ensure map-hidden is removed on init so side panel is visible
+  var row=document.getElementById('del-body-row');
+  if(row)row.classList.remove('map-hidden');
+  _truckMapVisible=true;
+  var btn=document.querySelector('.truck-map-toggle');
+  if(btn)btn.textContent='Hide Map';
+  // invalidateSize after layout settles
+  setTimeout(function(){if(_truckMap)_truckMap.invalidateSize();},100);
   truckMapLoad();
+  if(_truckTimer)clearInterval(_truckTimer);
   _truckTimer=setInterval(truckMapLoad,60000);
 }
 
 async function truckMapLoad(){
   var badge=document.getElementById('truck-map-status');
   try{
-    var res=await fetch('/api/trucks');var data=await res.json();
+    var res=await fetch('/api/trucks?_t='+Date.now(),{cache:'no-store'});var data=await res.json();
     if(!data.ok)throw new Error(data.error||'API error');
     // Clear old markers
     _truckMarkers.forEach(function(m){_truckMap.removeLayer(m);});
@@ -299,8 +309,11 @@ async function truckMapLoad(){
     });
     if(bounds.length>1)_truckMap.fitBounds(bounds,{padding:[30,30],maxZoom:14});
     else if(bounds.length===1)_truckMap.setView(bounds[0],14);
+    _truckData=trucks;
+    truckRenderBadges();
     var src=data.source==='live'?'Live':'Mock';
-    if(badge)badge.textContent=trucks.length+' truck'+(trucks.length!==1?'s':'')+' \u00B7 '+src;
+    var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if(badge)badge.textContent=trucks.length+' truck'+(trucks.length!==1?'s':'')+' \u00B7 '+src+' \u00B7 '+now;
   }catch(e){
     if(badge)badge.textContent='Error';
   }
@@ -308,18 +321,35 @@ async function truckMapLoad(){
 
 function truckMapToggle(){
   _truckMapVisible=!_truckMapVisible;
-  var mapEl=document.getElementById('truck-map');
+  var row=document.getElementById('del-body-row');
   var btn=document.querySelector('.truck-map-toggle');
   if(_truckMapVisible){
-    mapEl.style.display='';
+    if(row)row.classList.remove('map-hidden');
     if(btn)btn.textContent='Hide Map';
-    if(_truckMap)_truckMap.invalidateSize();
+    setTimeout(function(){if(_truckMap)_truckMap.invalidateSize();},300);
     if(!_truckTimer)_truckTimer=setInterval(truckMapLoad,60000);
   }else{
-    mapEl.style.display='none';
+    if(row)row.classList.add('map-hidden');
     if(btn)btn.textContent='Show Map';
     if(_truckTimer){clearInterval(_truckTimer);_truckTimer=null;}
   }
+}
+
+function truckRenderBadges(){
+  var bar=document.getElementById('truck-badge-bar');if(!bar)return;
+  var colors=['#22c55e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+  bar.innerHTML=_truckData.map(function(t,i){
+    var c=colors[i%colors.length];
+    return '<span class="truck-name-badge" onclick="truckFlyTo('+i+')" title="Fly to '+(t.name||'Truck')+'"><span class="tnd" style="background:'+c+';"></span>'+(t.name||'Truck')+'</span>';
+  }).join('');
+}
+
+function truckFlyTo(idx){
+  var t=_truckData[idx];if(!t||!t.lat||!t.lng)return;
+  if(!_truckMapVisible){truckMapToggle();}
+  _truckMap.flyTo([t.lat,t.lng],16,{duration:0.8});
+  // Open popup on matching marker
+  if(_truckMarkers[idx])_truckMarkers[idx].openPopup();
 }
 
 // ══════════════════════════════════════════════
