@@ -2,6 +2,65 @@
 // POS INVENTORY MODULE
 // ══════════════════════════════════════════════
 
+// ── Email Builders (shared by POS) ──
+function buildDeliveryEmailHtml(d){
+  var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:''}];
+  var appsHtml=apps.map(function(a){return '<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:14px;">'+a.a+'</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-size:14px;color:#666;">'+(a.m||'')+'</td></tr>';}).join('');
+  var dateStr=new Date(d.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">'
+    +'<div style="max-width:600px;margin:0 auto;background:#fff;">'
+    +'<div style="background:#1a2744;padding:24px 32px;text-align:center;"><h1 style="margin:0;color:#fff;font-size:22px;">DC Appliance</h1><p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">Delivery Confirmation</p></div>'
+    +'<div style="padding:28px 32px;">'
+    +'<p style="font-size:16px;color:#1f2937;">Hi <strong>'+d.name+'</strong>,</p>'
+    +'<p style="font-size:14px;color:#4b5563;line-height:1.6;">Your delivery has been scheduled. Here are the details:</p>'
+    +'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:20px 0;"><table style="width:100%;border-collapse:collapse;">'
+    +'<tr><td style="padding:6px 0;font-size:13px;color:#6b7280;font-weight:700;width:120px;">DATE</td><td style="padding:6px 0;font-size:14px;color:#1f2937;font-weight:600;">'+dateStr+'</td></tr>'
+    +'<tr><td style="padding:6px 0;font-size:13px;color:#6b7280;font-weight:700;">TIME</td><td style="padding:6px 0;font-size:14px;color:#1f2937;">'+(d.time||'TBD')+'</td></tr>'
+    +'<tr><td style="padding:6px 0;font-size:13px;color:#6b7280;font-weight:700;">ADDRESS</td><td style="padding:6px 0;font-size:14px;color:#1f2937;">'+d.address+', '+d.city+'</td></tr>'
+    +'<tr><td style="padding:6px 0;font-size:13px;color:#6b7280;font-weight:700;">TYPE</td><td style="padding:6px 0;font-size:14px;color:#1f2937;">'+(d.deliveryType||'Full Install')+'</td></tr>'
+    +(d.invoice?'<tr><td style="padding:6px 0;font-size:13px;color:#6b7280;font-weight:700;">INVOICE</td><td style="padding:6px 0;font-size:14px;color:#1f2937;">'+d.invoice+'</td></tr>':'')
+    +'</table></div>'
+    +'<h3 style="font-size:14px;color:#1f2937;margin:20px 0 8px;">Appliances</h3>'
+    +'<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:6px;"><thead><tr><th style="padding:8px 12px;background:#f8fafc;font-size:12px;color:#6b7280;text-align:left;font-weight:700;">APPLIANCE</th><th style="padding:8px 12px;background:#f8fafc;font-size:12px;color:#6b7280;text-align:left;font-weight:700;">MODEL</th></tr></thead><tbody>'+appsHtml+'</tbody></table>'
+    +(d.notes?'<div style="margin-top:16px;padding:12px 16px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;font-size:13px;color:#92400e;"><strong>Notes:</strong> '+d.notes+'</div>':'')
+    +'<p style="font-size:14px;color:#4b5563;margin-top:24px;line-height:1.6;">If you need to reschedule or have any questions, please contact us:</p>'
+    +'<p style="font-size:14px;color:#1f2937;font-weight:600;margin:4px 0;">(620) 371-6417</p>'
+    +'<p style="font-size:13px;color:#6b7280;">DC Appliance &mdash; Dodge City, KS</p>'
+    +'</div>'
+    +'<div style="background:#f8fafc;padding:16px 32px;text-align:center;border-top:1px solid #e2e8f0;"><p style="font-size:12px;color:#9ca3af;margin:0;">Thank you for choosing DC Appliance!</p></div></div></body></html>';
+}
+
+function buildInvoiceEmailHtml(order){
+  var itemsHtml=order.items.map(function(it){var lt=it.price*it.qty;return '<tr><td style="padding:10px 12px;border-bottom:1px solid #eee;font-size:14px;">'+it.name+(it.model?' <span style="color:#6b7280;font-size:12px;">'+it.model+'</span>':'')+'</td><td style="padding:10px 12px;border-bottom:1px solid #eee;font-size:14px;text-align:center;">'+it.qty+'</td><td style="padding:10px 12px;border-bottom:1px solid #eee;font-size:14px;text-align:right;">$'+it.price.toFixed(2)+'</td><td style="padding:10px 12px;border-bottom:1px solid #eee;font-size:14px;text-align:right;font-weight:600;">$'+lt.toFixed(2)+'</td></tr>';}).join('');
+  var dateStr=new Date(order.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var thankYou=typeof adminInvoiceMessage!=='undefined'?adminInvoiceMessage:'THANK YOU FOR YOUR BUSINESS!';
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">'
+    +'<div style="max-width:600px;margin:0 auto;background:#fff;">'
+    +'<div style="background:#1a2744;padding:24px 32px;text-align:center;"><h1 style="margin:0;color:#fff;font-size:22px;">DC Appliance</h1><p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">Invoice / Receipt</p></div>'
+    +'<div style="padding:28px 32px;">'
+    +'<table style="width:100%;"><tr><td><p style="margin:0;font-size:13px;color:#6b7280;font-weight:700;">INVOICE</p><p style="margin:2px 0 0;font-size:18px;font-weight:700;color:#1f2937;">'+order.id+'</p></td><td style="text-align:right;"><p style="margin:0;font-size:13px;color:#6b7280;font-weight:700;">DATE</p><p style="margin:2px 0 0;font-size:14px;color:#1f2937;">'+dateStr+'</p></td></tr></table>'
+    +'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:20px 0;">'
+    +'<p style="margin:0 0 4px;font-size:13px;color:#6b7280;font-weight:700;">BILL TO</p>'
+    +'<p style="margin:0;font-size:15px;font-weight:600;color:#1f2937;">'+(order.soldTo?order.soldTo.name:order.customer)+'</p>'
+    +(order.soldTo&&order.soldTo.addr?'<p style="margin:2px 0 0;font-size:13px;color:#4b5563;">'+order.soldTo.addr+'</p>':'')
+    +(order.soldTo&&order.soldTo.city?'<p style="margin:0;font-size:13px;color:#4b5563;">'+order.soldTo.city+(order.soldTo.state?', '+order.soldTo.state:'')+(order.soldTo.zip?' '+order.soldTo.zip:'')+'</p>':'')
+    +(order.soldTo&&order.soldTo.phone?'<p style="margin:4px 0 0;font-size:13px;color:#4b5563;">'+order.soldTo.phone+'</p>':'')
+    +'</div>'
+    +'<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:6px;"><thead><tr><th style="padding:10px 12px;background:#f8fafc;font-size:12px;color:#6b7280;text-align:left;font-weight:700;">ITEM</th><th style="padding:10px 12px;background:#f8fafc;font-size:12px;color:#6b7280;text-align:center;font-weight:700;">QTY</th><th style="padding:10px 12px;background:#f8fafc;font-size:12px;color:#6b7280;text-align:right;font-weight:700;">PRICE</th><th style="padding:10px 12px;background:#f8fafc;font-size:12px;color:#6b7280;text-align:right;font-weight:700;">TOTAL</th></tr></thead><tbody>'+itemsHtml+'</tbody></table>'
+    +'<div style="margin-top:16px;text-align:right;">'
+    +'<p style="margin:4px 0;font-size:14px;color:#4b5563;">Subtotal: <strong>$'+order.subtotal.toFixed(2)+'</strong></p>'
+    +'<p style="margin:4px 0;font-size:14px;color:#4b5563;">Tax'+(order.taxZone?' ('+order.taxZone+')':'')+': <strong>$'+order.tax.toFixed(2)+'</strong></p>'
+    +'<p style="margin:8px 0;font-size:18px;font-weight:700;color:#1f2937;">Total: $'+order.total.toFixed(2)+'</p>'
+    +'</div>'
+    +'<div style="margin-top:12px;padding:10px 14px;background:#f0fdf4;border-radius:6px;font-size:13px;color:#166534;"><strong>Payment:</strong> '+order.payment+'</div>'
+    +(order.clerk?'<p style="margin-top:12px;font-size:13px;color:#6b7280;">Salesperson: <strong>'+order.clerk+'</strong></p>':'')
+    +(order.invoiceNotes?'<div style="margin-top:12px;padding:12px 16px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:4px;font-size:13px;color:#92400e;">'+order.invoiceNotes+'</div>':'')
+    +'<div style="margin-top:28px;text-align:center;padding:16px;background:#f8fafc;border-radius:8px;"><p style="font-size:15px;font-weight:700;color:#1f2937;margin:0;">'+thankYou+'</p></div>'
+    +'<p style="font-size:14px;color:#1f2937;font-weight:600;margin:16px 0 4px;text-align:center;">(620) 371-6417</p>'
+    +'<p style="font-size:13px;color:#6b7280;text-align:center;">DC Appliance &mdash; Dodge City, KS</p>'
+    +'</div></div></body></html>';
+}
+
 // ══════════════════════════════════════════════
 // INVENTORY TAB
 // ══════════════════════════════════════════════
@@ -197,14 +256,35 @@ function renderOrderDetail(){
   if(isQuote){
     actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="convertQuoteToSale(\''+o.id+'\')">Convert to Sale</button><button class="ood-btn blue" onclick="printInvoice(\''+o.id+'\')">Print Quote</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   } else {
-    actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+    actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Receipt</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   }
   el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+'</div><div class="ood-meta">'+o.customer+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
   '<div class="ood-section"><div class="ood-section-title">'+( isQuote?'Quote':'Order')+' Details</div><div class="ood-grid"><div class="ood-field"><div class="ood-label">Payment</div><div class="ood-val">'+o.payment+'</div></div><div class="ood-field"><div class="ood-label">Tax Zone</div><div class="ood-val">'+(o.taxZone||'')+'</div></div><div class="ood-field"><div class="ood-label">Subtotal</div><div class="ood-val">'+fmt(o.subtotal)+'</div></div><div class="ood-field"><div class="ood-label">Tax</div><div class="ood-val">'+fmt(o.tax)+'</div></div><div class="ood-field"><div class="ood-label">Total</div><div class="ood-val" style="color:var(--gold);font-weight:700;">'+fmt(o.total)+'</div></div><div class="ood-field"><div class="ood-label">Status</div><div class="ood-val">'+o.status+'</div></div></div></div>'+
   notesHtml+
   (o.notes?'<div class="ood-notes">'+o.notes+'</div>':'')+
+  (o.emailLog&&o.emailLog.length?'<div class="ood-section"><div class="ood-section-title">Emails Sent</div>'+o.emailLog.map(function(e){var tl=e.type==='invoice_receipt'?'Receipt':e.type==='delivery_confirmation'?'Delivery Confirm':e.type||'Email';return '<div style="font-size:11px;color:var(--gray-2);margin-bottom:4px;display:flex;align-items:center;gap:6px;"><span style="color:var(--green);">&#x2709;</span><span>'+tl+' to <strong>'+e.to+'</strong></span><span style="color:var(--gray-3);margin-left:auto;">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div>';}).join('')+'</div>':'')+
   actionsHtml;
+}
+async function emailOrderReceipt(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  var custEmail='';
+  var c=customers.find(function(c){return c.name===o.customer;});
+  if(c&&c.email)custEmail=c.email;
+  if(c&&c.emailOptOut){toast('Customer has opted out of emails','error');return;}
+  if(!custEmail){
+    custEmail=prompt('Enter email address for receipt:','');
+    if(!custEmail||!custEmail.includes('@'))return;
+  }else{if(!confirm('Send receipt to '+custEmail+'?'))return;}
+  toast('Sending receipt...','info');
+  var html=buildInvoiceEmailHtml(o);
+  var res=await sendDcEmail(custEmail,o.customer,'Invoice '+o.id+' — DC Appliance',html);
+  if(res.ok){
+    if(!o.emailLog)o.emailLog=[];
+    o.emailLog.push({ts:new Date().toISOString(),to:custEmail,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});
+    saveOrders();renderOrderDetail();
+    toast('Receipt sent to '+custEmail,'success');
+  }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
 }
 function setOrderStatus(id,status){var o=orders.find(function(x){return x.id===id;});if(o){o.status=status;saveOrders();renderOrders();toast('Status updated','success');}}
 function deleteOrder(id){if(!confirm('Delete this order?'))return;orders=orders.filter(function(o){return o.id!==id;});selectedOrder=null;saveOrders();renderOrders();renderOrderDetail();toast('Order deleted','info');}
@@ -604,12 +684,14 @@ function delOpenDetail(id){
   '<input type="file" id="del-det-photo-input" accept="image/*" multiple style="display:none" onchange="delDetUploadPhotos(this.files,\''+id+'\')"/>'+
   ((d.photos&&d.photos.length)?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;">'+d.photos.map(function(p){return '<img src="'+p.url+'" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--bg4);" onclick="delDetViewPhoto(\''+p.url+'\')"/>';}).join('')+'</div>':'<div style="font-size:11px;color:var(--gray-3);">No photos yet</div>')+
   '</div>'+
-  delRenderLogHtml(d);
+  delRenderLogHtml(d)+
+  delRenderEmailLogHtml(d.emailLog);
   document.getElementById('del-det-body').innerHTML=body;
   var acts='';
   if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="del-abtn orange" onclick="delSetStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
   if(d.status!=='Delivered')acts+='<button class="del-abtn green" onclick="delSetStatus(\''+id+'\',\'Delivered\')">Mark Delivered</button>';
   if(d.status!=='Scheduled')acts+='<button class="del-abtn blue" onclick="delSetStatus(\''+id+'\',\'Scheduled\')">Reschedule</button>';
+  if(d.email)acts+='<button class="del-abtn purple" onclick="delSendConfirmEmail(\''+id+'\')">&#x2709; Email</button>';
   acts+='<button class="del-abtn gray" onclick="delOpenEditDelivery(\''+id+'\')">Edit</button>';
   acts+='<button class="del-abtn red" onclick="delDeleteDelivery(\''+id+'\')">Delete</button>';
   document.getElementById('del-det-actions').innerHTML=acts;openModal('del-detail-modal');
@@ -709,6 +791,35 @@ async function delAddLogEntry(deliveryId){
   await delSaveData();
   delOpenDetail(deliveryId);
   toast('Log entry added','success');
+}
+
+// Email log + send
+function delRenderEmailLogHtml(emailLog){
+  if(!emailLog||!emailLog.length)return '';
+  var h='<div style="margin-top:10px;border-top:1px solid var(--bg4);padding-top:8px;"><div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-3);margin-bottom:6px;">Emails Sent</div>';
+  emailLog.forEach(function(e){
+    var typeLabel=e.type==='delivery_confirmation'?'Delivery Confirmation':e.type==='invoice_receipt'?'Invoice/Receipt':e.type||'Email';
+    h+='<div style="font-size:11px;color:var(--gray-2);margin-bottom:4px;display:flex;align-items:center;gap:6px;"><span style="color:var(--green);">&#x2709;</span><span>'+typeLabel+' to <strong>'+e.to+'</strong></span><span style="color:var(--gray-3);margin-left:auto;">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div>';
+  });
+  h+='</div>';return h;
+}
+
+async function delSendConfirmEmail(id){
+  var d=delDeliveries.find(function(x){return x.id===id;});if(!d||!d.email)return;
+  var custOptedOut=false;
+  try{var c=customers.find(function(c){return c.name===d.name||c.email===d.email;});if(c&&c.emailOptOut)custOptedOut=true;}catch(e){}
+  if(custOptedOut){toast('Customer has opted out of emails','error');return;}
+  if(!confirm('Send delivery confirmation email to '+d.email+'?'))return;
+  var html=buildDeliveryEmailHtml(d);
+  var dateStr=new Date(d.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  var res=await sendDcEmail(d.email,d.name,'Delivery Confirmation — '+dateStr+' — DC Appliance',html);
+  if(res.ok){
+    if(!d.emailLog)d.emailLog=[];
+    d.emailLog.push({ts:new Date().toISOString(),to:d.email,type:'delivery_confirmation',by:currentEmployee?currentEmployee.name:'Admin'});
+    await delSaveData();
+    delOpenDetail(id);
+    toast('Confirmation email sent','success');
+  }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
 }
 
 // Print

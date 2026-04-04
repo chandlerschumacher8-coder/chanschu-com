@@ -63,6 +63,18 @@ function custSelect(idx){
   h+='<div class="cust-history-title">Notes</div>';
   h+='<textarea class="cust-notes" id="cust-notes-inp" placeholder="Customer notes...">'+(c.notes||'')+'</textarea>';
   h+='<button class="ghost-btn" onclick="custSaveNotes('+idx+')" style="margin-bottom:16px;">Save Notes</button>';
+  // Email actions
+  h+='<div class="cust-history-title">Email Actions</div>';
+  h+='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">';
+  if(c.email){
+    h+='<button class="ghost-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="custSendInvoiceEmail('+idx+')">&#x2709; Email Invoice</button>';
+    h+='<button class="ghost-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="custSendDeliveryEmail('+idx+')">&#x2709; Email Delivery Confirmation</button>';
+  }else{
+    h+='<div style="font-size:12px;color:#9ca3af;">No email on file — <a href="#" style="color:#2563eb;" onclick="event.preventDefault();custEditEmail('+idx+')">add email</a></div>';
+  }
+  if(c.emailOptOut)h+='<button class="ghost-btn" style="border-color:#fca5a5;color:#dc2626;font-size:10px;padding:3px 10px;" onclick="custToggleOptOut('+idx+')">&#x26D4; Opted Out — Click to Re-enable</button>';
+  else if(c.email)h+='<button class="ghost-btn" style="font-size:10px;padding:3px 10px;color:#9ca3af;" onclick="custToggleOptOut('+idx+')">Opt Out of Emails</button>';
+  h+='</div>';
   // Sales history
   h+='<div class="cust-history-title">Sales History ('+custOrders.length+')</div>';
   if(custOrders.length){
@@ -212,4 +224,69 @@ function custCsvImport(){
   saveCustomers();custUpdateBadge();custFilterList();
   closeModal('cust-csv-modal');custCsvReset();
   toast(added+' customers imported','success');
+}
+
+// ═══ CUSTOMER EMAIL ACTIONS ═══
+function custToggleOptOut(idx){
+  var c=customers[idx];if(!c)return;
+  c.emailOptOut=!c.emailOptOut;
+  saveCustomers();custSelect(idx);
+  toast(c.emailOptOut?c.name+' opted out of emails':c.name+' re-enabled for emails','info');
+}
+function custEditEmail(idx){
+  var c=customers[idx];if(!c)return;
+  var email=prompt('Email address:',c.email||'');
+  if(email===null)return;
+  c.email=email.trim();saveCustomers();custSelect(idx);
+}
+
+async function custSendInvoiceEmail(idx){
+  var c=customers[idx];if(!c||!c.email)return;
+  if(c.emailOptOut){toast('Customer has opted out of emails','error');return;}
+  var custOrders=orders.filter(function(o){return o.customer===c.name&&o.status!=='Quote';});
+  if(!custOrders.length){toast('No invoices found','error');return;}
+  // Show selection
+  var list=custOrders.slice(0,20).map(function(o,i){return (i+1)+'. '+o.id+' — '+o.date.slice(0,10)+' — $'+o.total.toFixed(2);}).join('\n');
+  var pick=prompt('Select invoice to email (enter number):\n\n'+list,'1');
+  if(!pick)return;
+  var idx2=parseInt(pick)-1;if(isNaN(idx2)||idx2<0||idx2>=custOrders.length)return;
+  var order=custOrders[idx2];
+  toast('Sending invoice...','info');
+  var html=buildInvoiceEmailHtml(order);
+  var res=await sendDcEmail(c.email,c.name,'Invoice '+order.id+' — DC Appliance',html);
+  if(res.ok){
+    if(!order.emailLog)order.emailLog=[];
+    order.emailLog.push({ts:new Date().toISOString(),to:c.email,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});
+    saveOrders();
+    toast('Invoice emailed to '+c.email,'success');
+  }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
+}
+
+async function custSendDeliveryEmail(idx){
+  var c=customers[idx];if(!c||!c.email)return;
+  if(c.emailOptOut){toast('Customer has opted out of emails','error');return;}
+  // Get deliveries for this customer
+  try{
+    var r=await fetch('/api/deliveries-get');var data=await r.json();
+    if(!data.ok){toast('Could not load deliveries','error');return;}
+    var custDels=data.deliveries.filter(function(d){return d.name===c.name&&d.status!=='Delivered';});
+    if(!custDels.length){toast('No scheduled deliveries found','error');return;}
+    var list=custDels.map(function(d,i){return (i+1)+'. '+d.id+' — '+d.date+' — '+d.address;}).join('\n');
+    var pick=prompt('Select delivery to email (enter number):\n\n'+list,'1');
+    if(!pick)return;
+    var idx2=parseInt(pick)-1;if(isNaN(idx2)||idx2<0||idx2>=custDels.length)return;
+    var del=custDels[idx2];
+    if(!del.email)del.email=c.email;
+    toast('Sending confirmation...','info');
+    var html=buildDeliveryEmailHtml(del);
+    var dateStr=new Date(del.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var res=await sendDcEmail(c.email,c.name,'Delivery Confirmation — '+dateStr+' — DC Appliance',html);
+    if(res.ok){
+      if(!del.emailLog)del.emailLog=[];
+      del.emailLog.push({ts:new Date().toISOString(),to:c.email,type:'delivery_confirmation',by:currentEmployee?currentEmployee.name:'Admin'});
+      // Save back the deliveries with the email log
+      await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:data.deliveries,nextId:data.nextId,notes:data.notes||[],nextNoteId:data.nextNoteId||1})});
+      toast('Confirmation emailed to '+c.email,'success');
+    }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
+  }catch(e){toast('Error loading deliveries','error');}
 }

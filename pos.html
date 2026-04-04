@@ -432,6 +432,8 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .del-abtn.gray:hover{background:#e2ddd8;}
 .del-abtn.red{border-color:#fca5a5;color:#dc2626;background:#fef2f2;}
 .del-abtn.red:hover{background:#fee2e2;}
+.del-abtn.purple{border-color:#c4b5fd;color:#6d28d9;background:#f5f3ff;}
+.del-abtn.purple:hover{background:#ede9fe;}
 /* Color picker */
 .del-color-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-bottom:10px;}
 .del-color-swatch{width:100%;aspect-ratio:1;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:all .15s;}
@@ -946,6 +948,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .cart-cust-dd-opt .cco-name{font-weight:600;}
 .cart-cust-dd-opt .cco-meta{font-size:9px;color:#6b7280;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -1877,6 +1880,28 @@ POS Settings
 </div>
 
 <script>
+// ══════════════════════════════════════════════
+// EMAILJS SETUP
+// ══════════════════════════════════════════════
+emailjs.init('8rsxIaKLiiRqq5Yo0');
+var EMAILJS_SERVICE='service_gx9g5vj';
+var EMAILJS_TEMPLATE='template_dc_email';
+
+async function sendDcEmail(toEmail,toName,subject,htmlBody){
+  try{
+    var res=await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
+      to_email:toEmail,
+      to_name:toName,
+      subject:subject,
+      message_html:htmlBody
+    });
+    return{ok:true,status:res.status};
+  }catch(e){
+    console.error('Email send error:',e);
+    return{ok:false,error:e.text||e.message||'Unknown error'};
+  }
+}
+
 // ══════════════════════════════════════════════
 // PRODUCTS DATA (loaded from Redis)
 // ══════════════════════════════════════════════
@@ -4758,9 +4783,35 @@ function startReturn(){
 function showCheckoutBar(orderId){
   var existing=document.querySelector('.checkout-bar');if(existing)existing.remove();
   var bar=document.createElement('div');bar.className='checkout-bar';bar.id='checkout-bar';
-  bar.innerHTML='<span class="checkout-bar-msg">Order '+orderId+' placed!</span><button class="checkout-bar-btn checkout-bar-delivery" onclick="scheduleDeliveryFromSale()">Schedule Delivery</button><button class="checkout-bar-btn checkout-bar-dismiss" onclick="this.parentElement.remove()">Dismiss</button>';
+  bar.innerHTML='<span class="checkout-bar-msg">Order '+orderId+' placed!</span><button class="checkout-bar-btn" style="background:#7c3aed;color:#fff;" onclick="promptEmailReceipt(\''+orderId+'\')">&#x2709; Email Receipt</button><button class="checkout-bar-btn checkout-bar-delivery" onclick="scheduleDeliveryFromSale()">Schedule Delivery</button><button class="checkout-bar-btn checkout-bar-dismiss" onclick="this.parentElement.remove()">Dismiss</button>';
   document.body.appendChild(bar);
   setTimeout(function(){var b=document.getElementById('checkout-bar');if(b)b.remove();},15000);
+}
+async function promptEmailReceipt(orderId){
+  var order=orders.find(function(o){return o.id===orderId;});if(!order)return;
+  // Check if customer has email
+  var custEmail='';
+  if(order.soldTo&&order.soldTo.phone){
+    var c=customers.find(function(c){return c.name===order.customer;});
+    if(c&&c.email)custEmail=c.email;
+    if(c&&c.emailOptOut){toast('Customer has opted out of emails','error');return;}
+  }
+  if(!custEmail){
+    custEmail=prompt('Enter email address for receipt:','');
+    if(!custEmail||!custEmail.includes('@'))return;
+  }else{
+    if(!confirm('Send receipt to '+custEmail+'?'))return;
+  }
+  var html=buildInvoiceEmailHtml(order);
+  toast('Sending receipt...','info');
+  var res=await sendDcEmail(custEmail,order.customer,'Invoice '+order.id+' — DC Appliance',html);
+  if(res.ok){
+    if(!order.emailLog)order.emailLog=[];
+    order.emailLog.push({ts:new Date().toISOString(),to:custEmail,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});
+    saveOrders();
+    toast('Receipt sent to '+custEmail,'success');
+  }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
+  var bar=document.getElementById('checkout-bar');if(bar)bar.remove();
 }
 function scheduleDeliveryFromSale(){
   var bar=document.getElementById('checkout-bar');if(bar)bar.remove();
