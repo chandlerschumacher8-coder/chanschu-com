@@ -328,6 +328,94 @@
     footer{padding:20px 28px;text-align:center;color:var(--gray-3);font-size:11px;margin-top:32px;}
     @media(max-width:900px){.two-col{grid-template-columns:1fr;}.stats-bar{grid-template-columns:repeat(3,1fr);}.main{padding:14px 16px;}}
     @media(max-width:500px){.stats-bar{grid-template-columns:1fr 1fr;}.dg{grid-template-columns:1fr;}}
+
+    /* ═══ MOBILE RESPONSIVE ═══ */
+    @media(max-width:767px){
+      body{overflow-x:hidden;}
+      header{padding:10px 14px;flex-wrap:wrap;gap:6px;}
+      .h-left{width:100%;}
+      .h-logo{font-size:14px;}
+      .h-company{font-size:9px;padding:2px 8px;}
+      .h-right{width:100%;justify-content:space-between;}
+      .h-user{font-size:11px;}
+      .hbtn{font-size:10px;padding:5px 10px;}
+      .main{padding:10px 12px;}
+      /* Stats bar — horizontal scroll */
+      .stats-bar{display:flex!important;overflow-x:auto;gap:8px;padding-bottom:6px;-webkit-overflow-scrolling:touch;grid-template-columns:unset!important;}
+      .stat-card{min-width:90px;flex-shrink:0;padding:8px 12px;}
+      .stat-val{font-size:18px;}
+      .stat-key{font-size:9px;}
+      /* Two-col layout stacked */
+      .two-col{grid-template-columns:1fr!important;gap:12px;}
+      /* Form panel — hidden by default on mobile, shown as full-screen overlay */
+      #form-panel{display:none;}
+      #form-panel.mobile-open{display:block!important;position:fixed;inset:0;z-index:500;background:var(--navy);overflow-y:auto;padding:0;border-radius:0;border:none;}
+      #form-panel.mobile-open .panel-hdr{position:sticky;top:0;z-index:10;background:var(--navy-2);display:flex;align-items:center;justify-content:space-between;}
+      #form-panel.mobile-open .panel-body{padding:16px 16px 100px;}
+      #form-panel.mobile-open .submit-btn{position:fixed;bottom:0;left:0;right:0;border-radius:0;z-index:10;}
+      /* Mobile schedule button */
+      .mobile-schedule-btn{display:block!important;width:100%;padding:14px;background:var(--gold);color:var(--navy);border:none;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:12px;min-height:48px;}
+      .mobile-schedule-btn:active{background:var(--gold-light);}
+      .mobile-form-close{display:block!important;background:none;border:none;color:var(--gray-2);font-size:20px;cursor:pointer;padding:4px 10px;}
+      /* Filters — horizontal scroll */
+      .filters-row{display:flex!important;overflow-x:auto;gap:4px;-webkit-overflow-scrolling:touch;flex-wrap:nowrap!important;padding-bottom:4px;}
+      .ftab{white-space:nowrap;min-height:36px;font-size:11px;padding:4px 12px;}
+      /* Tech filter full width */
+      #tech-filter{width:100%!important;min-width:unset!important;margin-top:4px;}
+      .search-inp{font-size:14px;padding:10px 12px;}
+      /* Job cards */
+      .job-card{padding:14px;margin-bottom:10px;}
+      .jc-name{font-size:16px;}
+      .jc-meta{font-size:11px;}
+      /* Hide desktop detail expand — use bottom sheet instead */
+      .job-detail{display:none!important;}
+      /* Bottom sheet */
+      .svc-bsheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;align-items:flex-end;justify-content:center;}
+      .svc-bsheet-overlay.open{display:flex;}
+      .svc-bsheet{background:var(--navy-2);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;animation:svcBsUp 0.3s ease-out;}
+      @keyframes svcBsUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+      .svc-bsheet-handle{width:40px;height:4px;background:var(--gray-3);border-radius:4px;margin:10px auto 0;}
+      .svc-bsheet-hdr{padding:12px 16px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.07);}
+      .svc-bsheet-title{font-size:16px;font-weight:700;color:var(--white);}
+      .svc-bsheet-close{background:none;border:none;color:var(--gray-2);font-size:20px;cursor:pointer;padding:4px 8px;}
+      .svc-bsheet-body{flex:1;overflow-y:auto;padding:14px 16px 24px;-webkit-overflow-scrolling:touch;}
+      .svc-bs-section{margin-bottom:16px;}
+      .svc-bs-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--gold);margin-bottom:8px;}
+      .svc-bs-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;}
+      .svc-bs-label{color:var(--gray-2);font-size:11px;font-weight:600;}
+      .svc-bs-val{color:var(--white);font-weight:500;}
+      .svc-bs-val a{color:var(--blue);text-decoration:none;}
+      .svc-bs-issue{background:var(--navy-3);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--gray-1);line-height:1.5;margin-top:4px;}
+      .svc-bs-actions{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+      .svc-bs-btn{width:100%;min-height:48px;border:none;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;color:var(--navy);padding:12px;}
+      .svc-bs-btn:active{opacity:0.85;}
+      .svc-bs-btn.orange{background:var(--orange);}
+      .svc-bs-btn.teal{background:#2dd4bf;}
+      .svc-bs-btn.gold{background:var(--gold);}
+      .svc-bs-btn.green{background:var(--green);}
+      .svc-bs-btn.blue{background:var(--blue);}
+      .svc-bs-btn.red{background:var(--red);color:var(--white);}
+      .svc-bs-btn.gray{background:var(--gray-3);color:var(--white);}
+      /* Log */
+      .svc-bs-log{margin-top:8px;}
+      .svc-bs-log-entry{padding:8px 10px;background:var(--navy-3);border-radius:6px;margin-bottom:6px;font-size:12px;}
+      .svc-bs-log-hdr{display:flex;justify-content:space-between;margin-bottom:2px;}
+      .svc-bs-log-author{font-weight:700;font-size:11px;color:var(--gold);}
+      .svc-bs-log-time{font-size:10px;color:var(--gray-2);}
+      .svc-bs-log-text{color:var(--gray-1);}
+      .svc-bs-note-row{display:flex;gap:6px;margin-top:8px;}
+      .svc-bs-note-input{flex:1;background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;min-height:44px;resize:none;}
+      .svc-bs-note-btn{min-height:44px;padding:0 16px;background:var(--gold);color:var(--navy);border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+      /* Priority badges */
+      .svc-bs-priority-high{background:rgba(224,112,112,0.15);color:var(--red);padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;}
+      .svc-bs-priority-medium{background:rgba(234,179,8,0.15);color:#fbbf24;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;}
+      .svc-bs-priority-low{background:rgba(82,183,136,0.15);color:var(--green);padding:2px 8px;border-radius:100px;font-size:11px;font-weight:700;}
+      /* Chat FAB */
+      .chat-fab{bottom:16px!important;right:16px!important;width:52px!important;height:52px!important;font-size:24px!important;}
+    }
+    /* Desktop: hide mobile-only elements */
+    .mobile-schedule-btn{display:none;}
+    .mobile-form-close{display:none;}
   </style>
 </head>
 <body>
@@ -380,10 +468,11 @@
       <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-key">Total</div></div>
     </div>
 
+    <button class="mobile-schedule-btn" onclick="mobileOpenSchedule()">+ Schedule Job</button>
     <div class="two-col" id="two-col">
       <!-- FORM -->
       <div class="panel" id="form-panel">
-        <div class="panel-hdr"><div class="panel-title">Schedule Job</div></div>
+        <div class="panel-hdr"><div class="panel-title">Schedule Job</div><button class="mobile-form-close" onclick="mobileCloseSchedule()">&#x2715;</button></div>
         <div class="panel-body">
           <!-- Invoice drop zone -->
           <div style="margin-bottom:14px;">
@@ -483,6 +572,18 @@
     </div>
   </div>
   <footer id="footer-bar">Service Portal</footer>
+</div>
+
+<!-- MOBILE JOB DETAIL BOTTOM SHEET -->
+<div class="svc-bsheet-overlay" id="svc-bsheet-overlay">
+  <div class="svc-bsheet">
+    <div class="svc-bsheet-handle"></div>
+    <div class="svc-bsheet-hdr">
+      <div class="svc-bsheet-title" id="svc-bs-title"></div>
+      <button class="svc-bsheet-close" onclick="closeSvcBSheet()">&#x2715;</button>
+    </div>
+    <div class="svc-bsheet-body" id="svc-bs-body"></div>
+  </div>
 </div>
 
 <!-- EDIT JOB MODAL -->
@@ -619,6 +720,8 @@
 
 <script>
 var currentUser=null,companies=[],jobs=[],nextId=1,techList=['Unassigned'],editUsers=[],editCompanyId=null,FILTER='all',chatHistory=[],pendingInvoiceFile=null;
+var _isMobile=window.matchMedia('(max-width:767px)').matches;
+window.matchMedia('(max-width:767px)').addEventListener('change',function(e){_isMobile=e.matches;});
 
 // ── AUTH — SHARED PIN LOGIN ──
 var SESSION_KEY='dc-emp-session';
@@ -986,6 +1089,7 @@ function renderJobs(){
 }
 
 function toggleJob(id){
+  if(_isMobile){openSvcBSheet(id);return;}
   var d=document.getElementById('detail-'+id),c=document.getElementById('card-'+id);
   var open=d.classList.contains('open');
   document.querySelectorAll('.job-detail').forEach(function(x){x.classList.remove('open');});
@@ -1294,6 +1398,92 @@ async function saveEditJob() {
 
 
 function closeModal(id){document.getElementById(id).classList.remove('open');document.querySelectorAll('.modal-msg').forEach(function(m){m.textContent='';});}
+
+// ═══ MOBILE FUNCTIONS ═══
+function mobileOpenSchedule(){
+  var fp=document.getElementById('form-panel');if(fp){fp.style.display='block';fp.classList.add('mobile-open');}
+}
+function mobileCloseSchedule(){
+  var fp=document.getElementById('form-panel');if(fp){fp.classList.remove('mobile-open');if(_isMobile)fp.style.display='none';}
+}
+
+function openSvcBSheet(id){
+  var j=jobs.find(function(x){return x.id===id;});if(!j)return;
+  document.getElementById('svc-bs-title').textContent=j.name+' — '+j.id;
+  var statusDisplay=j.status==='Open'?'New':j.status==='Completed'?'Complete':j.status;
+  var sc=statusDisplay==='New'?'s-new':statusDisplay==='In Progress'?'s-prog':statusDisplay==='Service Complete'?'s-svcomplete':statusDisplay==='Needs Claimed'?'s-needsclaimed':statusDisplay==='Complete'?'s-done':'s-new';
+  var pc=j.priority==='High'?'svc-bs-priority-high':j.priority==='Low'?'svc-bs-priority-low':'svc-bs-priority-medium';
+  var fd=j.date?new Date(j.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'—';
+  var h='';
+  // Status + Priority
+  h+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;"><span class="spill '+sc+'" style="font-size:12px;padding:4px 12px;">'+statusDisplay+'</span><span class="'+pc+'">'+j.priority+'</span></div>';
+  // Customer
+  h+='<div class="svc-bs-section"><div class="svc-bs-section-title">Customer</div>';
+  h+='<div class="svc-bs-row"><span class="svc-bs-label">Name</span><span class="svc-bs-val">'+j.name+'</span></div>';
+  h+='<div class="svc-bs-row"><span class="svc-bs-label">Phone</span><span class="svc-bs-val"><a href="tel:'+j.phone+'">'+j.phone+'</a></span></div>';
+  if(j.email)h+='<div class="svc-bs-row"><span class="svc-bs-label">Email</span><span class="svc-bs-val"><a href="mailto:'+j.email+'">'+j.email+'</a></span></div>';
+  h+='<div class="svc-bs-row"><span class="svc-bs-label">Address</span><span class="svc-bs-val">'+j.address+(j.city?', '+j.city:'')+'</span></div>';
+  h+='</div>';
+  // Appliance
+  h+='<div class="svc-bs-section"><div class="svc-bs-section-title">Appliance</div>';
+  h+='<div class="svc-bs-row"><span class="svc-bs-label">Type</span><span class="svc-bs-val">'+(j.brand?j.brand+' ':'')+j.appliance+'</span></div>';
+  if(j.model)h+='<div class="svc-bs-row"><span class="svc-bs-label">Model</span><span class="svc-bs-val">'+j.model+'</span></div>';
+  if(j.serial)h+='<div class="svc-bs-row"><span class="svc-bs-label">Serial #</span><span class="svc-bs-val">'+j.serial+'</span></div>';
+  if(j.warranty)h+='<div class="svc-bs-row"><span class="svc-bs-label">Warranty</span><span class="svc-bs-val">'+j.warranty+'</span></div>';
+  h+='</div>';
+  // Job details
+  h+='<div class="svc-bs-section"><div class="svc-bs-section-title">Job Details</div>';
+  if(j.invoice)h+='<div class="svc-bs-row"><span class="svc-bs-label">Invoice #</span><span class="svc-bs-val">'+j.invoice+'</span></div>';
+  if(j.claim)h+='<div class="svc-bs-row"><span class="svc-bs-label">Claim #</span><span class="svc-bs-val">'+j.claim+'</span></div>';
+  if(j.delivery)h+='<div class="svc-bs-row"><span class="svc-bs-label">Delivery Date</span><span class="svc-bs-val">'+new Date(j.delivery+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div>';
+  h+='<div class="svc-bs-row"><span class="svc-bs-label">Scheduled</span><span class="svc-bs-val">'+fd+' — '+j.time+'</span></div>';
+  h+='<div class="svc-bs-row"><span class="svc-bs-label">Tech</span><span class="svc-bs-val">'+j.tech+'</span></div>';
+  h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Issue</div><div class="svc-bs-issue">'+j.issue+'</div></div>';
+  if(j.notes)h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Notes</div><div class="svc-bs-issue">'+j.notes+'</div></div>';
+  h+='</div>';
+  // Actions
+  h+='<div class="svc-bs-section"><div class="svc-bs-section-title">Actions</div><div class="svc-bs-actions">';
+  if(j.status!=='In Progress')h+='<button class="svc-bs-btn orange" onclick="svcBsSetStatus(\''+j.id+'\',\'In Progress\')">Mark In Progress</button>';
+  if(j.status!=='Service Complete')h+='<button class="svc-bs-btn teal" onclick="svcBsSetStatus(\''+j.id+'\',\'Service Complete\')">Mark Svc Complete</button>';
+  if(j.status!=='Needs Claimed')h+='<button class="svc-bs-btn gold" onclick="svcBsSetStatus(\''+j.id+'\',\'Needs Claimed\')">Mark Needs Claimed</button>';
+  if(j.status!=='Complete')h+='<button class="svc-bs-btn green" onclick="svcBsSetStatus(\''+j.id+'\',\'Complete\')">Mark Complete</button>';
+  h+='<button class="svc-bs-btn blue" onclick="closeSvcBSheet();openEditJob(\''+j.id+'\')">Edit Job</button>';
+  h+='</div></div>';
+  // Job log
+  h+='<div class="svc-bs-section"><div class="svc-bs-section-title">Job Log</div>';
+  var log=j.log||[];
+  if(log.length){
+    h+='<div class="svc-bs-log">';
+    log.forEach(function(e){
+      h+='<div class="svc-bs-log-entry"><div class="svc-bs-log-hdr"><span class="svc-bs-log-author">'+e.author+'</span><span class="svc-bs-log-time">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div><div class="svc-bs-log-text">'+e.text+'</div></div>';
+    });
+    h+='</div>';
+  }
+  h+='<div class="svc-bs-note-row"><textarea class="svc-bs-note-input" id="svc-bs-note-inp" placeholder="Add a note..." rows="1"></textarea><button class="svc-bs-note-btn" onclick="svcBsAddNote(\''+j.id+'\')">Add</button></div>';
+  h+='</div>';
+
+  document.getElementById('svc-bs-body').innerHTML=h;
+  document.getElementById('svc-bsheet-overlay').classList.add('open');
+}
+
+function closeSvcBSheet(){document.getElementById('svc-bsheet-overlay').classList.remove('open');}
+
+async function svcBsSetStatus(id,status){
+  var j=jobs.find(function(x){return x.id===id;});if(!j)return;
+  j.status=status;
+  if(!j.log)j.log=[];
+  j.log.push({ts:new Date().toISOString(),author:currentUser?currentUser.name:'System',text:'Status changed to '+status});
+  await saveJobs();renderJobs();openSvcBSheet(id);
+}
+
+async function svcBsAddNote(id){
+  var inp=document.getElementById('svc-bs-note-inp');
+  var text=inp?inp.value.trim():'';if(!text)return;
+  var j=jobs.find(function(x){return x.id===id;});if(!j)return;
+  if(!j.log)j.log=[];
+  j.log.push({ts:new Date().toISOString(),author:currentUser?currentUser.name:'System',text:text});
+  await saveJobs();openSvcBSheet(id);
+}
 
 // Midnight auto-logout check
 setInterval(function(){
