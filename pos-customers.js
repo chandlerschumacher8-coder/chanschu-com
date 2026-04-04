@@ -75,6 +75,36 @@ function custSelect(idx){
   if(c.emailOptOut)h+='<button class="ghost-btn" style="border-color:#fca5a5;color:#dc2626;font-size:10px;padding:3px 10px;" onclick="custToggleOptOut('+idx+')">&#x26D4; Opted Out — Click to Re-enable</button>';
   else if(c.email)h+='<button class="ghost-btn" style="font-size:10px;padding:3px 10px;color:#9ca3af;" onclick="custToggleOptOut('+idx+')">Opt Out of Emails</button>';
   h+='</div>';
+  // Customer Ledger
+  var payments=(c.payments||[]);
+  var totalPaid=payments.reduce(function(s,p){return s+(p.amount||0);},0);
+  var balance=totalSpend-totalPaid;
+  h+='<div class="cust-history-title">Account Ledger</div>';
+  if(balance>0){
+    h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;">';
+    h+='<div><div style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;">Balance Due</div><div style="font-size:20px;font-weight:700;color:#dc2626;">'+fmt(balance)+'</div></div>';
+    h+='<button class="primary-btn" style="margin-left:auto;background:#16a34a;" onclick="custRecordPayment('+idx+')">Record Payment</button>';
+    h+='</div>';
+  }else{
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;font-weight:600;color:#16a34a;">&#x2713; Paid in Full</div>';
+  }
+  // Build ledger entries (sales + payments chronologically)
+  var ledgerEntries=[];
+  custOrders.forEach(function(o){ledgerEntries.push({type:'sale',date:o.date,ref:o.id,desc:(o.items||[]).map(function(i){return i.name;}).join(', '),amount:o.total,balance:0});});
+  payments.forEach(function(p){ledgerEntries.push({type:'payment',date:p.date,ref:'Payment',desc:p.method+(p.recordedBy?' ('+p.recordedBy+')':''),amount:-p.amount,balance:0});});
+  ledgerEntries.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  var runBal=0;ledgerEntries.forEach(function(e){runBal+=e.amount;e.balance=runBal;});
+
+  if(ledgerEntries.length){
+    h+='<div style="max-height:250px;overflow:auto;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:16px;"><table class="admin-table" style="font-size:11px;margin:0;"><thead><tr><th>Date</th><th>Type</th><th>Ref</th><th style="max-width:180px;">Description</th><th style="text-align:right;">Amount</th><th style="text-align:right;">Balance</th></tr></thead><tbody>';
+    ledgerEntries.forEach(function(e){
+      var color=e.type==='payment'?'color:#16a34a;':'';
+      var desc=e.desc;if(desc.length>40)desc=desc.slice(0,37)+'...';
+      h+='<tr><td>'+new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})+'</td><td style="'+color+'font-weight:600;">'+(e.type==='payment'?'Payment':'Sale')+'</td><td>'+e.ref+'</td><td style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+desc+'</td><td style="text-align:right;'+color+'font-weight:600;">'+(e.type==='payment'?'-':'')+fmt(Math.abs(e.amount))+'</td><td style="text-align:right;font-weight:700;'+(e.balance>0?'color:#dc2626;':'color:#16a34a;')+'">'+fmt(e.balance)+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+  }
+
   // Sales history
   h+='<div class="cust-history-title">Sales History ('+custOrders.length+')</div>';
   if(custOrders.length){
@@ -227,6 +257,16 @@ function custCsvImport(){
 }
 
 // ═══ CUSTOMER EMAIL ACTIONS ═══
+function custRecordPayment(idx){
+  var c=customers[idx];if(!c)return;
+  var amount=prompt('Payment amount for '+c.name+':','');
+  if(!amount)return;amount=parseFloat(amount);if(isNaN(amount)||amount<=0)return;
+  var method=prompt('Payment method (Cash, Check, Card, Financing):','Check')||'Check';
+  if(!c.payments)c.payments=[];
+  c.payments.push({date:new Date().toISOString(),amount:amount,method:method.trim(),recordedBy:currentEmployee?currentEmployee.name:'Admin'});
+  saveCustomers();custSelect(idx);toast('Payment of '+fmt(amount)+' recorded','success');
+}
+
 function custToggleOptOut(idx){
   var c=customers[idx];if(!c)return;
   c.emailOptOut=!c.emailOptOut;

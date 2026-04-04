@@ -149,11 +149,18 @@ function isSerialTracked(p){
   return SERIAL_TRACKED_CATS.indexOf(p.cat)!==-1;
 }
 
+function populateVendorDropdown(selId){
+  var sel=document.getElementById(selId);if(!sel)return;
+  var val=sel.value;sel.innerHTML='<option value="">— Select —</option>';
+  (typeof adminVendors!=='undefined'?adminVendors:[]).forEach(function(v){sel.innerHTML+='<option value="'+v.name+'">'+v.name+'</option>';});
+  if(val)sel.value=val;
+}
+
 function addProduct(){
   var sku=document.getElementById('ap-sku').value.trim(),name=document.getElementById('ap-name').value.trim(),brand=document.getElementById('ap-brand').value.trim();
   if(!sku||!name||!brand){toast('Fill in required fields','error');return;}
   var stEl=document.getElementById('ap-serial-tracked');
-  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true});
+  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true,upc:(document.getElementById('ap-upc')||{}).value||'',vendor:(document.getElementById('ap-vendor')||{}).value||'',serialPool:[]});
   saveProducts();
   closeModal('add-product-modal');renderInventory();refreshSaleView();toast('Product added','success');
 }

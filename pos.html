@@ -1130,7 +1130,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 <button class="inv-btn" onclick="exportCSV()">Export CSV</button>
 <button class="inv-btn" onclick="openModal('csv-upload-modal')">Upload CSV</button>
-<button class="inv-btn" onclick="openModal('add-product-modal')">+ Add Product</button>
+<button class="inv-btn" onclick="populateVendorDropdown('ap-vendor');openModal('add-product-modal')">+ Add Product</button>
 </div>
 <div class="inv-table-wrap">
 <table class="inv-table">
@@ -1380,6 +1380,26 @@ Permissions
 <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
 Service Techs
 </div>
+<div class="admin-menu-item" onclick="selectAdminSection('vendors')">
+<svg viewBox="0 0 24 24"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>
+Vendors
+</div>
+<div class="admin-menu-item" onclick="selectAdminSection('receiveinv')">
+<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+Receive Inventory
+</div>
+<div class="admin-menu-item" onclick="selectAdminSection('dataimport')">
+<svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+Data Import
+</div>
+<div class="admin-menu-item" onclick="selectAdminSection('arreport')">
+<svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14c1.1 0 2 .9 2 2v1h-9a2 2 0 00-2 2v8a2 2 0 002 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+Accounts Receivable
+</div>
+<div class="admin-menu-item" onclick="selectAdminSection('eomreports')">
+<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+End of Month
+</div>
 <div class="admin-menu-item" onclick="selectAdminSection('possettings')">
 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.44.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
 POS Settings
@@ -1571,6 +1591,40 @@ POS Settings
 <button class="ghost-btn" onclick="svcAdminLoadTechs()" style="font-size:11px;">Refresh</button>
 </div>
 <div id="svc-admin-techs"></div>
+</div>
+<!-- VENDORS -->
+<div class="admin-panel" id="admin-panel-vendors">
+<div class="admin-content-title">Vendor Management</div>
+<div class="admin-toolbar"><button class="admin-add-btn" onclick="vendorAdd()">+ Add Vendor</button></div>
+<div id="admin-vendors-list"></div>
+</div>
+<!-- RECEIVE INVENTORY -->
+<div class="admin-panel" id="admin-panel-receiveinv">
+<div class="admin-content-title">Receive Inventory</div>
+<div id="recv-inv-content"></div>
+</div>
+<!-- DATA IMPORT -->
+<div class="admin-panel" id="admin-panel-dataimport">
+<div class="admin-content-title">Data Import</div>
+<div id="data-import-content"></div>
+</div>
+<!-- ACCOUNTS RECEIVABLE -->
+<div class="admin-panel" id="admin-panel-arreport">
+<div class="admin-content-title">Accounts Receivable</div>
+<div class="admin-toolbar" style="gap:8px;">
+<button class="primary-btn" onclick="exportARPDF()">Export PDF</button>
+<button class="ghost-btn" onclick="exportARCSV()">Export CSV</button>
+</div>
+<div id="ar-report-content"></div>
+</div>
+<!-- END OF MONTH -->
+<div class="admin-panel" id="admin-panel-eomreports">
+<div class="admin-content-title">End of Month Reports</div>
+<div class="admin-toolbar" style="gap:8px;">
+<label style="font-size:11px;font-weight:700;color:var(--gray-2);">Month:</label>
+<input type="month" class="inp" id="eom-month" style="width:180px;" onchange="renderEomReports()"/>
+</div>
+<div id="eom-content"></div>
 </div>
 <div class="admin-panel" id="admin-panel-possettings">
 <div class="admin-content-title">POS Settings</div>
@@ -1841,6 +1895,7 @@ POS Settings
 <div class="field"><label>Category</label><select class="sel" id="ap-cat" onchange="var st=document.getElementById('ap-serial-tracked');if(st&&typeof SERIAL_TRACKED_CATS!=='undefined')st.checked=SERIAL_TRACKED_CATS.indexOf(this.value)!==-1;"><option>Refrigerators</option><option>Washers &amp; Dryers</option><option>Dishwashers</option><option>Ovens &amp; Ranges</option><option>Microwaves</option><option>Wall Ovens</option></select></div>
 <div class="frow"><div class="field"><label>Retail Price</label><input class="inp" id="ap-price" type="number" step="0.01"/></div><div class="field"><label>Cost</label><input class="inp" id="ap-cost" type="number" step="0.01"/></div></div>
 <div class="frow3"><div class="field"><label>Stock</label><input class="inp" id="ap-stock" type="number" value="0"/></div><div class="field"><label>Reorder Pt.</label><input class="inp" id="ap-reorder" type="number" value="2"/></div><div class="field"><label>Reorder Qty</label><input class="inp" id="ap-reorderqty" type="number" value="3"/></div></div>
+<div class="frow"><div class="field"><label>UPC</label><input class="inp" id="ap-upc" placeholder="Barcode"/></div><div class="field"><label>Vendor</label><select class="sel" id="ap-vendor"><option value="">— Select —</option></select></div></div>
 <div class="frow"><div class="field"><label>Serial #</label><input class="inp" id="ap-serial"/></div><div class="field"><label>Warranty</label><input class="inp" id="ap-warranty" value="1 Year"/></div></div>
 <div class="field" style="margin-top:4px;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="ap-serial-tracked" checked style="width:18px;height:18px;accent-color:var(--gold,#2563eb);"/> Serial Number Tracked <span style="font-weight:400;color:var(--gray-3);font-size:9px;">(require SN at delivery)</span></label></div>
 </div>
