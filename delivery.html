@@ -271,6 +271,70 @@
     .mobile-empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:15px;}
     .mobile-note-card{background:var(--bg2);border-radius:10px;padding:12px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;}
 
+    /* ── MOBILE ACTION BUTTONS ── */
+    .ms-actions{display:flex;gap:8px;margin-top:10px;}
+    .ms-actions button{flex:1;min-height:48px;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#fff;padding:10px 8px;}
+    .ms-actions button:active{opacity:0.85;}
+    .ms-btn-out{background:#f59e0b;}
+    .ms-btn-delivered{background:#16a34a;}
+    .ms-delivered-badge{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;background:#dcfce7;border-radius:10px;font-size:14px;font-weight:700;color:#16a34a;margin-top:10px;}
+
+    /* ── BOTTOM SHEET ── */
+    .bsheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;display:none;align-items:flex-end;justify-content:center;}
+    .bsheet-overlay.open{display:flex;}
+    .bsheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:92vh;display:flex;flex-direction:column;animation:bsheetUp 0.3s ease-out;}
+    @keyframes bsheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+    .bsheet-handle{width:40px;height:4px;background:#d1d5db;border-radius:4px;margin:10px auto 0;}
+    .bsheet-hdr{padding:14px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .bsheet-title{font-size:18px;font-weight:700;}
+    .bsheet-close{background:none;border:none;font-size:22px;color:var(--text3);cursor:pointer;padding:4px 8px;}
+    .bsheet-body{flex:1;overflow-y:auto;padding:16px 20px 24px;-webkit-overflow-scrolling:touch;}
+    .bsheet-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:10px;}
+    .bsheet-footer button{flex:1;min-height:52px;border:none;border-radius:12px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;padding:12px;}
+    .bsheet-footer button:active{opacity:0.85;}
+    .bsheet-cancel{background:#f3f4f6;color:#374151;}
+    .bsheet-confirm{background:#16a34a;color:#fff;}
+    .bsheet-confirm:disabled{background:#d1d5db;color:#9ca3af;cursor:not-allowed;}
+
+    /* ── BOTTOM SHEET CONTENT ── */
+    .bs-section{margin-bottom:20px;}
+    .bs-section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);margin-bottom:10px;}
+    .bs-app-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+    .bs-app-name{font-size:16px;font-weight:700;margin-bottom:2px;}
+    .bs-app-model{font-size:13px;color:var(--text2);margin-bottom:10px;}
+    .bs-serial-row{display:flex;gap:8px;align-items:stretch;}
+    .bs-serial-input{flex:1;font-size:18px;padding:14px;border:2px solid var(--border2);border-radius:10px;font-family:inherit;outline:none;-webkit-appearance:none;min-height:52px;}
+    .bs-serial-input:focus{border-color:var(--blue);}
+    .bs-serial-input.filled{border-color:var(--green);background:#f0fdf4;}
+    .bs-scan-btn{min-width:52px;min-height:52px;border:2px solid var(--border2);border-radius:10px;background:var(--bg2);cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .bs-scan-btn:active{background:var(--bg3);}
+    .bs-ai-status{font-size:12px;margin-top:6px;min-height:18px;}
+    .bs-ai-reading{color:var(--blue);font-weight:600;display:flex;align-items:center;gap:6px;}
+    .bs-ai-success{color:var(--green);font-weight:600;}
+    .bs-ai-fail{color:var(--red);font-weight:600;}
+    .bs-check-row{display:flex;align-items:center;gap:10px;min-height:48px;cursor:pointer;}
+    .bs-check-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--green);}
+    .bs-check-label{font-size:15px;font-weight:600;}
+
+    /* Photos section */
+    .bs-photo-btns{display:flex;gap:8px;margin-bottom:10px;}
+    .bs-photo-btn{flex:1;min-height:52px;background:var(--bg3);border:2px dashed var(--border2);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .bs-photo-btn:active{background:var(--border);}
+    .bs-photo-gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+    .bs-photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+
+    /* Spinner */
+    .bs-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.6s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* Success animation */
+    .bs-success-overlay{position:fixed;inset:0;background:rgba(255,255,255,0.95);z-index:700;display:none;align-items:center;justify-content:center;flex-direction:column;}
+    .bs-success-overlay.open{display:flex;}
+    .bs-success-check{width:80px;height:80px;border-radius:50%;background:#dcfce7;display:flex;align-items:center;justify-content:center;font-size:40px;animation:popIn 0.4s ease-out;}
+    @keyframes popIn{0%{transform:scale(0);opacity:0;}50%{transform:scale(1.2);}100%{transform:scale(1);opacity:1;}}
+    .bs-success-text{font-size:20px;font-weight:700;color:#16a34a;margin-top:16px;animation:fadeIn 0.3s 0.2s both;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
     @media(max-width:767px){
       html,body{overflow:auto;height:auto;}
       .app{height:auto;min-height:100vh;}
@@ -865,6 +929,15 @@ function renderMobileDay(){
     h+='<div class="mobile-stop-addr">'+d.address+', '+d.city+'</div>';
     h+='<div class="mobile-stop-apps">'+appStr+'</div>';
     h+='<div class="mobile-stop-time">'+(d.team||'Main Delivery Team')+' &middot; '+timeStr+'</div>';
+    // Action buttons
+    if(d.status==='Delivered'){
+      h+='<div class="ms-delivered-badge">&#x2713; Delivered'+(d.deliveredAt?' at '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'</div>';
+    }else{
+      h+='<div class="ms-actions">';
+      if(d.status!=='Out for Delivery')h+='<button class="ms-btn-out" onclick="mobileSetOut(\''+d.id+'\',event)">Mark Out</button>';
+      h+='<button class="ms-btn-delivered" onclick="mobileMarkDelivered(\''+d.id+'\',event)">Mark Delivered</button>';
+      h+='</div>';
+    }
     h+='</div>';
   });
   wrap.innerHTML=h;
@@ -1389,6 +1462,247 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // Init color grid
 buildColorGrid('yellow');
+</script>
+
+<!-- MOBILE DELIVERY BOTTOM SHEET -->
+<div class="bsheet-overlay" id="bsheet-overlay">
+  <div class="bsheet">
+    <div class="bsheet-handle"></div>
+    <div class="bsheet-hdr">
+      <div class="bsheet-title" id="bsheet-title">Confirm Delivery</div>
+      <button class="bsheet-close" onclick="closeBSheet()">&#x2715;</button>
+    </div>
+    <div class="bsheet-body" id="bsheet-body"></div>
+    <div class="bsheet-footer">
+      <button class="bsheet-cancel" onclick="closeBSheet()">Cancel</button>
+      <button class="bsheet-confirm" id="bsheet-confirm-btn" onclick="bsheetConfirmDelivery()">Confirm Delivery</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="bs-success-overlay" id="bs-success-overlay">
+  <div class="bs-success-check">&#x2713;</div>
+  <div class="bs-success-text">Delivery Complete!</div>
+</div>
+
+<!-- HIDDEN FILE INPUTS FOR BOTTOM SHEET -->
+<input type="file" id="bs-serial-camera" accept="image/*" capture="environment" style="display:none"/>
+<input type="file" id="bs-serial-gallery" accept="image/*" style="display:none"/>
+<input type="file" id="bs-photo-camera" accept="image/*" capture="environment" style="display:none"/>
+<input type="file" id="bs-photo-gallery" accept="image/*" multiple style="display:none"/>
+
+<script>
+// ═══ MOBILE DELIVERY CONFIRMATION FLOW ═══
+var _bsDeliveryId=null;
+var _bsPhotos=[];
+var _bsSerialTarget=-1;
+
+function openBSheet(deliveryId){
+  _bsDeliveryId=deliveryId;
+  _bsPhotos=[];
+  var d=deliveries.find(function(x){return x.id===deliveryId;});
+  if(!d)return;
+  // Copy existing photos
+  if(d.photos&&d.photos.length)_bsPhotos=d.photos.slice();
+
+  var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
+  document.getElementById('bsheet-title').textContent='Deliver to '+d.name;
+
+  var h='';
+  // Step 1 — Serial Numbers
+  h+='<div class="bs-section"><div class="bs-section-title">Step 1 — Serial Numbers</div>';
+  apps.forEach(function(a,i){
+    var serial=a.serial||'';
+    h+='<div class="bs-app-card">';
+    h+='<div class="bs-app-name">'+a.a+'</div>';
+    if(a.m)h+='<div class="bs-app-model">'+a.m+'</div>';
+    h+='<div class="bs-serial-row">';
+    h+='<input class="bs-serial-input'+(serial?' filled':'')+'" id="bs-serial-'+i+'" value="'+serial+'" placeholder="Serial number" inputmode="text" autocomplete="off"/>';
+    h+='<button class="bs-scan-btn" onclick="bsScanSerial('+i+',\'camera\')" title="Camera">&#x1F4F7;</button>';
+    h+='<button class="bs-scan-btn" onclick="bsScanSerial('+i+',\'gallery\')" title="Gallery">&#x1F5BC;</button>';
+    h+='</div>';
+    h+='<div class="bs-ai-status" id="bs-ai-status-'+i+'"></div>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  // Step 2 — Photos
+  h+='<div class="bs-section"><div class="bs-section-title">Step 2 — Delivery Photos (optional)</div>';
+  h+='<div class="bs-photo-btns">';
+  h+='<button class="bs-photo-btn" onclick="bsTakePhoto()">&#x1F4F7; Take Photo</button>';
+  h+='<button class="bs-photo-btn" onclick="bsUploadPhotos()">&#x1F5BC; Upload Photos</button>';
+  h+='</div>';
+  h+='<div class="bs-photo-gallery" id="bs-photo-gallery">';
+  _bsPhotos.forEach(function(p){
+    h+='<img class="bs-photo-thumb" src="'+p.url+'" alt=""/>';
+  });
+  h+='</div>';
+  h+='</div>';
+
+  // Step 3 — Summary
+  h+='<div class="bs-section"><div class="bs-section-title">Step 3 — Confirm</div>';
+  h+='<div style="font-size:14px;color:var(--text2);line-height:1.6;">Tap <b>Confirm Delivery</b> to mark this delivery as complete. Serial numbers and photos will be saved to the delivery record.</div>';
+  h+='</div>';
+
+  document.getElementById('bsheet-body').innerHTML=h;
+  document.getElementById('bsheet-overlay').classList.add('open');
+}
+
+function closeBSheet(){
+  document.getElementById('bsheet-overlay').classList.remove('open');
+  _bsDeliveryId=null;_bsPhotos=[];_bsSerialTarget=-1;
+}
+
+// ── SERIAL NUMBER AI SCAN ──
+function bsScanSerial(idx,mode){
+  _bsSerialTarget=idx;
+  var inp=mode==='camera'?document.getElementById('bs-serial-camera'):document.getElementById('bs-serial-gallery');
+  inp.onchange=function(){
+    if(!inp.files||!inp.files[0])return;
+    bsProcessSerialPhoto(inp.files[0],idx);
+    inp.value='';
+  };
+  inp.click();
+}
+
+async function bsProcessSerialPhoto(file,idx){
+  var statusEl=document.getElementById('bs-ai-status-'+idx);
+  statusEl.innerHTML='<div class="bs-ai-reading"><div class="bs-spinner"></div> Reading serial number...</div>';
+  try{
+    var b64=await toB64(file);
+    var res=await fetch('/api/ai-chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
+            {type:'text',text:'This is a photo of an appliance tag/label. Extract the model number and serial number. Return JSON only: {"model":"MODEL_HERE","serial":"SERIAL_HERE"}. If you cannot read either, use empty string. JSON only, no explanation.'}
+          ]
+        }],
+        max_tokens:200
+      })
+    });
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error||'API error');
+    var txt=data.content[0].text;
+    var match=txt.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('No JSON');
+    var parsed=JSON.parse(match[0]);
+    var serial=parsed.serial||'';
+    var model=parsed.model||'';
+    var inp=document.getElementById('bs-serial-'+idx);
+    if(serial){
+      inp.value=serial;
+      inp.classList.add('filled');
+      var msg='<div class="bs-ai-success">&#x2713; Serial: '+serial;
+      if(model)msg+=' &middot; Model: '+model;
+      msg+='</div>';
+      statusEl.innerHTML=msg;
+    }else{
+      statusEl.innerHTML='<div class="bs-ai-fail">Could not read serial — please enter manually</div>';
+      inp.focus();
+    }
+  }catch(e){
+    console.error(e);
+    statusEl.innerHTML='<div class="bs-ai-fail">Could not read tag — please enter manually</div>';
+    document.getElementById('bs-serial-'+idx).focus();
+  }
+}
+
+// ── DELIVERY PHOTOS ──
+function bsTakePhoto(){
+  var inp=document.getElementById('bs-photo-camera');
+  inp.onchange=function(){
+    if(inp.files&&inp.files.length)bsUploadPhotoFiles(inp.files);
+    inp.value='';
+  };
+  inp.click();
+}
+
+function bsUploadPhotos(){
+  var inp=document.getElementById('bs-photo-gallery');
+  inp.onchange=function(){
+    if(inp.files&&inp.files.length)bsUploadPhotoFiles(inp.files);
+    inp.value='';
+  };
+  inp.click();
+}
+
+async function bsUploadPhotoFiles(files){
+  var gallery=document.getElementById('bs-photo-gallery');
+  for(var i=0;i<files.length;i++){
+    // Show placeholder
+    var placeholder=document.createElement('div');
+    placeholder.style.cssText='aspect-ratio:1;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;';
+    placeholder.innerHTML='<div class="bs-spinner"></div>';
+    gallery.appendChild(placeholder);
+    try{
+      var b64=await toB64(files[i]);
+      var res=await fetch('/api/delivery-photo-upload',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,deliveryId:_bsDeliveryId})
+      });
+      var data=await res.json();
+      if(data.ok){
+        _bsPhotos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
+        var img=document.createElement('img');
+        img.className='bs-photo-thumb';img.src=data.url;
+        gallery.replaceChild(img,placeholder);
+      }else{gallery.removeChild(placeholder);}
+    }catch(e){console.error(e);gallery.removeChild(placeholder);}
+  }
+}
+
+// ── CONFIRM DELIVERY ──
+async function bsheetConfirmDelivery(){
+  if(!_bsDeliveryId)return;
+  var d=deliveries.find(function(x){return x.id===_bsDeliveryId;});
+  if(!d)return;
+
+  // Gather serial numbers
+  var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
+  if(!d.appliances||!d.appliances.length)d.appliances=apps;
+  apps.forEach(function(a,i){
+    var inp=document.getElementById('bs-serial-'+i);
+    if(inp)a.serial=inp.value.trim();
+  });
+
+  // Save photos
+  d.photos=_bsPhotos;
+
+  // Mark delivered
+  d.status='Delivered';
+  d.deliveredAt=new Date().toISOString();
+
+  var btn=document.getElementById('bsheet-confirm-btn');
+  btn.disabled=true;btn.textContent='Saving...';
+
+  await saveData();
+  closeBSheet();
+
+  // Success animation
+  var sov=document.getElementById('bs-success-overlay');
+  sov.classList.add('open');
+  setTimeout(function(){sov.classList.remove('open');},1800);
+
+  renderEvents();
+}
+
+// ── MOBILE QUICK STATUS CHANGE ──
+async function mobileSetOut(id,evt){
+  evt.stopPropagation();
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  d.status='Out for Delivery';
+  await saveData();renderEvents();
+}
+function mobileMarkDelivered(id,evt){
+  evt.stopPropagation();
+  openBSheet(id);
+}
 </script>
 </body>
 </html>
