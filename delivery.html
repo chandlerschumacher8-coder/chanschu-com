@@ -1192,7 +1192,7 @@ function renderMobileDay(){
       h+='<div class="ms-delivered-badge">&#x2713; Delivered'+(d.deliveredAt?' at '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'</div>';
     }else{
       h+='<div class="ms-actions">';
-      if(d.status!=='Out for Delivery')h+='<button class="ms-btn-out" onclick="mobileSetOut(\''+d.id+'\',event)">Mark Out</button>';
+      if(d.status!=='Out for Delivery')h+='<button class="ms-btn-out" onclick="mobileSetOut(\''+d.id+'\',event)">Delivering</button>';
       h+='<button class="ms-btn-delivered" onclick="mobileMarkDelivered(\''+d.id+'\',event)">Mark Delivered</button>';
       h+='</div>';
     }
@@ -1466,7 +1466,7 @@ function openDeliveryDetail(id){
     renderEmailLogHtml(d.emailLog);
   document.getElementById('det-body').innerHTML=body;
   var acts='';
-  if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="abtn orange" onclick="setStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
+  if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="abtn orange" onclick="setStatus(\''+id+'\',\'Out for Delivery\')">Delivering</button>';
   if(d.status!=='Delivered')acts+='<button class="abtn green" onclick="setStatus(\''+id+'\',\'Delivered\')">Mark Delivered</button>';
   if(d.status!=='Scheduled')acts+='<button class="abtn blue" onclick="setStatus(\''+id+'\',\'Scheduled\')">Reschedule</button>';
   if(d.email)acts+='<button class="abtn purple" onclick="sendDeliveryConfirmEmail(\''+id+'\')">&#x2709; Email Confirmation</button>';
