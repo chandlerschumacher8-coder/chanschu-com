@@ -1886,6 +1886,19 @@ POS Settings
 </div>
 
 <!-- ADD PRODUCT MODAL -->
+<!-- ADMIN PASSWORD MODAL -->
+<div class="modal-bg" id="admin-pw-modal">
+<div class="modal" style="max-width:360px;">
+<div class="modal-hdr"><div class="modal-title">Admin Access</div><button class="modal-close" onclick="closeModal('admin-pw-modal')">&#x2715;</button></div>
+<div class="modal-body" style="text-align:center;padding:24px;">
+<div style="font-size:13px;color:var(--gray-2);margin-bottom:16px;">Enter admin password to continue</div>
+<input class="inp" type="password" id="admin-pw-input" placeholder="Admin password" style="text-align:center;font-size:16px;padding:12px;" onkeydown="if(event.key==='Enter')adminPwSubmit()"/>
+<div id="admin-pw-err" style="display:none;color:var(--red);font-size:12px;margin-top:8px;font-weight:600;">Incorrect password — Admin access only</div>
+</div>
+<div class="modal-footer" style="justify-content:center;"><button class="primary-btn" onclick="adminPwSubmit()">Unlock Admin</button></div>
+</div>
+</div>
+
 <div class="modal-bg" id="add-product-modal">
 <div class="modal" style="max-width:480px;">
 <div class="modal-hdr"><div class="modal-title">Add Product</div><button class="modal-close" onclick="closeModal('add-product-modal')">&#x2715;</button></div>
@@ -4380,6 +4393,26 @@ var currentTab='dashboard';
 // ══════════════════════════════════════════════
 // NAV
 // ══════════════════════════════════════════════
+var _adminUnlocked=false;
+var _adminPendingTab=null;
+async function adminPwSubmit(){
+  var pw=document.getElementById('admin-pw-input').value;
+  if(!pw)return;
+  try{
+    var res=await fetch('/api/admin-verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    var data=await res.json();
+    if(data.ok){
+      _adminUnlocked=true;
+      closeModal('admin-pw-modal');
+      document.getElementById('admin-pw-err').style.display='none';
+      nav('admin',_adminPendingTab);
+    }else{
+      document.getElementById('admin-pw-err').style.display='block';
+      document.getElementById('admin-pw-input').value='';
+      document.getElementById('admin-pw-input').focus();
+    }
+  }catch(e){toast('Connection error','error');}
+}
 function nav(viewId,tabEl){
   // Redirect reorder to inventory ordering sub-tab
   if(viewId==='reorder'){viewId='inventory';tabEl=null;
@@ -4388,6 +4421,13 @@ function nav(viewId,tabEl){
   // If no employee logged in and going to sale, prompt
   if(viewId==='sale'&&!currentEmployee){
     showEmpSelect();return;
+  }
+  // Admin panel requires password
+  if(viewId==='admin'&&!_adminUnlocked){
+    _adminPendingTab=tabEl;
+    openModal('admin-pw-modal');
+    setTimeout(function(){var el=document.getElementById('admin-pw-input');if(el){el.value='';el.focus();}},100);
+    return;
   }
   currentTab=viewId;
   document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});

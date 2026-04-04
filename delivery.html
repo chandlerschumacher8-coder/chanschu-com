@@ -25,16 +25,29 @@
     body{color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;display:flex;flex-direction:column;}
 
     /* LOGIN */
-    .login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:1000;}
-    .login-box{background:#0c1c30;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:48px 40px;width:100%;max-width:380px;text-align:center;}
+    .login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;}
+    .login-box{background:#0c1c30;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;text-align:center;}
     .login-logo{font-family:'Playfair Display',serif;font-size:22px;color:#f8f7f5;margin-bottom:4px;}
     .login-logo span{color:#c9973a;}
-    .login-sub{font-size:12px;color:#8a8880;margin-bottom:28px;}
-    .login-field{width:100%;background:#112238;border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 16px;color:#f8f7f5;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;margin-bottom:12px;outline:none;}
-    .login-field:focus{border-color:rgba(201,151,58,0.5);}
-    .login-btn{width:100%;background:#c9973a;color:#07111f;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+    .login-sub{font-size:12px;color:#8a8880;margin-bottom:20px;}
+    .login-btn{width:100%;background:#c9973a;color:#07111f;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
     .login-btn:hover{background:#e4b96a;}
+    .login-btn:disabled{opacity:0.5;cursor:not-allowed;}
     .login-err{font-size:12px;color:#e07070;margin-top:8px;display:none;}
+    /* Employee selector */
+    .emp-list{max-height:180px;overflow-y:auto;margin-bottom:16px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;}
+    .emp-list-item{padding:10px 14px;color:#f8f7f5;font-size:14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;transition:background 0.1s;}
+    .emp-list-item:hover,.emp-list-item.selected{background:rgba(201,151,58,0.15);}
+    .emp-list-item.selected{border-left:3px solid #c9973a;}
+    .emp-list-role{font-size:10px;color:#8a8880;}
+    /* PIN pad */
+    .pin-display{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
+    .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);transition:all 0.15s;}
+    .pin-dot.filled{background:#c9973a;border-color:#c9973a;}
+    .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:0 auto;}
+    .pin-key{background:#112238;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#f8f7f5;font-size:22px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;padding:16px;cursor:pointer;transition:all 0.1s;min-height:56px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none;}
+    .pin-key:active{background:rgba(201,151,58,0.2);border-color:#c9973a;}
+    .pin-key.action{font-size:13px;font-weight:600;color:#8a8880;}
 
     /* APP */
     .app{display:none;flex-direction:column;height:100%;}
@@ -391,16 +404,27 @@
   <div class="login-box">
     <div class="login-logo">DC <span>Appliance</span></div>
     <div class="login-sub">Delivery Schedule</div>
-    <input class="login-field" type="password" id="login-pw" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <button class="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-err" id="login-err">Incorrect password.</div>
+    <div class="emp-list" id="login-emp-list"></div>
+    <div id="login-pin-section" style="display:none;">
+      <div style="color:#f8f7f5;font-size:14px;font-weight:600;margin-bottom:12px;" id="login-pin-name"></div>
+      <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
+      <div class="pin-pad">
+        <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+        <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+        <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+        <div class="pin-key action" onclick="pinClear()">Clear</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key action" onclick="pinBack()">&#x232B;</div>
+      </div>
+      <button class="login-btn" onclick="pinSubmit()" id="login-submit-btn" disabled>Sign In</button>
+      <div style="margin-top:8px;"><a href="#" onclick="event.preventDefault();pinBackToList()" style="color:#8a8880;font-size:12px;text-decoration:none;">&#8592; Back to employee list</a></div>
+    </div>
+    <div class="login-err" id="login-err"></div>
   </div>
 </div>
 
 <!-- APP -->
 <div class="app" id="app">
   <header>
-    <div class="h-logo">DC <span>Appliance</span> — Delivery Schedule</div>
+    <div class="h-logo">DC <span>Appliance</span> — <span id="h-welcome">Delivery Schedule</span></div>
     <div class="h-nav">
       <div class="team-pills">
         <button class="tpill active" id="tf-all" onclick="setTeam('all',this)">All Teams</button>
@@ -771,13 +795,127 @@ var weekStart=getWeekStart(new Date());
 var TEAM_FILTER='all';
 var pendingFiles=[];
 
-// ═══ AUTH ═══
-function doLogin(){
-  var pw=document.getElementById('login-pw').value;
-  if(pw===PASSWORD){document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='flex';loadData().then(function(){startPolling();});}
-  else{document.getElementById('login-err').style.display='block';document.getElementById('login-pw').value='';}
+// ═══ AUTH — SHARED PIN LOGIN ═══
+var SESSION_KEY='dc-emp-session';
+var _loginEmployees=[];
+var _selectedEmpIdx=-1;
+var _pinValue='';
+var _currentUser=null;
+
+function getMidnight(){var d=new Date();d.setHours(23,59,59,999);return d.getTime();}
+
+function checkSession(){
+  try{
+    var s=JSON.parse(localStorage.getItem(SESSION_KEY));
+    if(s&&s.name&&s.expiry&&Date.now()<s.expiry){
+      _currentUser=s;return true;
+    }
+  }catch(e){}
+  localStorage.removeItem(SESSION_KEY);_currentUser=null;return false;
 }
-function doLogout(){stopPolling();document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('login-pw').value='';document.getElementById('login-err').style.display='none';}
+
+function saveSession(user){
+  var s={name:user.name,id:user.id||'',role:user.posRole||user.role||'Sales',loginAt:new Date().toISOString(),expiry:getMidnight()};
+  localStorage.setItem(SESSION_KEY,JSON.stringify(s));
+  _currentUser=s;
+}
+
+async function loadLoginEmployees(){
+  try{
+    var res=await fetch('/api/employees-get?companyId=dc-appliance');
+    var data=await res.json();
+    if(data.ok&&data.users)_loginEmployees=data.users.filter(function(u){return u.active!==false;});
+  }catch(e){}
+}
+
+function renderEmpList(){
+  var el=document.getElementById('login-emp-list');
+  el.innerHTML=_loginEmployees.map(function(u,i){
+    return '<div class="emp-list-item" onclick="empSelect('+i+')"><span>'+u.name+'</span><span class="emp-list-role">'+(u.posRole||'Sales')+'</span></div>';
+  }).join('')||'<div style="padding:20px;color:#8a8880;font-size:12px;">Loading employees...</div>';
+}
+
+function empSelect(i){
+  _selectedEmpIdx=i;
+  var u=_loginEmployees[i];
+  if(!u.pin){
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('login-err').textContent='No PIN on file — see your manager';
+    return;
+  }
+  document.getElementById('login-emp-list').style.display='none';
+  document.getElementById('login-pin-section').style.display='block';
+  document.getElementById('login-pin-name').textContent=u.name;
+  document.getElementById('login-err').style.display='none';
+  _pinValue='';updatePinDots();
+}
+
+function pinBackToList(){
+  _selectedEmpIdx=-1;_pinValue='';updatePinDots();
+  document.getElementById('login-emp-list').style.display='';
+  document.getElementById('login-pin-section').style.display='none';
+  document.getElementById('login-err').style.display='none';
+}
+
+function pinKey(n){if(_pinValue.length>=4)return;_pinValue+=n;updatePinDots();if(_pinValue.length===4)pinSubmit();}
+function pinBack(){_pinValue=_pinValue.slice(0,-1);updatePinDots();}
+function pinClear(){_pinValue='';updatePinDots();}
+function updatePinDots(){
+  for(var i=0;i<4;i++){var d=document.getElementById('pd'+i);if(d)d.classList.toggle('filled',i<_pinValue.length);}
+  var btn=document.getElementById('login-submit-btn');if(btn)btn.disabled=_pinValue.length<4;
+}
+
+function pinSubmit(){
+  if(_selectedEmpIdx<0)return;
+  var u=_loginEmployees[_selectedEmpIdx];
+  if(_pinValue===u.pin){
+    saveSession(u);enterApp();
+  }else{
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('login-err').textContent='Incorrect PIN — please try again';
+    _pinValue='';updatePinDots();
+  }
+}
+
+function enterApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  var name=_currentUser?_currentUser.name:'';
+  document.getElementById('h-welcome').textContent=name?'Welcome, '+name:'Delivery Schedule';
+  applyRoleAccess();
+  loadData().then(function(){startPolling();});
+}
+
+function applyRoleAccess(){
+  if(!_currentUser)return;
+  var role=_currentUser.role;
+  // Hide add/edit/delete for Delivery role and CSR/Sales
+  var isAdmin=role==='Owner/Admin'||role==='General Manager'||role==='Manager';
+  var isDelivery=role==='Delivery';
+  // CSR/Sales can view + add only
+  var addBtns=document.querySelectorAll('.hbtn.gold');
+  // For non-admin/non-delivery: hide edit/delete in detail modals (handled dynamically)
+}
+
+function doLogout(){
+  stopPolling();localStorage.removeItem(SESSION_KEY);_currentUser=null;
+  document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';
+  document.getElementById('login-emp-list').style.display='';
+  document.getElementById('login-pin-section').style.display='none';
+  document.getElementById('login-err').style.display='none';
+  _pinValue='';updatePinDots();
+}
+
+// Midnight check — auto-logout
+setInterval(function(){
+  if(_currentUser&&Date.now()>=_currentUser.expiry){doLogout();}
+},60000);
+
+// On page load — check session or show login
+window.addEventListener('DOMContentLoaded',function(){
+  if(checkSession()){enterApp();}
+  else{loadLoginEmployees().then(renderEmpList);}
+});
 
 // ═══ DATA ═══
 async function loadData(){
