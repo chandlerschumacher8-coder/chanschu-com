@@ -593,10 +593,15 @@ function delOpenDetail(id){
   var scBadge=d.status==='Delivered'?'del-sb-delivered':d.status==='Out for Delivery'?'del-sb-out':d.status==='Rescheduled'?'del-sb-rescheduled':'del-sb-scheduled';
   var body='<div style="margin-bottom:10px;"><span class="del-status-badge '+scBadge+'">'+d.status+'</span></div>'+
   '<div class="del-detail-grid"><div><div class="del-dl">Phone</div><div class="del-dv"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div>'+(d.email?'<div><div class="del-dl">Email</div><div class="del-dv"><a href="mailto:'+d.email+'">'+d.email+'</a></div></div>':'<div></div>')+'<div style="grid-column:1/-1"><div class="del-dl">Address</div><div class="del-dv">'+d.address+', '+d.city+'</div></div><div><div class="del-dl">Delivery Type</div><div class="del-dv">'+(d.deliveryType||'Full Install')+'</div></div>'+(d.invoice?'<div><div class="del-dl">Invoice #</div><div class="del-dv">'+d.invoice+'</div></div>':'<div></div>')+'</div>'+
-  '<div style="margin-bottom:10px;"><div class="del-dl" style="margin-bottom:4px;">Appliances</div>'+apps.map(function(a){return '<div style="font-size:12px;margin-bottom:3px;">'+a.a+(a.m?' <span style="color:var(--gray-2);font-size:11px;">'+a.m+'</span>':'')+'</div>';}).join('')+'</div>'+
+  '<div style="margin-bottom:10px;"><div class="del-dl" style="margin-bottom:4px;">Appliances</div>'+apps.map(function(a){return '<div style="font-size:12px;margin-bottom:3px;">'+a.a+(a.m?' <span style="color:var(--gray-2);font-size:11px;">'+a.m+'</span>':'')+(a.serial?' <span style="color:var(--green);font-size:11px;font-weight:600;">SN: '+a.serial+'</span>':'')+'</div>';}).join('')+'</div>'+
   (d.notes?'<div class="del-dl" style="margin-bottom:4px;">Notes</div><div class="del-notes-blk">'+d.notes+'</div>':'')+
   (d.deliveredAt?'<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered: '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>':'')+
-  ((d.invoiceFiles&&d.invoiceFiles.length?d.invoiceFiles:(d.invoiceFile&&d.invoiceFile.url?[d.invoiceFile]:[])).map(function(f){return '<div class="del-file-attach" style="margin-top:8px;"><span style="font-size:16px;">&#x1F4C4;</span><div class="del-file-attach-name">'+f.filename+'</div><a class="del-file-attach-open" href="'+f.url+'" target="_blank">Open</a></div>';}).join(''));
+  ((d.invoiceFiles&&d.invoiceFiles.length?d.invoiceFiles:(d.invoiceFile&&d.invoiceFile.url?[d.invoiceFile]:[])).map(function(f){return '<div class="del-file-attach" style="margin-top:8px;"><span style="font-size:16px;">&#x1F4C4;</span><div class="del-file-attach-name">'+f.filename+'</div><a class="del-file-attach-open" href="'+f.url+'" target="_blank">Open</a></div>';}).join(''))+
+  '<div style="margin-top:12px;"><div class="del-dl" style="margin-bottom:6px;">Photos</div>'+
+  '<button class="del-abtn gray" style="margin-bottom:8px;" onclick="document.getElementById(\'del-det-photo-input\').click()">+ Add Photos</button>'+
+  '<input type="file" id="del-det-photo-input" accept="image/*" multiple style="display:none" onchange="delDetUploadPhotos(this.files,\''+id+'\')"/>'+
+  ((d.photos&&d.photos.length)?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;">'+d.photos.map(function(p){return '<img src="'+p.url+'" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--bg4);" onclick="delDetViewPhoto(\''+p.url+'\')"/>';}).join('')+'</div>':'<div style="font-size:11px;color:var(--gray-3);">No photos yet</div>')+
+  '</div>';
   document.getElementById('del-det-body').innerHTML=body;
   var acts='';
   if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="del-abtn orange" onclick="delSetStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
@@ -618,6 +623,27 @@ function delOpenNoteDetail(id){
 async function delSetStatus(id,status){var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Status: '+status,'success');}
 async function delDeleteDelivery(id){if(!confirm('Delete this stop?'))return;delDeliveries=delDeliveries.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Delivery deleted','info');}
 async function delDeleteNote(id){if(!confirm('Delete this note?'))return;delNotes=delNotes.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Note deleted','info');}
+// Delivery photos
+async function delDetUploadPhotos(files,deliveryId){
+  if(!files||!files.length)return;
+  var d=delDeliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
+  if(!d.photos)d.photos=[];
+  toast('Uploading '+files.length+' photo'+(files.length>1?'s':'')+'...','info');
+  for(var i=0;i<files.length;i++){
+    try{
+      var base64=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(r.result.split(',')[1]);};r.onerror=reject;r.readAsDataURL(files[i]);});
+      var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:base64,deliveryId:deliveryId})});
+      var data=await res.json();
+      if(data.ok)d.photos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
+    }catch(e){console.error(e);}
+  }
+  await delSaveData();delOpenDetail(deliveryId);toast('Photos uploaded','success');
+}
+function delDetViewPhoto(url){
+  var ov=document.getElementById('del-photo-overlay');
+  if(!ov){ov=document.createElement('div');ov.id='del-photo-overlay';ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;';ov.onclick=function(){ov.style.display='none';};ov.innerHTML='<img style="max-width:95vw;max-height:90vh;object-fit:contain;border-radius:4px;"/>';document.body.appendChild(ov);}
+  ov.querySelector('img').src=url;ov.style.display='flex';
+}
 // Print
 function delPrintManifest(){document.getElementById('del-print-date').value=ds(new Date());openModal('del-print-modal');}
 function delRunPrint(printTeam){
@@ -633,7 +659,7 @@ function delRunPrint(printTeam){
   stops.forEach(function(s,i){
     var apps=s.appliances&&s.appliances.length?s.appliances:[{a:s.appliance||'',m:s.model||''}];var dur=parseInt(s.duration)||60;
     var tstr=s.time==='Call Ahead'?'Call Ahead':(s.time+' - '+delMinsToTime(delTimeToMins(s.time)+dur));
-    var appsHtml=apps.map(function(a){return '<div class="app-row"><span class="app-name">'+a.a+'</span>'+(a.m?'<span style="font-size:11px;color:#555;">'+a.m+'</span>':'')+'<span style="font-size:11px;color:#555;">SN#</span><span class="sn-line"></span></div>';}).join('');
+    var appsHtml=apps.map(function(a){return '<div class="app-row"><span class="app-name">'+a.a+'</span>'+(a.m?'<span style="font-size:11px;color:#555;">'+a.m+'</span>':'')+'<span style="font-size:11px;color:#555;">SN#</span>'+(a.serial?'<span style="font-size:11px;font-weight:700;">'+a.serial+'</span>':'<span class="sn-line"></span>')+'</div>';}).join('');
     html+='<tr><td style="font-weight:700;font-size:14px;color:#555;">'+(s.stopOrder||i+1)+'</td><td><div class="nm">'+s.name+'</div><div style="font-size:11px;color:#444;">'+s.phone+'</div><div style="font-size:11px;color:#444;">'+s.address+'<br/>'+s.city+'</div>'+(s.invoice?'<div style="font-size:10px;color:#888;">'+s.invoice+'</div>':'')+'<span class="badge">'+(s.deliveryType||'Full Install')+'</span>'+(s.notes?'<div class="notes-box">'+s.notes+'</div>':'')+'</td><td style="white-space:nowrap;">'+tstr+'</td><td>'+appsHtml+'</td></tr>';
   });html+='</tbody></table>';}
   html+='</body></html>';win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);

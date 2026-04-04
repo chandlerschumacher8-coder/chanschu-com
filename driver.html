@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>DC Appliance - Driver</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f5f5f5;color:#1f2937;min-height:100dvh;overflow-x:hidden;}
+/* ── LOGIN SCREEN ── */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;background:#fff;padding:24px;}
+.login-logo{font-size:28px;font-weight:700;color:#1f2937;margin-bottom:6px;}
+.login-sub{font-size:14px;color:#6b7280;margin-bottom:32px;}
+.login-input{width:100%;max-width:320px;font-size:24px;text-align:center;padding:16px;border:2px solid #d1d5db;border-radius:12px;font-family:inherit;letter-spacing:8px;margin-bottom:16px;outline:none;-webkit-appearance:none;}
+.login-input:focus{border-color:#2563eb;}
+.login-input::placeholder{letter-spacing:0;font-size:16px;color:#9ca3af;}
+.login-btn{width:100%;max-width:320px;padding:16px;font-size:18px;font-weight:700;color:#fff;background:#2563eb;border:none;border-radius:12px;cursor:pointer;font-family:inherit;}
+.login-btn:active{background:#1d4ed8;}
+.login-err{color:#dc2626;font-size:14px;margin-top:12px;display:none;text-align:center;}
+.login-or{color:#9ca3af;font-size:13px;margin:16px 0 12px;}
+.login-pw-link{color:#2563eb;font-size:14px;cursor:pointer;text-decoration:underline;}
+/* ── TOP BAR ── */
+.topbar{background:#1a2744;color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar-name{font-size:16px;font-weight:700;}
+.topbar-date{font-size:12px;color:#94a3b8;margin-top:2px;}
+.topbar-logout{background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+/* ── DELIVERY LIST ── */
+#app-screen{display:none;min-height:100dvh;background:#f5f5f5;padding-bottom:80px;}
+.list-header{padding:16px 16px 8px;font-size:14px;color:#6b7280;font-weight:600;}
+.stop-card{background:#fff;margin:8px 16px;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);cursor:pointer;border-left:4px solid #2563eb;transition:transform 0.1s;}
+.stop-card:active{transform:scale(0.98);}
+.stop-card.out{border-left-color:#f59e0b;}
+.stop-card.delivered{border-left-color:#16a34a;opacity:0.7;}
+.stop-card.rescheduled{border-left-color:#6366f1;opacity:0.6;}
+.stop-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.stop-num{font-size:12px;font-weight:700;color:#fff;background:#2563eb;border-radius:6px;padding:2px 8px;min-width:28px;text-align:center;}
+.stop-card.out .stop-num{background:#f59e0b;}
+.stop-card.delivered .stop-num{background:#16a34a;}
+.stop-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:100px;}
+.sb-scheduled{background:#dbeafe;color:#2563eb;}
+.sb-out{background:#fef3c7;color:#d97706;}
+.sb-delivered{background:#dcfce7;color:#16a34a;}
+.sb-rescheduled{background:#e0e7ff;color:#4f46e5;}
+.stop-name{font-size:18px;font-weight:700;margin-bottom:4px;}
+.stop-addr{font-size:14px;color:#6b7280;margin-bottom:6px;}
+.stop-apps{font-size:13px;color:#374151;}
+.stop-time{font-size:13px;color:#6b7280;margin-top:6px;}
+.empty-msg{text-align:center;padding:60px 24px;color:#9ca3af;font-size:16px;}
+/* ── DETAIL SCREEN ── */
+#detail-screen{display:none;min-height:100dvh;background:#f5f5f5;}
+.detail-back{display:flex;align-items:center;gap:6px;padding:12px 16px;font-size:14px;font-weight:600;color:#2563eb;cursor:pointer;background:#fff;border-bottom:1px solid #e5e7eb;}
+.detail-card{background:#fff;margin:12px 16px;border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+.detail-name{font-size:22px;font-weight:700;margin-bottom:4px;}
+.detail-id{font-size:13px;color:#6b7280;margin-bottom:12px;}
+.detail-badge{display:inline-block;margin-bottom:16px;}
+.detail-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f3f4f6;}
+.detail-row:last-child{border-bottom:none;}
+.detail-icon{font-size:20px;width:32px;text-align:center;flex-shrink:0;}
+.detail-label{font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+.detail-val{font-size:15px;color:#1f2937;margin-top:2px;}
+.detail-val a{color:#2563eb;text-decoration:none;font-weight:600;}
+.detail-section{font-size:13px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;padding:16px 16px 6px;}
+/* Appliance rows */
+.app-item{background:#fff;margin:0 16px 1px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;}
+.app-item:first-child{border-radius:12px 12px 0 0;}
+.app-item:last-child{border-radius:0 0 12px 12px;margin-bottom:0;}
+.app-item:only-child{border-radius:12px;}
+.app-name{font-size:15px;font-weight:600;}
+.app-model{font-size:13px;color:#6b7280;}
+.serial-wrap{margin:0 16px;background:#fff;padding:10px 16px 14px;border-radius:0 0 12px 12px;border-top:1px dashed #e5e7eb;}
+.serial-label{font-size:11px;color:#9ca3af;font-weight:700;text-transform:uppercase;margin-bottom:4px;}
+.serial-input{width:100%;padding:12px;font-size:16px;border:2px solid #d1d5db;border-radius:8px;font-family:inherit;outline:none;-webkit-appearance:none;}
+.serial-input:focus{border-color:#2563eb;}
+.serial-input.saved{border-color:#16a34a;background:#f0fdf4;}
+.serial-saved{font-size:12px;color:#16a34a;font-weight:600;margin-top:4px;}
+/* Notes */
+.notes-card{background:#fffbeb;margin:12px 16px;border-radius:12px;padding:14px 16px;border-left:4px solid #f59e0b;}
+.notes-card-label{font-size:11px;font-weight:700;color:#d97706;text-transform:uppercase;margin-bottom:4px;}
+.notes-card-text{font-size:14px;color:#374151;}
+/* Photos */
+.photo-section{margin:0 16px 12px;}
+.photo-btn{width:100%;padding:14px;font-size:16px;font-weight:700;background:#f3f4f6;border:2px dashed #d1d5db;border-radius:12px;color:#6b7280;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
+.photo-btn:active{background:#e5e7eb;}
+.photo-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+.photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e5e7eb;}
+.photo-uploading{display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:8px;aspect-ratio:1;font-size:12px;color:#9ca3af;}
+/* Action buttons */
+.action-btns{padding:16px;display:flex;flex-direction:column;gap:10px;}
+.action-btn{width:100%;padding:18px;font-size:17px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:inherit;color:#fff;}
+.action-btn:active{opacity:0.85;}
+.btn-out{background:#f59e0b;}
+.btn-delivered{background:#16a34a;}
+.btn-reschedule{background:#6366f1;}
+.btn-disabled{background:#d1d5db;color:#9ca3af;pointer-events:none;}
+/* Photo viewer overlay */
+.photo-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:200;align-items:center;justify-content:center;flex-direction:column;}
+.photo-overlay.open{display:flex;}
+.photo-overlay img{max-width:95vw;max-height:80vh;object-fit:contain;border-radius:4px;}
+.photo-overlay-close{position:absolute;top:16px;right:16px;color:#fff;font-size:32px;cursor:pointer;background:none;border:none;z-index:201;}
+/* Toast */
+.driver-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:600;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.driver-toast.show{opacity:1;}
+/* Confirm overlay */
+.confirm-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:250;align-items:center;justify-content:center;padding:24px;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%;text-align:center;}
+.confirm-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+.confirm-msg{font-size:14px;color:#6b7280;margin-bottom:20px;line-height:1.5;}
+.confirm-btns{display:flex;gap:10px;}
+.confirm-btns button{flex:1;padding:14px;font-size:15px;font-weight:700;border:none;border-radius:10px;cursor:pointer;font-family:inherit;}
+.confirm-cancel{background:#f3f4f6;color:#374151;}
+.confirm-ok{background:#16a34a;color:#fff;}
+@media(min-width:600px){
+  .stop-card{max-width:560px;margin-left:auto;margin-right:auto;}
+  .detail-card,.notes-card,.photo-section,.action-btns,.app-item,.serial-wrap{max-width:560px;margin-left:auto;margin-right:auto;}
+  .detail-back{max-width:592px;margin:0 auto;}
+  .detail-section{max-width:560px;margin-left:auto;margin-right:auto;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-logo">DC Appliance</div>
+  <div class="login-sub">Driver Delivery App</div>
+  <input class="login-input" id="login-pin" type="tel" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Enter PIN" autocomplete="off"/>
+  <button class="login-btn" onclick="doLogin()">Log In</button>
+  <div class="login-or">or</div>
+  <span class="login-pw-link" onclick="togglePwLogin()">Use password instead</span>
+  <input class="login-input" id="login-pw" type="password" placeholder="Password" style="display:none;letter-spacing:0;font-size:18px;" autocomplete="off"/>
+  <div class="login-err" id="login-err">Invalid PIN or password</div>
+</div>
+
+<!-- APP SCREEN - DELIVERY LIST -->
+<div id="app-screen">
+  <div class="topbar">
+    <div>
+      <div class="topbar-name" id="driver-name"></div>
+      <div class="topbar-date" id="driver-date"></div>
+    </div>
+    <button class="topbar-logout" onclick="doLogout()">Log Out</button>
+  </div>
+  <div id="delivery-list"></div>
+</div>
+
+<!-- DETAIL SCREEN -->
+<div id="detail-screen">
+  <div class="detail-back" onclick="backToList()">&#8592; Back to Deliveries</div>
+  <div id="detail-content"></div>
+</div>
+
+<!-- PHOTO VIEWER -->
+<div class="photo-overlay" id="photo-overlay">
+  <button class="photo-overlay-close" onclick="closePhotoViewer()">&#x2715;</button>
+  <img id="photo-overlay-img" src="" alt=""/>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-title" id="confirm-title"></div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="confirmCancel()">Cancel</button>
+      <button class="confirm-ok" id="confirm-ok" onclick="confirmOk()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="driver-toast" id="driver-toast"></div>
+
+<script>
+var DRIVER_PASSWORD='DCDriver2026';
+var COMPANY_ID='dc-appliance';
+var currentDriver=null;
+var allDeliveries=[];
+var allNotes=[];
+var nextId=1;
+var nextNoteId=1;
+var currentDeliveryId=null;
+var _confirmCb=null;
+var _pollTimer=null;
+
+// ── TOAST ──
+function toast(msg){
+  var t=document.getElementById('driver-toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2500);
+}
+
+// ── LOGIN ──
+function togglePwLogin(){
+  var pw=document.getElementById('login-pw');
+  var pin=document.getElementById('login-pin');
+  if(pw.style.display==='none'){pw.style.display='';pin.style.display='none';pw.focus();}
+  else{pw.style.display='none';pin.style.display='';pin.focus();}
+}
+
+async function doLogin(){
+  var pin=document.getElementById('login-pin').value.trim();
+  var pw=document.getElementById('login-pw').value.trim();
+  var err=document.getElementById('login-err');
+  err.style.display='none';
+
+  // Password login
+  if(pw&&!pin){
+    if(pw===DRIVER_PASSWORD){
+      currentDriver={name:'Driver',pin:'',isPasswordLogin:true};
+      enterApp();return;
+    }
+    err.style.display='block';return;
+  }
+
+  // PIN login
+  if(!pin){err.style.display='block';return;}
+
+  // Also accept the master password typed into PIN field
+  if(pin===DRIVER_PASSWORD){
+    currentDriver={name:'Driver',pin:'',isPasswordLogin:true};
+    enterApp();return;
+  }
+
+  try{
+    var res=await fetch('/api/employees-get?companyId='+COMPANY_ID);
+    var data=await res.json();
+    if(data.ok&&data.users){
+      var user=data.users.find(function(u){return u.pin===pin&&u.active!==false;});
+      if(user){currentDriver={name:user.name,pin:user.pin,posRole:user.posRole||'Delivery'};enterApp();return;}
+    }
+  }catch(e){}
+  err.style.display='block';
+}
+
+function enterApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  document.getElementById('driver-name').textContent=currentDriver.name;
+  document.getElementById('driver-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  loadDeliveries();
+  _pollTimer=setInterval(pollDeliveries,15000);
+}
+
+function doLogout(){
+  currentDriver=null;currentDeliveryId=null;
+  if(_pollTimer)clearInterval(_pollTimer);
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('detail-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-pin').value='';
+  document.getElementById('login-pw').value='';
+}
+
+// ── LOAD DELIVERIES ──
+var _lastHash='';
+async function loadDeliveries(){
+  try{
+    var res=await fetch('/api/deliveries-get');
+    var data=await res.json();
+    if(!data.ok)return;
+    allDeliveries=data.deliveries||[];
+    nextId=data.nextId||1;
+    allNotes=data.notes||[];
+    nextNoteId=data.nextNoteId||1;
+    _lastHash=JSON.stringify(allDeliveries);
+    renderList();
+    if(currentDeliveryId)renderDetail(currentDeliveryId);
+  }catch(e){console.error(e);}
+}
+
+async function pollDeliveries(){
+  try{
+    var res=await fetch('/api/deliveries-get');
+    var data=await res.json();
+    if(!data.ok)return;
+    var h=JSON.stringify(data.deliveries||[]);
+    if(h!==_lastHash){
+      allDeliveries=data.deliveries||[];
+      nextId=data.nextId||1;
+      allNotes=data.notes||[];
+      nextNoteId=data.nextNoteId||1;
+      _lastHash=h;
+      renderList();
+      if(currentDeliveryId)renderDetail(currentDeliveryId);
+    }
+  }catch(e){}
+}
+
+function getTodayStr(){
+  var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function todayDeliveries(){
+  var today=getTodayStr();
+  var list=allDeliveries.filter(function(d){return d.date===today;});
+  // If driver logged in with PIN (not password), show all today's - they're on the team
+  list.sort(function(a,b){return (a.stopOrder||99)-(b.stopOrder||99);});
+  return list;
+}
+
+function renderList(){
+  var stops=todayDeliveries();
+  var wrap=document.getElementById('delivery-list');
+  if(!stops.length){
+    wrap.innerHTML='<div class="empty-msg">No deliveries scheduled for today</div>';
+    return;
+  }
+  var h='<div class="list-header">'+stops.length+' Deliver'+(stops.length===1?'y':'ies')+' Today</div>';
+  stops.forEach(function(d,i){
+    var cls='stop-card';
+    if(d.status==='Out for Delivery')cls+=' out';
+    else if(d.status==='Delivered')cls+=' delivered';
+    else if(d.status==='Rescheduled')cls+=' rescheduled';
+    var badge='sb-scheduled';
+    if(d.status==='Out for Delivery')badge='sb-out';
+    else if(d.status==='Delivered')badge='sb-delivered';
+    else if(d.status==='Rescheduled')badge='sb-rescheduled';
+    var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:''}];
+    var appStr=apps.map(function(a){return a.a;}).join(', ');
+    h+='<div class="'+cls+'" onclick="openDetail(\''+d.id+'\')">';
+    h+='<div class="stop-top"><div class="stop-num">'+(d.stopOrder||i+1)+'</div><span class="stop-badge '+badge+'">'+d.status+'</span></div>';
+    h+='<div class="stop-name">'+d.name+'</div>';
+    h+='<div class="stop-addr">'+d.address+', '+d.city+'</div>';
+    h+='<div class="stop-apps">'+appStr+'</div>';
+    h+='<div class="stop-time">'+(d.time||'')+(d.duration&&d.duration!=='480'?' ('+d.duration+' min)':'')+'</div>';
+    h+='</div>';
+  });
+  wrap.innerHTML=h;
+}
+
+// ── DETAIL SCREEN ──
+function openDetail(id){
+  currentDeliveryId=id;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('detail-screen').style.display='block';
+  renderDetail(id);
+  window.scrollTo(0,0);
+}
+
+function backToList(){
+  currentDeliveryId=null;
+  document.getElementById('detail-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+}
+
+function renderDetail(id){
+  var d=allDeliveries.find(function(x){return x.id===id;});
+  if(!d){backToList();return;}
+  var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
+  var badge='sb-scheduled';
+  if(d.status==='Out for Delivery')badge='sb-out';
+  else if(d.status==='Delivered')badge='sb-delivered';
+  else if(d.status==='Rescheduled')badge='sb-rescheduled';
+
+  var mapsUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.address+', '+d.city);
+
+  var h='<div class="detail-card">';
+  h+='<div class="detail-name">'+d.name+'</div>';
+  h+='<div class="detail-id">'+d.id+' &middot; '+(d.team||'Main Delivery Team')+'</div>';
+  h+='<div class="detail-badge"><span class="stop-badge '+badge+'">'+d.status+'</span></div>';
+  h+='<div class="detail-row"><div class="detail-icon">&#x1F4DE;</div><div><div class="detail-label">Phone</div><div class="detail-val"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div></div>';
+  h+='<div class="detail-row"><div class="detail-icon">&#x1F4CD;</div><div><div class="detail-label">Address</div><div class="detail-val"><a href="'+mapsUrl+'" target="_blank">'+d.address+', '+d.city+' &#x2197;</a></div></div></div>';
+  if(d.time)h+='<div class="detail-row"><div class="detail-icon">&#x1F552;</div><div><div class="detail-label">Time Window</div><div class="detail-val">'+d.time+(d.duration&&d.duration!=='480'?' ('+d.duration+' min)':'')+'</div></div></div>';
+  h+='<div class="detail-row"><div class="detail-icon">&#x1F69A;</div><div><div class="detail-label">Delivery Type</div><div class="detail-val">'+(d.deliveryType||'Full Install')+'</div></div></div>';
+  if(d.invoice)h+='<div class="detail-row"><div class="detail-icon">&#x1F4C4;</div><div><div class="detail-label">Invoice</div><div class="detail-val">'+d.invoice+'</div></div></div>';
+  if(d.deliveredAt)h+='<div class="detail-row"><div class="detail-icon">&#x2705;</div><div><div class="detail-label">Delivered At</div><div class="detail-val" style="color:#16a34a;font-weight:600;">'+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div></div></div>';
+  h+='</div>';
+
+  // Notes
+  if(d.notes){
+    h+='<div class="notes-card"><div class="notes-card-label">Notes</div><div class="notes-card-text">'+d.notes+'</div></div>';
+  }
+
+  // Appliances + serial number fields
+  h+='<div class="detail-section">Appliances</div>';
+  apps.forEach(function(a,i){
+    var serial=a.serial||'';
+    h+='<div class="app-item"><div><div class="app-name">'+a.a+'</div>'+(a.m?'<div class="app-model">'+a.m+'</div>':'')+'</div></div>';
+    h+='<div class="serial-wrap"><div class="serial-label">Serial Number</div>';
+    h+='<input class="serial-input'+(serial?' saved':'')+'" id="serial-'+i+'" data-idx="'+i+'" value="'+serial+'" placeholder="Enter serial number" inputmode="text" autocomplete="off" onfocus="this.select()" onblur="saveSerial(\''+id+'\','+i+',this.value)"/>';
+    if(serial)h+='<div class="serial-saved">Saved</div>';
+    h+='</div>';
+  });
+
+  // Photos
+  var photos=d.photos||[];
+  h+='<div class="detail-section">Photos</div>';
+  h+='<div class="photo-section">';
+  h+='<button class="photo-btn" onclick="triggerPhotoUpload(\''+id+'\')">&#x1F4F7; Add Photos</button>';
+  h+='<input type="file" id="photo-file-input" accept="image/*" capture="environment" multiple style="display:none" onchange="handlePhotoFiles(this.files,\''+id+'\')"/>';
+  if(photos.length){
+    h+='<div class="photo-gallery">';
+    photos.forEach(function(p){
+      h+='<img class="photo-thumb" src="'+p.url+'" onclick="viewPhoto(\''+p.url+'\')" alt="delivery photo"/>';
+    });
+    h+='</div>';
+  }
+  h+='</div>';
+
+  // Action buttons
+  h+='<div class="action-btns">';
+  if(d.status!=='Out for Delivery'&&d.status!=='Delivered'){
+    h+='<button class="action-btn btn-out" onclick="setOutForDelivery(\''+id+'\')">Out for Delivery</button>';
+  }
+  if(d.status!=='Delivered'){
+    h+='<button class="action-btn btn-delivered" onclick="startMarkDelivered(\''+id+'\')">Mark Delivered</button>';
+  }
+  if(d.status!=='Rescheduled'&&d.status!=='Delivered'){
+    h+='<button class="action-btn btn-reschedule" onclick="rescheduleDelivery(\''+id+'\')">Reschedule</button>';
+  }
+  h+='</div>';
+
+  document.getElementById('detail-content').innerHTML=h;
+}
+
+// ── SERIAL NUMBERS ──
+async function saveSerial(deliveryId,appIdx,val){
+  var d=allDeliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
+  var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
+  if(!d.appliances||!d.appliances.length)d.appliances=apps;
+  if(d.appliances[appIdx]){
+    if(d.appliances[appIdx].serial===val)return;
+    d.appliances[appIdx].serial=val;
+    await saveAllDeliveries();
+    var inp=document.getElementById('serial-'+appIdx);
+    if(inp){inp.classList.toggle('saved',!!val);}
+    if(val)toast('Serial number saved');
+  }
+}
+
+// ── PHOTOS ──
+function triggerPhotoUpload(deliveryId){
+  document.getElementById('photo-file-input').click();
+}
+
+async function handlePhotoFiles(files,deliveryId){
+  if(!files||!files.length)return;
+  var d=allDeliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
+  if(!d.photos)d.photos=[];
+
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    toast('Uploading photo '+(i+1)+' of '+files.length+'...');
+    try{
+      var base64=await readFileAsBase64(file);
+      var res=await fetch('/api/delivery-photo-upload',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          filename:file.name,
+          contentType:file.type,
+          data:base64,
+          deliveryId:deliveryId
+        })
+      });
+      var data=await res.json();
+      if(data.ok){
+        d.photos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
+      }
+    }catch(e){toast('Upload failed');console.error(e);}
+  }
+  await saveAllDeliveries();
+  renderDetail(deliveryId);
+  toast(files.length+' photo'+(files.length>1?'s':'')+' uploaded');
+}
+
+function readFileAsBase64(file){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    reader.onload=function(){resolve(reader.result.split(',')[1]);};
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function viewPhoto(url){
+  document.getElementById('photo-overlay-img').src=url;
+  document.getElementById('photo-overlay').classList.add('open');
+}
+function closePhotoViewer(){
+  document.getElementById('photo-overlay').classList.remove('open');
+}
+
+// ── STATUS ACTIONS ──
+async function setOutForDelivery(id){
+  var d=allDeliveries.find(function(x){return x.id===id;});if(!d)return;
+  d.status='Out for Delivery';
+  await saveAllDeliveries();
+  renderDetail(id);renderList();
+  toast('Status: Out for Delivery');
+}
+
+function startMarkDelivered(id){
+  var d=allDeliveries.find(function(x){return x.id===id;});if(!d)return;
+  var apps=d.appliances&&d.appliances.length?d.appliances:[];
+  var missing=apps.filter(function(a){return !a.serial;});
+  var photos=d.photos||[];
+
+  var msgs=[];
+  if(missing.length)msgs.push(missing.length+' appliance'+(missing.length>1?'s':'')+' missing serial numbers.');
+  if(!photos.length)msgs.push('No delivery photos attached.');
+
+  if(msgs.length){
+    showConfirm('Complete Delivery?',msgs.join(' ')+'<br/><br/>Continue anyway?',function(){
+      markDelivered(id);
+    });
+  }else{
+    showConfirm('Mark Delivered?','Confirm this delivery is complete.',function(){
+      markDelivered(id);
+    });
+  }
+}
+
+async function markDelivered(id){
+  var d=allDeliveries.find(function(x){return x.id===id;});if(!d)return;
+  d.status='Delivered';
+  d.deliveredAt=new Date().toISOString();
+  await saveAllDeliveries();
+  renderDetail(id);renderList();
+  toast('Delivery complete!');
+}
+
+async function rescheduleDelivery(id){
+  var d=allDeliveries.find(function(x){return x.id===id;});if(!d)return;
+  showConfirm('Reschedule?','Mark this delivery as rescheduled?',async function(){
+    d.status='Rescheduled';
+    d.deliveredAt=null;
+    await saveAllDeliveries();
+    renderDetail(id);renderList();
+    toast('Delivery rescheduled');
+  });
+}
+
+// ── CONFIRM DIALOG ──
+function showConfirm(title,msg,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').innerHTML=msg;
+  _confirmCb=cb;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function confirmOk(){
+  document.getElementById('confirm-overlay').classList.remove('open');
+  if(_confirmCb)_confirmCb();_confirmCb=null;
+}
+function confirmCancel(){
+  document.getElementById('confirm-overlay').classList.remove('open');
+  _confirmCb=null;
+}
+
+// ── SAVE ──
+async function saveAllDeliveries(){
+  try{
+    await fetch('/api/deliveries-save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({deliveries:allDeliveries,nextId:nextId,notes:allNotes,nextNoteId:nextNoteId})
+    });
+  }catch(e){toast('Save failed');console.error(e);}
+}
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'){
+    if(document.getElementById('login-screen').style.display!=='none'){doLogin();}
+  }
+});
+
+// Auto-focus PIN on load
+window.addEventListener('load',function(){document.getElementById('login-pin').focus();});
+</script>
+</body>
+</html>

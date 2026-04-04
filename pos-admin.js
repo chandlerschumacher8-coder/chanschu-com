@@ -447,7 +447,7 @@ function renderAdminUsers(){
     var rowStyle=inactive?'opacity:0.5;':'';
     h+='<tr style="'+rowStyle+'"><td style="font-weight:600;">'+u.name+'</td>'
       +'<td>'+(u.posRole||'—')+'</td>'
-      +'<td>'+(u.pin||'—')+'</td>'
+      +'<td><span class="pin-cell" onclick="inlineEditPin(this,'+i+')" style="cursor:pointer;min-width:40px;display:inline-block;" title="Click to edit PIN">'+(u.pin||'—')+'</span></td>'
       +'<td>'+statusBadge+'</td>'
       +'<td><div class="admin-card-actions">'
       +'<button class="admin-card-btn edit" onclick="adminEditUser('+i+')">Edit</button>'
@@ -457,6 +457,22 @@ function renderAdminUsers(){
   });
   h+='</tbody></table>';
   wrap.innerHTML=h;
+}
+function inlineEditPin(span,i){
+  var u=adminUsers[i];if(!u)return;
+  var inp=document.createElement('input');
+  inp.type='text';inp.maxLength=4;inp.value=u.pin||'';
+  inp.style.cssText='width:60px;text-align:center;font-size:inherit;padding:2px 4px;border:1px solid #3b82f6;border-radius:4px;outline:none;';
+  inp.setAttribute('inputmode','numeric');inp.setAttribute('pattern','[0-9]*');
+  function save(){
+    var val=inp.value.trim();
+    if(val&&(val.length!==4||isNaN(val))){toast('PIN must be 4 digits','error');inp.focus();return;}
+    if(val&&adminUsers.find(function(x,j){return j!==i&&x.pin===val;})){toast('PIN already in use','error');inp.focus();return;}
+    u.pin=val;renderAdminUsers();saveAllUsers().then(function(){if(val)toast(u.name+' PIN updated','success');});
+  }
+  inp.addEventListener('blur',save);
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();inp.blur();}if(e.key==='Escape'){u.pin=u.pin;renderAdminUsers();}});
+  span.textContent='';span.appendChild(inp);inp.focus();inp.select();
 }
 function adminToggleActive(i,active){
   var u=adminUsers[i];if(!u)return;
