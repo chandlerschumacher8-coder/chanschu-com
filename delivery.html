@@ -241,6 +241,54 @@
     .legend-row{display:flex;align-items:center;gap:14px;padding:5px 14px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;}
     .legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);}
     .legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+    /* ── MOBILE DAILY VIEW ── */
+    .mobile-day-nav{display:none;background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 14px;flex-shrink:0;}
+    .mobile-day-nav-row{display:flex;align-items:center;gap:10px;}
+    .mobile-day-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:18px;font-family:inherit;font-weight:700;line-height:1;flex-shrink:0;}
+    .mobile-day-btn:active{background:var(--border);}
+    .mobile-day-title{flex:1;text-align:center;font-size:17px;font-weight:700;color:var(--text);}
+    .mobile-today-btn{font-size:12px;font-weight:700;padding:6px 14px;border:1px solid var(--border2);color:var(--text2);background:transparent;border-radius:100px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+    .mobile-today-btn:active{background:var(--bg3);}
+    .mobile-day-list{display:none;flex:1;overflow-y:auto;padding:8px 12px 80px;background:var(--bg);}
+    .mobile-stop{background:var(--bg2);border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;border-left:4px solid var(--blue);}
+    .mobile-stop:active{transform:scale(0.98);}
+    .mobile-stop.ms-out{border-left-color:#f59e0b;}
+    .mobile-stop.ms-delivered{border-left-color:#16a34a;opacity:0.65;}
+    .mobile-stop.ms-rescheduled{border-left-color:#4338ca;opacity:0.6;}
+    .mobile-stop.ms-other{border-left-color:#1f2937;}
+    .mobile-stop.ms-other.ms-delivered{border-left-color:#ea580c;}
+    .mobile-stop-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+    .mobile-stop-num{font-size:12px;font-weight:700;color:#fff;background:var(--blue);border-radius:6px;padding:2px 8px;}
+    .mobile-stop.ms-other .mobile-stop-num{background:#1f2937;}
+    .mobile-stop.ms-out .mobile-stop-num{background:#f59e0b;}
+    .mobile-stop.ms-delivered .mobile-stop-num{background:#16a34a;}
+    .mobile-stop-name{font-size:17px;font-weight:700;margin-bottom:3px;}
+    .mobile-stop-addr{font-size:13px;color:var(--text2);margin-bottom:4px;}
+    .mobile-stop-apps{font-size:12px;color:var(--text);}
+    .mobile-stop-time{font-size:12px;color:var(--text3);margin-top:5px;}
+    .mobile-stop-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;}
+    .mobile-empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:15px;}
+    .mobile-note-card{background:var(--bg2);border-radius:10px;padding:12px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;}
+
+    @media(max-width:767px){
+      html,body{overflow:auto;height:auto;}
+      .app{height:auto;min-height:100vh;}
+      header{flex-wrap:wrap;gap:6px;padding:8px 12px;}
+      .h-logo{font-size:13px;width:100%;margin-bottom:2px;}
+      .h-nav{flex-wrap:wrap;gap:4px;width:100%;}
+      .hbtn{font-size:10px;padding:4px 8px;}
+      .tpill{font-size:9px;padding:3px 8px;}
+      .sep{display:none;}
+      .cal-wrap{overflow:visible;}
+      .cal-grid,.week-nav{display:none!important;}
+      .mobile-day-nav{display:block!important;}
+      .mobile-day-list{display:block!important;}
+      .legend-row{padding:6px 12px;gap:8px;}
+      .legend-item{font-size:9px;}
+      .modal{max-width:100%;margin:8px;}
+      .modal-body{max-height:70vh;}
+    }
   </style>
 </head>
 <body>
@@ -281,6 +329,16 @@
       <div class="week-title" id="week-title"></div>
       <button class="today-btn" onclick="goToday()">Today</button>
     </div>
+    <!-- MOBILE DAILY VIEW -->
+    <div class="mobile-day-nav">
+      <div class="mobile-day-nav-row">
+        <button class="mobile-day-btn" onclick="mobileChangeDay(-1)">&#8592;</button>
+        <div class="mobile-day-title" id="mobile-day-title"></div>
+        <button class="mobile-today-btn" onclick="mobileGoToday()">Today</button>
+        <button class="mobile-day-btn" onclick="mobileChangeDay(1)">&#8594;</button>
+      </div>
+    </div>
+    <div class="mobile-day-list" id="mobile-day-list"></div>
     <div class="cal-grid">
       <div class="time-col">
         <div class="time-col-header"></div>
@@ -750,6 +808,83 @@ function renderEvents(){
     });
   });
 }
+
+// ═══ MOBILE DAILY VIEW ═══
+var mobileDay=new Date();
+mobileDay.setHours(0,0,0,0);
+var _isMobile=false;
+
+function mobileChangeDay(delta){mobileDay=new Date(mobileDay);mobileDay.setDate(mobileDay.getDate()+delta);renderMobileDay();}
+function mobileGoToday(){mobileDay=new Date();mobileDay.setHours(0,0,0,0);renderMobileDay();}
+
+function renderMobileDay(){
+  var dayStr=ds(mobileDay);
+  var title=mobileDay.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+  var todayStr=ds(new Date());
+  if(dayStr===todayStr)title='Today — '+mobileDay.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  document.getElementById('mobile-day-title').textContent=title;
+
+  var stops=deliveries.filter(function(d){return d.date===dayStr&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);});
+  stops.sort(function(a,b){return (a.stopOrder||99)-(b.stopOrder||99)||(timeToMins(a.time)-timeToMins(b.time));});
+  var dayNotes=notes.filter(function(n){return n.date===dayStr;});
+
+  var wrap=document.getElementById('mobile-day-list');
+  if(!stops.length&&!dayNotes.length){
+    wrap.innerHTML='<div class="mobile-empty">No deliveries or notes for this day</div>';
+    return;
+  }
+  var h='';
+  // Notes at top
+  dayNotes.forEach(function(n){
+    var color=NOTE_COLORS.find(function(c){return c.key===n.color;})||NOTE_COLORS[0];
+    h+='<div class="mobile-note-card" onclick="openNoteDetail(\''+n.id+'\')" style="border-left:4px solid '+color.bd+';background:'+color.bg+';">';
+    h+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:'+color.txt+';opacity:0.7;">Note</div>';
+    h+='<div style="font-size:15px;font-weight:700;color:'+color.txt+';">'+n.title+'</div>';
+    if(n.details)h+='<div style="font-size:12px;color:'+color.txt+';opacity:0.8;margin-top:2px;">'+n.details+'</div>';
+    h+='</div>';
+  });
+  // Delivery cards
+  stops.forEach(function(d,i){
+    var isOther=d.team==='Other Delivery Team';
+    var cls='mobile-stop';
+    if(isOther)cls+=' ms-other';
+    if(d.status==='Out for Delivery')cls+=' ms-out';
+    else if(d.status==='Delivered')cls+=' ms-delivered';
+    else if(d.status==='Rescheduled')cls+=' ms-rescheduled';
+    var badge='sb-scheduled';
+    if(d.status==='Out for Delivery')badge='sb-out';
+    else if(d.status==='Delivered')badge='sb-delivered';
+    else if(d.status==='Rescheduled')badge='sb-rescheduled';
+    var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:''}];
+    var appStr=apps.map(function(a){return a.a;}).join(', ');
+    var dur=parseInt(d.duration)||60;
+    var timeStr=d.time==='Call Ahead'?'Call Ahead':(d.time+' — '+minsToTime(timeToMins(d.time)+dur));
+    h+='<div class="'+cls+'" onclick="openDeliveryDetail(\''+d.id+'\')">';
+    h+='<div class="mobile-stop-top"><div class="mobile-stop-num">'+(d.stopOrder||i+1)+'</div><span class="mobile-stop-badge status-badge '+badge+'">'+d.status+'</span></div>';
+    h+='<div class="mobile-stop-name">'+d.name+'</div>';
+    h+='<div class="mobile-stop-addr">'+d.address+', '+d.city+'</div>';
+    h+='<div class="mobile-stop-apps">'+appStr+'</div>';
+    h+='<div class="mobile-stop-time">'+(d.team||'Main Delivery Team')+' &middot; '+timeStr+'</div>';
+    h+='</div>';
+  });
+  wrap.innerHTML=h;
+}
+
+// Responsive switching
+var _mobileQuery=window.matchMedia('(max-width:767px)');
+function handleViewSwitch(e){
+  _isMobile=e.matches;
+  if(_isMobile){renderMobileDay();}
+}
+_mobileQuery.addEventListener('change',handleViewSwitch);
+_isMobile=_mobileQuery.matches;
+
+// Patch renderEvents to also update mobile view
+var _origRenderEvents=renderEvents;
+renderEvents=function(){
+  _origRenderEvents();
+  if(_isMobile)renderMobileDay();
+};
 
 // ═══ ADD DELIVERY ═══
 function openAddDelivery(date,time){
