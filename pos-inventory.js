@@ -104,7 +104,8 @@ function renderInventory(){
     var actBtn=isActive?
       '<button class="inv-act-btn deactivate" onclick="invDeactivate('+p.id+')">Deactivate</button>':
       '<button class="inv-act-btn activate" onclick="invActivate('+p.id+')">Activate</button>';
-    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+(p.model||'')+'</td><td>'+p.name+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
+    var snBadge=isSerialTracked(p)?'<span style="font-size:8px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;margin-left:4px;">SN</span>':'';
+    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+(p.model||'')+'</td><td>'+p.name+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
   }).join('');
   // Low stock alerts — active items only, based on Avail-Sold
   var alerts=PRODUCTS.filter(function(p){var ams=p.stock-(p.sold||0);return p.active!==false&&ams<=p.reorderPt;});
@@ -139,10 +140,20 @@ function exportCSV(){
   var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='inventory.csv';a.click();
   toast('CSV exported','success');
 }
+// Categories that require serial number tracking by default
+var SERIAL_TRACKED_CATS=['BOTTOM MOUNT FRIDGE','BUILT IN','COMBO WASHER DRYER','COOK TOP','DISHWASHERS','DRYERS','FREEZER','FRENCH DOOR FRIDGE','ICEMKR','RANGES','SIDE BY SIDE FRIDGE','TOP MOUNT','TRASH COMPACTOR','WASHERS','BEVERAGE CENTER','Refrigerators','Washers & Dryers','Dishwashers','Ovens & Ranges','Wall Ovens'];
+
+function isSerialTracked(p){
+  if(p.serialTracked!==undefined)return !!p.serialTracked;
+  // Default: true for major appliance categories
+  return SERIAL_TRACKED_CATS.indexOf(p.cat)!==-1;
+}
+
 function addProduct(){
   var sku=document.getElementById('ap-sku').value.trim(),name=document.getElementById('ap-name').value.trim(),brand=document.getElementById('ap-brand').value.trim();
   if(!sku||!name||!brand){toast('Fill in required fields','error');return;}
-  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;'});
+  var stEl=document.getElementById('ap-serial-tracked');
+  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true});
   saveProducts();
   closeModal('add-product-modal');renderInventory();refreshSaleView();toast('Product added','success');
 }
@@ -243,10 +254,24 @@ function renderOrderDetail(){
   var el=document.getElementById('oo-detail');
   if(!selectedOrder){el.innerHTML='<div class="oo-detail-empty">Select an order to view details</div>';return;}
   var o=selectedOrder;
-  var itemsHtml=o.items.map(function(i){
+  var allDelivered=true;
+  var itemsHtml=o.items.map(function(i,idx){
     var p=PRODUCTS.find(function(x){return x.id===i.id;});
     var inStock=p?p.stock>=i.qty:false;
-    return '<div class="ood-item"><div class="ood-item-info"><div class="ood-item-name">'+i.name+'</div><div class="ood-item-meta">'+(i.model||'')+' x '+i.qty+(inStock?' <span style="color:var(--green);">In Stock</span>':' <span style="color:var(--red);">Low/Out</span>')+'</div></div><div class="ood-item-price">'+fmt(i.price*i.qty)+'</div></div>';
+    var tracked=p?isSerialTracked(p):(i.serialTracked||false);
+    var delivered=!!i.delivered;
+    if(!delivered)allDelivered=false;
+    var deliveryHtml='';
+    if(!isQuote){
+      if(delivered){
+        deliveryHtml='<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><span style="color:var(--green);font-size:14px;">&#x2713;</span><span style="font-size:11px;color:var(--green);font-weight:600;">Delivered</span>'+(i.serial?'<span style="font-size:10px;color:var(--gray-2);background:var(--bg3);padding:2px 6px;border-radius:3px;">SN: '+i.serial+'</span>':'')+(i.deliveredAt?'<span style="font-size:10px;color:var(--gray-3);margin-left:auto;">'+new Date(i.deliveredAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>':'')+'</div>';
+      }else if(tracked){
+        deliveryHtml='<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><input class="inp" id="ood-sn-'+idx+'" placeholder="Serial number" value="'+(i.serial||'')+'" style="flex:1;font-size:11px;padding:5px 8px;max-width:200px;"/>'+(i.serial==='PENDING'?'<span style="font-size:10px;color:var(--orange);font-weight:700;">SN Pending</span>':'')+'<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gray-2);cursor:pointer;white-space:nowrap;"><input type="checkbox" id="ood-del-'+idx+'" style="accent-color:var(--green);"/> Delivered</label></div>';
+      }else{
+        deliveryHtml='<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gray-2);cursor:pointer;"><input type="checkbox" id="ood-del-'+idx+'" style="accent-color:var(--green);"/> Mark Delivered</label></div>';
+      }
+    }
+    return '<div class="ood-item" style="flex-wrap:wrap;"><div class="ood-item-info"><div class="ood-item-name">'+i.name+'</div><div class="ood-item-meta">'+(i.model||'')+' x '+i.qty+(inStock?' <span style="color:var(--green);">In Stock</span>':' <span style="color:var(--red);">Low/Out</span>')+'</div></div><div class="ood-item-price">'+fmt(i.price*i.qty)+'</div><div style="width:100%;">'+deliveryHtml+'</div></div>';
   }).join('');
   var isQuote=o.status==='Quote';
   var notesHtml='';
@@ -256,7 +281,9 @@ function renderOrderDetail(){
   if(isQuote){
     actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="convertQuoteToSale(\''+o.id+'\')">Convert to Sale</button><button class="ood-btn blue" onclick="printInvoice(\''+o.id+'\')">Print Quote</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   } else {
-    actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Receipt</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+    actionsHtml='<div class="ood-actions">';
+    if(!allDelivered)actionsHtml+='<button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;font-weight:700;" onclick="confirmItemDelivery(\''+o.id+'\')">&#x2713; Confirm Delivery</button>';
+    actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Receipt</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   }
   el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+'</div><div class="ood-meta">'+o.customer+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
@@ -285,6 +312,44 @@ async function emailOrderReceipt(id){
     saveOrders();renderOrderDetail();
     toast('Receipt sent to '+custEmail,'success');
   }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
+}
+function confirmItemDelivery(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  var anyChecked=false;
+  o.items.forEach(function(item,idx){
+    if(item.delivered)return;
+    var cb=document.getElementById('ood-del-'+idx);
+    if(!cb||!cb.checked)return;
+    var p=PRODUCTS.find(function(x){return x.id===item.id;});
+    var tracked=p?isSerialTracked(p):(item.serialTracked||false);
+    if(tracked){
+      var snEl=document.getElementById('ood-sn-'+idx);
+      var sn=snEl?snEl.value.trim():'';
+      if(!sn){toast('Enter serial number for '+item.name,'error');snEl&&snEl.focus();return;}
+      item.serial=sn;
+    }
+    item.delivered=true;
+    item.deliveredAt=new Date().toISOString();
+    item.deliveredBy=currentEmployee?currentEmployee.name:(o.clerk||'Admin');
+    // Record commission data
+    if(p){
+      var cat=p.cat||'';
+      var commRate=0;
+      if(typeof adminCommissions!=='undefined'){
+        var ov=adminCommissions.overrides?adminCommissions.overrides.find(function(x){return x.person===(o.clerk||'')&&x.cat===cat;}):null;
+        commRate=ov?parseFloat(ov.pct):((adminCommissions.defaults&&adminCommissions.defaults[cat])?parseFloat(adminCommissions.defaults[cat]):0);
+      }
+      item.commissionRate=commRate;
+      item.commissionEarned=(item.price*item.qty)*(commRate/100);
+    }
+    anyChecked=true;
+  });
+  if(!anyChecked){toast('Check items to mark as delivered','error');return;}
+  // If all items delivered, update order status
+  if(o.items.every(function(i){return !!i.delivered;})){o.status='Delivered';}
+  else if(o.items.some(function(i){return !!i.delivered;})){o.status='Partial';}
+  saveOrders();selectedOrder=o;renderOrderDetail();renderOrders();
+  toast('Delivery confirmed','success');
 }
 function setOrderStatus(id,status){var o=orders.find(function(x){return x.id===id;});if(o){o.status=status;saveOrders();renderOrders();toast('Status updated','success');}}
 function deleteOrder(id){if(!confirm('Delete this order?'))return;orders=orders.filter(function(o){return o.id!==id;});selectedOrder=null;saveOrders();renderOrders();renderOrderDetail();toast('Order deleted','info');}

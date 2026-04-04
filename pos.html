@@ -1344,6 +1344,10 @@ Brands
 <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
 Commission Rates
 </div>
+<div class="admin-menu-item" onclick="selectAdminSection('commreport')">
+<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+Commission Report
+</div>
 <div class="admin-menu-item" onclick="selectAdminSection('taxrates')">
 <svg viewBox="0 0 24 24"><path d="M7 15h7v2H7v-2zm0-4h10v2H7v-2zm0-4h10v2H7V7zm12-4h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z"/></svg>
 Tax Rates
@@ -1404,6 +1408,16 @@ POS Settings
 <button class="admin-add-btn" onclick="adminAddCommOverride()">+ Add Override</button>
 </div>
 <div id="admin-commissions-content"></div>
+</div>
+<div class="admin-panel" id="admin-panel-commreport">
+<div class="admin-content-title">End of Month Commission Report</div>
+<div class="admin-toolbar" style="gap:8px;">
+<label style="font-size:11px;font-weight:700;color:var(--gray-2);">Month:</label>
+<input type="month" class="inp" id="comm-report-month" style="width:180px;" onchange="renderCommReport()"/>
+<button class="primary-btn" onclick="exportCommReportPDF()">Export PDF</button>
+<button class="ghost-btn" onclick="exportCommReportCSV()">Export CSV</button>
+</div>
+<div id="comm-report-content" style="margin-top:12px;"></div>
 </div>
 <div class="admin-panel" id="admin-panel-taxrates">
 <div class="admin-content-title">Kansas Tax Rates</div>
@@ -1824,10 +1838,11 @@ POS Settings
 <div class="modal-body">
 <div class="frow"><div class="field"><label>SKU <span class="req">*</span></label><input class="inp" id="ap-sku"/></div><div class="field"><label>Brand <span class="req">*</span></label><input class="inp" id="ap-brand"/></div></div>
 <div class="field"><label>Product Name <span class="req">*</span></label><input class="inp" id="ap-name"/></div>
-<div class="field"><label>Category</label><select class="sel" id="ap-cat"><option>Refrigerators</option><option>Washers &amp; Dryers</option><option>Dishwashers</option><option>Ovens &amp; Ranges</option><option>Microwaves</option><option>Wall Ovens</option></select></div>
+<div class="field"><label>Category</label><select class="sel" id="ap-cat" onchange="var st=document.getElementById('ap-serial-tracked');if(st&&typeof SERIAL_TRACKED_CATS!=='undefined')st.checked=SERIAL_TRACKED_CATS.indexOf(this.value)!==-1;"><option>Refrigerators</option><option>Washers &amp; Dryers</option><option>Dishwashers</option><option>Ovens &amp; Ranges</option><option>Microwaves</option><option>Wall Ovens</option></select></div>
 <div class="frow"><div class="field"><label>Retail Price</label><input class="inp" id="ap-price" type="number" step="0.01"/></div><div class="field"><label>Cost</label><input class="inp" id="ap-cost" type="number" step="0.01"/></div></div>
 <div class="frow3"><div class="field"><label>Stock</label><input class="inp" id="ap-stock" type="number" value="0"/></div><div class="field"><label>Reorder Pt.</label><input class="inp" id="ap-reorder" type="number" value="2"/></div><div class="field"><label>Reorder Qty</label><input class="inp" id="ap-reorderqty" type="number" value="3"/></div></div>
 <div class="frow"><div class="field"><label>Serial #</label><input class="inp" id="ap-serial"/></div><div class="field"><label>Warranty</label><input class="inp" id="ap-warranty" value="1 Year"/></div></div>
+<div class="field" style="margin-top:4px;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="ap-serial-tracked" checked style="width:18px;height:18px;accent-color:var(--gold,#2563eb);"/> Serial Number Tracked <span style="font-weight:400;color:var(--gray-3);font-size:9px;">(require SN at delivery)</span></label></div>
 </div>
 <div class="modal-footer"><button class="ghost-btn" onclick="closeModal('add-product-modal')">Cancel</button><button class="primary-btn" onclick="addProduct()">Add Product</button></div>
 </div>
@@ -4625,7 +4640,32 @@ function checkout(method){
   var rate=cartTaxRate;
   var tax=sub*rate;
   var zoneName=cartTaxName;
-  var order={id:'ORD-'+nextOrderId,customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||''};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:''};
+  var isQuickSale=(cust==='Walk-In Customer');
+  var orderItems=cart.map(function(c){
+    var p=PRODUCTS.find(function(x){return x.id===c.id;});
+    var tracked=p?isSerialTracked(p):false;
+    var item={id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||'',serialTracked:tracked};
+    if(isQuickSale){
+      // Auto-mark delivered for quick sales
+      item.delivered=true;item.deliveredAt=new Date().toISOString();item.deliveredBy=f.clerk||'Admin';
+      // Prompt serial for tracked items
+      if(tracked&&!item.serial){
+        var sn=prompt('Serial number for '+c.name+(c.model?' ('+c.model+')':'')+':\n(Leave blank to flag as pending)','');
+        item.serial=sn?sn.trim():'PENDING';
+      }
+      // Record commission
+      if(p){
+        var cat=p.cat||'';var commRate=0;
+        if(typeof adminCommissions!=='undefined'){
+          var ov=adminCommissions.overrides?adminCommissions.overrides.find(function(x){return x.person===(f.clerk||'')&&x.cat===cat;}):null;
+          commRate=ov?parseFloat(ov.pct):((adminCommissions.defaults&&adminCommissions.defaults[cat])?parseFloat(adminCommissions.defaults[cat]):0);
+        }
+        item.commissionRate=commRate;item.commissionEarned=(item.price*item.qty)*(commRate/100);
+      }
+    }
+    return item;
+  });
+  var order={id:'ORD-'+nextOrderId,customer:cust,items:orderItems,subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:isQuickSale?'Delivered':'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:''};
   nextOrderId++;orders.unshift(order);
   cart.forEach(function(c){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p&&!c.isService){if(!p.sold)p.sold=0;p.sold+=c.qty;}});
   saveProducts();saveOrders();
@@ -4633,7 +4673,7 @@ function checkout(method){
   setTimeout(function(){custCheckAndSave(order);},300);
   cart=[];clearSaleForm();
   renderCart();refreshSaleView();
-  toast('Order '+order.id+' placed via '+method,'success');
+  toast('Order '+order.id+' placed via '+method+(isQuickSale?' (Quick Sale — Delivered)':''),'success');
   showCheckoutBar(order.id);
 }
 function saveQuote(){

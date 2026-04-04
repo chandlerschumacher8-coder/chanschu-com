@@ -195,6 +195,7 @@ function renderAdminSection(){
   if(adminSection==='categories') renderAdminCategories();
   else if(adminSection==='brands') renderAdminBrands();
   else if(adminSection==='commissions') renderAdminCommissions();
+  else if(adminSection==='commreport') renderCommReport();
   else if(adminSection==='taxrates') renderTaxList();
   else if(adminSection==='taxzones') renderAdminTaxZones();
   else if(adminSection==='priceupdate') renderPriceHistory();
@@ -635,6 +636,122 @@ function permSaveUser(empIdx){
 
 // Override applyPermissions to use granular permissions
 var _origApplyPermissions=typeof applyPermissions==='function'?applyPermissions:null;
+
+// ═══ COMMISSION REPORT ═══
+function getCommReportData(yearMonth){
+  // yearMonth = '2026-04' format
+  var data=[];
+  orders.forEach(function(o){
+    if(o.status==='Quote')return;
+    o.items.forEach(function(item){
+      if(!item.delivered)return;
+      var dAt=item.deliveredAt||o.date;
+      if(!dAt)return;
+      var ym=dAt.slice(0,7);
+      if(ym!==yearMonth)return;
+      data.push({
+        clerk:item.deliveredBy||o.clerk||'Unknown',
+        product:item.name,
+        model:item.model||'',
+        price:item.price,
+        qty:item.qty,
+        lineTotal:item.price*item.qty,
+        rate:item.commissionRate||0,
+        earned:item.commissionEarned||0,
+        date:dAt.slice(0,10),
+        orderId:o.id,
+        serial:item.serial||''
+      });
+    });
+  });
+  return data;
+}
+
+function renderCommReport(){
+  var monthEl=document.getElementById('comm-report-month');
+  if(!monthEl.value){var now=new Date();monthEl.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');}
+  var ym=monthEl.value;
+  var data=getCommReportData(ym);
+  var wrap=document.getElementById('comm-report-content');
+  if(!data.length){wrap.innerHTML='<div class="admin-empty" style="padding:20px;">No delivered items for this month.</div>';return;}
+
+  // Group by clerk
+  var grouped={};
+  data.forEach(function(d){
+    if(!grouped[d.clerk])grouped[d.clerk]={items:[],total:0,earned:0};
+    grouped[d.clerk].items.push(d);
+    grouped[d.clerk].total+=d.lineTotal;
+    grouped[d.clerk].earned+=d.earned;
+  });
+
+  var monthLabel=new Date(ym+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  var h='<div style="font-size:13px;font-weight:600;color:var(--gray-2);margin-bottom:12px;">'+monthLabel+' — '+data.length+' delivered items</div>';
+
+  Object.keys(grouped).sort().forEach(function(clerk){
+    var g=grouped[clerk];
+    h+='<div style="margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">';
+    h+='<div style="background:var(--bg3);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">';
+    h+='<span style="font-size:14px;font-weight:700;">'+clerk+'</span>';
+    h+='<span style="font-size:13px;font-weight:700;color:var(--green);">Commission: '+fmt(g.earned)+'</span>';
+    h+='</div>';
+    h+='<table class="admin-table" style="font-size:11px;margin:0;"><thead><tr><th>Date</th><th>Order</th><th>Product</th><th>Model</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Sale Price</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Earned</th></tr></thead><tbody>';
+    g.items.forEach(function(d){
+      h+='<tr><td>'+d.date+'</td><td>'+d.orderId+'</td><td>'+d.product+'</td><td>'+d.model+'</td><td style="text-align:center;">'+d.qty+'</td><td style="text-align:right;">'+fmt(d.lineTotal)+'</td><td style="text-align:right;">'+d.rate+'%</td><td style="text-align:right;font-weight:600;color:var(--green);">'+fmt(d.earned)+'</td></tr>';
+    });
+    h+='<tr style="font-weight:700;background:var(--bg3);"><td colspan="5">Total</td><td style="text-align:right;">'+fmt(g.total)+'</td><td></td><td style="text-align:right;color:var(--green);">'+fmt(g.earned)+'</td></tr>';
+    h+='</tbody></table></div>';
+  });
+
+  // Grand total
+  var grandTotal=data.reduce(function(s,d){return s+d.earned;},0);
+  h+='<div style="text-align:right;font-size:15px;font-weight:700;margin-top:8px;">Grand Total Commission: <span style="color:var(--green);">'+fmt(grandTotal)+'</span></div>';
+  wrap.innerHTML=h;
+}
+
+function exportCommReportCSV(){
+  var monthEl=document.getElementById('comm-report-month');
+  if(!monthEl.value)return;
+  var data=getCommReportData(monthEl.value);
+  if(!data.length){toast('No data to export','error');return;}
+  var csv='Salesperson,Date,Order,Product,Model,Qty,Sale Price,Commission Rate %,Commission Earned\n';
+  data.forEach(function(d){
+    csv+='"'+d.clerk+'","'+d.date+'","'+d.orderId+'","'+d.product+'","'+d.model+'",'+d.qty+','+d.lineTotal.toFixed(2)+','+d.rate+','+d.earned.toFixed(2)+'\n';
+  });
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='commission-report-'+monthEl.value+'.csv';a.click();
+  toast('CSV exported','success');
+}
+
+function exportCommReportPDF(){
+  var monthEl=document.getElementById('comm-report-month');
+  if(!monthEl.value)return;
+  var data=getCommReportData(monthEl.value);
+  if(!data.length){toast('No data to export','error');return;}
+  var monthLabel=new Date(monthEl.value+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  // Group by clerk
+  var grouped={};
+  data.forEach(function(d){if(!grouped[d.clerk])grouped[d.clerk]={items:[],total:0,earned:0};grouped[d.clerk].items.push(d);grouped[d.clerk].total+=d.lineTotal;grouped[d.clerk].earned+=d.earned;});
+
+  var win=window.open('','_blank');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Commission Report</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:16px;}.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:14px;}.hdr h1{font-size:16px;}.clerk{margin-bottom:16px;border:1px solid #ddd;border-radius:6px;overflow:hidden;}.clerk-hdr{background:#f5f5f5;padding:8px 12px;display:flex;justify-content:space-between;font-weight:700;border-bottom:1px solid #ddd;}table{width:100%;border-collapse:collapse;}th{background:#222;color:#fff;font-size:10px;padding:5px 8px;text-align:left;font-weight:700;}td{padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;}tr.total td{font-weight:700;background:#f5f5f5;}.grand{text-align:right;font-size:15px;font-weight:700;margin-top:12px;}@media print{@page{margin:10mm;size:letter;}}</style></head><body>';
+  html+='<div class="hdr"><div><h1>DC Appliance — Commission Report</h1><div style="font-size:11px;color:#666;">'+monthLabel+'</div></div><div style="font-size:10px;color:#666;text-align:right;">(620) 371-6417<br/>Dodge City, KS</div></div>';
+
+  Object.keys(grouped).sort().forEach(function(clerk){
+    var g=grouped[clerk];
+    html+='<div class="clerk"><div class="clerk-hdr"><span>'+clerk+'</span><span style="color:#16a34a;">Commission: $'+g.earned.toFixed(2)+'</span></div>';
+    html+='<table><thead><tr><th>Date</th><th>Order</th><th>Product</th><th>Model</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Sale</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Earned</th></tr></thead><tbody>';
+    g.items.forEach(function(d){html+='<tr><td>'+d.date+'</td><td>'+d.orderId+'</td><td>'+d.product+'</td><td>'+d.model+'</td><td style="text-align:center;">'+d.qty+'</td><td style="text-align:right;">$'+d.lineTotal.toFixed(2)+'</td><td style="text-align:right;">'+d.rate+'%</td><td style="text-align:right;">$'+d.earned.toFixed(2)+'</td></tr>';});
+    html+='<tr class="total"><td colspan="5">Total</td><td style="text-align:right;">$'+g.total.toFixed(2)+'</td><td></td><td style="text-align:right;">$'+g.earned.toFixed(2)+'</td></tr>';
+    html+='</tbody></table></div>';
+  });
+
+  var grandTotal=data.reduce(function(s,d){return s+d.earned;},0);
+  html+='<div class="grand">Grand Total: $'+grandTotal.toFixed(2)+'</div>';
+  html+='</body></html>';
+  win.document.write(html);win.document.close();
+  setTimeout(function(){win.print();},400);
+}
 
 // Commission is now global per-category, managed in POS Settings
 function adminResetPin(i){
