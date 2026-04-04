@@ -454,7 +454,9 @@ function delRenderEvents(){
         ev.className='del-event '+sc+(d.status==='Delivered'?' del-ev-delivered':'');
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;';
         ev.setAttribute('data-id',d.id);
-        ev.innerHTML='<div class="del-ev-name">'+d.name+'</div>'+(height>28?'<div class="del-ev-sub">'+apps+(d.city?' &middot; '+d.city:'')+'</div>':'')+(height>46?'<div class="del-ev-time">'+d.time+(dur?' - '+endTime:'')+'</div>':'')+'<div class="del-resize-handle" data-resize="true"></div>';
+        var _warn=d.log&&d.log.some(function(e){return DEL_FLAG_WORDS.test(e.text);});
+        ev.innerHTML=(_warn?'<div style="position:absolute;top:2px;right:4px;font-size:11px;z-index:5;">&#x26A0;</div>':'')+
+          '<div class="del-ev-name">'+d.name+'</div>'+(height>28?'<div class="del-ev-sub">'+apps+(d.city?' &middot; '+d.city:'')+'</div>':'')+(height>46?'<div class="del-ev-time">'+d.time+(dur?' - '+endTime:'')+'</div>':'')+'<div class="del-resize-handle" data-resize="true"></div>';
         ev.onclick=(function(id){return function(e){e.stopPropagation();delOpenDetail(id);};})(d.id);
         ev.addEventListener('mousedown',(function(id,evRef,dObj){return function(e){if(e.button!==0)return;if(e.target.dataset.resize){delStartResize(e,id,evRef,dObj);return;}delStartDrag(e,id,evRef,dObj);};})(d.id,ev,d));
         col.appendChild(ev);
@@ -601,7 +603,8 @@ function delOpenDetail(id){
   '<button class="del-abtn gray" style="margin-bottom:8px;" onclick="document.getElementById(\'del-det-photo-input\').click()">+ Add Photos</button>'+
   '<input type="file" id="del-det-photo-input" accept="image/*" multiple style="display:none" onchange="delDetUploadPhotos(this.files,\''+id+'\')"/>'+
   ((d.photos&&d.photos.length)?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;">'+d.photos.map(function(p){return '<img src="'+p.url+'" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--bg4);" onclick="delDetViewPhoto(\''+p.url+'\')"/>';}).join('')+'</div>':'<div style="font-size:11px;color:var(--gray-3);">No photos yet</div>')+
-  '</div>';
+  '</div>'+
+  delRenderLogHtml(d);
   document.getElementById('del-det-body').innerHTML=body;
   var acts='';
   if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="del-abtn orange" onclick="delSetStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
@@ -644,6 +647,70 @@ function delDetViewPhoto(url){
   if(!ov){ov=document.createElement('div');ov.id='del-photo-overlay';ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;';ov.onclick=function(){ov.style.display='none';};ov.innerHTML='<img style="max-width:95vw;max-height:90vh;object-fit:contain;border-radius:4px;"/>';document.body.appendChild(ov);}
   ov.querySelector('img').src=url;ov.style.display='flex';
 }
+// Delivery Log
+var DEL_FLAG_WORDS=/damaged|broken|missing|wrong|refused|dent|scratch|crack|leak|cancel/i;
+var _delLogPendingPhoto=null;
+
+function delRenderLogHtml(d){
+  var entries=d.log||[];
+  var h='<div style="margin-top:14px;border-top:1px solid var(--bg4);padding-top:10px;">';
+  h+='<div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-3);margin-bottom:8px;">Delivery Log ('+entries.length+')</div>';
+  if(entries.length){
+    h+='<div style="max-height:200px;overflow-y:auto;margin-bottom:10px;">';
+    entries.forEach(function(e){
+      var flagged=DEL_FLAG_WORDS.test(e.text);
+      h+='<div style="padding:8px 10px;border-radius:6px;margin-bottom:6px;font-size:12px;'+(flagged?'background:#fef2f2;border:1px solid #fca5a5;':'background:var(--bg3);border:1px solid var(--bg4);')+'">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;"><span style="font-weight:700;font-size:11px;">'+(flagged?'<span style="color:#dc2626;">&#x26A0;</span> ':'')+e.author+'</span><span style="font-size:10px;color:var(--gray-3);">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div>';
+      h+='<div style="color:var(--gray-2);line-height:1.4;">'+e.text+'</div>';
+      if(e.photo)h+='<img src="'+e.photo+'" style="width:48px;height:48px;object-fit:cover;border-radius:4px;margin-top:4px;cursor:pointer;border:1px solid var(--bg4);" onclick="delDetViewPhoto(\''+e.photo+'\')"/>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+  h+='<div style="display:flex;gap:6px;align-items:flex-end;">';
+  h+='<textarea id="del-log-input" placeholder="Add a log note..." rows="1" style="flex:1;font-size:12px;padding:8px 10px;border:1px solid var(--bg4);border-radius:6px;font-family:inherit;outline:none;resize:none;min-height:36px;"></textarea>';
+  h+='<button style="min-height:36px;min-width:36px;background:var(--bg3);border:1px solid var(--bg4);border-radius:6px;cursor:pointer;font-size:16px;" onclick="delLogAttachPhoto(\''+d.id+'\')">&#x1F4F7;</button>';
+  h+='<button style="min-height:36px;padding:0 14px;background:var(--navy,#1a2744);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;" onclick="delAddLogEntry(\''+d.id+'\')">Add Note</button>';
+  h+='</div>';
+  h+='<div id="del-log-photo-preview"></div>';
+  h+='</div>';
+  return h;
+}
+
+function delLogAttachPhoto(deliveryId){
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.style.display='none';
+  inp.onchange=async function(){
+    if(!inp.files||!inp.files[0])return;
+    var el=document.getElementById('del-log-photo-preview');
+    el.innerHTML='<div style="font-size:10px;color:var(--gold-light,#3b82f6);font-weight:600;margin-top:4px;">Uploading...</div>';
+    try{
+      var b64=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(r.result.split(',')[1]);};r.onerror=reject;r.readAsDataURL(inp.files[0]);});
+      var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
+      var data=await res.json();
+      if(data.ok){_delLogPendingPhoto=data.url;el.innerHTML='<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:4px;">&#x2713; Photo attached</div>';}
+      else{el.innerHTML='';_delLogPendingPhoto=null;}
+    }catch(e){el.innerHTML='';_delLogPendingPhoto=null;}
+    document.body.removeChild(inp);
+  };
+  document.body.appendChild(inp);inp.click();
+}
+
+async function delAddLogEntry(deliveryId){
+  var inp=document.getElementById('del-log-input');
+  var text=inp?inp.value.trim():'';
+  if(!text){inp&&inp.focus();return;}
+  var d=delDeliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
+  if(!d.log)d.log=[];
+  var author=currentEmployee?currentEmployee.name:'Admin';
+  var entry={ts:new Date().toISOString(),author:author,text:text};
+  if(_delLogPendingPhoto){entry.photo=_delLogPendingPhoto;_delLogPendingPhoto=null;}
+  d.log.push(entry);
+  await delSaveData();
+  delOpenDetail(deliveryId);
+  toast('Log entry added','success');
+}
+
 // Print
 function delPrintManifest(){document.getElementById('del-print-date').value=ds(new Date());openModal('del-print-modal');}
 function delRunPrint(printTeam){

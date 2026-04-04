@@ -271,6 +271,34 @@
     .mobile-empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:15px;}
     .mobile-note-card{background:var(--bg2);border-radius:10px;padding:12px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06);cursor:pointer;}
 
+    /* ── DELIVERY LOG ── */
+    .log-section{margin-top:14px;border-top:1px solid var(--border);padding-top:10px;}
+    .log-title{font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+    .log-entries{max-height:200px;overflow-y:auto;margin-bottom:10px;}
+    .log-entry{padding:8px 10px;border-radius:6px;margin-bottom:6px;background:var(--bg3);border:1px solid var(--border);font-size:12px;}
+    .log-entry.flagged{background:#fef2f2;border-color:#fca5a5;}
+    .log-entry-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+    .log-author{font-weight:700;font-size:11px;color:var(--text);}
+    .log-time{font-size:10px;color:var(--text3);}
+    .log-text{color:var(--text2);line-height:1.4;}
+    .log-flag-icon{color:#dc2626;font-size:12px;}
+    .log-photo-thumb{width:48px;height:48px;object-fit:cover;border-radius:4px;margin-top:4px;cursor:pointer;border:1px solid var(--border);}
+    .log-input-row{display:flex;gap:6px;align-items:flex-end;}
+    .log-input{flex:1;font-size:12px;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;font-family:inherit;outline:none;resize:none;min-height:36px;}
+    .log-input:focus{border-color:var(--blue);}
+    .log-add-btn{min-height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}
+    .log-add-btn:hover{background:#243456;}
+    .log-photo-btn{min-height:36px;min-width:36px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+    .log-photo-btn:hover{background:var(--border);}
+    .log-pending-photo{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--blue);font-weight:600;margin-top:4px;}
+    /* Warning badge on calendar events */
+    .ev-warn{position:absolute;top:2px;right:4px;font-size:11px;line-height:1;z-index:5;}
+    /* Warning badge on mobile cards */
+    .ms-warn{font-size:13px;margin-left:6px;}
+    /* Needs Attention pill */
+    .tpill.attention{border-color:#fca5a5;color:#dc2626;background:#fef2f2;}
+    .tpill.attention.active{background:#dc2626;border-color:#dc2626;color:#fff;}
+
     /* ── MOBILE ACTION BUTTONS ── */
     .ms-actions{display:flex;gap:8px;margin-top:10px;}
     .ms-actions button{flex:1;min-height:48px;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;color:#fff;padding:10px 8px;}
@@ -377,6 +405,7 @@
         <button class="tpill active" id="tf-all" onclick="setTeam('all',this)">All Teams</button>
         <button class="tpill" id="tf-main" onclick="setTeam('Main Delivery Team',this)">Main Team</button>
         <button class="tpill" id="tf-other" onclick="setTeam('Other Delivery Team',this)">Other Team</button>
+        <button class="tpill attention" id="tf-attention" onclick="setTeam('attention',this)">&#x26A0; Needs Attention</button>
       </div>
       <div class="sep"></div>
       <span id="del-sync-badge" style="font-size:10px;color:#16a34a;font-weight:600;padding:3px 8px;background:rgba(22,163,74,0.1);border-radius:100px;transition:opacity 1s;opacity:0;">↻ Updated</span><button class="hbtn gold" onclick="openAddDelivery(null,null)">+ Delivery</button>
@@ -766,6 +795,7 @@ function renderEvents(){
   days.forEach(function(dayStr){
     var col=document.getElementById('col-'+dayStr); if(!col)return;
     var dayDeliveries=deliveries.filter(function(d){
+      if(TEAM_FILTER==='attention')return d.date===dayStr&&hasFlag(d);
       return d.date===dayStr&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);
     });
     if(dayDeliveries.length===0)return;
@@ -816,7 +846,9 @@ function renderEvents(){
         ev.className='cal-event '+sc+(d.status==='Delivered'?' ev-delivered':'');
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;';
         ev.setAttribute('data-id',d.id);
-        ev.innerHTML='<div class="ev-name">'+d.name+'</div>'+
+        var warn=hasFlag(d);
+        ev.innerHTML=(warn?'<div class="ev-warn">&#x26A0;</div>':'')+
+          '<div class="ev-name">'+d.name+'</div>'+
           (height>28?'<div class="ev-sub">'+apps+(d.city?' · '+d.city:'')+'</div>':'')+
           (height>46?'<div class="ev-time-lbl">'+d.time+(dur?' – '+endTime:'')+'</div>':'')+
           '<div class="resize-handle" data-resize="true"></div>';
@@ -888,7 +920,8 @@ function renderMobileDay(){
   if(dayStr===todayStr)title='Today — '+mobileDay.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   document.getElementById('mobile-day-title').textContent=title;
 
-  var stops=deliveries.filter(function(d){return d.date===dayStr&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);});
+  var stops=deliveries.filter(function(d){return d.date===dayStr&&(TEAM_FILTER==='all'||TEAM_FILTER==='attention'?true:d.team===TEAM_FILTER);});
+  if(TEAM_FILTER==='attention')stops=stops.filter(function(d){return hasFlag(d);});
   stops.sort(function(a,b){return (a.stopOrder||99)-(b.stopOrder||99)||(timeToMins(a.time)-timeToMins(b.time));});
   var dayNotes=notes.filter(function(n){return n.date===dayStr;});
 
@@ -925,7 +958,7 @@ function renderMobileDay(){
     var timeStr=d.time==='Call Ahead'?'Call Ahead':(d.time+' — '+minsToTime(timeToMins(d.time)+dur));
     h+='<div class="'+cls+'" onclick="openDeliveryDetail(\''+d.id+'\')">';
     h+='<div class="mobile-stop-top"><div class="mobile-stop-num">'+(d.stopOrder||i+1)+'</div><span class="mobile-stop-badge status-badge '+badge+'">'+d.status+'</span></div>';
-    h+='<div class="mobile-stop-name">'+d.name+'</div>';
+    h+='<div class="mobile-stop-name">'+d.name+(hasFlag(d)?'<span class="ms-warn">&#x26A0;</span>':'')+'</div>';
     h+='<div class="mobile-stop-addr">'+d.address+', '+d.city+'</div>';
     h+='<div class="mobile-stop-apps">'+appStr+'</div>';
     h+='<div class="mobile-stop-time">'+(d.team||'Main Delivery Team')+' &middot; '+timeStr+'</div>';
@@ -1079,6 +1112,88 @@ async function saveNote(){
   await saveData();closeModal('note-modal');renderEvents();
 }
 
+// ═══ DELIVERY LOG ═══
+var FLAG_WORDS=/damaged|broken|missing|wrong|refused|dent|scratch|crack|leak|cancel/i;
+var _logPendingPhoto=null;
+var _logCurrentId=null;
+
+function hasFlag(d){
+  if(!d.log||!d.log.length)return false;
+  return d.log.some(function(e){return FLAG_WORDS.test(e.text);});
+}
+
+function renderLogHtml(d,isMobile){
+  var entries=d.log||[];
+  var h='<div class="'+(isMobile?'bs-section':'log-section')+'">';
+  h+='<div class="'+(isMobile?'bs-section-title':'log-title')+'">Delivery Log ('+entries.length+')</div>';
+  if(entries.length){
+    h+='<div class="log-entries">';
+    entries.forEach(function(e){
+      var flagged=FLAG_WORDS.test(e.text);
+      h+='<div class="log-entry'+(flagged?' flagged':'')+'">';
+      h+='<div class="log-entry-hdr"><span class="log-author">'+(flagged?'<span class="log-flag-icon">&#x26A0;</span> ':'')+e.author+'</span><span class="log-time">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div>';
+      h+='<div class="log-text">'+e.text+'</div>';
+      if(e.photo)h+='<img class="log-photo-thumb" src="'+e.photo+'" onclick="detViewPhoto(\''+e.photo+'\')"/>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+  // Add note input
+  var inputId=isMobile?'bs-log-input':'det-log-input';
+  var photoId=isMobile?'bs-log-photo-btn':'det-log-photo-btn';
+  h+='<div class="log-input-row">';
+  h+='<textarea class="log-input" id="'+inputId+'" placeholder="Add a log note..." rows="1"></textarea>';
+  h+='<button class="log-photo-btn" id="'+photoId+'" onclick="logAttachPhoto(\''+(isMobile?'mobile':'desktop')+'\',\''+d.id+'\')" title="Attach photo">&#x1F4F7;</button>';
+  h+='<button class="log-add-btn" onclick="addLogEntry(\''+d.id+'\',\''+(isMobile?'mobile':'desktop')+'\')">Add Note</button>';
+  h+='</div>';
+  h+='<div id="'+(isMobile?'bs':'det')+'-log-photo-preview"></div>';
+  h+='</div>';
+  return h;
+}
+
+function logAttachPhoto(mode,deliveryId){
+  _logCurrentId=deliveryId;
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.style.display='none';
+  inp.onchange=async function(){
+    if(!inp.files||!inp.files[0])return;
+    var previewId=(mode==='mobile'?'bs':'det')+'-log-photo-preview';
+    var el=document.getElementById(previewId);
+    el.innerHTML='<div class="log-pending-photo"><div class="bs-spinner"></div> Uploading photo...</div>';
+    try{
+      var b64=await toB64(inp.files[0]);
+      var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
+      var data=await res.json();
+      if(data.ok){
+        _logPendingPhoto=data.url;
+        el.innerHTML='<div class="log-pending-photo">&#x2713; Photo attached <img src="'+data.url+'" style="width:32px;height:32px;object-fit:cover;border-radius:3px;vertical-align:middle;"/></div>';
+      }else{el.innerHTML='';_logPendingPhoto=null;}
+    }catch(e){el.innerHTML='';_logPendingPhoto=null;}
+    document.body.removeChild(inp);
+  };
+  document.body.appendChild(inp);inp.click();
+}
+
+async function addLogEntry(deliveryId,mode){
+  var inputId=(mode==='mobile'?'bs':'det')+'-log-input';
+  var inp=document.getElementById(inputId);
+  var text=inp?inp.value.trim():'';
+  if(!text){inp&&inp.focus();return;}
+  var d=deliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
+  if(!d.log)d.log=[];
+  var entry={ts:new Date().toISOString(),author:'Dispatcher',text:text};
+  if(_logPendingPhoto){entry.photo=_logPendingPhoto;_logPendingPhoto=null;}
+  d.log.push(entry);
+  await saveData();
+  // Re-render the appropriate view
+  if(mode==='mobile'&&document.getElementById('bsheet-overlay').classList.contains('open')){
+    openBSheet(deliveryId);
+  }else{
+    openDeliveryDetail(deliveryId);
+  }
+  renderEvents();
+}
+
 // ═══ DETAIL MODALS ═══
 function openDeliveryDetail(id){
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
@@ -1106,7 +1221,8 @@ function openDeliveryDetail(id){
     '<button class="abtn gray" style="margin-bottom:8px;" onclick="document.getElementById(\'det-photo-input\').click()">+ Add Photos</button>'+
     '<input type="file" id="det-photo-input" accept="image/*" multiple style="display:none" onchange="detUploadPhotos(this.files,\''+id+'\')"/>'+
     ((d.photos&&d.photos.length)?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;">'+d.photos.map(function(p){return '<img src="'+p.url+'" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid #ddd;" onclick="detViewPhoto(\''+p.url+'\')"/>';}).join('')+'</div>':'<div style="font-size:11px;color:var(--text3);">No photos yet</div>')+
-    '</div>';
+    '</div>'+
+    renderLogHtml(d,false);
   document.getElementById('det-body').innerHTML=body;
   var acts='';
   if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="abtn orange" onclick="setStatus(\''+id+'\',\'Out for Delivery\')">Out for Delivery</button>';
@@ -1539,6 +1655,9 @@ function openBSheet(deliveryId){
   });
   h+='</div>';
   h+='</div>';
+
+  // Notes & Log
+  h+=renderLogHtml(d,true);
 
   // Step 3 — Summary
   h+='<div class="bs-section"><div class="bs-section-title">Step 3 — Confirm</div>';
