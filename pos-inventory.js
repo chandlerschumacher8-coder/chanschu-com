@@ -156,11 +156,68 @@ function populateVendorDropdown(selId){
   if(val)sel.value=val;
 }
 
+// ═══ MODEL LOOKUP — AI POWERED ═══
+async function lookupModel(){
+  var sku=(document.getElementById('ap-sku')||{}).value.trim();
+  if(!sku){toast('Enter a model number first','error');return;}
+  var resultEl=document.getElementById('ap-lookup-result');
+  resultEl.style.display='block';
+  resultEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;"></div> Looking up '+sku+' from manufacturer sites...</div>';
+  try{
+    var prompt='Look up appliance model number "'+sku+'" from manufacturer sources (Whirlpool, Maytag, KitchenAid, Amana, LG, Samsung, GE Appliances, Frigidaire/Electrolux). '
+      +'Return JSON only: {"brand":"Brand Name","description":"Full product description with key features","category":"Category","specs":{"dimensions":"","capacity":"","features":""},"specSheetUrl":"","found":true}. '
+      +'If you cannot find reliable info, return {"found":false}. JSON only, no explanation.';
+    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],max_tokens:600})});
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error||'API error');
+    var match=data.content[0].text.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('No JSON found');
+    var parsed=JSON.parse(match[0]);
+    if(!parsed.found){
+      resultEl.innerHTML='<div style="color:#9a3412;">&#x26A0; Could not find info for '+sku+' — please fill in manually.</div>';
+      return;
+    }
+    // Show preview + confirm
+    var h='<div style="font-weight:700;margin-bottom:6px;color:#1e40af;">Found: '+sku+'</div>';
+    if(parsed.brand)h+='<div><strong>Brand:</strong> '+parsed.brand+'</div>';
+    if(parsed.description)h+='<div style="margin:4px 0;"><strong>Description:</strong> '+parsed.description+'</div>';
+    if(parsed.category)h+='<div><strong>Category:</strong> '+parsed.category+'</div>';
+    if(parsed.specs){
+      if(parsed.specs.dimensions)h+='<div><strong>Dimensions:</strong> '+parsed.specs.dimensions+'</div>';
+      if(parsed.specs.capacity)h+='<div><strong>Capacity:</strong> '+parsed.specs.capacity+'</div>';
+      if(parsed.specs.features)h+='<div><strong>Features:</strong> '+parsed.specs.features+'</div>';
+    }
+    if(parsed.specSheetUrl)h+='<div style="margin-top:4px;"><a href="'+parsed.specSheetUrl+'" target="_blank" style="color:#2563eb;">View Spec Sheet</a></div>';
+    h+='<div style="margin-top:8px;display:flex;gap:6px;"><button class="primary-btn" onclick="applyLookup()" type="button">Use This</button><button class="ghost-btn" onclick="document.getElementById(\'ap-lookup-result\').style.display=\'none\';" type="button">Dismiss</button></div>';
+    resultEl.innerHTML=h;
+    window._lookupData=parsed;
+  }catch(e){
+    resultEl.innerHTML='<div style="color:#9a3412;">&#x26A0; Lookup failed: '+e.message+' — please fill in manually.</div>';
+  }
+}
+
+function applyLookup(){
+  var p=window._lookupData;if(!p)return;
+  var nameEl=document.getElementById('ap-name');
+  var brandEl=document.getElementById('ap-brand');
+  var catEl=document.getElementById('ap-cat');
+  if(p.description)nameEl.value=p.description;
+  if(p.brand&&!brandEl.value)brandEl.value=p.brand;
+  if(p.category&&catEl){
+    for(var i=0;i<catEl.options.length;i++){if(catEl.options[i].value.toLowerCase()===p.category.toLowerCase()){catEl.selectedIndex=i;break;}}
+  }
+  // Store spec sheet URL for later save
+  window._lookupSpecSheetUrl=p.specSheetUrl||'';
+  document.getElementById('ap-lookup-result').innerHTML='<div style="color:#16a34a;font-weight:600;">&#x2713; Applied — fields filled in.</div>';
+  setTimeout(function(){document.getElementById('ap-lookup-result').style.display='none';},2000);
+}
+
 function addProduct(){
   var sku=document.getElementById('ap-sku').value.trim(),name=document.getElementById('ap-name').value.trim(),brand=document.getElementById('ap-brand').value.trim();
   if(!sku||!name||!brand){toast('Fill in required fields','error');return;}
   var stEl=document.getElementById('ap-serial-tracked');
-  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true,upc:(document.getElementById('ap-upc')||{}).value||'',vendor:(document.getElementById('ap-vendor')||{}).value||'',serialPool:[]});
+  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,model:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true,upc:(document.getElementById('ap-upc')||{}).value||'',vendor:(document.getElementById('ap-vendor')||{}).value||'',serialPool:[],specSheetUrl:window._lookupSpecSheetUrl||''});
+  window._lookupSpecSheetUrl='';window._lookupData=null;
   saveProducts();
   closeModal('add-product-modal');renderInventory();refreshSaleView();toast('Product added','success');
 }
