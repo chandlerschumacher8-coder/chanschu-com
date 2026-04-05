@@ -1090,8 +1090,9 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 <div class="cart-footer">
 <div class="cf-row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
-<div class="cf-row"><span>Tax</span><span id="cart-tax">$0.00</span></div>
-<div class="cf-row total"><span>Total</span><span id="cart-total">$0.00</span></div>
+<div class="cf-row"><span>Tax <span id="cart-tax-rate-lbl" style="font-size:10px;color:#9ca3af;font-weight:400;"></span></span><span id="cart-tax">$0.00</span></div>
+<div class="cf-row total"><span>Total + Tax</span><span id="cart-total">$0.00</span></div>
+<button class="ghost-btn" onclick="hbAmtWithTax()" style="width:100%;margin-top:6px;font-size:11px;padding:7px;border-color:#bfdbfe;color:#2563eb;background:#eff6ff;" title="Enter a final amount including tax — system will back-calculate and add a line item">&#x1F4B0; Amt w/ Tax (reverse calc)</button>
 <div class="pay-btns">
 <button class="pay-btn" onclick="checkout('Card')">Card</button>
 <button class="pay-btn" onclick="checkout('Cash')">Cash</button>
@@ -1643,13 +1644,6 @@ POS Settings
 <div style="margin-top:10px;display:flex;gap:8px;">
 <button class="primary-btn" onclick="hbSave()">Save Hot Buttons</button>
 <button class="ghost-btn" onclick="hbRenderEditor()">Reset</button>
-</div>
-<div style="margin-top:12px;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
-<div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Fixed Buttons (always visible)</div>
-<div style="display:flex;gap:8px;">
-<span class="ci-special-btn" style="cursor:default;">Amt w/ Tax</span>
-<span class="ci-special-btn" style="cursor:default;">Total + Tax</span>
-</div>
 </div>
 <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;">
 <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:4px;">Commission Rates by Category</div>
@@ -4659,9 +4653,6 @@ function renderHotBar(){
     }
   });
   // Separator + fixed special buttons
-  h+='<div class="sale-quickadd-sep"></div>';
-  h+='<button class="ci-special-btn" onclick="hbAmtWithTax()">Amt w/ Tax</button>';
-  h+='<button class="ci-special-btn" onclick="hbTotalPlusTax()">Total + Tax</button>';
   bar.innerHTML=h;
 }
 function hbQuickAddItem(model){
@@ -4721,7 +4712,7 @@ function cartQty(pid,delta){
 function cartRemove(pid){cart=cart.filter(function(x){return x.id!==pid;});renderCart();}
 function renderCart(){
   var el=document.getElementById('cart-items');
-  if(cart.length===0){el.innerHTML='<div class="cart-empty">Cart is empty. Click a product to add it.</div>';document.getElementById('cart-subtotal').textContent='$0.00';document.getElementById('cart-tax').textContent='$0.00';document.getElementById('cart-total').textContent='$0.00';return;}
+  if(cart.length===0){el.innerHTML='<div class="cart-empty">Cart is empty. Click a product to add it.</div>';document.getElementById('cart-subtotal').textContent='$0.00';document.getElementById('cart-tax').textContent='$0.00';document.getElementById('cart-total').textContent='$0.00';var rl=document.getElementById('cart-tax-rate-lbl');if(rl)rl.textContent='('+(cartTaxRate*100).toFixed(3)+'%)';return;}
   el.innerHTML=cart.map(function(c,idx){
     return '<div class="cart-item" style="flex-wrap:wrap;"><div class="ci-info"><div class="ci-name">'+c.name+'</div><div class="ci-price">'+fmt(c.price)+' x '+c.qty+'</div></div><div class="ci-qty"><button onclick="cartQty('+c.id+',-1)">-</button><span>'+c.qty+'</span><button onclick="cartQty('+c.id+',1)">+</button></div><div class="ci-total">'+fmt(c.price*c.qty)+'</div><button class="ci-rm" onclick="cartRemove('+c.id+')">&#x2715;</button>'+(c.isService?'':'<input class="ci-serial" placeholder="Serial #" value="'+(c.serial||'')+'" onchange="cartSerial('+idx+',this.value)"/>')+'</div>';
   }).join('');
@@ -4730,6 +4721,7 @@ function renderCart(){
   document.getElementById('cart-subtotal').textContent=fmt(sub);
   document.getElementById('cart-tax').textContent=fmt(tax);
   document.getElementById('cart-total').textContent=fmt(sub+tax);
+  var rlbl=document.getElementById('cart-tax-rate-lbl');if(rlbl)rlbl.textContent='('+(cartTaxRate*100).toFixed(3)+'%)';
   // Populate clerk dropdown
   var clerkSel=document.getElementById('cart-clerk');
   if(clerkSel&&clerkSel.options.length<=1){
