@@ -1122,7 +1122,7 @@ function renderEomReports(){
   h+='<div style="font-size:14px;font-weight:700;margin-bottom:4px;">Inventory Report</div>';
   h+='<div style="font-size:11px;color:var(--gray-2);margin-bottom:8px;">Stock levels and sold units</div>';
   h+=eomInventoryHtml(ym);
-  h+='<div style="margin-top:6px;"><button class="ghost-btn" style="font-size:10px;padding:3px 10px;" onclick="exportEomCSV(\'inventory\',\''+ym+'\')">CSV</button></div></div>';
+  h+='<div style="margin-top:6px;"><button class="ghost-btn" style="font-size:10px;padding:3px 10px;" onclick="exportEomCSV(\'inventory\',\''+ym+'\')">CSV</button> <button class="ghost-btn" style="font-size:10px;padding:3px 10px;" onclick="exportEomPDF(\'inventory\',\''+ym+'\')">PDF</button></div></div>';
 
   // 5. AR Summary card
   h+='<div style="border:1px solid var(--border);border-radius:8px;padding:14px;">';
@@ -1192,13 +1192,34 @@ function eomSalesTaxHtml(ym){
 }
 
 function eomInventoryHtml(ym){
-  var active=PRODUCTS.filter(function(p){return p.active!==false&&(p.stock>0||(p.sold||0)>0);});
+  var active=PRODUCTS.filter(function(p){return p.active!==false;});
   if(!active.length)return '<div style="font-size:11px;color:var(--gray-3);">No inventory data</div>';
-  // Show top 20 by sold
-  var sorted=active.slice().sort(function(a,b){return (b.sold||0)-(a.sold||0);}).slice(0,20);
-  var h='<table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Product</th><th style="text-align:center;">Stock</th><th style="text-align:center;">Sold</th><th style="text-align:center;">Avail</th></tr></thead><tbody>';
-  sorted.forEach(function(p){var avail=Math.max(0,p.stock-(p.sold||0));h+='<tr><td>'+p.name+'</td><td style="text-align:center;">'+p.stock+'</td><td style="text-align:center;">'+(p.sold||0)+'</td><td style="text-align:center;font-weight:700;">'+avail+'</td></tr>';});
-  h+='</tbody></table>';return h;
+  // Calculate month-specific sold counts from orders
+  var monthSold={};
+  orders.forEach(function(o){
+    if(o.status==='Quote')return;
+    var om=(o.date||'').slice(0,7);
+    if(om!==ym)return;
+    (o.items||[]).forEach(function(i){monthSold[i.id]=(monthSold[i.id]||0)+(i.qty||0);});
+  });
+  var totalStock=0,totalSoldMonth=0,totalAvail=0,totalInvValue=0,totalSoldValue=0;
+  active.forEach(function(p){
+    var stock=p.stock||0;
+    var sold=monthSold[p.id]||0;
+    totalStock+=stock;
+    totalSoldMonth+=sold;
+    totalAvail+=Math.max(0,stock-sold);
+    totalInvValue+=stock*(p.cost||0);
+    totalSoldValue+=sold*(p.price||0);
+  });
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">';
+  h+='<div style="padding:6px 0;"><div style="color:var(--gray-3);font-size:9px;font-weight:700;text-transform:uppercase;">Units in Stock</div><div style="font-size:18px;font-weight:700;">'+totalStock.toLocaleString()+'</div></div>';
+  h+='<div style="padding:6px 0;"><div style="color:var(--gray-3);font-size:9px;font-weight:700;text-transform:uppercase;">Units Sold</div><div style="font-size:18px;font-weight:700;">'+totalSoldMonth.toLocaleString()+'</div></div>';
+  h+='<div style="padding:6px 0;"><div style="color:var(--gray-3);font-size:9px;font-weight:700;text-transform:uppercase;">Units Available</div><div style="font-size:18px;font-weight:700;">'+totalAvail.toLocaleString()+'</div></div>';
+  h+='<div style="padding:6px 0;"><div style="color:var(--gray-3);font-size:9px;font-weight:700;text-transform:uppercase;">Inventory Value</div><div style="font-size:18px;font-weight:700;">'+fmt(totalInvValue)+'</div></div>';
+  h+='<div style="padding:6px 0;grid-column:1/-1;"><div style="color:var(--gray-3);font-size:9px;font-weight:700;text-transform:uppercase;">Sold Value (Retail)</div><div style="font-size:18px;font-weight:700;color:var(--green);">'+fmt(totalSoldValue)+'</div></div>';
+  h+='</div>';
+  return h;
 }
 
 function exportEomCSV(type,ym){
@@ -1210,8 +1231,16 @@ function exportEomCSV(type,ym){
     orders.forEach(function(o){if(o.status==='Quote')return;var deliveredTotal=0;o.items.forEach(function(i){if(i.delivered){var dm=(i.deliveredAt||o.date||'').slice(0,7);if(dm===ym)deliveredTotal+=i.price*i.qty;}});if(deliveredTotal<=0)return;var zone=o.taxZone||'Default';var rate=o.tax&&o.subtotal?(o.tax/o.subtotal):0;var taxAmt=deliveredTotal*rate;if(!taxData[zone])taxData[zone]={taxable:0,tax:0,rate:rate};taxData[zone].taxable+=deliveredTotal;taxData[zone].tax+=taxAmt;});
     Object.keys(taxData).forEach(function(z){var d=taxData[z];csv+='"'+z+'",'+(d.rate*100).toFixed(3)+','+d.taxable.toFixed(2)+','+d.tax.toFixed(2)+'\n';});
   }else if(type==='inventory'){
-    csv='Product,Model,Brand,Stock,Sold,Available\n';
-    PRODUCTS.filter(function(p){return p.active!==false;}).forEach(function(p){csv+='"'+p.name+'","'+(p.model||'')+'","'+p.brand+'",'+p.stock+','+(p.sold||0)+','+Math.max(0,p.stock-(p.sold||0))+'\n';});
+    var monthSold={};
+    orders.forEach(function(o){if(o.status==='Quote')return;var om=(o.date||'').slice(0,7);if(om!==ym)return;(o.items||[]).forEach(function(i){monthSold[i.id]=(monthSold[i.id]||0)+(i.qty||0);});});
+    var tStock=0,tSold=0,tAvail=0,tInvVal=0,tSoldVal=0;
+    PRODUCTS.filter(function(p){return p.active!==false;}).forEach(function(p){var s=p.stock||0;var sld=monthSold[p.id]||0;tStock+=s;tSold+=sld;tAvail+=Math.max(0,s-sld);tInvVal+=s*(p.cost||0);tSoldVal+=sld*(p.price||0);});
+    csv='Metric,Value\n';
+    csv+='"Total Units in Stock",'+tStock+'\n';
+    csv+='"Total Units Sold",'+tSold+'\n';
+    csv+='"Total Units Available",'+tAvail+'\n';
+    csv+='"Total Inventory Value",'+tInvVal.toFixed(2)+'\n';
+    csv+='"Total Sold Value (Retail)",'+tSoldVal.toFixed(2)+'\n';
   }else if(type==='spiffs'){
     csv='Employee,Product,Spiff Amount\n';
     orders.forEach(function(o){if(o.status==='Quote')return;o.items.forEach(function(item){if(!item.delivered)return;var dAt=(item.deliveredAt||o.date||'').slice(0,7);if(dAt!==ym||!item.spiff)return;csv+='"'+(o.clerk||'')+'","'+item.name+'",'+item.spiff+'\n';});});
@@ -1233,6 +1262,23 @@ function exportEomPDF(type,ym){
     html+='<table><thead><tr><th>Zone</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Taxable Sales</th><th style="text-align:right;">Tax Collected</th></tr></thead><tbody>';
     zones.forEach(function(z){var d=taxData[z];html+='<tr><td>'+z+'</td><td style="text-align:right;">'+(d.rate*100).toFixed(3)+'%</td><td style="text-align:right;">$'+d.taxable.toFixed(2)+'</td><td style="text-align:right;font-weight:700;">$'+d.tax.toFixed(2)+'</td></tr>';});
     html+='<tr style="font-weight:700;background:#f5f5f5;"><td colspan="3">Total</td><td style="text-align:right;">$'+totalTax.toFixed(2)+'</td></tr>';
+    html+='</tbody></table></body></html>';
+    win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
+  }else if(type==='inventory'){
+    var monthSold={};
+    orders.forEach(function(o){if(o.status==='Quote')return;var om=(o.date||'').slice(0,7);if(om!==ym)return;(o.items||[]).forEach(function(i){monthSold[i.id]=(monthSold[i.id]||0)+(i.qty||0);});});
+    var tStock=0,tSold=0,tAvail=0,tInvVal=0,tSoldVal=0;
+    PRODUCTS.filter(function(p){return p.active!==false;}).forEach(function(p){var s=p.stock||0;var sld=monthSold[p.id]||0;tStock+=s;tSold+=sld;tAvail+=Math.max(0,s-sld);tInvVal+=s*(p.cost||0);tSoldVal+=sld*(p.price||0);});
+    var monthLabel=new Date(ym+'-15').toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    var win=window.open('','_blank');
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Inventory Report</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;padding:16px;}.hdr{border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:14px;text-align:center;}.hdr h1{font-size:16px;}table{width:100%;border-collapse:collapse;margin-top:10px;}th{background:#222;color:#fff;font-size:10px;padding:8px 12px;text-align:left;}td{padding:10px 12px;border-bottom:1px solid #ddd;font-size:13px;}td.val{text-align:right;font-weight:700;}@media print{@page{margin:10mm;}}</style></head><body>';
+    html+='<div class="hdr"><img src="'+DC_APPLIANCE_LOGO+'" style="max-width:180px;height:auto;margin:0 auto 8px;" alt="DC Appliance"/><h1>DC Appliance — Inventory Report</h1><div style="font-size:11px;color:#666;">'+monthLabel+'</div><div style="font-size:10px;color:#666;margin-top:4px;">(620) 371-6417</div></div>';
+    html+='<table><thead><tr><th>Metric</th><th style="text-align:right;">Value</th></tr></thead><tbody>';
+    html+='<tr><td>Total Units in Stock</td><td class="val">'+tStock.toLocaleString()+'</td></tr>';
+    html+='<tr><td>Total Units Sold</td><td class="val">'+tSold.toLocaleString()+'</td></tr>';
+    html+='<tr><td>Total Units Available</td><td class="val">'+tAvail.toLocaleString()+'</td></tr>';
+    html+='<tr><td>Total Inventory Value (at cost)</td><td class="val">$'+tInvVal.toFixed(2)+'</td></tr>';
+    html+='<tr style="background:#f0fdf4;"><td><strong>Total Sold Value (at retail)</strong></td><td class="val" style="color:#16a34a;">$'+tSoldVal.toFixed(2)+'</td></tr>';
     html+='</tbody></table></body></html>';
     win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
   }
