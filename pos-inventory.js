@@ -345,7 +345,7 @@ function renderOrderDetail(){
   } else {
     actionsHtml='<div class="ood-actions">';
     if(!allDelivered)actionsHtml+='<button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;font-weight:700;" onclick="confirmItemDelivery(\''+o.id+'\')">&#x2713; Confirm Delivery</button>';
-    actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Invoice</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper Copy</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;" onclick="printBothDocuments(\''+o.id+'\')">Print Both</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+    actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#93c5fd;color:#2563eb;" onclick="editOrder(\''+o.id+'\')">Edit</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;" onclick="orderRecordPayment(\''+o.id+'\')">Record Payment</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Invoice</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper Copy</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;" onclick="printBothDocuments(\''+o.id+'\')">Print Both</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   }
   el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+'</div><div class="ood-meta"><a href="#" style="color:var(--blue);text-decoration:none;font-weight:600;" onclick="event.preventDefault();openCustomerProfile(\''+o.customer.replace(/'/g,"\\'")+'\')">'+o.customer+'</a> &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
@@ -413,6 +413,50 @@ function confirmItemDelivery(id){
   saveOrders();selectedOrder=o;renderOrderDetail();renderOrders();
   toast('Delivery confirmed','success');
 }
+function editOrder(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  if(o.status==='Delivered'||o.status==='Paid in Full'){
+    if(!confirm('This order is already '+o.status+'. Edit anyway?'))return;
+  }
+  // Load into cart for editing
+  if(cart.length&&!confirm('Current cart will be replaced. Continue?'))return;
+  cart=(o.items||[]).map(function(i){return{id:i.id,name:i.name,model:i.model||'',price:i.price,qty:i.qty,serial:i.serial||'',isService:false};});
+  // Fill customer fields
+  var st=o.soldTo||{};var sh=o.shipTo||{};
+  var fill=function(id,v){var el=document.getElementById(id);if(el)el.value=v||'';};
+  fill('cart-sold-name',st.name);fill('cart-sold-addr',st.addr);fill('cart-sold-city',st.city);fill('cart-sold-state',st.state);fill('cart-sold-zip',st.zip);fill('cart-sold-phone',st.phone);
+  fill('cart-ship-name',sh.name);fill('cart-ship-addr',sh.addr);fill('cart-ship-city',sh.city);fill('cart-ship-state',sh.state);fill('cart-ship-zip',sh.zip);
+  fill('cart-po',o.po);fill('cart-job',o.job);fill('cart-invoice-notes',o.invoiceNotes);fill('cart-shipper-notes',o.shipperNotes);
+  if(o.clerk){var cl=document.getElementById('cart-clerk');if(cl)cl.value=o.clerk;}
+  // Remove the original order so saving creates a fresh record
+  orders=orders.filter(function(x){return x.id!==id;});selectedOrder=null;saveOrders();
+  // Navigate to New Sale tab
+  var saleTab;document.querySelectorAll('.tb-tab').forEach(function(t){if(t.textContent.trim()==='New Sale')saleTab=t;});
+  nav('sale',saleTab);renderCart();refreshSaleView();
+  toast('Loaded '+id+' for editing — complete the sale to save changes','info');
+}
+
+async function orderRecordPayment(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  // Calculate current balance
+  var paid=(o.payments||[]).reduce(function(s,p){return s+(p.amount||0);},0);
+  var balance=o.total-paid;
+  if(balance<=0.01){toast('This order is paid in full','info');return;}
+  var amt=prompt('Record payment on '+o.id+':\nBalance due: '+fmt(balance),balance.toFixed(2));
+  if(!amt)return;amt=parseFloat(amt);if(isNaN(amt)||amt<=0){toast('Invalid amount','error');return;}
+  var method=prompt('Payment method (Cash, Check, Card, Financing):','Check')||'Check';
+  if(!o.payments)o.payments=[];
+  o.payments.push({date:new Date().toISOString(),amount:amt,method:method.trim(),recordedBy:currentEmployee?currentEmployee.name:'Admin'});
+  // Also add to customer record for ledger
+  var c=customers.find(function(x){return x.name===o.customer;});
+  if(c){if(!c.payments)c.payments=[];c.payments.push({date:new Date().toISOString(),amount:amt,method:method.trim(),invoice:o.id,recordedBy:currentEmployee?currentEmployee.name:'Admin'});saveCustomers();}
+  // Check if paid in full
+  var newPaid=paid+amt;
+  if(newPaid>=o.total-0.01)o.status='Paid in Full';
+  await saveOrders();renderOrderDetail();renderOrders();
+  toast('Payment of '+fmt(amt)+' recorded','success');
+}
+
 function setOrderStatus(id,status){var o=orders.find(function(x){return x.id===id;});if(o){o.status=status;saveOrders();renderOrders();toast('Status updated','success');}}
 function deleteOrder(id){if(!confirm('Delete this order?'))return;orders=orders.filter(function(o){return o.id!==id;});selectedOrder=null;saveOrders();renderOrders();renderOrderDetail();toast('Order deleted','info');}
 function printAddrBlock(label,addr){

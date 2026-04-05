@@ -1032,6 +1032,9 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="sale-left">
 <div class="sale-toolbar" id="sale-toolbar">
 <input class="sale-search" id="sale-search" placeholder="Search products or scan UPC..." oninput="saleSearch()"/>
+<input class="sale-search" id="invoice-lookup" placeholder="Invoice #" style="max-width:130px;flex:0 0 auto;" onkeydown="if(event.key==='Enter')lookupInvoice()"/>
+<button class="sale-back-btn" onclick="lookupInvoice()" style="border-color:#86efac;color:#16a34a;">Pull Up</button>
+<button class="sale-back-btn" onclick="clearInvoiceLookup()">Clear</button>
 <button class="sale-back-btn" onclick="openQuoteLoader()" style="border-color:#bfdbfe;color:#2563eb;">Load Quote</button>
 </div>
 <div id="sale-browse"></div>
@@ -5095,6 +5098,38 @@ function saveQuote(){
   renderCart();toast('Quote '+quote.id+' saved for '+cust,'success');
 }
 // ── QUOTE LOADER ──
+// ── INVOICE LOOKUP ──
+function lookupInvoice(){
+  var inp=document.getElementById('invoice-lookup');
+  var num=inp.value.trim();
+  if(!num){inp.focus();return;}
+  // Try exact match first, then fuzzy (ORD-123 or just 123)
+  var order=orders.find(function(o){return o.id.toLowerCase()===num.toLowerCase();});
+  if(!order){
+    var padded='ORD-'+num.replace(/^(ORD-)?/i,'');
+    order=orders.find(function(o){return o.id.toLowerCase()===padded.toLowerCase();});
+  }
+  if(!order){
+    toast('Invoice #'+num+' not found','error');
+    inp.focus();inp.select();
+    return;
+  }
+  // Found — jump to Orders tab and select this order
+  selectedOrder=order;
+  var ordersTab;document.querySelectorAll('.tb-tab').forEach(function(t){if(t.textContent.trim()==='Orders')ordersTab=t;});
+  nav('orders',ordersTab);
+  setTimeout(function(){selectOrder(order.id);},100);
+  toast('Loaded '+order.id,'success');
+}
+
+function clearInvoiceLookup(){
+  var inp=document.getElementById('invoice-lookup');if(inp)inp.value='';
+  // Clear cart + form for a fresh new sale
+  if(cart.length){if(!confirm('Clear cart and start fresh?'))return;cart=[];}
+  clearSaleForm();renderCart();
+  var s=document.getElementById('sale-search');if(s){s.value='';saleSearch();}
+}
+
 function openQuoteLoader(){
   openModal('quote-loader-modal');
   document.getElementById('quote-search').value='';
