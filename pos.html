@@ -196,8 +196,11 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .pay-btn.quote{border-color:#bfdbfe;color:#2563eb;background:#eff6ff;grid-column:1/-1;}
 .pay-btn.quote:hover{border-color:#2563eb;background:#dbeafe;}
 .cart-notes-wrap{padding:8px 0 0;}
-.cart-notes-label{display:block;font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9ca3af;margin-bottom:3px;}
-.cart-notes{width:100%;background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:6px 9px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;resize:none;outline:none;margin-bottom:4px;}
+.cart-notes-label{display:block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#374151;margin-bottom:5px;}
+.cart-notes{width:100%;background:#fefce8;border:1px solid #e5e7eb;border-left:4px solid #eab308;border-radius:6px;padding:10px 12px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;resize:vertical;outline:none;margin-bottom:4px;min-height:120px;line-height:1.4;}
+.cart-notes:focus{border-color:#2563eb;border-left-color:#eab308;background:#fffef2;}
+.cart-notes#cart-shipper-notes{background:#eff6ff;border-left-color:#3b82f6;}
+.cart-notes#cart-shipper-notes:focus{background:#f5f9ff;border-color:#2563eb;border-left-color:#3b82f6;}
 .cart-notes:focus{border-color:#2563eb;}
 .oo-quote-badge{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:100px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;}
 
@@ -1102,8 +1105,8 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <!-- Notes + Quick-Add Fixed Bar -->
 <div class="sale-notes-bar">
 <div class="sale-notes-row">
-<div class="sale-note-field"><label class="cart-notes-label">Invoice Notes</label><textarea class="cart-notes" id="cart-invoice-notes" placeholder="Delivery instructions, special terms..." rows="1"></textarea></div>
-<div class="sale-note-field"><label class="cart-notes-label">Shipper Notes <span style="font-weight:400;color:#9ca3af;">(internal)</span></label><textarea class="cart-notes" id="cart-shipper-notes" placeholder="Haul away, floor level, access codes..." rows="1"></textarea></div>
+<div class="sale-note-field"><label class="cart-notes-label">Delivery Instructions</label><textarea class="cart-notes" id="cart-invoice-notes" placeholder="Delivery instructions, special terms..." rows="5"></textarea></div>
+<div class="sale-note-field"><label class="cart-notes-label">Shipper Notes <span style="font-weight:400;color:#9ca3af;text-transform:none;letter-spacing:0;font-size:9px;">(internal)</span></label><textarea class="cart-notes" id="cart-shipper-notes" placeholder="Haul away, floor level, access codes..." rows="5"></textarea></div>
 </div>
 </div>
 <div class="sale-quickadd" id="sale-hotbar"></div>
@@ -1886,6 +1889,28 @@ POS Settings
 </div>
 
 <!-- ADD PRODUCT MODAL -->
+<!-- PRE-SUBMIT CHECKLIST MODAL -->
+<div class="modal-bg" id="checklist-modal">
+<div class="modal" style="max-width:440px;">
+<div class="modal-hdr"><div class="modal-title">Before You Finish...</div><button class="modal-close" onclick="closeChecklist()">&#x2715;</button></div>
+<div class="modal-body" style="padding:24px;">
+<div style="font-size:13px;color:#4b5563;margin-bottom:20px;line-height:1.5;">Please confirm you've completed the following:</div>
+<label style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:#f9fafb;border:2px solid #e5e7eb;border-radius:10px;cursor:pointer;margin-bottom:10px;transition:all 0.15s;" id="chk1-wrap">
+<input type="checkbox" id="chk-notes" onchange="updateChecklistBtn()" style="width:22px;height:22px;accent-color:#16a34a;flex-shrink:0;margin-top:1px;"/>
+<div><div style="font-size:14px;font-weight:700;color:#1f2937;">Notes filled in</div><div style="font-size:12px;color:#6b7280;margin-top:2px;">Delivery instructions and any shipper notes have been added</div></div>
+</label>
+<label style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:#f9fafb;border:2px solid #e5e7eb;border-radius:10px;cursor:pointer;margin-bottom:10px;transition:all 0.15s;" id="chk2-wrap">
+<input type="checkbox" id="chk-warranty" onchange="updateChecklistBtn()" style="width:22px;height:22px;accent-color:#16a34a;flex-shrink:0;margin-top:1px;"/>
+<div><div style="font-size:14px;font-weight:700;color:#1f2937;">Warranties offered</div><div style="font-size:12px;color:#6b7280;margin-top:2px;">Did you offer and discuss warranty options with the customer?</div></div>
+</label>
+</div>
+<div class="modal-footer" style="justify-content:space-between;gap:10px;">
+<button class="ghost-btn" onclick="closeChecklist()">Go Back</button>
+<button class="primary-btn" id="chk-complete-btn" onclick="checklistComplete()" disabled style="opacity:0.5;cursor:not-allowed;">Complete Sale</button>
+</div>
+</div>
+</div>
+
 <!-- ADMIN PASSWORD MODAL -->
 <div class="modal-bg" id="admin-pw-modal">
 <div class="modal" style="max-width:360px;">
@@ -4727,10 +4752,48 @@ function clearSaleForm(){
   ['cart-sold-name','cart-sold-addr','cart-sold-city','cart-sold-state','cart-sold-zip','cart-sold-phone','cart-ship-name','cart-ship-addr','cart-ship-city','cart-ship-state','cart-ship-zip','cart-po','cart-job','cart-invoice-notes','cart-shipper-notes'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var cl=document.getElementById('cart-clerk');if(cl)cl.selectedIndex=0;
 }
+var _pendingCheckoutMethod=null;
+var _checklistConfirmed=false;
+function openPreSubmitChecklist(){
+  document.getElementById('chk-notes').checked=false;
+  document.getElementById('chk-warranty').checked=false;
+  updateChecklistBtn();
+  openModal('checklist-modal');
+}
+function updateChecklistBtn(){
+  var n=document.getElementById('chk-notes').checked;
+  var w=document.getElementById('chk-warranty').checked;
+  var btn=document.getElementById('chk-complete-btn');
+  if(n&&w){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
+  else{btn.disabled=true;btn.style.opacity='0.5';btn.style.cursor='not-allowed';}
+  // Visual feedback on checked items
+  document.getElementById('chk1-wrap').style.borderColor=n?'#16a34a':'#e5e7eb';
+  document.getElementById('chk1-wrap').style.background=n?'#f0fdf4':'#f9fafb';
+  document.getElementById('chk2-wrap').style.borderColor=w?'#16a34a':'#e5e7eb';
+  document.getElementById('chk2-wrap').style.background=w?'#f0fdf4':'#f9fafb';
+}
+function closeChecklist(){closeModal('checklist-modal');_pendingCheckoutMethod=null;_checklistConfirmed=false;}
+function checklistComplete(){
+  var n=document.getElementById('chk-notes').checked;
+  var w=document.getElementById('chk-warranty').checked;
+  if(!n||!w)return;
+  _checklistConfirmed=true;
+  closeModal('checklist-modal');
+  var m=_pendingCheckoutMethod;_pendingCheckoutMethod=null;
+  checkout(m);
+}
+
 function checkout(method){
   if(cart.length===0){toast('Cart is empty','error');return;}
   var f=getSaleFields();
   var cust=f.soldTo.name.trim()||'Walk-In Customer';
+  // Pre-submit checklist — customer sales only (skip for walk-ins)
+  if(cust!=='Walk-In Customer'&&!_checklistConfirmed){
+    _pendingCheckoutMethod=method;
+    openPreSubmitChecklist();
+    return;
+  }
+  _checklistConfirmed=false;
   var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
   var rate=cartTaxRate;
   var tax=sub*rate;
