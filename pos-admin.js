@@ -1165,18 +1165,19 @@ var _diInvHeaders=[];
 var _diInvRawRows=[];
 var _diInvMapping={};
 var DI_INV_FIELDS=[
-  {key:'model',label:'Model Number',req:true,aliases:['model','model number','model#','sku']},
-  {key:'name',label:'Description',req:true,aliases:['description','name','desc','product name','product']},
-  {key:'price',label:'Retail Price',req:true,aliases:['price','retail price','retail','sell price','sellprice']},
-  {key:'upc',label:'UPC',req:false,aliases:['upc','barcode','upc code']},
-  {key:'brand',label:'Brand',req:false,aliases:['brand','manufacturer']},
-  {key:'cost',label:'Cost',req:false,aliases:['cost','wholesale','wholesale cost']},
-  {key:'vendor',label:'Vendor',req:false,aliases:['vendor','supplier']},
-  {key:'cat',label:'Department/Category',req:false,aliases:['category','cat','department','dept']},
-  {key:'serialTracked',label:'Serial Tracked',req:false,aliases:['serial tracked','serialtracked','sn tracked','tracks serial']},
-  {key:'reorderPt',label:'Min Quantity',req:false,aliases:['min qty','min quantity','min','reorder pt','reorder point','reorderpt','minimum']},
-  {key:'reorderQty',label:'Reorder Quantity',req:false,aliases:['reorder qty','reorderqty','reorder quantity','order qty']},
-  {key:'qty',label:'Initial Quantity',req:false,aliases:['qty','stock','quantity','on hand','stock qty']}
+  {key:'model',label:'Model Number',req:true,aliases:['model','modelnumber','model number','model#','modelno','model no','item model']},
+  {key:'name',label:'Description',req:true,aliases:['description','desc','name','product name','product','item description','item name','long description']},
+  {key:'price',label:'Retail Price',req:true,aliases:['price','retailprice','retail price','retail','sell price','sellprice','msrp','list price','list']},
+  {key:'upc',label:'UPC',req:false,aliases:['upc','barcode','gtin','upc code','upc#','ean']},
+  {key:'brand',label:'Brand',req:false,aliases:['brand','manufacturer','mfg','mfr','maker']},
+  {key:'cost',label:'Cost',req:false,aliases:['cost','wholesale','wholesale cost','unit cost','unitcost','our cost']},
+  {key:'vendor',label:'Vendor',req:false,aliases:['vendor','supplier','distributor']},
+  {key:'sku',label:'PLU / SKU',req:false,aliases:['sku','plu','item#','item number','itemnum','plu#']},
+  {key:'cat',label:'Department / Category',req:false,aliases:['category','cat','department','dept','product category','type']},
+  {key:'serialTracked',label:'Serial Tracked',req:false,aliases:['serial tracked','serialtracked','sn tracked','tracks serial','serialized','track serial']},
+  {key:'reorderPt',label:'Min Quantity',req:false,aliases:['min qty','min quantity','min','reorder pt','reorder point','reorderpt','minimum','min stock']},
+  {key:'reorderQty',label:'Reorder Quantity',req:false,aliases:['reorder qty','reorderqty','reorder quantity','order qty','reorder']},
+  {key:'qty',label:'Qty / Stock',req:false,aliases:['qty','quantity','stock','stock qty','on hand','onhand','inventory','count']}
 ];
 
 function loadInvMapping(){try{return JSON.parse(localStorage.getItem('di-inv-mapping')||'{}');}catch(e){return{};}}
@@ -1184,28 +1185,60 @@ function saveInvMapping(){try{localStorage.setItem('di-inv-mapping',JSON.stringi
 
 async function diHandleInvFile(file){
   if(!file)return;
-  var text=await file.text();
-  var lines=text.split(/\r?\n/).filter(Boolean);
-  if(lines.length<2){toast('File is empty','error');return;}
-  _diInvHeaders=lines[0].split(',').map(function(h){return h.trim().replace(/^"|"$/g,'');});
-  _diInvRawRows=[];
-  for(var i=1;i<lines.length;i++){
-    var cols=lines[i].split(',').map(function(c){return c.trim().replace(/^"|"$/g,'');});
-    _diInvRawRows.push(cols);
+  var isExcel=file.name.match(/\.(xlsx|xls)$/i);
+  _diInvHeaders=[];_diInvRawRows=[];
+  if(isExcel){
+    if(!window.XLSX){toast('Excel library loading — try again','error');return;}
+    var arrayBuffer=await file.arrayBuffer();
+    var wb=window.XLSX.read(arrayBuffer,{type:'array'});
+    var sheet=wb.Sheets[wb.SheetNames[0]];
+    var rows=window.XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+    if(!rows.length){toast('File is empty','error');return;}
+    _diInvHeaders=rows[0].map(function(h){return String(h||'').trim();});
+    for(var i=1;i<rows.length;i++){
+      var r=rows[i];
+      // Skip blank rows
+      if(r.every(function(c){return !String(c||'').trim();}))continue;
+      _diInvRawRows.push(r.map(function(c){return String(c==null?'':c).trim();}));
+    }
+  }else{
+    var text=await file.text();
+    var lines=text.split(/\r?\n/).filter(Boolean);
+    if(lines.length<2){toast('File is empty','error');return;}
+    // Simple CSV parser that handles quoted values with commas
+    var parseCsvLine=function(line){
+      var out=[],cur='',inQ=false;
+      for(var c=0;c<line.length;c++){
+        var ch=line[c];
+        if(ch==='"'){if(inQ&&line[c+1]==='"'){cur+='"';c++;}else inQ=!inQ;}
+        else if(ch===','&&!inQ){out.push(cur);cur='';}
+        else cur+=ch;
+      }
+      out.push(cur);
+      return out.map(function(x){return x.trim();});
+    };
+    _diInvHeaders=parseCsvLine(lines[0]);
+    for(var i=1;i<lines.length;i++){
+      var cols=parseCsvLine(lines[i]);
+      _diInvRawRows.push(cols);
+    }
   }
-  // Build initial mapping: check saved prefs, then auto-detect by alias
+  // Build initial mapping: check saved prefs, then auto-detect by alias (case-insensitive + normalize)
+  var normalize=function(s){return String(s||'').toLowerCase().replace(/[\s_\-#.]+/g,'');};
   var saved=loadInvMapping();
   _diInvMapping={};
   DI_INV_FIELDS.forEach(function(f){
     // Try saved mapping first
     if(saved[f.key]&&_diInvHeaders.indexOf(saved[f.key])>=0){_diInvMapping[f.key]=saved[f.key];return;}
-    // Auto-detect by alias
+    // Auto-detect by alias (normalized)
+    var normalizedAliases=f.aliases.map(normalize);
     for(var i=0;i<_diInvHeaders.length;i++){
-      var h=_diInvHeaders[i].toLowerCase();
-      if(f.aliases.indexOf(h)>=0){_diInvMapping[f.key]=_diInvHeaders[i];return;}
+      var nh=normalize(_diInvHeaders[i]);
+      if(normalizedAliases.indexOf(nh)>=0){_diInvMapping[f.key]=_diInvHeaders[i];return;}
     }
     _diInvMapping[f.key]='';
   });
+  console.log('Auto-mapped columns:',_diInvMapping);
   showInvMappingScreen();
 }
 
@@ -1227,40 +1260,53 @@ function showInvMappingScreen(){
     h+='<td style="font-size:10px;color:var(--gray-3);font-family:monospace;">'+sample+'</td></tr>';
   });
   h+='</tbody></table></div>';
-  // Validate required
-  var missingReq=DI_INV_FIELDS.filter(function(f){return f.req&&!_diInvMapping[f.key];}).map(function(f){return f.label;});
+  // Validate required — show default value inputs for missing required fields
+  var missingReq=DI_INV_FIELDS.filter(function(f){return f.req&&!_diInvMapping[f.key];});
   if(missingReq.length){
-    h+='<div style="margin-top:10px;padding:8px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;font-size:11px;color:#991b1b;">Missing required field'+(missingReq.length>1?'s':'')+': <strong>'+missingReq.join(', ')+'</strong></div>';
+    h+='<div style="margin-top:12px;padding:12px 14px;background:#fffbeb;border-left:3px solid #eab308;border-radius:6px;">';
+    h+='<div style="font-size:11px;font-weight:700;color:#713f12;margin-bottom:8px;">'+missingReq.length+' required field'+(missingReq.length>1?'s':'')+' not found in CSV — provide a default value or leave blank to flag as needing attention:</div>';
+    missingReq.forEach(function(f){
+      var defVal=window._diInvDefaults&&window._diInvDefaults[f.key]||'';
+      var placeholder=f.key==='price'?'0.00 (flags as Needs Pricing)':f.key==='name'?'(use Model Number as fallback)':'Default value';
+      var inputType=f.key==='price'?'number step="0.01"':'text';
+      h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;">';
+      h+='<span style="font-weight:700;min-width:120px;color:#713f12;">'+f.label+':</span>';
+      h+='<input type="'+inputType+'" value="'+defVal+'" oninput="window._diInvDefaults=window._diInvDefaults||{};window._diInvDefaults[\''+f.key+'\']=this.value;" placeholder="'+placeholder+'" style="flex:1;font-size:11px;padding:5px 8px;border:1px solid #fcd34d;border-radius:4px;"/>';
+      h+='</div>';
+    });
+    h+='</div>';
   }
   h+='<div style="display:flex;gap:8px;margin-top:12px;">';
-  h+='<button class="primary-btn" onclick="proceedToInvPreview()" '+(missingReq.length?'disabled style="opacity:0.5;cursor:not-allowed;"':'')+'>Continue to Preview</button>';
-  h+='<button class="ghost-btn" onclick="_diInvRawRows=[];_diInvHeaders=[];document.getElementById(\'di-inv-preview\').style.display=\'none\';">Cancel</button>';
+  h+='<button class="primary-btn" onclick="proceedToInvPreview()">Continue to Preview</button>';
+  h+='<button class="ghost-btn" onclick="_diInvRawRows=[];_diInvHeaders=[];window._diInvDefaults={};document.getElementById(\'di-inv-preview\').style.display=\'none\';">Cancel</button>';
   h+='</div></div>';
   document.getElementById('di-inv-preview').innerHTML=h;
   document.getElementById('di-inv-preview').style.display='block';
 }
 
 function proceedToInvPreview(){
-  var missingReq=DI_INV_FIELDS.filter(function(f){return f.req&&!_diInvMapping[f.key];});
-  if(missingReq.length)return;
   saveInvMapping();
+  var defaults=window._diInvDefaults||{};
   // Build rows using mapping
   _diInvRows=[];
-  var newCount=0,updateCount=0;
+  var newCount=0,updateCount=0,needsPricing=0;
   var newBrands={},newVendors={};
   var existingBrands={};(adminBrands||[]).forEach(function(b){existingBrands[(b||'').toLowerCase()]=true;});
   var existingVendors={};(adminVendors||[]).forEach(function(v){if(v.name)existingVendors[v.name.toLowerCase()]=true;});
   var errors=[];
   _diInvRawRows.forEach(function(cols,rowIdx){
     var getVal=function(key){
-      var col=_diInvMapping[key];if(!col)return '';
-      var ci=_diInvHeaders.indexOf(col);if(ci<0)return '';
-      return (cols[ci]||'').trim();
+      var col=_diInvMapping[key];if(!col)return defaults[key]||'';
+      var ci=_diInvHeaders.indexOf(col);if(ci<0)return defaults[key]||'';
+      var v=(cols[ci]||'').trim();
+      return v||defaults[key]||'';
     };
     var model=getVal('model');
-    var name=getVal('name');
+    var name=getVal('name')||model; // fallback to model if no name
     var price=parseFloat(getVal('price'))||0;
-    if(!model||!name){errors.push('Row '+(rowIdx+2)+': missing model or description');return;}
+    if(!model){errors.push('Row '+(rowIdx+2)+': missing model number');return;}
+    var flagNeedsPricing=price<=0;
+    if(flagNeedsPricing)needsPricing++;
     var brand=getVal('brand');
     var vendor=getVal('vendor');
     if(brand&&!existingBrands[brand.toLowerCase()])newBrands[brand]=true;
@@ -1268,12 +1314,12 @@ function proceedToInvPreview(){
     var existing=PRODUCTS.find(function(p){return (p.model||'').toLowerCase()===model.toLowerCase()||(p.sku||'').toLowerCase()===model.toLowerCase();});
     _diInvRows.push({
       model:model,name:name,brand:brand,vendor:vendor,
-      upc:getVal('upc'),cat:getVal('cat'),
+      upc:getVal('upc'),cat:getVal('cat'),sku:getVal('sku'),
       cost:parseFloat(getVal('cost'))||0,price:price,
       reorderPt:parseInt(getVal('reorderPt'))||null,
       reorderQty:parseInt(getVal('reorderQty'))||null,
       serialTracked:getVal('serialTracked'),qty:parseInt(getVal('qty'))||0,
-      isUpdate:!!existing
+      isUpdate:!!existing,needsPricing:flagNeedsPricing
     });
     if(existing)updateCount++;else newCount++;
   });
@@ -1289,6 +1335,7 @@ function proceedToInvPreview(){
   h+='<div style="padding:10px 14px;background:#faf5ff;border:1px solid #c4b5fd;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#5b21b6;text-transform:uppercase;">New Vendors</div><div style="font-size:20px;font-weight:800;color:#7c3aed;">'+newVendorList.length+'</div>'+(newVendorList.length?'<div style="font-size:10px;color:#5b21b6;margin-top:2px;">'+newVendorList.slice(0,5).join(', ')+(newVendorList.length>5?' +'+(newVendorList.length-5)+' more':'')+' — add contact details later</div>':'')+'</div>';
   h+='</div>';
   if(errors.length){h+='<div style="padding:8px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;margin-bottom:10px;font-size:11px;color:#991b1b;max-height:80px;overflow:auto;"><strong>'+errors.length+' row'+(errors.length===1?'':'s')+' will be skipped:</strong><br/>'+errors.slice(0,8).join('<br/>')+(errors.length>8?'<br/>... +'+(errors.length-8)+' more':'')+'</div>';}
+  if(needsPricing){h+='<div style="padding:8px 12px;background:#fffbeb;border-left:3px solid #eab308;border-radius:4px;margin-bottom:10px;font-size:11px;color:#713f12;"><strong>'+needsPricing+' product'+(needsPricing===1?'':'s')+' will be flagged as Needs Pricing</strong> — no price in file. You can set prices later in Inventory.</div>';}
   h+='<div style="max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-bottom:10px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model</th><th>Name</th><th>Brand</th><th>Vendor</th><th style="text-align:right;">Price</th><th>Status</th></tr></thead><tbody>';
   _diInvRows.slice(0,15).forEach(function(r){h+='<tr><td>'+r.model+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.name+'</td><td>'+r.brand+'</td><td>'+r.vendor+'</td><td style="text-align:right;">$'+(r.price||0).toFixed(2)+'</td><td style="font-weight:700;color:'+(r.isUpdate?'#2563eb':'#16a34a')+';">'+(r.isUpdate?'Update':'New')+'</td></tr>';});
   if(_diInvRows.length>15)h+='<tr><td colspan="6" style="text-align:center;color:var(--gray-3);font-style:italic;">... and '+(_diInvRows.length-15)+' more rows</td></tr>';
@@ -1325,13 +1372,16 @@ async function diConfirmInv(){
     if(p){
       if(r.name)p.name=r.name;if(r.brand)p.brand=r.brand;if(r.cat)p.cat=r.cat;
       if(r.upc)p.upc=r.upc;
+      if(r.sku)p.sku=r.sku;
       if(r.cost)p.cost=r.cost;if(r.price)p.price=r.price;if(r.vendor)p.vendor=r.vendor;
       if(r.reorderPt!=null)p.reorderPt=r.reorderPt;
       if(r.reorderQty!=null)p.reorderQty=r.reorderQty;
       if(r.qty)p.stock=(p.stock||0)+r.qty;
+      if(r.needsPricing)p.needsPricing=true;else if(r.price>0)delete p.needsPricing;
       updated++;
     }else{
-      PRODUCTS.push({id:PRODUCTS.length+200+added,model:r.model,sku:r.model,name:r.name,brand:r.brand,cat:r.cat,price:r.price,cost:r.cost,stock:r.qty,sold:0,reorderPt:r.reorderPt||2,reorderQty:r.reorderQty||3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:r.serialTracked.toLowerCase()==='false'||r.serialTracked==='0'?false:true,vendor:r.vendor,upc:r.upc||'',serialPool:[]});
+      var st=String(r.serialTracked||'').toLowerCase();
+      PRODUCTS.push({id:PRODUCTS.length+200+added,model:r.model,sku:r.sku||r.model,name:r.name,brand:r.brand,cat:r.cat,price:r.price,cost:r.cost,stock:r.qty,sold:0,reorderPt:r.reorderPt||2,reorderQty:r.reorderQty||3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:st==='false'||st==='0'||st==='no'?false:true,vendor:r.vendor,upc:r.upc||'',serialPool:[],needsPricing:r.needsPricing||false});
       added++;
     }
   });
@@ -1733,27 +1783,147 @@ function cleanSerialAndFlag(rawSerial){
   return{serial:sn,condition:conditions.join(', ')};
 }
 
+// Client-side PDF text extraction + SmartTouch format parser
+async function diExtractPdfText(file){
+  if(!window.pdfjsLib)throw new Error('PDF library not loaded');
+  var arrayBuffer=await file.arrayBuffer();
+  var pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  var loadingEl=document.getElementById('di-serial-loading');
+  var pages=[];
+  for(var i=1;i<=pdf.numPages;i++){
+    if(loadingEl)loadingEl.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Parsing page '+i+' of '+pdf.numPages+'...';
+    var page=await pdf.getPage(i);
+    var content=await page.getTextContent();
+    // Group text items by y-coordinate (line) then sort by x
+    var lines={};
+    content.items.forEach(function(item){
+      var y=Math.round(item.transform[5]);
+      if(!lines[y])lines[y]=[];
+      lines[y].push({x:item.transform[4],text:item.str});
+    });
+    var keys=Object.keys(lines).map(Number).sort(function(a,b){return b-a;});
+    keys.forEach(function(y){
+      lines[y].sort(function(a,b){return a.x-b.x;});
+      pages.push(lines[y].map(function(i){return i.str;}).join(' '));
+    });
+    pages.push(''); // page separator
+  }
+  return pages.join('\n');
+}
+
+function diParseSmartTouchSerials(text){
+  // SmartTouch format:
+  // Header: may mention brand name near top
+  // MODEL# PLU#
+  // SERIAL# INVOICE# MM-DD-YYYY NOT SPECIFIED $COST
+  // Optional prefix on serial: "dented ", "used ", etc
+  var lines=text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+  // Detect brand from top of file (first 5 lines)
+  var brand='';
+  var brandMatch=text.match(/(?:Brand|BRAND|Manufacturer)\s*[:=]?\s*([A-Za-z][A-Za-z0-9 &.\-]{2,40})/);
+  if(brandMatch)brand=brandMatch[1].trim();
+  // Common brand keywords in SmartTouch reports
+  var commonBrands=['Whirlpool','Maytag','KitchenAid','Amana','LG','Samsung','GE','Frigidaire','Electrolux','Bosch','Sonos','Weber','Traeger','Sealy','Serta','Stearns','Tempur'];
+  if(!brand){
+    for(var i=0;i<Math.min(lines.length,10);i++){
+      for(var j=0;j<commonBrands.length;j++){
+        var re=new RegExp('\\b'+commonBrands[j]+'\\b','i');
+        if(re.test(lines[i])){brand=commonBrands[j];break;}
+      }
+      if(brand)break;
+    }
+  }
+
+  var models=[];
+  var currentModel=null;
+  // Serial line regex: optional condition prefix + serial + invoice# + date + "NOT SPECIFIED" + $cost
+  // Example: "CF0201673 6761 01-20-2026 NOT SPECIFIED $562.00"
+  // With prefix: "dented CF0201673 6761 01-20-2026 NOT SPECIFIED $562.00"
+  var serialRe=/^(?:(dented|used|damaged|scratched|open\s*box|return|demo|floor\s*model|refurbished|refurb)\s+)?([A-Za-z0-9][A-Za-z0-9\-_]{3,})\s+(\d+)\s+(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\s+(?:NOT\s+SPECIFIED|NOT SPECIFIED|[A-Z ]+)\s+\$?([\d,]+(?:\.\d{1,2})?)/i;
+  // Model line regex: model number (alphanumeric, typically all caps or mixed) + PLU (numeric)
+  // Example: "WTW6157PB 21895"
+  var modelRe=/^([A-Z][A-Z0-9][A-Z0-9\-_\/.]{2,25})\s+(\d{3,8})\s*$/;
+
+  lines.forEach(function(line){
+    // Try serial first
+    var sm=line.match(serialRe);
+    if(sm&&currentModel){
+      var condition=sm[1]?(sm[1].charAt(0).toUpperCase()+sm[1].slice(1).toLowerCase()):'';
+      var cost=parseFloat(sm[5].replace(/,/g,''))||0;
+      // Normalize date YYYY-MM-DD
+      var dParts=sm[4].split(/[-\/]/);
+      var dateStr='';
+      if(dParts.length===3){
+        var mm=dParts[0].padStart(2,'0');
+        var dd=dParts[1].padStart(2,'0');
+        var yyyy=dParts[2].length===2?('20'+dParts[2]):dParts[2];
+        dateStr=yyyy+'-'+mm+'-'+dd;
+      }
+      currentModel.serials.push({serial:sm[2],invoice:sm[3],date:dateStr,cost:cost,condition:condition});
+      return;
+    }
+    // Try model header
+    var mm=line.match(modelRe);
+    if(mm){
+      currentModel={model:mm[1],plu:mm[2],serials:[]};
+      models.push(currentModel);
+      return;
+    }
+  });
+
+  // Filter out empty models
+  models=models.filter(function(m){return m.serials.length>0;});
+  return{brand:brand,models:models};
+}
+
 async function diHandleSerialFile(file){
   if(!file)return;
-  document.getElementById('di-serial-loading').style.display='block';
+  var loadingEl=document.getElementById('di-serial-loading');
+  loadingEl.style.display='block';
   document.getElementById('di-serial-preview').style.display='none';
   try{
-    var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
-    var prompt='Extract ALL serial numbers from this SmartTouch POS Serial Number Report by Brand. Return JSON only: '
-      +'{"brand":"Brand Name","models":[{"model":"MODEL#","plu":"","serials":[{"serial":"SN123","invoice":"INV/PO#","date":"YYYY-MM-DD","cost":0}]}]}. '
-      +'Keep any prefixes like "dented", "used", "damaged", "open box" in the serial field exactly as shown. JSON only, no explanation.';
-    var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:file.type||'application/pdf',data:b64}},{type:'text',text:prompt}]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:8000});
-    var match=data.content[0].text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('Could not parse AI response');
-    var parsed=JSON.parse(match[0]);
+    if(!file.type.match(/pdf/i)&&!file.name.match(/\.pdf$/i)){
+      throw new Error('Please upload a PDF file');
+    }
+    // Step 1: extract text from PDF client-side
+    loadingEl.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Extracting PDF text...';
+    var text=await diExtractPdfText(file);
+    console.log('Extracted '+text.length+' chars from PDF. Preview:',text.slice(0,500));
+    // Step 2: parse SmartTouch format client-side
+    loadingEl.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Parsing serial numbers...';
+    var parsed=diParseSmartTouchSerials(text);
+    var totalSerials=(parsed.models||[]).reduce(function(s,m){return s+m.serials.length;},0);
+    console.log('Parser found '+parsed.models.length+' models, '+totalSerials+' serials. Brand:',parsed.brand);
+    // Step 3: fallback to Claude API if no serials found
+    if(totalSerials===0){
+      console.warn('Client-side parser found 0 serials. Text dump (first 2000 chars):',text.slice(0,2000));
+      loadingEl.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #fcd34d;border-top-color:#d97706;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Pattern match found no serials — trying AI fallback...';
+      try{
+        var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
+        var prompt='Extract ALL serial numbers from this SmartTouch POS Serial Number Report by Brand. Return JSON only: {"brand":"Brand Name","models":[{"model":"MODEL#","plu":"","serials":[{"serial":"SN123","invoice":"INV/PO#","date":"YYYY-MM-DD","cost":0}]}]}. Keep any prefixes like "dented", "used", "damaged", "open box" in the serial field exactly as shown. JSON only, no explanation.';
+        var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:prompt}]}];
+        var data=await claudeApiCall({messages:msgs,max_tokens:8000});
+        var m=data.content[0].text.match(/\{[\s\S]*\}/);
+        if(m)parsed=JSON.parse(m[0]);
+      }catch(apiErr){
+        console.error('AI fallback failed:',apiErr);
+      }
+    }
+    var finalSerialCount=(parsed.models||[]).reduce(function(s,m){return s+m.serials.length;},0);
+    if(finalSerialCount===0){
+      document.getElementById('di-serial-preview').innerHTML='<div style="padding:14px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;"><strong>Could not parse file</strong> — please verify this is a SmartTouch Serial Number Report by Brand.<br/><br/><button class="ghost-btn" onclick="document.querySelector(\'#di-serial-preview\').style.display=\'none\';" style="margin-top:8px;">Try Another File</button> <button class="ghost-btn" onclick="console.log(\'Check console for PDF text dump\')" style="margin-top:8px;">Show Debug Info</button></div>';
+      document.getElementById('di-serial-preview').style.display='block';
+      loadingEl.style.display='none';
+      return;
+    }
     _diSerialParsed={file:file.name,data:parsed};
     diShowSerialPreview();
   }catch(e){
-    document.getElementById('di-serial-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;">Import failed: '+e.message+'</div>';
+    console.error('Serial import error:',e);
+    document.getElementById('di-serial-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;"><strong>Import failed:</strong> '+e.message+'<br/><button class="ghost-btn" onclick="document.getElementById(\'di-serial-preview\').style.display=\'none\';" style="margin-top:8px;">Try Again</button></div>';
     document.getElementById('di-serial-preview').style.display='block';
   }
-  document.getElementById('di-serial-loading').style.display='none';
+  loadingEl.style.display='none';
 }
 
 function diShowSerialPreview(){
@@ -1768,10 +1938,12 @@ function diShowSerialPreview(){
     if(!prod&&unmatchedModels.indexOf(m.model)<0)unmatchedModels.push(m.model);
     (m.serials||[]).forEach(function(s){
       totalSerials++;
-      var clean=cleanSerialAndFlag(s.serial);
-      var entry={model:m.model,plu:m.plu||'',serial:clean.serial,condition:clean.condition,invoice:s.invoice||'',date:s.date||'',cost:parseFloat(s.cost)||0,matched:!!prod};
+      // Use pre-parsed condition if client-side parser set it, otherwise detect from serial string
+      var serialClean=s.serial||'';var condition=s.condition||'';
+      if(!condition){var clean=cleanSerialAndFlag(serialClean);serialClean=clean.serial;condition=clean.condition;}
+      var entry={model:m.model,plu:m.plu||'',serial:serialClean,condition:condition,invoice:s.invoice||'',date:s.date||'',cost:parseFloat(s.cost)||0,matched:!!prod};
       allSerials.push(entry);
-      if(clean.condition)conditionSerials.push(entry);
+      if(condition)conditionSerials.push(entry);
     });
   });
 
