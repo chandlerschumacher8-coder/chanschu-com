@@ -1118,9 +1118,10 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="view" id="view-inventory">
 <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
 <div class="inv-subtabs">
-<button class="inv-subtab active" onclick="switchInvTab('stock',this)">Stock</button>
+<button class="inv-subtab active" onclick="switchInvTab('stock',this)">Products</button>
 <button class="inv-subtab" onclick="switchInvTab('ordering',this)">Ordering</button>
-<button class="inv-subtab" onclick="switchInvTab('receiving',this)">Receiving</button>
+<button class="inv-subtab" onclick="switchInvTab('purchaseorders',this)">Purchase Orders</button>
+<button class="inv-subtab" onclick="switchInvTab('receiving',this)">Receive Inventory</button>
 </div>
 <!-- SUB: STOCK -->
 <div class="inv-sub-panel active" id="inv-sub-stock">
@@ -1171,6 +1172,22 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <button class="reorder-submit" onclick="submitPO()">Submit Purchase Order</button>
 <div class="po-history" id="po-history-section"></div>
 </div>
+</div>
+</div>
+<!-- SUB: PURCHASE ORDERS -->
+<div class="inv-sub-panel" id="inv-sub-purchaseorders">
+<div style="flex:1;overflow:auto;padding:14px 16px;background:#f8fafc;">
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+<div style="display:flex;gap:4px;">
+<button class="inv-toggle-btn active" id="po-tab-open" onclick="poSwitchView('open')">Open POs</button>
+<button class="inv-toggle-btn" id="po-tab-history" onclick="poSwitchView('history')">PO History</button>
+</div>
+<input class="inp" id="po-search" placeholder="Search vendor, PO#, date..." oninput="renderPOList()" style="max-width:280px;font-size:12px;padding:6px 10px;"/>
+<button class="inv-btn" style="margin-left:auto;" onclick="openNewPO()">+ New PO</button>
+<button class="inv-btn" onclick="exportPOHistoryCSV()" id="po-export-csv" style="display:none;">Export CSV</button>
+<button class="inv-btn" onclick="exportPOHistoryPDF()" id="po-export-pdf" style="display:none;">Export PDF</button>
+</div>
+<div id="po-list-content"></div>
 </div>
 </div>
 <!-- SUB: RECEIVING -->
@@ -1934,6 +1951,30 @@ POS Settings
 <div class="modal-footer" style="justify-content:space-between;gap:10px;">
 <button class="ghost-btn" onclick="closeChecklist()">Go Back</button>
 <button class="primary-btn" id="chk-complete-btn" onclick="checklistComplete()" disabled style="opacity:0.5;cursor:not-allowed;">Complete Sale</button>
+</div>
+</div>
+</div>
+
+<!-- NEW / EDIT PO MODAL -->
+<div class="modal-bg" id="po-modal">
+<div class="modal" style="max-width:800px;width:95%;">
+<div class="modal-hdr"><div class="modal-title" id="po-modal-title">New Purchase Order</div><button class="modal-close" onclick="closeModal('po-modal')">&#x2715;</button></div>
+<div class="modal-body" style="max-height:72vh;overflow-y:auto;padding:16px;">
+<input type="hidden" id="po-edit-id"/>
+<div class="frow">
+<div class="field"><label>Vendor <span class="req">*</span></label><select class="sel" id="po-vendor"><option value="">Select...</option></select></div>
+<div class="field"><label>Expected Delivery Date</label><input class="inp" id="po-expected" type="date"/></div>
+</div>
+<div style="margin-top:10px;"><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Line Items</label></div>
+<div id="po-items-list" style="margin-top:6px;"></div>
+<button class="ghost-btn" onclick="poAddItemRow()" style="margin-top:6px;">+ Add Item</button>
+<div class="field" style="margin-top:12px;"><label>Notes</label><textarea class="txta" id="po-notes" rows="2" placeholder="Terms, special instructions..."></textarea></div>
+<div style="margin-top:12px;padding:10px 14px;background:#f9fafb;border-radius:8px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Total Cost</span><span id="po-total" style="font-size:20px;font-weight:700;color:#1f2937;">$0.00</span></div>
+</div>
+<div class="modal-footer" style="gap:8px;">
+<button class="ghost-btn" onclick="closeModal('po-modal')">Cancel</button>
+<button class="ghost-btn" onclick="savePOAndPrint()">Save &amp; Print</button>
+<button class="primary-btn" onclick="savePOFromModal()">Save PO</button>
 </div>
 </div>
 </div>
@@ -4522,7 +4563,7 @@ function nav(viewId,tabEl){
   updateAIChips();
   if(viewId==='delivery'){delLoadData();truckMapInit();}
   if(viewId==='service'){svcLoadJobs();}
-  if(viewId==='inventory'){renderInventory();if(invSubTab==='ordering')renderReorder();if(invSubTab==='receiving')renderReceiving();}
+  if(viewId==='inventory'){renderInventory();if(invSubTab==='ordering')renderReorder();if(invSubTab==='receiving')renderReceiving();if(invSubTab==='purchaseorders')renderPOList();}
   if(viewId==='dashboard'){renderDashboard();}
   if(viewId==='orders'){renderOrders();}
   if(viewId==='timeclock'){tcInit();}
@@ -4539,6 +4580,7 @@ function switchInvTab(tab,btn){
   if(tab==='stock')renderInventory();
   if(tab==='ordering')renderReorder();
   if(tab==='receiving')renderReceiving();
+  if(tab==='purchaseorders')renderPOList();
 }
 
 // ══════════════════════════════════════════════

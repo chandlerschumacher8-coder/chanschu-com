@@ -1410,6 +1410,242 @@ async function savePOs(){
 }
 
 // ══════════════════════════════════════════════
+// PURCHASE ORDERS TAB — new format + new PO creation
+// ══════════════════════════════════════════════
+var _poView='open'; // 'open' or 'history'
+var _poMonthCounters={}; // YYYYMM -> count
+
+function nextPOId(){
+  var now=new Date();
+  var ym=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0');
+  // Find highest existing number for this month
+  var existing=purchaseOrders.filter(function(p){return p.id&&p.id.indexOf('PO-'+ym+'-')===0;});
+  var maxN=0;
+  existing.forEach(function(p){var n=parseInt(p.id.split('-')[2]);if(n>maxN)maxN=n;});
+  return 'PO-'+ym+'-'+String(maxN+1).padStart(3,'0');
+}
+
+function poSwitchView(v){
+  _poView=v;
+  document.getElementById('po-tab-open').classList.toggle('active',v==='open');
+  document.getElementById('po-tab-history').classList.toggle('active',v==='history');
+  var exp=document.getElementById('po-export-csv');if(exp)exp.style.display=v==='history'?'':'none';
+  var exp2=document.getElementById('po-export-pdf');if(exp2)exp2.style.display=v==='history'?'':'none';
+  renderPOList();
+}
+
+function renderPOList(){
+  var el=document.getElementById('po-list-content');if(!el)return;
+  var q=(document.getElementById('po-search')||{}).value||'';q=q.toLowerCase();
+  var list;
+  if(_poView==='open'){
+    list=purchaseOrders.filter(function(po){return po.status==='Pending'||po.status==='Partially Received'||po.status==='Awaiting Invoice';});
+  }else{
+    list=purchaseOrders.filter(function(po){return po.status==='Received'||po.status==='Cancelled';});
+  }
+  if(q)list=list.filter(function(po){return (po.vendor||'').toLowerCase().indexOf(q)>=0||(po.id||'').toLowerCase().indexOf(q)>=0||(po.date||'').indexOf(q)>=0;});
+  list.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+
+  if(!list.length){el.innerHTML='<div style="text-align:center;padding:40px;color:#9ca3af;">No '+(_poView==='open'?'open POs':'PO history')+' yet</div>';return;}
+
+  if(_poView==='open'){
+    // Card layout
+    el.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;">'+list.map(function(po){
+      var statusColor=po.status==='Pending'?'#2563eb':po.status==='Partially Received'?'#ea580c':'#7c3aed';
+      var bgColor=po.status==='Pending'?'#dbeafe':po.status==='Partially Received'?'#ffedd5':'#ede9fe';
+      return '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
+        +'<div><div style="font-size:13px;font-weight:700;color:#1f2937;">'+po.id+'</div><div style="font-size:12px;color:#6b7280;">'+(po.vendor||'—')+'</div></div>'
+        +'<span style="font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;background:'+bgColor+';color:'+statusColor+';">'+po.status+'</span>'
+        +'</div>'
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;color:#4b5563;margin-bottom:8px;">'
+        +'<div><span style="color:#9ca3af;">Created:</span> '+new Date(po.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</div>'
+        +'<div><span style="color:#9ca3af;">Expected:</span> '+(po.expectedDate?new Date(po.expectedDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'—')+'</div>'
+        +'<div><span style="color:#9ca3af;">Items:</span> '+(po.items||[]).length+'</div>'
+        +'<div style="font-weight:700;color:#1f2937;"><span style="color:#9ca3af;font-weight:400;">Total:</span> '+fmt(po.totalCost||0)+'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:6px;">'
+        +'<button class="ghost-btn" style="flex:1;font-size:10px;padding:5px 8px;border-color:#86efac;color:#16a34a;" onclick="poReceive(\''+po.id+'\')">Receive</button>'
+        +'<button class="ghost-btn" style="flex:1;font-size:10px;padding:5px 8px;" onclick="poEdit(\''+po.id+'\')">Edit</button>'
+        +'<button class="ghost-btn" style="flex:1;font-size:10px;padding:5px 8px;border-color:#fca5a5;color:#dc2626;" onclick="poCancel(\''+po.id+'\')">Cancel</button>'
+        +'</div></div>';
+    }).join('')+'</div>';
+  }else{
+    // Table
+    var h='<table class="admin-table" style="font-size:11px;"><thead><tr><th>PO #</th><th>Vendor</th><th>Created</th><th>Received</th><th style="text-align:center;">Items</th><th style="text-align:right;">Total</th><th>Status</th><th style="width:80px;"></th></tr></thead><tbody>';
+    list.forEach(function(po){
+      var sc=po.status==='Received'?'#dcfce7':'#fee2e2';
+      var stc=po.status==='Received'?'#16a34a':'#dc2626';
+      h+='<tr><td style="font-weight:600;">'+po.id+'</td><td>'+(po.vendor||'—')+'</td><td>'+new Date(po.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</td><td>'+(po.receivedDate?new Date(po.receivedDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—')+'</td><td style="text-align:center;">'+((po.items||[]).length)+'</td><td style="text-align:right;font-weight:600;">'+fmt(po.totalCost||0)+'</td><td><span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;background:'+sc+';color:'+stc+';">'+po.status+'</span></td><td><button class="admin-card-btn edit" onclick="poViewReadOnly(\''+po.id+'\')">View</button></td></tr>';
+    });
+    h+='</tbody></table>';
+    el.innerHTML=h;
+  }
+}
+
+// ═══ PO CREATE / EDIT ═══
+function openNewPO(){
+  document.getElementById('po-edit-id').value='';
+  document.getElementById('po-modal-title').textContent='New Purchase Order';
+  document.getElementById('po-vendor').value='';
+  document.getElementById('po-expected').value='';
+  document.getElementById('po-notes').value='';
+  // Populate vendor dropdown
+  var sel=document.getElementById('po-vendor');sel.innerHTML='<option value="">Select...</option>';
+  (typeof adminVendors!=='undefined'?adminVendors:[]).forEach(function(v){sel.innerHTML+='<option value="'+v.name+'">'+v.name+'</option>';});
+  // Clear items + add one blank row
+  document.getElementById('po-items-list').innerHTML='';
+  poAddItemRow();
+  poUpdateTotal();
+  openModal('po-modal');
+}
+
+function poEdit(id){
+  var po=purchaseOrders.find(function(p){return p.id===id;});if(!po)return;
+  openNewPO();
+  document.getElementById('po-edit-id').value=id;
+  document.getElementById('po-modal-title').textContent='Edit PO '+id;
+  document.getElementById('po-vendor').value=po.vendor||'';
+  document.getElementById('po-expected').value=po.expectedDate||'';
+  document.getElementById('po-notes').value=po.notes||'';
+  document.getElementById('po-items-list').innerHTML='';
+  (po.items||[]).forEach(function(it){poAddItemRow(it);});
+  poUpdateTotal();
+}
+
+function poAddItemRow(prefill){
+  var list=document.getElementById('po-items-list');
+  var idx=list.children.length;
+  var row=document.createElement('div');
+  row.style.cssText='display:grid;grid-template-columns:1fr 60px 90px 100px 28px;gap:6px;align-items:center;margin-bottom:6px;';
+  row.innerHTML='<select class="sel po-item-prod" onchange="poItemProdChange(this)" style="font-size:11px;padding:6px 8px;"><option value="">Select product...</option></select>'
+    +'<input class="inp po-item-qty" type="number" value="'+(prefill?prefill.qtyOrdered:1)+'" min="1" oninput="poUpdateTotal()" style="font-size:11px;padding:6px 8px;text-align:center;"/>'
+    +'<input class="inp po-item-cost" type="number" step="0.01" value="'+(prefill?prefill.unitCost:0)+'" oninput="poUpdateTotal()" style="font-size:11px;padding:6px 8px;text-align:right;"/>'
+    +'<div class="po-item-ext" style="font-size:11px;text-align:right;font-weight:600;">$0.00</div>'
+    +'<button class="ghost-btn" onclick="this.parentElement.remove();poUpdateTotal();" style="padding:4px 8px;font-size:14px;">&#x2715;</button>';
+  list.appendChild(row);
+  // Populate product dropdown
+  var sel=row.querySelector('.po-item-prod');
+  PRODUCTS.filter(function(p){return p.active!==false;}).forEach(function(p){
+    var opt=document.createElement('option');
+    opt.value=p.id;opt.textContent=(p.model||p.sku||'')+' — '+p.name;
+    opt.dataset.cost=p.cost||0;opt.dataset.model=p.model||p.sku||'';opt.dataset.name=p.name;
+    sel.appendChild(opt);
+  });
+  if(prefill&&prefill.productId){sel.value=prefill.productId;}
+  poUpdateTotal();
+}
+
+function poItemProdChange(sel){
+  var row=sel.parentElement;
+  var opt=sel.options[sel.selectedIndex];
+  if(opt&&opt.dataset.cost){row.querySelector('.po-item-cost').value=opt.dataset.cost;}
+  poUpdateTotal();
+}
+
+function poUpdateTotal(){
+  var total=0;
+  document.querySelectorAll('#po-items-list > div').forEach(function(row){
+    var q=parseFloat(row.querySelector('.po-item-qty').value)||0;
+    var c=parseFloat(row.querySelector('.po-item-cost').value)||0;
+    var ext=q*c;total+=ext;
+    row.querySelector('.po-item-ext').textContent=fmt(ext);
+  });
+  document.getElementById('po-total').textContent=fmt(total);
+}
+
+function collectPOFromForm(){
+  var vendor=document.getElementById('po-vendor').value;
+  if(!vendor){toast('Select a vendor','error');return null;}
+  var items=[];
+  document.querySelectorAll('#po-items-list > div').forEach(function(row){
+    var sel=row.querySelector('.po-item-prod');
+    var prodId=parseInt(sel.value);if(!prodId)return;
+    var opt=sel.options[sel.selectedIndex];
+    var qty=parseInt(row.querySelector('.po-item-qty').value)||1;
+    var cost=parseFloat(row.querySelector('.po-item-cost').value)||0;
+    items.push({productId:prodId,model:opt.dataset.model||'',name:opt.dataset.name||'',qtyOrdered:qty,qtyReceived:0,unitCost:cost});
+  });
+  if(!items.length){toast('Add at least one item','error');return null;}
+  var totalCost=items.reduce(function(s,i){return s+i.qtyOrdered*i.unitCost;},0);
+  return{vendor:vendor,expectedDate:document.getElementById('po-expected').value||'',notes:document.getElementById('po-notes').value.trim(),items:items,totalCost:totalCost};
+}
+
+async function savePOFromModal(){
+  var data=collectPOFromForm();if(!data)return;
+  var editId=document.getElementById('po-edit-id').value;
+  if(editId){
+    var po=purchaseOrders.find(function(p){return p.id===editId;});if(!po)return;
+    po.vendor=data.vendor;po.expectedDate=data.expectedDate;po.notes=data.notes;po.items=data.items;po.totalCost=data.totalCost;
+    toast('PO '+editId+' updated','success');
+  }else{
+    var poId=nextPOId();
+    purchaseOrders.unshift({id:poId,vendor:data.vendor,expectedDate:data.expectedDate,notes:data.notes,items:data.items,totalCost:data.totalCost,date:new Date().toISOString(),status:'Pending',receivedDate:null,receivedBy:null,createdBy:currentEmployee?currentEmployee.name:'Admin'});
+    toast('PO '+poId+' created','success');
+  }
+  await savePOs();closeModal('po-modal');renderPOList();
+}
+
+async function savePOAndPrint(){
+  await savePOFromModal();
+  // Print the most recent PO
+  var po=purchaseOrders[0];if(po)printPO(po.id);
+}
+
+function poCancel(id){
+  if(!confirm('Cancel PO '+id+'? This cannot be undone.'))return;
+  var po=purchaseOrders.find(function(p){return p.id===id;});if(!po)return;
+  po.status='Cancelled';po.cancelledAt=new Date().toISOString();po.cancelledBy=currentEmployee?currentEmployee.name:'Admin';
+  savePOs();renderPOList();toast('PO cancelled','info');
+}
+
+function poReceive(id){
+  // Switch to Receive Inventory sub-tab and select this PO
+  switchInvTab('receiving');
+  setTimeout(function(){recvSelectPO(id);},100);
+}
+
+function poViewReadOnly(id){
+  var po=purchaseOrders.find(function(p){return p.id===id;});if(!po)return;
+  var win=window.open('','_blank','width=800,height=900');
+  var itemRows=(po.items||[]).map(function(it){return '<tr><td>'+(it.model||'')+'</td><td>'+it.name+'</td><td style="text-align:center;">'+it.qtyOrdered+'</td><td style="text-align:center;">'+(it.qtyReceived||0)+'</td><td style="text-align:right;">$'+(it.unitCost||0).toFixed(2)+'</td><td style="text-align:right;">$'+((it.qtyOrdered||0)*(it.unitCost||0)).toFixed(2)+'</td></tr>';}).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>PO '+po.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}body{padding:20px;font-size:12px;}h1{font-size:18px;margin-bottom:4px;}.hdr{display:flex;align-items:center;gap:14px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;}.hdr img{max-width:180px;}table{width:100%;border-collapse:collapse;margin:10px 0;}th{background:#222;color:#fff;font-size:10px;padding:6px 10px;text-align:left;}td{padding:8px 10px;border-bottom:1px solid #ddd;}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;font-size:12px;}.grid>div{padding:8px 12px;background:#f8fafc;border-radius:6px;}.grid label{font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;display:block;}.total{text-align:right;font-size:16px;font-weight:700;margin-top:10px;}@media print{@page{margin:10mm;}}</style></head><body>';
+  html+='<div class="hdr"><img src="'+(window.DC_APPLIANCE_LOGO||'')+'" onerror="this.style.display=\'none\'"/><div><h1>Purchase Order</h1><div style="font-weight:700;font-size:14px;">'+po.id+'</div><div style="font-size:10px;color:#666;">DC Appliance &middot; 620-371-6417</div></div></div>';
+  html+='<div class="grid"><div><label>Vendor</label><div><strong>'+po.vendor+'</strong></div></div><div><label>Status</label><div>'+po.status+'</div></div><div><label>Created</label><div>'+new Date(po.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div><div><label>Expected</label><div>'+(po.expectedDate||'—')+'</div></div>';
+  if(po.receivedDate)html+='<div><label>Received</label><div>'+new Date(po.receivedDate).toLocaleDateString()+'</div></div><div><label>Received By</label><div>'+(po.receivedBy||'—')+'</div></div>';
+  html+='</div>';
+  html+='<table><thead><tr><th>Model#</th><th>Description</th><th style="text-align:center;">Ordered</th><th style="text-align:center;">Received</th><th style="text-align:right;">Unit Cost</th><th style="text-align:right;">Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>';
+  html+='<div class="total">Total: $'+(po.totalCost||0).toFixed(2)+'</div>';
+  if(po.notes)html+='<div style="margin-top:12px;padding:10px 14px;background:#fffbeb;border-left:4px solid #eab308;font-size:11px;"><strong>Notes:</strong> '+po.notes+'</div>';
+  html+='</body></html>';
+  win.document.write(html);win.document.close();
+}
+
+function printPO(id){poViewReadOnly(id);setTimeout(function(){try{window.focus();}catch(e){}},300);}
+
+function exportPOHistoryCSV(){
+  var list=purchaseOrders.filter(function(p){return p.status==='Received'||p.status==='Cancelled';});
+  if(!list.length){toast('No history to export','error');return;}
+  var csv='PO#,Vendor,Created,Received,Items,Total,Status\n';
+  list.forEach(function(po){csv+='"'+po.id+'","'+(po.vendor||'')+'","'+po.date.slice(0,10)+'","'+(po.receivedDate?po.receivedDate.slice(0,10):'')+'",'+((po.items||[]).length)+','+(po.totalCost||0).toFixed(2)+',"'+po.status+'"\n';});
+  var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='po-history.csv';a.click();
+  toast('CSV exported','success');
+}
+
+function exportPOHistoryPDF(){
+  var list=purchaseOrders.filter(function(p){return p.status==='Received'||p.status==='Cancelled';});
+  if(!list.length){toast('No history to export','error');return;}
+  var win=window.open('','_blank');
+  var total=list.reduce(function(s,p){return s+(p.totalCost||0);},0);
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>PO History</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}body{padding:16px;font-size:11px;}.hdr{text-align:center;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;}.hdr img{max-width:180px;margin-bottom:6px;}table{width:100%;border-collapse:collapse;}th{background:#222;color:#fff;font-size:10px;padding:6px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #ddd;}.total{text-align:right;font-weight:700;font-size:13px;margin-top:12px;}@media print{@page{margin:10mm;}}</style></head><body>';
+  html+='<div class="hdr"><img src="'+(window.DC_APPLIANCE_LOGO||'')+'" onerror="this.style.display=\'none\'"/><h1 style="font-size:16px;">DC Appliance — PO History</h1><div style="font-size:10px;color:#666;">'+new Date().toLocaleDateString()+'</div></div>';
+  html+='<table><thead><tr><th>PO#</th><th>Vendor</th><th>Created</th><th>Received</th><th style="text-align:center;">Items</th><th style="text-align:right;">Total</th><th>Status</th></tr></thead><tbody>';
+  list.forEach(function(po){html+='<tr><td>'+po.id+'</td><td>'+(po.vendor||'')+'</td><td>'+po.date.slice(0,10)+'</td><td>'+(po.receivedDate?po.receivedDate.slice(0,10):'')+'</td><td style="text-align:center;">'+((po.items||[]).length)+'</td><td style="text-align:right;">$'+(po.totalCost||0).toFixed(2)+'</td><td>'+po.status+'</td></tr>';});
+  html+='</tbody></table><div class="total">Total: $'+total.toFixed(2)+'</div></body></html>';
+  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
+}
+
+// ══════════════════════════════════════════════
 // RECEIVING TAB
 // ══════════════════════════════════════════════
 function renderReceiving(){renderRecvList();if(selectedPO)renderRecvDetail();}
@@ -1483,18 +1719,36 @@ async function recvHandleSlip(file){
 }
 async function recvComplete(){
   if(!selectedPO)return;
-  if(!confirm('Complete receiving for '+selectedPO.id+'? Stock will be updated.'))return;
+  // Calculate if this is partial or full
+  var allFull=true;var anyReceived=false;var newlyReceived=0;
   selectedPO.items.forEach(function(it){
-    var recv=recvQtys[it.productId]||0;
-    it.qtyReceived=recv;
-    var p=PRODUCTS.find(function(x){return x.id===it.productId;});
-    if(p)p.stock+=recv;
+    var nowRecv=recvQtys[it.productId]||0;
+    var prevRecv=it.qtyReceived||0;
+    if(nowRecv<it.qtyOrdered)allFull=false;
+    if(nowRecv>0)anyReceived=true;
+    if(nowRecv>prevRecv)newlyReceived+=(nowRecv-prevRecv);
   });
-  selectedPO.status='Received';selectedPO.receivedDate=new Date().toISOString();selectedPO.receivedBy='Admin';
-  await savePOs();
-  await saveProducts();
+  if(!anyReceived){toast('Enter received quantities first','error');return;}
+  var msg=allFull?'Complete receiving for '+selectedPO.id+'? All items will be marked received and stock updated.':'Mark '+selectedPO.id+' as Partially Received? Stock will update for received items only. PO stays open.';
+  if(!confirm(msg))return;
+  selectedPO.items.forEach(function(it){
+    var nowRecv=recvQtys[it.productId]||0;
+    var prevRecv=it.qtyReceived||0;
+    var delta=nowRecv-prevRecv;
+    it.qtyReceived=nowRecv;
+    if(delta>0){
+      var p=PRODUCTS.find(function(x){return x.id===it.productId;});
+      if(p)p.stock=(p.stock||0)+delta;
+    }
+  });
+  selectedPO.status=allFull?'Received':'Partially Received';
+  if(allFull){selectedPO.receivedDate=new Date().toISOString();}
+  selectedPO.receivedBy=currentEmployee?currentEmployee.name:'Admin';
+  if(!selectedPO.receiveLog)selectedPO.receiveLog=[];
+  selectedPO.receiveLog.push({ts:new Date().toISOString(),by:selectedPO.receivedBy,units:newlyReceived});
+  await savePOs();await saveProducts();
   renderRecvDetail();renderRecvList();refreshSaleView();renderInventory();
-  toast(selectedPO.id+' received - stock updated','success');
+  toast(selectedPO.id+': '+(allFull?'fully received':'partially received')+' — '+newlyReceived+' units added to stock','success');
 }
 
 // ══════════════════════════════════════════════
