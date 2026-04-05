@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Shop All Products — DC Appliance</title>
+<meta name="description" content="Browse refrigerators, washers, dryers, dishwashers, ranges, mattresses, TVs and more. Live inventory from DC Appliance."/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/dc.css"/>
+</head>
+<body>
+
+<header class="dc-header" data-dc-header></header>
+
+<!-- PAGE BANNER -->
+<section class="dc-page-banner">
+  <div class="dc-page-banner-inner">
+    <h1 id="shop-title">Shop All Products</h1>
+    <p id="shop-subtitle">Live inventory · Free local delivery on orders over $499</p>
+  </div>
+</section>
+<nav class="dc-breadcrumb"><a href="index.html">Home</a><span>/</span><span id="shop-crumb">Shop</span></nav>
+
+<div class="dc-shop-wrap">
+  <!-- FILTERS -->
+  <aside class="dc-filters">
+    <div class="dc-filter-group">
+      <div class="dc-filter-title">Department</div>
+      <div id="dc-filter-dept"></div>
+    </div>
+    <div class="dc-filter-group">
+      <div class="dc-filter-title">Brand</div>
+      <div id="dc-filter-brand"></div>
+    </div>
+    <div class="dc-filter-group">
+      <div class="dc-filter-title">Price Range</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="dc-price-min" class="dc-range-input" placeholder="Min" min="0"/>
+        <span style="color:var(--text-muted);font-size:12px;">to</span>
+        <input type="number" id="dc-price-max" class="dc-range-input" placeholder="Max" min="0"/>
+      </div>
+      <button class="dc-btn dc-btn-ghost" onclick="applyPriceRange()" style="width:100%;margin-top:8px;padding:8px;font-size:12px;">Apply</button>
+    </div>
+    <div class="dc-filter-group">
+      <div class="dc-filter-title">Availability</div>
+      <label class="dc-filter-option">
+        <input type="checkbox" id="dc-filter-instock" onchange="applyFilters()"/>
+        In Stock Only
+      </label>
+    </div>
+    <div class="dc-filter-group">
+      <button class="dc-btn dc-btn-ghost" onclick="clearFilters()" style="width:100%;padding:10px;font-size:13px;">Clear All Filters</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dc-shop-main">
+    <div class="dc-shop-toolbar">
+      <div class="dc-shop-count"><strong id="dc-count">0</strong> products</div>
+      <div class="dc-shop-sort">
+        <label for="dc-sort">Sort:</label>
+        <select id="dc-sort" onchange="applyFilters()">
+          <option value="featured">Featured</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="newest">Newest</option>
+          <option value="name">Name A-Z</option>
+        </select>
+      </div>
+    </div>
+    <div class="dc-prod-grid" id="dc-prod-grid"></div>
+    <div class="dc-pager" id="dc-pager"></div>
+  </main>
+</div>
+
+<footer class="dc-footer" data-dc-footer></footer>
+
+<script src="assets/dc.js"></script>
+<script>
+var shopState = { dept: '', brand: '', q: '', inStock: false, priceMin: null, priceMax: null, sort: 'featured', page: 1, perPage: 24 };
+
+function parseUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  shopState.dept = params.get('dept') || '';
+  shopState.brand = params.get('brand') || '';
+  shopState.q = params.get('q') || '';
+  shopState.inStock = params.get('instock') === '1';
+  shopState.priceMin = params.get('min') ? parseFloat(params.get('min')) : null;
+  shopState.priceMax = params.get('max') ? parseFloat(params.get('max')) : null;
+  shopState.sort = params.get('sort') || 'featured';
+  shopState.page = parseInt(params.get('page')) || 1;
+}
+
+function updateUrl() {
+  const params = new URLSearchParams();
+  if (shopState.dept) params.set('dept', shopState.dept);
+  if (shopState.brand) params.set('brand', shopState.brand);
+  if (shopState.q) params.set('q', shopState.q);
+  if (shopState.inStock) params.set('instock', '1');
+  if (shopState.priceMin != null) params.set('min', shopState.priceMin);
+  if (shopState.priceMax != null) params.set('max', shopState.priceMax);
+  if (shopState.sort !== 'featured') params.set('sort', shopState.sort);
+  if (shopState.page > 1) params.set('page', shopState.page);
+  const qs = params.toString();
+  window.history.replaceState({}, '', 'shop.html' + (qs ? '?' + qs : ''));
+}
+
+function matchesQuery(p, q) {
+  const lq = q.toLowerCase();
+  return (p.name || '').toLowerCase().includes(lq)
+    || (p.brand || '').toLowerCase().includes(lq)
+    || (p.model || '').toLowerCase().includes(lq)
+    || (p.sku || '').toLowerCase().includes(lq)
+    || (p.cat || '').toLowerCase().includes(lq);
+}
+
+function getFilteredProducts() {
+  let list = window.DC_PRODUCTS.slice();
+  if (shopState.dept) {
+    const dept = window.DC_DEPARTMENTS.find(d => d.slug === shopState.dept);
+    if (dept) list = list.filter(p => dept.cats.some(c => c.toUpperCase() === (p.cat || '').toUpperCase()));
+  }
+  if (shopState.brand) list = list.filter(p => (p.brand || '').toLowerCase() === shopState.brand.toLowerCase());
+  if (shopState.q) list = list.filter(p => matchesQuery(p, shopState.q));
+  if (shopState.inStock) list = list.filter(p => dcGetStock(p) > 0);
+  if (shopState.priceMin != null) list = list.filter(p => (p.price || 0) >= shopState.priceMin);
+  if (shopState.priceMax != null) list = list.filter(p => (p.price || 0) <= shopState.priceMax);
+  // Sort
+  if (shopState.sort === 'price-asc') list.sort((a,b) => (a.price||0) - (b.price||0));
+  else if (shopState.sort === 'price-desc') list.sort((a,b) => (b.price||0) - (a.price||0));
+  else if (shopState.sort === 'name') list.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  else if (shopState.sort === 'newest') list.sort((a,b) => (b.id||0) - (a.id||0));
+  else if (shopState.sort === 'deals') list.sort((a,b) => (b.price||0) - (a.price||0)); // deals = highest-value first
+  // Featured default: in-stock first, featured flag first
+  else list.sort((a,b) => {
+    const af = a.featured ? 1 : 0, bf = b.featured ? 1 : 0;
+    if (af !== bf) return bf - af;
+    const as = dcGetStock(a) > 0 ? 1 : 0, bs = dcGetStock(b) > 0 ? 1 : 0;
+    if (as !== bs) return bs - as;
+    return 0;
+  });
+  return list;
+}
+
+function renderProducts() {
+  const list = getFilteredProducts();
+  const count = document.getElementById('dc-count');
+  count.textContent = list.length;
+  const grid = document.getElementById('dc-prod-grid');
+  if (!list.length) {
+    grid.innerHTML = '<div class="dc-shop-empty" style="grid-column:1/-1;">No products match your filters. <a href="#" onclick="event.preventDefault();clearFilters()" style="color:var(--navy);font-weight:700;">Clear filters</a></div>';
+    document.getElementById('dc-pager').innerHTML = '';
+    return;
+  }
+  // Pagination
+  const total = list.length;
+  const totalPages = Math.ceil(total / shopState.perPage);
+  if (shopState.page > totalPages) shopState.page = 1;
+  const start = (shopState.page - 1) * shopState.perPage;
+  const pageItems = list.slice(start, start + shopState.perPage);
+  grid.innerHTML = pageItems.map(dcProductCardHtml).join('');
+  // Pager
+  const pager = document.getElementById('dc-pager');
+  if (totalPages > 1) {
+    let h = '<button onclick="goToPage('+(shopState.page-1)+')" '+(shopState.page<=1?'disabled':'')+'>‹ Prev</button>';
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - shopState.page) <= 1) {
+        h += '<button class="'+(i===shopState.page?'active':'')+'" onclick="goToPage('+i+')">'+i+'</button>';
+      } else if (Math.abs(i - shopState.page) === 2) {
+        h += '<button disabled>…</button>';
+      }
+    }
+    h += '<button onclick="goToPage('+(shopState.page+1)+')" '+(shopState.page>=totalPages?'disabled':'')+'>Next ›</button>';
+    pager.innerHTML = h;
+  } else pager.innerHTML = '';
+}
+
+function goToPage(n) { shopState.page = n; updateUrl(); renderProducts(); window.scrollTo(0,0); }
+
+function buildFilterSidebar() {
+  // Department filter
+  const deptHost = document.getElementById('dc-filter-dept');
+  const deptCounts = {};
+  window.DC_PRODUCTS.forEach(p => {
+    const d = window.DC_DEPARTMENTS.find(dd => dd.cats.some(c => c.toUpperCase() === (p.cat||'').toUpperCase()));
+    if (d) deptCounts[d.slug] = (deptCounts[d.slug] || 0) + 1;
+  });
+  deptHost.innerHTML = window.DC_DEPARTMENTS.filter(d => deptCounts[d.slug]).map(d => {
+    const active = shopState.dept === d.slug;
+    return `<label class="dc-filter-option ${active?'active':''}">
+      <input type="radio" name="dc-dept" value="${d.slug}" ${active?'checked':''} onchange="shopState.dept=this.value;shopState.page=1;applyFilters();"/>
+      ${d.name}<span class="dc-filter-count">${deptCounts[d.slug]}</span>
+    </label>`;
+  }).join('') + (shopState.dept ? '<label class="dc-filter-option" style="margin-top:6px;"><input type="radio" name="dc-dept" value="" onchange="shopState.dept=\'\';shopState.page=1;applyFilters();"/>All Departments</label>' : '');
+
+  // Brand filter
+  const brandHost = document.getElementById('dc-filter-brand');
+  const brandCounts = {};
+  window.DC_PRODUCTS.forEach(p => { if (p.brand) brandCounts[p.brand] = (brandCounts[p.brand]||0) + 1; });
+  const brands = Object.keys(brandCounts).sort();
+  brandHost.innerHTML = brands.slice(0, 15).map(b => {
+    const active = shopState.brand.toLowerCase() === b.toLowerCase();
+    return `<label class="dc-filter-option ${active?'active':''}">
+      <input type="radio" name="dc-brand" value="${b}" ${active?'checked':''} onchange="shopState.brand=this.value;shopState.page=1;applyFilters();"/>
+      ${b}<span class="dc-filter-count">${brandCounts[b]}</span>
+    </label>`;
+  }).join('') + (shopState.brand ? '<label class="dc-filter-option" style="margin-top:6px;"><input type="radio" name="dc-brand" value="" onchange="shopState.brand=\'\';shopState.page=1;applyFilters();"/>All Brands</label>' : '');
+
+  // Price range
+  document.getElementById('dc-price-min').value = shopState.priceMin != null ? shopState.priceMin : '';
+  document.getElementById('dc-price-max').value = shopState.priceMax != null ? shopState.priceMax : '';
+  document.getElementById('dc-filter-instock').checked = shopState.inStock;
+  document.getElementById('dc-sort').value = shopState.sort;
+}
+
+function applyPriceRange() {
+  const min = document.getElementById('dc-price-min').value;
+  const max = document.getElementById('dc-price-max').value;
+  shopState.priceMin = min ? parseFloat(min) : null;
+  shopState.priceMax = max ? parseFloat(max) : null;
+  shopState.page = 1;
+  applyFilters();
+}
+
+function applyFilters() {
+  shopState.inStock = document.getElementById('dc-filter-instock').checked;
+  shopState.sort = document.getElementById('dc-sort').value;
+  updateUrl();
+  renderProducts();
+}
+
+function clearFilters() {
+  shopState = { dept: '', brand: '', q: '', inStock: false, priceMin: null, priceMax: null, sort: 'featured', page: 1, perPage: 24 };
+  updateUrl();
+  buildFilterSidebar();
+  renderProducts();
+}
+
+function updatePageTitle() {
+  let title = 'Shop All Products';
+  let sub = 'Live inventory · Free local delivery on orders over $499';
+  let crumb = 'Shop';
+  if (shopState.dept) {
+    const d = window.DC_DEPARTMENTS.find(dd => dd.slug === shopState.dept);
+    if (d) { title = d.name; crumb = d.name; sub = 'Browse our ' + d.name.toLowerCase() + ' inventory'; }
+  }
+  if (shopState.brand) {
+    title = shopState.brand + (shopState.dept ? ' ' + title : '');
+    crumb = shopState.brand;
+  }
+  if (shopState.q) { title = 'Search: "' + shopState.q + '"'; crumb = 'Search'; }
+  document.getElementById('shop-title').textContent = title;
+  document.getElementById('shop-subtitle').textContent = sub;
+  document.getElementById('shop-crumb').textContent = crumb;
+  document.title = title + ' — DC Appliance';
+}
+
+async function dcPageInit() {
+  parseUrlParams();
+  updatePageTitle();
+  buildFilterSidebar();
+  renderProducts();
+}
+</script>
+</body>
+</html>

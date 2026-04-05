@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DC Appliance — Appliances, Mattresses, TVs &amp; More in Dodge City, KS</title>
+<meta name="description" content="Shop refrigerators, washers, dryers, dishwashers, ovens, mattresses, TVs and more from DC Appliance. Free local delivery. Family-owned since day one."/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/dc.css"/>
+</head>
+<body>
+
+<header class="dc-header" data-dc-header></header>
+
+<!-- HERO -->
+<section class="dc-hero">
+  <div class="dc-hero-inner">
+    <span class="dc-hero-kicker">Family-owned · Dodge City, KS</span>
+    <h1>Premium Appliances, Real Local Service</h1>
+    <p>Shop top brands like Whirlpool, LG, Samsung and Maytag. Free local delivery and install — we call you to schedule.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="shop.html" class="dc-btn dc-btn-primary">Shop Now →</a>
+      <a href="shop.html?sort=deals" class="dc-btn dc-btn-outline">View Deals</a>
+    </div>
+  </div>
+</section>
+
+<!-- DEPARTMENTS -->
+<section class="dc-section" id="departments">
+  <div class="dc-section-inner">
+    <div class="dc-section-head">
+      <div>
+        <div class="dc-section-title">Shop by Department</div>
+        <div class="dc-section-sub">Everything for your home — in-stock locally</div>
+      </div>
+      <a href="shop.html" class="dc-section-link">Browse All →</a>
+    </div>
+    <div class="dc-dept-grid" id="dc-dept-grid"></div>
+  </div>
+</section>
+
+<!-- FEATURED PRODUCTS -->
+<section class="dc-section" style="background:var(--bg-soft);">
+  <div class="dc-section-inner">
+    <div class="dc-section-head">
+      <div>
+        <div class="dc-section-title">Featured Products</div>
+        <div class="dc-section-sub">Hand-picked top sellers in stock right now</div>
+      </div>
+      <a href="shop.html" class="dc-section-link">View All →</a>
+    </div>
+    <div class="dc-prod-grid" id="dc-featured-grid"></div>
+  </div>
+</section>
+
+<!-- WHY DC APPLIANCE -->
+<section class="dc-section dc-why">
+  <div class="dc-section-inner">
+    <div class="dc-section-head" style="justify-content:center;text-align:center;">
+      <div>
+        <div class="dc-section-title">Why Shop DC Appliance</div>
+        <div class="dc-section-sub">Service that chain stores can't match</div>
+      </div>
+    </div>
+    <div class="dc-why-grid">
+      <div class="dc-why-item">
+        <div class="dc-why-icon">🚚</div>
+        <div class="dc-why-title">Free Local Delivery</div>
+        <div class="dc-why-desc">Free drop-off in Dodge City on orders over $499. We call to schedule a time that works for you.</div>
+      </div>
+      <div class="dc-why-item">
+        <div class="dc-why-icon">💰</div>
+        <div class="dc-why-title">Price Match Guarantee</div>
+        <div class="dc-why-desc">Find it cheaper at Lowe's or Home Depot? We'll match the price on the spot.</div>
+      </div>
+      <div class="dc-why-item">
+        <div class="dc-why-icon">🏠</div>
+        <div class="dc-why-title">Family Owned</div>
+        <div class="dc-why-desc">Locally owned and operated. Real people who know your neighbors — and remember you next time.</div>
+      </div>
+      <div class="dc-why-item">
+        <div class="dc-why-icon">🔧</div>
+        <div class="dc-why-title">Service Department</div>
+        <div class="dc-why-desc">In-house techs handle warranty work and repairs. Call us first — we'll make it right.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="dc-footer" data-dc-footer></footer>
+
+<script src="assets/dc.js"></script>
+<script>
+async function dcPageInit() {
+  // Render department grid
+  const deptHost = document.getElementById('dc-dept-grid');
+  if (deptHost) {
+    deptHost.innerHTML = window.DC_DEPARTMENTS.map(d => {
+      return `<a href="shop.html?dept=${d.slug}" class="dc-dept-card">
+        <div class="dc-dept-icon">${d.icon}</div>
+        <div class="dc-dept-name">${d.name}</div>
+      </a>`;
+    }).join('');
+  }
+  // Render featured products (top 8 in-stock items sorted by price descending as "hand-picked")
+  const featHost = document.getElementById('dc-featured-grid');
+  if (featHost) {
+    const inStock = window.DC_PRODUCTS.filter(p => (p.stock || 0) > (p.sold || 0) && (p.price || 0) > 0);
+    // Prefer products flagged as featured, fall back to highest-priced in-stock items
+    let featured = inStock.filter(p => p.featured === true);
+    if (featured.length < 8) {
+      const rest = inStock.filter(p => !p.featured).sort((a,b) => (b.price||0) - (a.price||0));
+      featured = featured.concat(rest).slice(0, 8);
+    } else {
+      featured = featured.slice(0, 8);
+    }
+    if (featured.length) {
+      featHost.innerHTML = featured.map(dcProductCardHtml).join('');
+    } else {
+      featHost.innerHTML = '<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--text-muted);">Loading products…</div>';
+    }
+  }
+}
+</script>
+</body>
+</html>
