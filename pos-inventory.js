@@ -290,7 +290,7 @@ function renderOrderDetail(){
   } else {
     actionsHtml='<div class="ood-actions">';
     if(!allDelivered)actionsHtml+='<button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;font-weight:700;" onclick="confirmItemDelivery(\''+o.id+'\')">&#x2713; Confirm Delivery</button>';
-    actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Receipt</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+    actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Invoice</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper Copy</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;" onclick="printBothDocuments(\''+o.id+'\')">Print Both</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   }
   el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+'</div><div class="ood-meta">'+o.customer+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
@@ -364,44 +364,224 @@ function printAddrBlock(label,addr){
   if(!addr||!addr.name)return '';
   return '<div style="margin-bottom:8px;"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:2px;">'+label+'</div><div style="font-weight:700;">'+addr.name+'</div>'+(addr.addr?'<div>'+addr.addr+'</div>':'')+(addr.city?'<div>'+addr.city+(addr.state?', '+addr.state:'')+' '+(addr.zip||'')+'</div>':'')+(addr.phone?'<div>'+addr.phone+'</div>':'')+'</div>';
 }
+// ── SHARED INVOICE DOCUMENT STYLES ──
+var INVOICE_LOGO_PATH='images/dc-appliance-logo-transparent.png';
+function invoiceDocStyles(){
+  return '<style>*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#000;background:#fff;}'
+    +'.doc-page{width:8.5in;min-height:11in;padding:0.4in;position:relative;page-break-after:always;}'
+    +'.doc-page:last-child{page-break-after:auto;}'
+    +'.doc-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}'
+    +'.doc-hdr-left{flex:1;}'
+    +'.doc-logo{max-width:180px;max-height:70px;object-fit:contain;display:block;margin-bottom:4px;}'
+    +'.doc-store-tag{font-size:9px;font-weight:700;color:#333;letter-spacing:1px;margin-top:2px;}'
+    +'.doc-store-addr{font-size:9px;color:#333;line-height:1.35;margin-top:3px;}'
+    +'.doc-hdr-right{width:320px;}'
+    +'.doc-title{font-size:28px;font-weight:800;letter-spacing:2px;text-align:right;margin-bottom:4px;}'
+    +'.doc-info{border:1px solid #000;}'
+    +'.doc-info table{width:100%;border-collapse:collapse;}'
+    +'.doc-info td{padding:3px 6px;font-size:9px;border:1px solid #000;}'
+    +'.doc-info .lbl{font-size:7px;font-weight:700;text-transform:uppercase;color:#555;display:block;}'
+    +'.doc-info .val{font-weight:700;font-size:10px;}'
+    +'.doc-info .big .val{font-size:14px;}'
+    +'.doc-addr-row{display:flex;gap:10px;margin-bottom:6px;}'
+    +'.doc-addr-box{flex:1;border:1px solid #000;padding:6px 8px;}'
+    +'.doc-addr-box .box-lbl{font-size:8px;font-weight:700;text-transform:uppercase;background:#eee;padding:2px 4px;margin:-6px -8px 4px -8px;border-bottom:1px solid #000;}'
+    +'.doc-addr-box .box-name{font-size:11px;font-weight:700;margin-bottom:2px;}'
+    +'.doc-addr-box .box-line{font-size:9px;line-height:1.35;}'
+    +'.doc-cat-bar{background:#222;color:#fff;padding:5px 8px;font-size:9px;font-weight:700;letter-spacing:0.5px;text-align:center;margin-bottom:0;}'
+    +'.doc-items{width:100%;border-collapse:collapse;border:1px solid #000;}'
+    +'.doc-items th{background:#eee;font-size:8px;font-weight:700;text-transform:uppercase;padding:4px 5px;border:1px solid #000;text-align:left;}'
+    +'.doc-items td{padding:5px 5px;border:1px solid #000;font-size:9px;vertical-align:top;}'
+    +'.doc-items .col-c{text-align:center;}.doc-items .col-r{text-align:right;}'
+    +'.doc-watermark{text-align:center;font-size:11px;font-weight:700;color:#bbb;padding:20px 0;letter-spacing:3px;}'
+    +'.doc-bot{display:flex;gap:10px;margin-top:10px;}'
+    +'.doc-terms{flex:1;font-size:7px;line-height:1.4;color:#333;}'
+    +'.doc-terms p{margin-bottom:3px;}'
+    +'.doc-totals{width:260px;border:1px solid #000;}'
+    +'.doc-totals .tot-row{display:flex;justify-content:space-between;padding:3px 8px;border-bottom:1px solid #000;font-size:10px;}'
+    +'.doc-totals .tot-row:last-child{border-bottom:none;font-weight:700;font-size:12px;background:#eee;}'
+    +'.doc-totals .tot-row.grand{font-size:14px;font-weight:800;background:#ddd;}'
+    +'.doc-paid{font-size:36px;font-weight:800;color:#c00;text-align:center;padding:6px;border:3px solid #c00;transform:rotate(-8deg);margin:6px auto;width:fit-content;letter-spacing:4px;}'
+    +'.doc-ledger{width:100%;border-collapse:collapse;border:1px solid #000;margin-top:6px;}'
+    +'.doc-ledger th{background:#eee;font-size:7px;font-weight:700;text-transform:uppercase;padding:3px 5px;border:1px solid #000;}'
+    +'.doc-ledger td{padding:3px 5px;border:1px solid #000;font-size:8px;}'
+    +'.doc-notes-box{border:1px solid #000;padding:6px 8px;min-height:60px;}'
+    +'.doc-notes-box .box-lbl{font-size:8px;font-weight:700;text-transform:uppercase;background:#eee;padding:2px 4px;margin:-6px -8px 4px -8px;border-bottom:1px solid #000;}'
+    +'.doc-notes-box .box-content{font-size:9px;line-height:1.4;white-space:pre-wrap;}'
+    +'.doc-approval{border:1px solid #000;padding:8px;font-size:9px;line-height:1.6;}'
+    +'.doc-approval p{margin-bottom:4px;}'
+    +'.doc-sig-line{border-bottom:1px solid #000;display:inline-block;min-width:180px;height:14px;margin-left:6px;vertical-align:bottom;}'
+    +'.doc-footer{text-align:center;font-size:24px;font-weight:800;color:#c00;letter-spacing:4px;margin-top:14px;padding-top:8px;border-top:2px solid #000;}'
+    +'.doc-checkbox{width:14px;height:14px;border:1.5px solid #000;display:inline-block;}'
+    +'.doc-store-loc{display:inline-block;padding:3px 10px;border:1px solid #000;font-size:9px;font-weight:700;margin-top:6px;background:#eee;}'
+    +'@media print{@page{size:letter;margin:0;}body{margin:0;}.doc-page{box-shadow:none;margin:0;}.no-print{display:none!important;}}'
+    +'</style>';
+}
+
+function printAddrBox(label,a){
+  if(!a||!a.name)a={name:'',addr:'',city:'',state:'',zip:'',phone:''};
+  return '<div class="doc-addr-box"><div class="box-lbl">'+label+':</div>'
+    +'<div class="box-name">'+(a.name||'')+'</div>'
+    +(a.addr?'<div class="box-line">'+a.addr+'</div>':'')
+    +(a.city||a.state||a.zip?'<div class="box-line">'+[a.city,a.state,a.zip].filter(Boolean).join(', ').replace(/, ([A-Z]{2})/,' $1')+'</div>':'')
+    +(a.phone?'<div class="box-line">'+a.phone+'</div>':'')
+    +(a.cid?'<div class="box-line">CID: '+a.cid+'</div>':'')
+    +'</div>';
+}
+
+function buildInvoiceHeader(o,docTitle){
+  var now=new Date();
+  var printDate=now.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  var invDate=new Date(o.date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'});
+  var delDate=o.deliveryDate?new Date(o.deliveryDate+'T12:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'';
+  var h='<div class="doc-hdr">';
+  h+='<div class="doc-hdr-left"><img class="doc-logo" src="'+INVOICE_LOGO_PATH+'" alt="DC Appliance" onerror="this.style.display=\'none\'"/>';
+  h+='<div class="doc-store-tag">MATTRESS &middot; OUTDOOR &middot; ELECTRONICS</div>';
+  h+='<div class="doc-store-addr">2610 Central Ave, Dodge City, KS 67801<br/>620-371-6417</div></div>';
+  h+='<div class="doc-hdr-right">';
+  h+='<div class="doc-title">'+docTitle+'</div>';
+  h+='<div class="doc-info"><table>';
+  h+='<tr class="big"><td><span class="lbl">Date</span><span class="val">'+invDate+'</span></td><td><span class="lbl">Invoice Number</span><span class="val">'+o.id+'</span></td></tr>';
+  h+='<tr><td><span class="lbl">Salesperson</span><span class="val">'+(o.clerk||'—')+'</span></td><td><span class="lbl">Terms</span><span class="val">'+(o.payment||'—')+'</span></td></tr>';
+  h+='<tr><td><span class="lbl">Print Date</span><span class="val">'+printDate+'</span></td><td><span class="lbl">Del/Pick Up Date</span><span class="val">'+(delDate||'—')+'</span></td></tr>';
+  h+='</table></div></div></div>';
+  return h;
+}
+
+function buildCategoryBar(){
+  return '<div class="doc-cat-bar">APPLIANCES &nbsp;|&nbsp; TV\'S &nbsp;|&nbsp; HOME THEATER &nbsp;|&nbsp; MATTRESSES &nbsp;|&nbsp; HARDWARE &nbsp;|&nbsp; APPLIANCE SERVICE</div>';
+}
+
+function getCustomerPayments(custName){
+  var c=(typeof customers!=='undefined'?customers.find(function(x){return x.name===custName;}):null);
+  return (c&&c.payments)||[];
+}
+
+function getOrderBalance(o){
+  var totalPaid=0;
+  // Check if order has direct payments or if it's paid via status
+  if(o.status==='Paid in Full'||o.payment==='Cash'||o.payment==='Card'||o.payment==='Check')totalPaid=o.total;
+  else if(o.payments)totalPaid=(o.payments||[]).reduce(function(s,p){return s+(p.amount||0);},0);
+  return{paid:totalPaid,balance:o.total-totalPaid};
+}
+
+function buildCustomerInvoiceDoc(o){
+  // Customer invoice items: MODEL# | DESCRIPTION | QTY | PRICE | DISC | EXT PRICE | SERIAL# | S
+  var itemRows=o.items.map(function(i){
+    var disc=i.discount||0;
+    var ext=i.price*i.qty-disc;
+    return '<tr><td>'+(i.model||'')+'</td><td>'+i.name+'</td><td class="col-c">'+i.qty+'</td><td class="col-r">'+fmt(i.price)+'</td><td class="col-r">'+(disc?fmt(disc):'—')+'</td><td class="col-r">'+fmt(ext)+'</td><td>'+(i.serial||'')+'</td><td class="col-c">'+(i.warrantyOffered?'Y':'')+'</td></tr>';
+  }).join('');
+  // Add padding rows so watermark/layout looks consistent
+  var blank=Math.max(0,8-o.items.length);
+  for(var i=0;i<blank;i++)itemRows+='<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+
+  var bal=getOrderBalance(o);
+  var payments=getCustomerPayments(o.customer);
+  // Build ledger rows
+  var ledgerRows='<tr><td>'+new Date(o.date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+'</td><td>Invoice '+o.id+'</td><td class="col-r">'+fmt(o.total)+'</td><td class="col-r">'+fmt(o.total)+'</td></tr>';
+  var running=o.total;
+  payments.forEach(function(p){running-=p.amount;ledgerRows+='<tr><td>'+new Date(p.date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+'</td><td>Payment ('+p.method+')</td><td class="col-r">-'+fmt(p.amount)+'</td><td class="col-r">'+fmt(running)+'</td></tr>';});
+
+  var h='<div class="doc-page">';
+  h+=buildInvoiceHeader(o,'INVOICE');
+  // Sold To / Ship To
+  h+='<div class="doc-addr-row">';
+  h+=printAddrBox('Sold To',o.soldTo||{name:o.customer});
+  h+=printAddrBox('Ship To',(o.shipTo&&o.shipTo.name)?o.shipTo:(o.soldTo||{name:o.customer}));
+  h+='</div>';
+  h+=buildCategoryBar();
+  // Items table
+  h+='<table class="doc-items"><thead><tr><th style="width:12%;">MODEL#</th><th>DESCRIPTION</th><th style="width:6%;" class="col-c">QTY</th><th style="width:9%;" class="col-r">PRICE</th><th style="width:7%;" class="col-r">DISC</th><th style="width:10%;" class="col-r">EXT PRICE</th><th style="width:12%;">SERIAL#</th><th style="width:4%;" class="col-c">S</th></tr></thead><tbody>'+itemRows+'</tbody></table>';
+  h+='<div class="doc-watermark">THANK YOU FOR YOUR BUSINESS!</div>';
+  // Terms + totals
+  h+='<div class="doc-bot">';
+  h+='<div class="doc-terms">';
+  h+='<p><strong>Rebates</strong> must be filled out completely online or mailed in by Customer. Rebates are NOT the store\'s responsibility.</p>';
+  h+='<p><strong>Delivery</strong> — we will make every effort to set up a delivery time that is convenient for you. We will call and set up a date and time for delivery and call before we leave for delivery. We offer Free Drop off in the city limits between the hours of 9am &amp; 5pm, Monday thru Friday.</p>';
+  h+='<p><strong>Measurements</strong> — Customer is responsible for measuring openings and take full responsibility for wrong measurements.</p>';
+  h+='<p><strong>Install</strong> — We will make every effort to do the job properly, but should any additional work be needed, we recommend you contact a licensed contractor. We are not Electricians or Plumbers and do not hook up gas lines or do cabinet or countertop work.</p>';
+  if(o.invoiceNotes)h+='<p style="margin-top:6px;padding:4px 6px;background:#fffbeb;border-left:3px solid #eab308;"><strong>Delivery Instructions:</strong> '+o.invoiceNotes+'</p>';
+  h+='</div>';
+  h+='<div style="width:260px;">';
+  h+='<div class="doc-totals">';
+  h+='<div class="tot-row"><span>Sub-Total:</span><span>'+fmt(o.subtotal)+'</span></div>';
+  h+='<div class="tot-row"><span>Sales Tax:</span><span>'+fmt(o.tax)+'</span></div>';
+  h+='<div class="tot-row grand"><span>Total Sale:</span><span>'+fmt(o.total)+'</span></div>';
+  h+='</div>';
+  if(bal.balance<=0.01)h+='<div class="doc-paid">PAID</div>';
+  else h+='<div style="text-align:right;font-size:14px;font-weight:800;color:#c00;margin-top:6px;">Balance Due: '+fmt(bal.balance)+'</div>';
+  h+='<table class="doc-ledger"><thead><tr><th>DATE</th><th>MEMO</th><th class="col-r">CHG/PMT</th><th class="col-r">BALANCE</th></tr></thead><tbody>'+ledgerRows+'</tbody></table>';
+  h+='</div></div>';
+  h+='<div class="doc-footer">CUSTOMER COPY</div>';
+  h+='</div>';
+  return h;
+}
+
+function buildShipperCopyDoc(o){
+  // Shipper columns: MODEL# | DESCRIPTION | QTY | SERIAL# | S | SHIP DATE | checkbox
+  var itemRows=o.items.map(function(i){
+    var shipDate=i.deliveredAt?new Date(i.deliveredAt).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'}):'';
+    return '<tr><td>'+(i.model||'')+'</td><td>'+i.name+'</td><td class="col-c">'+i.qty+'</td><td>'+(i.serial||'')+'</td><td class="col-c">'+(i.warrantyOffered?'Y':'')+'</td><td>'+shipDate+'</td><td class="col-c"><span class="doc-checkbox"></span></td></tr>';
+  }).join('');
+  var blank=Math.max(0,8-o.items.length);
+  for(var i=0;i<blank;i++)itemRows+='<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td class="col-c"><span class="doc-checkbox"></span></td></tr>';
+
+  var bal=getOrderBalance(o);
+  var h='<div class="doc-page">';
+  h+=buildInvoiceHeader(o,'SHIPPER COPY');
+  h+='<div class="doc-addr-row">';
+  h+=printAddrBox('Sold To',o.soldTo||{name:o.customer});
+  h+=printAddrBox('Ship To',(o.shipTo&&o.shipTo.name)?o.shipTo:(o.soldTo||{name:o.customer}));
+  h+='</div>';
+  h+=buildCategoryBar();
+  h+='<table class="doc-items"><thead><tr><th style="width:14%;">MODEL#</th><th>DESCRIPTION</th><th style="width:6%;" class="col-c">QTY</th><th style="width:15%;">SERIAL#</th><th style="width:5%;" class="col-c">S</th><th style="width:10%;">SHIP DATE</th><th style="width:6%;" class="col-c">✓</th></tr></thead><tbody>'+itemRows+'</tbody></table>';
+  // Two-column bottom
+  h+='<div class="doc-bot" style="margin-top:14px;">';
+  h+='<div style="flex:1;">';
+  h+='<div class="doc-approval">';
+  h+='<p>&bull; Items above have been received.</p>';
+  h+='<p>&bull; This delivery has been completed to my satisfaction.</p>';
+  h+='<p>&bull; No damage to the appliance or the surrounding area has occurred.</p>';
+  h+='<p style="margin-top:12px;">Customer approval: <span class="doc-sig-line" style="min-width:220px;"></span></p>';
+  h+='<p>Date: <span class="doc-sig-line" style="min-width:140px;"></span></p>';
+  h+='</div>';
+  h+='</div>';
+  h+='<div style="width:260px;">';
+  h+='<div class="doc-notes-box"><div class="box-lbl">Delivery Notes / Directions</div><div class="box-content">'+(o.invoiceNotes||o.shipperNotes||'—')+'</div></div>';
+  h+='<div class="doc-store-loc">DODGE CITY</div>';
+  h+='<div class="doc-totals" style="margin-top:8px;">';
+  h+='<div class="tot-row"><span>Sub-Total:</span><span>'+fmt(o.subtotal)+'</span></div>';
+  h+='<div class="tot-row"><span>Sales Tax:</span><span>'+fmt(o.tax)+'</span></div>';
+  h+='<div class="tot-row grand"><span>Total Sale:</span><span>'+fmt(o.total)+'</span></div>';
+  h+='</div>';
+  if(bal.balance<=0.01)h+='<div class="doc-paid" style="font-size:28px;">PAID</div>';
+  h+='</div></div>';
+  h+='<div class="doc-footer">SHIPPER COPY</div>';
+  h+='</div>';
+  return h;
+}
+
 function printInvoice(id){
   var o=orders.find(function(x){return x.id===id;});if(!o)return;
-  var isQuote=o.status==='Quote';
-  var itemRows=o.items.map(function(i){return '<tr><td>'+(i.model||'')+'</td><td>'+i.name+(i.serial?'<div style="font-size:10px;color:#888;">SN: '+i.serial+'</div>':'')+'</td><td style="text-align:center;">'+i.qty+'</td><td style="text-align:right;">'+fmt(Math.abs(i.price))+'</td><td style="text-align:right;">'+fmt(i.price*i.qty)+'</td></tr>';}).join('');
-  var html='<!DOCTYPE html><html><head><title>'+(isQuote?'Quote':'Invoice')+' '+o.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:20px;max-width:800px;margin:0 auto;}h1{font-size:18px;margin-bottom:2px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{background:#222;color:#fff;font-size:10px;text-transform:uppercase;padding:6px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #ddd;}.totals{margin-top:12px;text-align:right;}.totals div{margin:3px 0;font-size:13px;}.totals .grand{font-size:16px;font-weight:700;}.notes{margin-top:16px;padding:10px;background:#f5f5f5;border-left:3px solid #999;font-size:11px;}.inv-msg{margin-top:20px;text-align:center;font-size:13px;font-weight:700;color:#555;padding:12px;border-top:1px solid #ddd;}@media print{@page{margin:10mm;}}</style></head><body>';
-  html+='<div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:12px;"><img src="'+DC_APPLIANCE_LOGO+'" style="max-width:200px;height:auto;object-fit:contain;" alt="DC Appliance"/><div><h1 style="margin-top:8px;">DC Appliance — '+(isQuote?'Quote':'Invoice')+'</h1><div style="font-size:11px;color:#555;">(620) 371-6417 &middot; Dodge City, KS</div></div></div>';
-  // Header info
-  var hdrRight='<div style="text-align:right;font-size:11px;color:#555;">'+(o.taxZone?'Tax: '+o.taxZone+'<br/>':'')+(o.clerk?'Clerk: '+o.clerk+'<br/>':'')+(o.po?'PO#: '+o.po+'<br/>':'')+(o.job?'Job#: '+o.job+'<br/>':'')+'</div>';
-  html+='<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div style="font-size:11px;color:#555;">'+o.id+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div>'+hdrRight+'</div>';
-  // Addresses
-  html+='<div style="display:flex;gap:30px;margin-bottom:12px;">';
-  html+=printAddrBlock('Sold To',o.soldTo||{name:o.customer});
-  if(o.shipTo&&o.shipTo.name)html+=printAddrBlock('Ship To',o.shipTo);
-  html+='</div>';
-  html+='<table><thead><tr><th>Model #</th><th>Description</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Price</th><th style="text-align:right;">Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>';
-  html+='<div class="totals"><div>Subtotal: '+fmt(o.subtotal)+'</div><div>Tax: '+fmt(o.tax)+'</div><div class="grand">Total: '+fmt(o.total)+'</div></div>';
-  if(o.invoiceNotes)html+='<div class="notes"><strong>Notes:</strong> '+o.invoiceNotes+'</div>';
-  if(adminInvoiceMessage)html+='<div class="inv-msg">'+adminInvoiceMessage+'</div>';
-  html+='</body></html>';
-  var win=window.open('','_blank');win.document.write(html);win.document.close();setTimeout(function(){win.print();},300);
+  var win=window.open('','_blank');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildCustomerInvoiceDoc(o)+'</body></html>';
+  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
 }
+
 function printShipperTicket(id){
   var o=orders.find(function(x){return x.id===id;});if(!o)return;
-  var html='<!DOCTYPE html><html><head><title>Shipper Ticket '+o.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,sans-serif;font-size:12px;color:#111;padding:20px;max-width:800px;margin:0 auto;}h1{font-size:18px;margin-bottom:2px;}table{width:100%;border-collapse:collapse;margin:12px 0;}th{background:#222;color:#fff;font-size:10px;text-transform:uppercase;padding:6px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #ddd;}.notes{margin-top:16px;padding:10px;background:#fff3e0;border-left:3px solid #e65100;font-size:11px;}.sn-line{border-bottom:1.5px solid #555;min-width:120px;display:inline-block;height:14px;margin-left:6px;}@media print{@page{margin:10mm;}}</style></head><body>';
-  html+='<div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:12px;"><img src="'+DC_APPLIANCE_LOGO+'" style="max-width:200px;height:auto;object-fit:contain;" alt="DC Appliance"/><div><h1 style="margin-top:8px;">DC Appliance — Shipper Ticket</h1><div style="font-size:11px;color:#555;">INTERNAL — DO NOT GIVE TO CUSTOMER</div></div></div>';
-  // Header
-  html+='<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><div style="font-size:11px;color:#555;">'+o.id+' &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+(o.clerk?' &middot; Clerk: '+o.clerk:'')+'</div></div>';
-  html+='<div style="display:flex;gap:30px;margin-bottom:12px;">';
-  html+=printAddrBlock('Sold To',o.soldTo||{name:o.customer});
-  if(o.shipTo&&o.shipTo.name)html+=printAddrBlock('Ship To',o.shipTo);
-  html+='</div>';
-  html+='<table><thead><tr><th>Model #</th><th>Description</th><th style="text-align:center;">Qty</th><th>Serial #</th></tr></thead><tbody>';
-  o.items.forEach(function(i){html+='<tr><td>'+(i.model||'')+'</td><td>'+i.name+'</td><td style="text-align:center;">'+i.qty+'</td><td>'+(i.serial||'<span class="sn-line"></span>')+'</td></tr>';});
-  html+='</tbody></table>';
-  if(o.shipperNotes)html+='<div class="notes"><strong>Shipper Notes:</strong> '+o.shipperNotes+'</div>';
-  html+='<div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:11px;"><div>Delivered by: <span class="sn-line"></span></div><div>Date: <span class="sn-line"></span></div><div>Customer Signature: <span class="sn-line" style="min-width:180px;"></span></div></div>';
-  html+='</body></html>';
-  var win=window.open('','_blank');win.document.write(html);win.document.close();setTimeout(function(){win.print();},300);
+  var win=window.open('','_blank');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Shipper Copy '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildShipperCopyDoc(o)+'</body></html>';
+  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
+}
+
+function printBothDocuments(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  var win=window.open('','_blank');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice &amp; Shipper '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildCustomerInvoiceDoc(o)+buildShipperCopyDoc(o)+'</body></html>';
+  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
 }
 
 // ══════════════════════════════════════════════
