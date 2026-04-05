@@ -97,8 +97,9 @@ function renderInventory(){
     var isActive=p.active!==false;
     var sold=p.sold||0;
     var availMinusSold=Math.max(0,p.stock-sold);
-    var sc=availMinusSold<=0?'sp-out':availMinusSold<=p.reorderPt?'sp-low':'sp-in';
-    var sl=availMinusSold<=0?'Out of Stock':availMinusSold<=p.reorderPt?'Low Stock':'In Stock';
+    var oversold=sold>p.stock;
+    var sc=oversold?'sp-out':availMinusSold<=0?'sp-out':availMinusSold<=p.reorderPt?'sp-low':'sp-in';
+    var sl=oversold?'Oversold':availMinusSold<=0?'Out of Stock':availMinusSold<=p.reorderPt?'Low Stock':'In Stock';
     var dept=getProductDept(p);
     var badge=hasSearch?'<span class="inv-active-badge '+(isActive?'active-badge':'inactive-badge')+'">'+(isActive?'Active':'Inactive')+'</span>':'';
     var actBtn=isActive?
@@ -1508,10 +1509,12 @@ function renderPOList(){
         +'<div><span style="color:#9ca3af;">Items:</span> '+(po.items||[]).length+'</div>'
         +'<div style="font-weight:700;color:#1f2937;"><span style="color:#9ca3af;font-weight:400;">Total:</span> '+fmt(po.totalCost||0)+'</div>'
         +'</div>'
-        +'<div style="display:flex;gap:6px;">'
-        +'<button class="ghost-btn" style="flex:1;font-size:10px;padding:5px 8px;border-color:#86efac;color:#16a34a;" onclick="poReceive(\''+po.id+'\')">Receive</button>'
-        +'<button class="ghost-btn" style="flex:1;font-size:10px;padding:5px 8px;" onclick="poEdit(\''+po.id+'\')">Edit</button>'
-        +'<button class="ghost-btn" style="flex:1;font-size:10px;padding:5px 8px;border-color:#fca5a5;color:#dc2626;" onclick="poCancel(\''+po.id+'\')">Cancel</button>'
+        +'<div style="display:flex;gap:4px;flex-wrap:wrap;">'
+        +'<button class="ghost-btn" style="flex:1;min-width:60px;font-size:10px;padding:5px 6px;border-color:#86efac;color:#16a34a;" onclick="poReceive(\''+po.id+'\')">Receive</button>'
+        +'<button class="ghost-btn" style="flex:1;min-width:50px;font-size:10px;padding:5px 6px;" onclick="poEdit(\''+po.id+'\')">Edit</button>'
+        +'<button class="ghost-btn" style="flex:1;min-width:50px;font-size:10px;padding:5px 6px;" onclick="printPO(\''+po.id+'\')">Print</button>'
+        +'<button class="ghost-btn" style="flex:1;min-width:60px;font-size:10px;padding:5px 6px;border-color:#c4b5fd;color:#6d28d9;" onclick="poEmailVendor(\''+po.id+'\')">&#x2709; Email</button>'
+        +'<button class="ghost-btn" style="flex:1;min-width:50px;font-size:10px;padding:5px 6px;border-color:#fca5a5;color:#dc2626;" onclick="poCancel(\''+po.id+'\')">Cancel</button>'
         +'</div></div>';
     }).join('')+'</div>';
   }else{
@@ -1651,21 +1654,73 @@ function poReceive(id){
 
 function poViewReadOnly(id){
   var po=purchaseOrders.find(function(p){return p.id===id;});if(!po)return;
+  var vendor=(typeof adminVendors!=='undefined'?adminVendors:[]).find(function(v){return v.name===po.vendor;})||{};
   var win=window.open('','_blank','width=800,height=900');
-  var itemRows=(po.items||[]).map(function(it){return '<tr><td>'+(it.model||'')+'</td><td>'+it.name+'</td><td style="text-align:center;">'+it.qtyOrdered+'</td><td style="text-align:center;">'+(it.qtyReceived||0)+'</td><td style="text-align:right;">$'+(it.unitCost||0).toFixed(2)+'</td><td style="text-align:right;">$'+((it.qtyOrdered||0)*(it.unitCost||0)).toFixed(2)+'</td></tr>';}).join('');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>PO '+po.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}body{padding:20px;font-size:12px;}h1{font-size:18px;margin-bottom:4px;}.hdr{display:flex;align-items:center;gap:14px;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px;}.hdr img{max-width:180px;}table{width:100%;border-collapse:collapse;margin:10px 0;}th{background:#222;color:#fff;font-size:10px;padding:6px 10px;text-align:left;}td{padding:8px 10px;border-bottom:1px solid #ddd;}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;font-size:12px;}.grid>div{padding:8px 12px;background:#f8fafc;border-radius:6px;}.grid label{font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;display:block;}.total{text-align:right;font-size:16px;font-weight:700;margin-top:10px;}@media print{@page{margin:10mm;}}</style></head><body>';
-  html+='<div class="hdr"><img src="'+(window.DC_APPLIANCE_LOGO||'')+'" onerror="this.style.display=\'none\'"/><div><h1>Purchase Order</h1><div style="font-weight:700;font-size:14px;">'+po.id+'</div><div style="font-size:10px;color:#666;">DC Appliance &middot; 620-371-6417</div></div></div>';
-  html+='<div class="grid"><div><label>Vendor</label><div><strong>'+po.vendor+'</strong></div></div><div><label>Status</label><div>'+po.status+'</div></div><div><label>Created</label><div>'+new Date(po.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div><div><label>Expected</label><div>'+(po.expectedDate||'—')+'</div></div>';
-  if(po.receivedDate)html+='<div><label>Received</label><div>'+new Date(po.receivedDate).toLocaleDateString()+'</div></div><div><label>Received By</label><div>'+(po.receivedBy||'—')+'</div></div>';
+  var itemRows=(po.items||[]).map(function(it){var ext=(it.qtyOrdered||0)*(it.unitCost||0);return '<tr><td>'+(it.model||'')+'</td><td>'+it.name+'</td><td style="text-align:center;">'+it.qtyOrdered+'</td><td style="text-align:right;">$'+(it.unitCost||0).toFixed(2)+'</td><td style="text-align:right;font-weight:700;">$'+ext.toFixed(2)+'</td></tr>';}).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>PO '+po.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}body{padding:24px;font-size:12px;color:#111;}.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px;}.top-left img{max-width:200px;max-height:70px;}.top-left .store{font-size:10px;color:#333;margin-top:6px;line-height:1.4;}.top-right{text-align:right;}.top-right h1{font-size:26px;font-weight:800;letter-spacing:2px;margin-bottom:6px;}.top-right .meta{font-size:11px;color:#333;}.top-right .meta strong{font-size:13px;}.vendor-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:14px;}.vendor-box .lbl{font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:4px;}.vendor-box .v-name{font-size:14px;font-weight:700;margin-bottom:2px;}.vendor-box .v-line{font-size:11px;color:#4b5563;line-height:1.4;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#222;color:#fff;font-size:10px;padding:7px 10px;text-align:left;text-transform:uppercase;}td{padding:8px 10px;border-bottom:1px solid #ddd;font-size:11px;}.total-row{display:flex;justify-content:flex-end;margin-bottom:12px;}.total-box{background:#eee;padding:8px 18px;border-radius:6px;font-size:16px;font-weight:800;}.notes{margin-top:10px;padding:10px 14px;background:#fffbeb;border-left:4px solid #eab308;font-size:11px;border-radius:4px;}.sig-block{margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}.sig-line{border-bottom:1.5px solid #000;height:22px;margin-bottom:4px;}.sig-label{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.05em;}@media print{@page{margin:12mm;size:letter;}body{padding:0;}}</style></head><body>';
+  // Header
+  html+='<div class="top"><div class="top-left"><img src="'+(window.DC_APPLIANCE_LOGO||'')+'" onerror="this.style.display=\'none\'" alt="DC Appliance"/><div class="store">DC Appliance<br/>2610 Central Ave, Dodge City, KS 67801<br/>620-371-6417</div></div>';
+  html+='<div class="top-right"><h1>PURCHASE ORDER</h1><div class="meta"><strong>'+po.id+'</strong><br/>Created: '+new Date(po.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'<br/>Expected: '+(po.expectedDate?new Date(po.expectedDate+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'—')+'<br/>Status: '+po.status+'</div></div></div>';
+  // Vendor box
+  html+='<div class="vendor-box"><div class="lbl">Vendor</div><div class="v-name">'+po.vendor+'</div>';
+  if(vendor.repName)html+='<div class="v-line">Rep: '+vendor.repName+'</div>';
+  if(vendor.phone)html+='<div class="v-line">Phone: '+vendor.phone+'</div>';
+  if(vendor.email)html+='<div class="v-line">Email: '+vendor.email+'</div>';
+  if(vendor.accountNum)html+='<div class="v-line">Account #: '+vendor.accountNum+'</div>';
+  if(vendor.paymentTerms)html+='<div class="v-line">Terms: '+vendor.paymentTerms+'</div>';
   html+='</div>';
-  html+='<table><thead><tr><th>Model#</th><th>Description</th><th style="text-align:center;">Ordered</th><th style="text-align:center;">Received</th><th style="text-align:right;">Unit Cost</th><th style="text-align:right;">Total</th></tr></thead><tbody>'+itemRows+'</tbody></table>';
-  html+='<div class="total">Total: $'+(po.totalCost||0).toFixed(2)+'</div>';
-  if(po.notes)html+='<div style="margin-top:12px;padding:10px 14px;background:#fffbeb;border-left:4px solid #eab308;font-size:11px;"><strong>Notes:</strong> '+po.notes+'</div>';
+  // Items table
+  html+='<table><thead><tr><th style="width:16%;">Model #</th><th>Description</th><th style="width:10%;text-align:center;">Qty Ordered</th><th style="width:12%;text-align:right;">Unit Cost</th><th style="width:14%;text-align:right;">Extended Cost</th></tr></thead><tbody>'+itemRows+'</tbody></table>';
+  html+='<div class="total-row"><div class="total-box">Total: $'+(po.totalCost||0).toFixed(2)+'</div></div>';
+  if(po.notes)html+='<div class="notes"><strong>Notes:</strong> '+po.notes+'</div>';
+  // Signature lines
+  html+='<div class="sig-block"><div><div class="sig-line"></div><div class="sig-label">Received By</div></div><div><div class="sig-line"></div><div class="sig-label">Date</div></div></div>';
   html+='</body></html>';
   win.document.write(html);win.document.close();
 }
 
 function printPO(id){poViewReadOnly(id);setTimeout(function(){try{window.focus();}catch(e){}},300);}
+
+async function poEmailVendor(id){
+  var po=purchaseOrders.find(function(p){return p.id===id;});if(!po)return;
+  var vendor=(typeof adminVendors!=='undefined'?adminVendors:[]).find(function(v){return v.name===po.vendor;});
+  var toEmail=vendor&&vendor.email?vendor.email:'';
+  if(!toEmail){
+    toEmail=prompt('Enter vendor email address:','');
+    if(!toEmail||!toEmail.includes('@'))return;
+  }
+  if(!confirm('Send PO '+po.id+' to '+toEmail+'?'))return;
+  // Build email HTML
+  var itemRows=(po.items||[]).map(function(it){var ext=(it.qtyOrdered||0)*(it.unitCost||0);return '<tr><td style="padding:8px 10px;border-bottom:1px solid #eee;">'+(it.model||'')+'</td><td style="padding:8px 10px;border-bottom:1px solid #eee;">'+it.name+'</td><td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:center;">'+it.qtyOrdered+'</td><td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;">$'+(it.unitCost||0).toFixed(2)+'</td><td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">$'+ext.toFixed(2)+'</td></tr>';}).join('');
+  var html='<!DOCTYPE html><html><body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#f5f5f5;">'
+    +'<div style="max-width:700px;margin:0 auto;background:#fff;">'
+    +'<div style="background:#1a2744;padding:20px 28px;color:#fff;"><h1 style="margin:0;font-size:24px;letter-spacing:2px;">PURCHASE ORDER</h1><p style="margin:4px 0 0;font-size:13px;color:#94a3b8;">'+po.id+' &middot; '+new Date(po.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</p></div>'
+    +'<div style="padding:24px 28px;">'
+    +'<p style="font-size:14px;color:#1f2937;">Hi'+(vendor&&vendor.repName?' '+vendor.repName:'')+',</p>'
+    +'<p style="font-size:13px;color:#4b5563;line-height:1.6;">Please process the following purchase order for DC Appliance:</p>'
+    +'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin:16px 0;font-size:12px;">'
+    +'<p style="margin:0 0 4px;"><strong>PO #:</strong> '+po.id+'</p>'
+    +'<p style="margin:0 0 4px;"><strong>Vendor:</strong> '+po.vendor+'</p>'
+    +(vendor&&vendor.accountNum?'<p style="margin:0 0 4px;"><strong>Account #:</strong> '+vendor.accountNum+'</p>':'')
+    +'<p style="margin:0;"><strong>Expected Delivery:</strong> '+(po.expectedDate||'—')+'</p>'
+    +'</div>'
+    +'<table style="width:100%;border-collapse:collapse;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;">'
+    +'<thead><tr><th style="padding:8px 10px;background:#f8fafc;text-align:left;font-size:10px;color:#6b7280;">MODEL #</th><th style="padding:8px 10px;background:#f8fafc;text-align:left;font-size:10px;color:#6b7280;">DESCRIPTION</th><th style="padding:8px 10px;background:#f8fafc;text-align:center;font-size:10px;color:#6b7280;">QTY</th><th style="padding:8px 10px;background:#f8fafc;text-align:right;font-size:10px;color:#6b7280;">UNIT COST</th><th style="padding:8px 10px;background:#f8fafc;text-align:right;font-size:10px;color:#6b7280;">EXT. COST</th></tr></thead>'
+    +'<tbody>'+itemRows+'</tbody></table>'
+    +'<div style="text-align:right;font-size:16px;font-weight:700;margin-top:14px;">Total: $'+(po.totalCost||0).toFixed(2)+'</div>'
+    +(po.notes?'<div style="margin-top:14px;padding:12px 16px;background:#fffbeb;border-left:4px solid #f59e0b;font-size:12px;"><strong>Notes:</strong> '+po.notes+'</div>':'')
+    +'<p style="font-size:13px;color:#4b5563;margin-top:24px;">Please confirm receipt of this PO. Contact me with any questions.</p>'
+    +'<p style="font-size:13px;color:#1f2937;font-weight:600;">Thank you!<br/>DC Appliance<br/>620-371-6417</p>'
+    +'</div></div></body></html>';
+  toast('Sending PO email...','info');
+  var res=await sendDcEmail(toEmail,vendor?vendor.name:po.vendor,'Purchase Order '+po.id+' — DC Appliance',html);
+  if(res.ok){
+    if(!po.emailLog)po.emailLog=[];
+    po.emailLog.push({ts:new Date().toISOString(),to:toEmail,type:'po_vendor',by:currentEmployee?currentEmployee.name:'Admin'});
+    await savePOs();
+    toast('PO emailed to '+toEmail,'success');
+  }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
+}
 
 function exportPOHistoryCSV(){
   var list=purchaseOrders.filter(function(p){return p.status==='Received'||p.status==='Cancelled';});
