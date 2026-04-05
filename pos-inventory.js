@@ -343,19 +343,95 @@ function csvImport(){
 // ══════════════════════════════════════════════
 // OPEN ORDERS TAB
 // ══════════════════════════════════════════════
+var ooSort='date-asc',ooSpFilter='';
 function renderOrders(){
-  var filters=['All','Awaiting Delivery','Awaiting Product','Partial','Quote'];
-  document.getElementById('oo-toolbar').innerHTML=filters.map(function(f){
-    return '<button class="oo-filter'+(f===ooFilter?' active':'')+'" onclick="ooFilter=\''+f+'\';renderOrders();">'+f+'</button>';
-  }).join('');
-  var filtered=orders.filter(function(o){return ooFilter==='All'||o.status===ooFilter;});
+  // Build filter pills
+  var filters=[{key:'All',label:'All'},{key:'My Orders',label:'My Orders'},{key:'Online Orders',label:'Online Orders'},{key:'Needs Delivery',label:'Needs Delivery'},{key:'No Delivery Date',label:'No Delivery Date'}];
+  // Collect unique salespeople from open orders
+  var salesPeople={};
+  orders.forEach(function(o){if(!isOrderFullyDelivered(o)&&o.status!=='Quote'&&o.clerk)salesPeople[o.clerk]=(salesPeople[o.clerk]||0)+1;});
+  var spNames=Object.keys(salesPeople).sort();
+  var spOpts='<option value="">All Salespeople</option>'+spNames.map(function(n){return '<option value="'+n+'"'+(ooSpFilter===n?' selected':'')+'>'+n+' ('+salesPeople[n]+')</option>';}).join('');
+  // Sort options
+  var sortOpts=[
+    {v:'date-asc',l:'Date (Oldest First)'},
+    {v:'date-desc',l:'Date (Newest First)'},
+    {v:'id',l:'Invoice # (Ascending)'},
+    {v:'customer',l:'Customer A-Z'},
+    {v:'total',l:'Total (High to Low)'},
+    {v:'salesperson',l:'Salesperson A-Z'}
+  ];
+  var sortSelHtml='<select onchange="ooSort=this.value;renderOrders();" style="font-size:11px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff;">'+sortOpts.map(function(s){return '<option value="'+s.v+'"'+(ooSort===s.v?' selected':'')+'>'+s.l+'</option>';}).join('')+'</select>';
+  // Build toolbar
+  var toolbarHtml='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 12px;background:#f9fafb;border-bottom:1px solid #e5e7eb;">';
+  toolbarHtml+=filters.map(function(f){return '<button class="oo-filter'+(f.key===ooFilter?' active':'')+'" onclick="ooFilter=\''+f.key+'\';renderOrders();" style="font-size:11px;padding:5px 10px;">'+f.label+'</button>';}).join('');
+  toolbarHtml+='<select onchange="ooSpFilter=this.value;renderOrders();" style="font-size:11px;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;background:#fff;margin-left:auto;">'+spOpts+'</select>';
+  toolbarHtml+=sortSelHtml;
+  toolbarHtml+='</div>';
+  document.getElementById('oo-toolbar').innerHTML=toolbarHtml;
+
+  // Filter orders
+  var now=Date.now();
+  var filtered=orders.filter(function(o){
+    if(o.status==='Quote')return false;
+    if(isOrderFullyDelivered(o))return false; // Remove fully delivered
+    // Filter pills
+    if(ooFilter==='My Orders'){var mine=(currentEmployee&&currentEmployee.name)||'';if(o.clerk!==mine)return false;}
+    else if(ooFilter==='Online Orders'){if(o.source!=='online'&&!(o.status||'').toLowerCase().includes('online'))return false;}
+    else if(ooFilter==='Needs Delivery'){if(!o.deliveryDate)return false;}
+    else if(ooFilter==='No Delivery Date'){if(o.deliveryDate)return false;}
+    // Salesperson filter
+    if(ooSpFilter&&o.clerk!==ooSpFilter)return false;
+    return true;
+  });
+  // Sort
+  filtered.sort(function(a,b){
+    if(ooSort==='date-asc')return new Date(a.date)-new Date(b.date);
+    if(ooSort==='date-desc')return new Date(b.date)-new Date(a.date);
+    if(ooSort==='id')return (a.id||'').localeCompare(b.id||'');
+    if(ooSort==='customer')return (a.customer||'').localeCompare(b.customer||'');
+    if(ooSort==='total')return (b.total||0)-(a.total||0);
+    if(ooSort==='salesperson')return (a.clerk||'').localeCompare(b.clerk||'');
+    return 0;
+  });
+
   document.getElementById('oo-list').innerHTML=filtered.length?filtered.map(function(o){
-    var isQuote=o.status==='Quote';
-    var sc=isQuote?'':o.status==='Awaiting Delivery'?'del-sb-scheduled':o.status==='Awaiting Product'?'del-sb-out':'del-sb-delivered';
-    var badge=isQuote?'<span class="oo-quote-badge">Quote</span>':'<span class="del-status-badge '+sc+'">'+o.status+'</span>';
-    return '<div class="oo-card'+(selectedOrder&&selectedOrder.id===o.id?' active':'')+'" onclick="selectOrder(\''+o.id+'\')"><div class="oo-card-id">'+o.id+'</div><div class="oo-card-name">'+o.customer+'</div><div class="oo-card-row">'+badge+'<span class="oo-card-total">'+fmt(o.total)+'</span></div></div>';
-  }).join(''):'<div style="text-align:center;color:var(--gray-2);padding:30px;font-size:12px;">No orders found</div>';
+    var daysOpen=Math.floor((now-new Date(o.date))/(1000*60*60*24));
+    var ageBg='';if(daysOpen>60)ageBg='background:#fef2f2;border-left:3px solid #dc2626;';else if(daysOpen>30)ageBg='background:#fffbeb;border-left:3px solid #eab308;';
+    var isOnline=o.source==='online';
+    var partial=o.items&&o.items.some(function(i){return i.delivered;});
+    var statusLabel=isOnline?'Online Order':(partial?'Partially Delivered':'Open');
+    var statusColor=isOnline?'#7c3aed':(partial?'#ea580c':'#2563eb');
+    var statusBg=isOnline?'#ede9fe':(partial?'#ffedd5':'#dbeafe');
+    var items=(o.items||[]).map(function(i){return i.name;}).join(', ');
+    if(items.length>50)items=items.slice(0,47)+'...';
+    var delStr=o.deliveryDate?'&#x1F4C5; '+new Date(o.deliveryDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):'<span style="color:#d97706;">No delivery date</span>';
+    // Balance
+    var paid=(o.payments||[]).reduce(function(s,p){return s+(p.amount||0);},0);
+    var balance=(o.total||0)-paid;
+    var balanceHtml=balance>0.01?'<span style="color:#dc2626;font-weight:700;">Due: '+fmt(balance)+'</span>':'<span style="color:#16a34a;font-weight:600;">Paid</span>';
+    var isActive=selectedOrder&&selectedOrder.id===o.id;
+    return '<div class="oo-card'+(isActive?' active':'')+'" onclick="selectOrder(\''+o.id+'\')" style="padding:10px 12px;margin-bottom:6px;border-radius:6px;cursor:pointer;'+ageBg+(isActive?'border-color:var(--gold);':'')+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">'
+      +'<div><div style="font-weight:700;font-size:12px;">'+o.id+'</div><div style="font-size:13px;font-weight:600;">'+o.customer+'</div></div>'
+      +'<span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:100px;background:'+statusBg+';color:'+statusColor+';">'+statusLabel+'</span>'
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--gray-2);margin-bottom:3px;">'+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' &middot; <strong>Open '+daysOpen+' day'+(daysOpen===1?'':'s')+'</strong> &middot; '+(o.clerk||'—')+'</div>'
+      +(items?'<div style="font-size:10px;color:var(--gray-2);margin-bottom:3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+items+'</div>':'')
+      +'<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-top:4px;">'
+      +'<span style="color:var(--gray-2);">'+delStr+'</span>'
+      +'<span style="font-weight:700;">'+fmt(o.total)+' &middot; '+balanceHtml+'</span>'
+      +'</div>'
+      +'</div>';
+  }).join(''):'<div style="text-align:center;color:var(--gray-2);padding:30px;font-size:12px;">No open orders</div>';
   if(selectedOrder)renderOrderDetail();
+}
+
+function isOrderFullyDelivered(o){
+  if(!o||!o.items||!o.items.length)return false;
+  // Fully delivered if every item is marked delivered OR order status is Delivered/Complete
+  if(o.status==='Delivered'||o.status==='Paid in Full')return o.items.every(function(i){return i.delivered;});
+  return o.items.every(function(i){return i.delivered;});
 }
 function selectOrder(id){
   selectedOrder=orders.find(function(o){return o.id===id;})||null;
