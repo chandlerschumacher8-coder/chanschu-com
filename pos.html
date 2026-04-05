@@ -5054,20 +5054,44 @@ function renderCart(){
   document.getElementById('cart-tax').textContent=fmt(tax);
   document.getElementById('cart-total').textContent=fmt(sub+tax);
   var rlbl=document.getElementById('cart-tax-rate-lbl');if(rlbl)rlbl.textContent='('+(cartTaxRate*100).toFixed(3)+'%)';
-  // Populate clerk dropdown — only Sales / General Manager / Owner-Admin / Manager roles
-  var clerkSel=document.getElementById('cart-clerk');
-  var salesRoles=['Sales','General Manager','Owner/Admin','Manager'];
-  var empCount=adminUsers.filter(function(u){return u.active!==false&&salesRoles.indexOf(u.posRole||'Sales')>=0;}).length;
-  // Repopulate if options mismatch (accounts for new/deactivated employees)
-  if(clerkSel&&clerkSel.options.length!==(empCount+1)){
-    var eligible=adminUsers.filter(function(u){return u.active!==false&&salesRoles.indexOf(u.posRole||'Sales')>=0;});
-    var prev=clerkSel.value;
-    clerkSel.innerHTML='<option value="">Select Salesperson...</option>'+eligible.map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
-    // Restore previous selection, or auto-fill logged-in employee
-    if(prev)clerkSel.value=prev;
-    else if(currentEmployee&&salesRoles.indexOf(currentEmployee.posRole||'Sales')>=0)clerkSel.value=currentEmployee.name;
-  }
+  // Populate clerk dropdown — only Sales / General Manager / Owner/Admin roles
+  populateClerkDropdown();
 }
+
+// Allowed roles for the clerk dropdown
+var CLERK_SALES_ROLES=['Sales','General Manager','Owner/Admin'];
+function populateClerkDropdown(){
+  var clerkSel=document.getElementById('cart-clerk');if(!clerkSel)return;
+  var eligible=(adminUsers||[]).filter(function(u){return u.active!==false&&CLERK_SALES_ROLES.indexOf(u.posRole||'Sales')>=0;});
+  // Compare fingerprint so we only rebuild when the list actually changes
+  var fp=eligible.map(function(u){return u.name;}).sort().join('|');
+  if(clerkSel.dataset.fp===fp)return;
+  var prev=clerkSel.value;
+  clerkSel.dataset.fp=fp;
+  clerkSel.innerHTML='<option value="">Select Salesperson...</option>'+eligible.map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
+  // Restore previous selection, or auto-fill logged-in employee if they're eligible
+  if(prev&&clerkSel.querySelector('option[value="'+prev.replace(/"/g,'&quot;')+'"]'))clerkSel.value=prev;
+  else if(currentEmployee&&CLERK_SALES_ROLES.indexOf(currentEmployee.posRole||'Sales')>=0)clerkSel.value=currentEmployee.name;
+  else clerkSel.value='';
+}
+
+// Periodic refresh of employee list from Redis — keeps clerk dropdown in sync
+async function refreshEmployeeList(){
+  try{
+    var res=await fetch('/api/employees-get?companyId=dc-appliance');
+    var data=await res.json();
+    if(data.ok&&data.users){
+      // Update the adminUsers array in place, preserving any local-only fields
+      adminUsers=data.users;
+      populateClerkDropdown();
+    }
+  }catch(e){}
+}
+
+// Refresh every 60 seconds while POS is open
+setInterval(refreshEmployeeList,60000);
+// Also refresh when window regains focus (e.g., user switched tabs after editing employees)
+window.addEventListener('focus',refreshEmployeeList);
 function cartSerial(idx,val){if(cart[idx])cart[idx].serial=val;}
 function getSaleFields(){
   return {
@@ -5082,11 +5106,10 @@ function getSaleFields(){
 }
 function clearSaleForm(){
   ['cart-sold-name','cart-sold-addr','cart-sold-city','cart-sold-state','cart-sold-zip','cart-sold-phone','cart-ship-name','cart-ship-addr','cart-ship-city','cart-ship-state','cart-ship-zip','cart-po','cart-job','cart-invoice-notes','cart-shipper-notes'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
-  // Reset clerk to logged-in employee if they're a salesperson, otherwise blank
+  // Reset clerk to logged-in employee if they're Sales/GM/Owner-Admin, otherwise blank
   var cl=document.getElementById('cart-clerk');
   if(cl){
-    var salesRoles=['Sales','General Manager','Owner/Admin','Manager'];
-    if(currentEmployee&&salesRoles.indexOf(currentEmployee.posRole||'Sales')>=0){cl.value=currentEmployee.name;}
+    if(currentEmployee&&CLERK_SALES_ROLES.indexOf(currentEmployee.posRole||'Sales')>=0){cl.value=currentEmployee.name;}
     else{cl.selectedIndex=0;}
   }
 }
