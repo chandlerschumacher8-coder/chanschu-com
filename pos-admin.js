@@ -1147,46 +1147,187 @@ function renderDataImport(){
 }
 
 var _diInvRows=[];
+var _diInvHeaders=[];
+var _diInvRawRows=[];
+var _diInvMapping={};
+var DI_INV_FIELDS=[
+  {key:'model',label:'Model Number',req:true,aliases:['model','model number','model#','sku']},
+  {key:'name',label:'Description',req:true,aliases:['description','name','desc','product name','product']},
+  {key:'price',label:'Retail Price',req:true,aliases:['price','retail price','retail','sell price','sellprice']},
+  {key:'upc',label:'UPC',req:false,aliases:['upc','barcode','upc code']},
+  {key:'brand',label:'Brand',req:false,aliases:['brand','manufacturer']},
+  {key:'cost',label:'Cost',req:false,aliases:['cost','wholesale','wholesale cost']},
+  {key:'vendor',label:'Vendor',req:false,aliases:['vendor','supplier']},
+  {key:'cat',label:'Department/Category',req:false,aliases:['category','cat','department','dept']},
+  {key:'serialTracked',label:'Serial Tracked',req:false,aliases:['serial tracked','serialtracked','sn tracked','tracks serial']},
+  {key:'reorderPt',label:'Min Quantity',req:false,aliases:['min qty','min quantity','min','reorder pt','reorder point','reorderpt','minimum']},
+  {key:'reorderQty',label:'Reorder Quantity',req:false,aliases:['reorder qty','reorderqty','reorder quantity','order qty']},
+  {key:'qty',label:'Initial Quantity',req:false,aliases:['qty','stock','quantity','on hand','stock qty']}
+];
+
+function loadInvMapping(){try{return JSON.parse(localStorage.getItem('di-inv-mapping')||'{}');}catch(e){return{};}}
+function saveInvMapping(){try{localStorage.setItem('di-inv-mapping',JSON.stringify(_diInvMapping));}catch(e){}}
+
 async function diHandleInvFile(file){
   if(!file)return;
   var text=await file.text();
   var lines=text.split(/\r?\n/).filter(Boolean);
   if(lines.length<2){toast('File is empty','error');return;}
-  var headers=lines[0].split(',').map(function(h){return h.trim().replace(/"/g,'').toLowerCase();});
-  _diInvRows=[];var newCount=0,updateCount=0;
+  _diInvHeaders=lines[0].split(',').map(function(h){return h.trim().replace(/^"|"$/g,'');});
+  _diInvRawRows=[];
   for(var i=1;i<lines.length;i++){
     var cols=lines[i].split(',').map(function(c){return c.trim().replace(/^"|"$/g,'');});
-    var row={};headers.forEach(function(h,j){row[h]=cols[j]||'';});
-    var model=row.model||row['model number']||row['model#']||row.sku||'';
-    if(!model)continue;
-    var existing=PRODUCTS.find(function(p){return (p.model||'').toLowerCase()===model.toLowerCase()||(p.sku||'').toLowerCase()===model.toLowerCase();});
-    _diInvRows.push({model:model,name:row.name||row.description||'',brand:row.brand||'',cat:row.category||row.cat||'',cost:parseFloat(row.cost)||0,price:parseFloat(row.price||row['retail price']||row.retail)||0,vendor:row.vendor||'',serialTracked:row['serial tracked']||'',qty:parseInt(row.qty||row.stock||row.quantity)||0,isUpdate:!!existing});
-    if(existing)updateCount++;else newCount++;
+    _diInvRawRows.push(cols);
   }
-  var h='<div style="font-size:12px;font-weight:700;margin-bottom:6px;">'+_diInvRows.length+' items: <span style="color:var(--green);">'+newCount+' new</span>, <span style="color:var(--blue);">'+updateCount+' updates</span></div>';
-  h+='<div style="max-height:200px;overflow:auto;border:1px solid var(--border);border-radius:6px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model</th><th>Name</th><th>Brand</th><th>Price</th><th>Status</th></tr></thead><tbody>';
-  _diInvRows.forEach(function(r){h+='<tr><td>'+r.model+'</td><td>'+r.name+'</td><td>'+r.brand+'</td><td>$'+(r.price||0).toFixed(2)+'</td><td style="font-weight:700;color:'+(r.isUpdate?'var(--blue)':'var(--green)')+';">'+(r.isUpdate?'Update':'New')+'</td></tr>';});
-  h+='</tbody></table></div><button class="primary-btn" onclick="diConfirmInv()" style="margin-top:8px;">Import '+_diInvRows.length+' Products</button>';
-  document.getElementById('di-inv-preview').innerHTML=h;document.getElementById('di-inv-preview').style.display='block';
+  // Build initial mapping: check saved prefs, then auto-detect by alias
+  var saved=loadInvMapping();
+  _diInvMapping={};
+  DI_INV_FIELDS.forEach(function(f){
+    // Try saved mapping first
+    if(saved[f.key]&&_diInvHeaders.indexOf(saved[f.key])>=0){_diInvMapping[f.key]=saved[f.key];return;}
+    // Auto-detect by alias
+    for(var i=0;i<_diInvHeaders.length;i++){
+      var h=_diInvHeaders[i].toLowerCase();
+      if(f.aliases.indexOf(h)>=0){_diInvMapping[f.key]=_diInvHeaders[i];return;}
+    }
+    _diInvMapping[f.key]='';
+  });
+  showInvMappingScreen();
 }
 
-function diConfirmInv(){
-  var added=0,updated=0;
+function showInvMappingScreen(){
+  var h='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;">';
+  h+='<div style="font-size:12px;font-weight:700;margin-bottom:4px;">Step 1 — Map Your CSV Columns</div>';
+  h+='<div style="font-size:11px;color:var(--gray-2);margin-bottom:12px;">Match your CSV columns to the system fields. Required fields marked with *. Your mapping is saved for next time.</div>';
+  h+='<div style="max-height:320px;overflow:auto;">';
+  h+='<table class="admin-table" style="font-size:11px;margin:0;"><thead><tr><th>System Field</th><th>Your CSV Column</th><th style="width:40%;">Sample Value</th></tr></thead><tbody>';
+  DI_INV_FIELDS.forEach(function(f){
+    var mapped=_diInvMapping[f.key]||'';
+    var colIdx=mapped?_diInvHeaders.indexOf(mapped):-1;
+    var sample=(colIdx>=0&&_diInvRawRows[0])?(_diInvRawRows[0][colIdx]||''):'';
+    h+='<tr><td style="font-weight:600;">'+f.label+(f.req?' <span style="color:var(--red);">*</span>':'')+'</td>';
+    h+='<td><select class="sel" onchange="_diInvMapping[\''+f.key+'\']=this.value;showInvMappingScreen();" style="font-size:11px;padding:4px 8px;">';
+    h+='<option value="">— skip —</option>';
+    _diInvHeaders.forEach(function(hdr){h+='<option value="'+hdr.replace(/"/g,'&quot;')+'"'+(mapped===hdr?' selected':'')+'>'+hdr+'</option>';});
+    h+='</select></td>';
+    h+='<td style="font-size:10px;color:var(--gray-3);font-family:monospace;">'+sample+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  // Validate required
+  var missingReq=DI_INV_FIELDS.filter(function(f){return f.req&&!_diInvMapping[f.key];}).map(function(f){return f.label;});
+  if(missingReq.length){
+    h+='<div style="margin-top:10px;padding:8px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;font-size:11px;color:#991b1b;">Missing required field'+(missingReq.length>1?'s':'')+': <strong>'+missingReq.join(', ')+'</strong></div>';
+  }
+  h+='<div style="display:flex;gap:8px;margin-top:12px;">';
+  h+='<button class="primary-btn" onclick="proceedToInvPreview()" '+(missingReq.length?'disabled style="opacity:0.5;cursor:not-allowed;"':'')+'>Continue to Preview</button>';
+  h+='<button class="ghost-btn" onclick="_diInvRawRows=[];_diInvHeaders=[];document.getElementById(\'di-inv-preview\').style.display=\'none\';">Cancel</button>';
+  h+='</div></div>';
+  document.getElementById('di-inv-preview').innerHTML=h;
+  document.getElementById('di-inv-preview').style.display='block';
+}
+
+function proceedToInvPreview(){
+  var missingReq=DI_INV_FIELDS.filter(function(f){return f.req&&!_diInvMapping[f.key];});
+  if(missingReq.length)return;
+  saveInvMapping();
+  // Build rows using mapping
+  _diInvRows=[];
+  var newCount=0,updateCount=0;
+  var newBrands={},newVendors={};
+  var existingBrands={};(adminBrands||[]).forEach(function(b){existingBrands[(b||'').toLowerCase()]=true;});
+  var existingVendors={};(adminVendors||[]).forEach(function(v){if(v.name)existingVendors[v.name.toLowerCase()]=true;});
+  var errors=[];
+  _diInvRawRows.forEach(function(cols,rowIdx){
+    var getVal=function(key){
+      var col=_diInvMapping[key];if(!col)return '';
+      var ci=_diInvHeaders.indexOf(col);if(ci<0)return '';
+      return (cols[ci]||'').trim();
+    };
+    var model=getVal('model');
+    var name=getVal('name');
+    var price=parseFloat(getVal('price'))||0;
+    if(!model||!name){errors.push('Row '+(rowIdx+2)+': missing model or description');return;}
+    var brand=getVal('brand');
+    var vendor=getVal('vendor');
+    if(brand&&!existingBrands[brand.toLowerCase()])newBrands[brand]=true;
+    if(vendor&&!existingVendors[vendor.toLowerCase()])newVendors[vendor]=true;
+    var existing=PRODUCTS.find(function(p){return (p.model||'').toLowerCase()===model.toLowerCase()||(p.sku||'').toLowerCase()===model.toLowerCase();});
+    _diInvRows.push({
+      model:model,name:name,brand:brand,vendor:vendor,
+      upc:getVal('upc'),cat:getVal('cat'),
+      cost:parseFloat(getVal('cost'))||0,price:price,
+      reorderPt:parseInt(getVal('reorderPt'))||null,
+      reorderQty:parseInt(getVal('reorderQty'))||null,
+      serialTracked:getVal('serialTracked'),qty:parseInt(getVal('qty'))||0,
+      isUpdate:!!existing
+    });
+    if(existing)updateCount++;else newCount++;
+  });
+  // Build summary screen
+  var newBrandList=Object.keys(newBrands);
+  var newVendorList=Object.keys(newVendors);
+  var h='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;">';
+  h+='<div style="font-size:12px;font-weight:700;margin-bottom:10px;">Step 2 — Review &amp; Confirm Import</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">';
+  h+='<div style="padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#166534;text-transform:uppercase;">Products to Create</div><div style="font-size:20px;font-weight:800;color:#16a34a;">'+newCount+'</div></div>';
+  h+='<div style="padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#1e40af;text-transform:uppercase;">Products to Update</div><div style="font-size:20px;font-weight:800;color:#2563eb;">'+updateCount+'</div></div>';
+  h+='<div style="padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;">New Brands</div><div style="font-size:20px;font-weight:800;color:#d97706;">'+newBrandList.length+'</div>'+(newBrandList.length?'<div style="font-size:10px;color:#92400e;margin-top:2px;">'+newBrandList.slice(0,5).join(', ')+(newBrandList.length>5?' +'+(newBrandList.length-5)+' more':'')+'</div>':'')+'</div>';
+  h+='<div style="padding:10px 14px;background:#faf5ff;border:1px solid #c4b5fd;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#5b21b6;text-transform:uppercase;">New Vendors</div><div style="font-size:20px;font-weight:800;color:#7c3aed;">'+newVendorList.length+'</div>'+(newVendorList.length?'<div style="font-size:10px;color:#5b21b6;margin-top:2px;">'+newVendorList.slice(0,5).join(', ')+(newVendorList.length>5?' +'+(newVendorList.length-5)+' more':'')+' — add contact details later</div>':'')+'</div>';
+  h+='</div>';
+  if(errors.length){h+='<div style="padding:8px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;margin-bottom:10px;font-size:11px;color:#991b1b;max-height:80px;overflow:auto;"><strong>'+errors.length+' row'+(errors.length===1?'':'s')+' will be skipped:</strong><br/>'+errors.slice(0,8).join('<br/>')+(errors.length>8?'<br/>... +'+(errors.length-8)+' more':'')+'</div>';}
+  h+='<div style="max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-bottom:10px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model</th><th>Name</th><th>Brand</th><th>Vendor</th><th style="text-align:right;">Price</th><th>Status</th></tr></thead><tbody>';
+  _diInvRows.slice(0,15).forEach(function(r){h+='<tr><td>'+r.model+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.name+'</td><td>'+r.brand+'</td><td>'+r.vendor+'</td><td style="text-align:right;">$'+(r.price||0).toFixed(2)+'</td><td style="font-weight:700;color:'+(r.isUpdate?'#2563eb':'#16a34a')+';">'+(r.isUpdate?'Update':'New')+'</td></tr>';});
+  if(_diInvRows.length>15)h+='<tr><td colspan="6" style="text-align:center;color:var(--gray-3);font-style:italic;">... and '+(_diInvRows.length-15)+' more rows</td></tr>';
+  h+='</tbody></table></div>';
+  h+='<div style="display:flex;gap:8px;">';
+  h+='<button class="primary-btn" onclick="diConfirmInv()">Import '+_diInvRows.length+' Products</button>';
+  h+='<button class="ghost-btn" onclick="showInvMappingScreen()">← Back to Mapping</button>';
+  h+='</div></div>';
+  document.getElementById('di-inv-preview').innerHTML=h;
+}
+
+async function diConfirmInv(){
+  var added=0,updated=0,brandsAdded=0,vendorsAdded=0;
+  // Auto-create brands
+  var existingBrandMap={};(adminBrands||[]).forEach(function(b){existingBrandMap[(b||'').toLowerCase()]=true;});
+  _diInvRows.forEach(function(r){
+    if(r.brand&&!existingBrandMap[r.brand.toLowerCase()]){
+      adminBrands.push(r.brand);existingBrandMap[r.brand.toLowerCase()]=true;brandsAdded++;
+    }
+  });
+  if(brandsAdded){try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-brands',data:adminBrands})});}catch(e){}}
+  // Auto-create vendors
+  var existingVendorMap={};(adminVendors||[]).forEach(function(v){if(v.name)existingVendorMap[v.name.toLowerCase()]=true;});
+  _diInvRows.forEach(function(r){
+    if(r.vendor&&!existingVendorMap[r.vendor.toLowerCase()]){
+      adminVendors.push({name:r.vendor,repName:'',phone:'',email:'',accountNum:'',paymentTerms:'Net 30'});
+      existingVendorMap[r.vendor.toLowerCase()]=true;vendorsAdded++;
+    }
+  });
+  if(vendorsAdded)saveVendors();
+  // Process products
   _diInvRows.forEach(function(r){
     var p=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===r.model.toLowerCase()||(x.sku||'').toLowerCase()===r.model.toLowerCase();});
     if(p){
       if(r.name)p.name=r.name;if(r.brand)p.brand=r.brand;if(r.cat)p.cat=r.cat;
+      if(r.upc)p.upc=r.upc;
       if(r.cost)p.cost=r.cost;if(r.price)p.price=r.price;if(r.vendor)p.vendor=r.vendor;
+      if(r.reorderPt!=null)p.reorderPt=r.reorderPt;
+      if(r.reorderQty!=null)p.reorderQty=r.reorderQty;
       if(r.qty)p.stock=(p.stock||0)+r.qty;
       updated++;
     }else{
-      PRODUCTS.push({id:PRODUCTS.length+200+added,model:r.model,sku:r.model,name:r.name,brand:r.brand,cat:r.cat,price:r.price,cost:r.cost,stock:r.qty,sold:0,reorderPt:2,reorderQty:3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:r.serialTracked==='false'?false:true,vendor:r.vendor,serialPool:[]});
+      PRODUCTS.push({id:PRODUCTS.length+200+added,model:r.model,sku:r.model,name:r.name,brand:r.brand,cat:r.cat,price:r.price,cost:r.cost,stock:r.qty,sold:0,reorderPt:r.reorderPt||2,reorderQty:r.reorderQty||3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:r.serialTracked.toLowerCase()==='false'||r.serialTracked==='0'?false:true,vendor:r.vendor,upc:r.upc||'',serialPool:[]});
       added++;
     }
   });
-  saveProducts();_diInvRows=[];
+  await saveProducts();
+  _diInvRows=[];_diInvRawRows=[];_diInvHeaders=[];
   document.getElementById('di-inv-preview').style.display='none';
-  toast(added+' added, '+updated+' updated','success');
+  var parts=[added+' added',updated+' updated'];
+  if(brandsAdded)parts.push(brandsAdded+' brands created');
+  if(vendorsAdded)parts.push(vendorsAdded+' vendors created');
+  toast(parts.join(', '),'success');
 }
 
 var _diCustRows=[];
