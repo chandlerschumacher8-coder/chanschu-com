@@ -1164,27 +1164,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 <!-- SUB: ORDERING -->
 <div class="inv-sub-panel" id="inv-sub-ordering">
-<div class="reorder-wrap">
-<div class="reorder-main">
-<div class="reorder-kpis" id="reorder-kpis"></div>
-<div class="reorder-toolbar">
-<button class="inv-btn" onclick="reorderAutoSuggest()">Auto-Suggest from Sales</button>
-</div>
-<div class="reorder-table-wrap">
-<table class="reorder-table">
-<thead><tr><th>Product</th><th>Brand</th><th>In Stock</th><th>Reorder Pt.</th><th>Reorder Qty</th><th>30-Day Sales</th><th>Days Left</th><th>Status</th><th>Order Qty</th></tr></thead>
-<tbody id="reorder-tbody"></tbody>
-</table>
-</div>
-</div>
-<div class="reorder-sidebar">
-<div class="reorder-sidebar-title">Draft Purchase Order</div>
-<div id="reorder-po-items"></div>
-<div class="reorder-po-total"><span>Est. Total</span><span id="reorder-po-total">$0.00</span></div>
-<button class="reorder-submit" onclick="submitPO()">Submit Purchase Order</button>
-<div class="po-history" id="po-history-section"></div>
-</div>
-</div>
+<div id="order-content" style="flex:1;overflow:auto;padding:20px 24px;background:#f8fafc;"></div>
 </div>
 <!-- SUB: PURCHASE ORDERS -->
 <div class="inv-sub-panel" id="inv-sub-purchaseorders">

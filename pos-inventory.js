@@ -1362,32 +1362,162 @@ function svcPrintJob(id){var card=document.getElementById('svc-card-'+id);var de
 // ══════════════════════════════════════════════
 // ORDERING (was REORDER) TAB
 // ══════════════════════════════════════════════
+// ═══ ORDER SECTION — vendor-first workflow ═══
+var _orderVendor='';
+var _orderDraft=[]; // [{productId, name, model, brand, stock, reorderPt, qty, unitCost}]
+var _orderNotes='';
+var _orderExpected='';
+
 function renderReorder(){
-  var needsReorder=PRODUCTS.filter(function(p){return (p.stock-(p.sold||0))<=p.reorderPt;});
-  var kpis=document.getElementById('reorder-kpis');
-  var onOrder=Object.keys(reorderQtys).filter(function(k){return reorderQtys[k]>0;}).length;
-  var suggestedUnits=needsReorder.reduce(function(s,p){return s+p.reorderQty;},0);
-  var estCost=Object.keys(reorderQtys).reduce(function(s,k){var p=PRODUCTS.find(function(x){return x.id===parseInt(k);});return s+(p?p.cost*(reorderQtys[k]||0):0);},0);
-  var pendingPOs=purchaseOrders.filter(function(po){return po.status==='Pending';}).length;
-  kpis.innerHTML='<div class="reorder-kpi"><div class="reorder-kpi-val" style="color:var(--red);">'+needsReorder.length+'</div><div class="reorder-kpi-key">Below Reorder Point</div></div><div class="reorder-kpi"><div class="reorder-kpi-val" style="color:var(--orange);">'+onOrder+'</div><div class="reorder-kpi-key">In Draft</div></div><div class="reorder-kpi"><div class="reorder-kpi-val" style="color:var(--blue);">'+pendingPOs+'</div><div class="reorder-kpi-key">Pending POs</div></div><div class="reorder-kpi"><div class="reorder-kpi-val" style="color:var(--gold);">'+fmt(estCost)+'</div><div class="reorder-kpi-key">Draft Cost</div></div>';
-  // Group products by brand
-  var brands={};PRODUCTS.forEach(function(p){if(!brands[p.brand])brands[p.brand]=[];brands[p.brand].push(p);});
-  var tb=document.getElementById('reorder-tbody');var html='';
-  Object.keys(brands).sort().forEach(function(brand){
-    var prods=brands[brand];
-    var brandLow=prods.filter(function(p){return (p.stock-(p.sold||0))<=p.reorderPt;}).length;
-    html+='<tr class="reorder-vendor-hdr"><td colspan="8"><span class="reorder-vendor-name">'+brand+'</span> <span style="font-size:10px;color:var(--gray-2);margin-left:6px;">'+prods.length+' items'+(brandLow?' | '+brandLow+' low':'')+'</span></td><td><button class="reorder-vendor-btn" onclick="createVendorPO(\''+brand.replace(/'/g,"\\'")+'\')">Create PO</button></td></tr>';
-    prods.forEach(function(p){
-      var ams=p.stock-(p.sold||0);
-      var daysLeft=p.sales30>0?Math.round(ams/(p.sales30/30)):999;
-      var sc=ams<=0?'sp-out':ams<=p.reorderPt?'sp-low':'sp-in';
-      var sl=ams<=0?'Out':'Low';if(ams>p.reorderPt)sl='OK';
-      var qty=reorderQtys[p.id]||0;
-      html+='<tr><td>'+p.name+'</td><td>'+p.brand+'</td><td>'+ams+'</td><td>'+p.reorderPt+'</td><td>'+p.reorderQty+'</td><td>'+p.sales30+'</td><td>'+(daysLeft>365?'365+':daysLeft)+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td><div class="reorder-qty-ctrl"><button onclick="reorderAdj('+p.id+',-1)">-</button><span>'+qty+'</span><button onclick="reorderAdj('+p.id+',1)">+</button></div></td></tr>';
-    });
+  var el=document.getElementById('order-content');if(!el)return;
+  if(!_orderVendor){
+    // Step 1 — Vendor selection only
+    var vendorOpts=(typeof adminVendors!=='undefined'?adminVendors:[])
+      .filter(function(v){return v.name;})
+      .sort(function(a,b){return a.name.localeCompare(b.name);})
+      .map(function(v){return '<option value="'+v.name+'">'+v.name+'</option>';}).join('');
+    // Also include brands used on products that aren't in vendor list, as fallback
+    var brandsInUse={};PRODUCTS.forEach(function(p){if(p.vendor)brandsInUse[p.vendor]=true;else if(p.brand)brandsInUse[p.brand]=true;});
+    var vendorNames={};(adminVendors||[]).forEach(function(v){vendorNames[v.name]=true;});
+    var extraOpts=Object.keys(brandsInUse).filter(function(b){return !vendorNames[b];}).sort().map(function(b){return '<option value="'+b+'">'+b+' (brand)</option>';}).join('');
+    el.innerHTML='<div style="max-width:560px;margin:40px auto;text-align:center;">'
+      +'<h2 style="font-size:24px;font-weight:700;color:#1f2937;margin-bottom:6px;">Start a New Order</h2>'
+      +'<p style="font-size:13px;color:#6b7280;margin-bottom:24px;">Select a vendor to build a suggested purchase order based on current stock levels.</p>'
+      +'<div style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,0.04);">'
+      +'<label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;letter-spacing:0.06em;margin-bottom:8px;">Select a Vendor to Begin</label>'
+      +'<select class="sel" id="order-vendor-sel" onchange="_orderVendor=this.value;renderReorder();" style="font-size:16px;padding:14px 16px;width:100%;border:2px solid #d1d5db;border-radius:10px;">'
+      +'<option value="">— Choose a vendor —</option>'+vendorOpts+(extraOpts?'<optgroup label="Brands (no vendor record)">'+extraOpts+'</optgroup>':'')
+      +'</select>'
+      +'</div></div>';
+    return;
+  }
+  // Step 2+ — vendor selected
+  renderOrderForm();
+}
+
+function renderOrderForm(){
+  var el=document.getElementById('order-content');
+  var vendorProducts=PRODUCTS.filter(function(p){
+    if(p.active===false)return false;
+    return (p.vendor&&p.vendor.toLowerCase()===_orderVendor.toLowerCase())||(!p.vendor&&p.brand&&p.brand.toLowerCase()===_orderVendor.toLowerCase());
   });
-  tb.innerHTML=html;
-  renderPO();renderPOHistory();
+  var vendorProdCount=vendorProducts.length;
+
+  var h='<div style="max-width:1100px;margin:0 auto;">';
+  h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">';
+  h+='<button class="ghost-btn" onclick="orderBackToVendor()" style="font-size:12px;">&#8592; Change Vendor</button>';
+  h+='<div style="flex:1;"><div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;">Ordering For</div><div style="font-size:18px;font-weight:700;color:#1f2937;">'+_orderVendor+'</div><div style="font-size:11px;color:#9ca3af;">'+vendorProdCount+' product'+(vendorProdCount===1?'':'s')+' in inventory</div></div>';
+  if(!_orderDraft.length)h+='<button class="primary-btn" onclick="generateSuggestedOrder()" style="font-size:13px;padding:10px 18px;">Generate Suggested Order</button>';
+  h+='</div>';
+
+  if(_orderDraft.length){
+    // Draft order table
+    var total=_orderDraft.reduce(function(s,r){return s+r.qty*r.unitCost;},0);
+    h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:14px;">';
+    h+='<table class="admin-table" style="font-size:11px;margin:0;"><thead><tr>';
+    h+='<th>Product</th><th>Model #</th><th>Brand</th><th style="text-align:center;">On Hand</th><th style="text-align:center;">Min</th><th style="width:80px;text-align:center;">Order Qty</th><th style="text-align:right;">Unit Cost</th><th style="text-align:right;">Ext. Cost</th><th style="width:40px;"></th>';
+    h+='</tr></thead><tbody>';
+    _orderDraft.forEach(function(r,i){
+      var ext=r.qty*r.unitCost;
+      var ams=r.stock-(r.sold||0);
+      var bg=ams<=0?'background:#fef2f2;':ams<=r.reorderPt?'background:#fffbeb;':'';
+      h+='<tr style="'+bg+'">';
+      h+='<td style="font-weight:600;">'+r.name+'</td>';
+      h+='<td>'+(r.model||'')+'</td>';
+      h+='<td>'+(r.brand||'')+'</td>';
+      h+='<td style="text-align:center;font-weight:700;'+(ams<=0?'color:#dc2626;':ams<=r.reorderPt?'color:#d97706;':'')+'">'+ams+'</td>';
+      h+='<td style="text-align:center;">'+r.reorderPt+'</td>';
+      h+='<td style="text-align:center;"><input type="number" min="1" value="'+r.qty+'" oninput="orderUpdateQty('+i+',this.value)" style="width:60px;padding:4px 6px;text-align:center;border:1px solid #d1d5db;border-radius:4px;font-size:11px;"/></td>';
+      h+='<td style="text-align:right;">'+fmt(r.unitCost)+'</td>';
+      h+='<td style="text-align:right;font-weight:600;">'+fmt(ext)+'</td>';
+      h+='<td><button onclick="orderRemoveRow('+i+')" title="Remove" style="background:transparent;border:none;color:#dc2626;cursor:pointer;font-size:16px;padding:4px 8px;">&#x1F5D1;</button></td>';
+      h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+    // Add product row
+    h+='<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">';
+    h+='<select id="order-add-prod" class="sel" style="flex:1;font-size:12px;">';
+    h+='<option value="">+ Add another product from '+_orderVendor+'...</option>';
+    var draftIds={};_orderDraft.forEach(function(r){draftIds[r.productId]=true;});
+    vendorProducts.filter(function(p){return !draftIds[p.id];}).forEach(function(p){
+      h+='<option value="'+p.id+'">'+(p.model||p.sku||'')+' — '+p.name+' (on hand: '+(p.stock-(p.sold||0))+')</option>';
+    });
+    h+='</select>';
+    h+='<button class="ghost-btn" onclick="orderAddManual()">Add</button>';
+    h+='</div>';
+    // Notes + expected date
+    h+='<div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:14px;">';
+    h+='<div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">PO Notes</label><textarea class="txta" id="order-notes" rows="2" oninput="_orderNotes=this.value;" placeholder="Terms, special instructions..." style="width:100%;">'+_orderNotes+'</textarea></div>';
+    h+='<div><label style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Expected Delivery</label><input type="date" class="inp" id="order-expected" value="'+_orderExpected+'" oninput="_orderExpected=this.value;"/></div>';
+    h+='</div>';
+    // Total + create
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">';
+    h+='<div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Total Order Cost</div><div style="font-size:24px;font-weight:800;color:#1f2937;">'+fmt(total)+'</div></div>';
+    h+='<button class="primary-btn" onclick="createOrderPO()" style="font-size:14px;padding:12px 24px;">Create Purchase Order</button>';
+    h+='</div>';
+  }else{
+    // No suggestions yet — show empty prompt
+    var flagged=vendorProducts.filter(function(p){var ams=p.stock-(p.sold||0);return ams<=0||ams<=p.reorderPt||(p.sold||0)>p.stock;}).length;
+    h+='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:30px;text-align:center;">';
+    if(flagged){
+      h+='<div style="font-size:13px;color:#374151;">Click <strong>Generate Suggested Order</strong> to start — '+flagged+' product'+(flagged===1?'':'s')+' for '+_orderVendor+' need'+(flagged===1?'s':'')+' reordering.</div>';
+    }else{
+      h+='<div style="font-size:14px;color:#16a34a;font-weight:700;margin-bottom:4px;">&#x2713; All products for '+_orderVendor+' are sufficiently stocked</div>';
+      h+='<div style="font-size:12px;color:#6b7280;">You can still click <strong>Generate Suggested Order</strong> and manually add products, or change vendor.</div>';
+    }
+    h+='</div>';
+  }
+
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function generateSuggestedOrder(){
+  var vendorProducts=PRODUCTS.filter(function(p){
+    if(p.active===false)return false;
+    return (p.vendor&&p.vendor.toLowerCase()===_orderVendor.toLowerCase())||(!p.vendor&&p.brand&&p.brand.toLowerCase()===_orderVendor.toLowerCase());
+  });
+  var flagged=vendorProducts.filter(function(p){
+    var ams=p.stock-(p.sold||0);
+    var oversold=(p.sold||0)>p.stock;
+    return ams<=0||ams<=(p.reorderPt||0)||oversold;
+  });
+  if(!flagged.length){
+    toast('All products for '+_orderVendor+' are sufficiently stocked','info');
+    // Still enter the draft view empty so they can add manually
+    _orderDraft=[];renderReorder();return;
+  }
+  _orderDraft=flagged.map(function(p){
+    return{productId:p.id,name:p.name,model:p.model||p.sku||'',brand:p.brand||'',stock:p.stock||0,sold:p.sold||0,reorderPt:p.reorderPt||0,qty:p.reorderQty||1,unitCost:p.cost||0};
+  });
+  renderReorder();toast('Suggested '+flagged.length+' products to reorder','success');
+}
+
+function orderUpdateQty(i,v){var q=parseInt(v)||0;if(q<1)q=1;if(_orderDraft[i])_orderDraft[i].qty=q;renderReorder();}
+function orderRemoveRow(i){_orderDraft.splice(i,1);renderReorder();}
+function orderBackToVendor(){
+  if(_orderDraft.length&&!confirm('Discard current draft order?'))return;
+  _orderVendor='';_orderDraft=[];_orderNotes='';_orderExpected='';renderReorder();
+}
+
+function orderAddManual(){
+  var sel=document.getElementById('order-add-prod');if(!sel||!sel.value)return;
+  var p=PRODUCTS.find(function(x){return x.id===parseInt(sel.value);});if(!p)return;
+  _orderDraft.push({productId:p.id,name:p.name,model:p.model||p.sku||'',brand:p.brand||'',stock:p.stock||0,sold:p.sold||0,reorderPt:p.reorderPt||0,qty:p.reorderQty||1,unitCost:p.cost||0});
+  renderReorder();
+}
+
+async function createOrderPO(){
+  if(!_orderDraft.length){toast('No items in draft order','error');return;}
+  var items=_orderDraft.map(function(r){return{productId:r.productId,model:r.model,name:r.name,qtyOrdered:r.qty,qtyReceived:0,unitCost:r.unitCost};});
+  var totalCost=items.reduce(function(s,i){return s+i.qtyOrdered*i.unitCost;},0);
+  var poId=nextPOId();
+  purchaseOrders.unshift({id:poId,vendor:_orderVendor,expectedDate:_orderExpected,notes:_orderNotes,items:items,totalCost:totalCost,date:new Date().toISOString(),status:'Pending',receivedDate:null,receivedBy:null,createdBy:currentEmployee?currentEmployee.name:'Admin'});
+  await savePOs();
+  toast('PO '+poId+' created for '+_orderVendor,'success');
+  // Reset
+  _orderVendor='';_orderDraft=[];_orderNotes='';_orderExpected='';
+  renderReorder();
 }
 function reorderAdj(pid,delta){reorderQtys[pid]=(reorderQtys[pid]||0)+delta;if(reorderQtys[pid]<0)reorderQtys[pid]=0;renderReorder();}
 function reorderAutoSuggest(){PRODUCTS.forEach(function(p){if((p.stock-(p.sold||0))<=p.reorderPt)reorderQtys[p.id]=p.reorderQty;});renderReorder();toast('Auto-suggested quantities set','success');}
