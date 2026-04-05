@@ -1553,7 +1553,7 @@ function showSerialPrompt(id,missing){
   html+='<div style="font-size:12px;color:#713f12;margin-bottom:10px;">The following items are missing serial numbers:</div>';
   missing.forEach(function(a,idx){
     html+='<div style="margin-bottom:8px;"><label style="font-size:11px;font-weight:600;color:#713f12;display:block;margin-bottom:3px;">'+a.a+(a.m?' — '+a.m:'')+'</label>';
-    html+='<input class="inp ds-serial-input" data-appliance="'+encodeURIComponent(a.a)+'" placeholder="Enter serial number" style="width:100%;font-size:12px;padding:6px 10px;"/></div>';
+    html+='<input class="inp ds-serial-input" data-appliance="'+encodeURIComponent(a.a)+'" placeholder="Enter serial number" style="width:100%;font-size:12px;padding:6px 10px;"/><div style="font-size:9px;color:#92400e;margin-top:2px;">Enter serial from product tag</div></div>';
   });
   html+='<div style="display:flex;gap:8px;margin-top:10px;">';
   html+='<button class="abtn green" onclick="confirmSerialsAndDeliver(\''+id+'\')" style="flex:1;">Enter Serial Numbers</button>';
@@ -1989,6 +1989,7 @@ function openBSheet(deliveryId){
     h+='<button class="bs-scan-btn" onclick="bsScanSerial('+i+',\'camera\')" title="Camera">&#x1F4F7;</button>';
     h+='<button class="bs-scan-btn" onclick="bsScanSerial('+i+',\'gallery\')" title="Gallery">&#x1F5BC;</button>';
     h+='</div>';
+    h+='<div style="font-size:10px;color:#94a3b8;margin-top:4px;">Enter serial from product tag</div>';
     h+='<div class="bs-ai-status" id="bs-ai-status-'+i+'"></div>';
     h+='</div>';
   });

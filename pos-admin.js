@@ -2455,6 +2455,8 @@ function renderStoreSettings(){
   setVal('ss-bank-names',s.bank_names);
   setVal('ss-tier',s.subscription_tier||'enterprise');
   setVal('ss-status',s.subscription_status||'active');
+  // Require Serial Pool toggle
+  var rp=document.getElementById('ss-require-pool');if(rp)rp.checked=!!s.require_serial_pool;
 }
 
 async function uploadStoreLogo(file){
@@ -2496,6 +2498,7 @@ async function saveStoreSettings(){
   currentStore.landlord_name=getVal('ss-landlord');
   currentStore.credit_card_names=getVal('ss-cc-names');
   currentStore.bank_names=getVal('ss-bank-names');
+  currentStore.require_serial_pool=(document.getElementById('ss-require-pool')||{}).checked||false;
   var ok=await saveStoreConfig();
   if(ok){adminInvoiceMessage=currentStore.invoice_message;toast('Store settings saved','success');}
   else{toast('Save failed','error');}
