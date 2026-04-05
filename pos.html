@@ -1428,6 +1428,10 @@ Accounts Receivable
 <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
 End of Month
 </div>
+<div class="admin-menu-item" onclick="selectAdminSection('storesettings')">
+<svg viewBox="0 0 24 24"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+Store Settings
+</div>
 <div class="admin-menu-item" onclick="selectAdminSection('mergetool')">
 <svg viewBox="0 0 24 24"><path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/></svg>
 Merge Tool
@@ -1652,6 +1656,53 @@ POS Settings
 <input type="month" class="inp" id="eom-month" style="width:180px;" onchange="renderEomReports()"/>
 </div>
 <div id="eom-content"></div>
+</div>
+<div class="admin-panel" id="admin-panel-storesettings">
+<div class="admin-content-title">Store Settings</div>
+<div style="max-width:800px;padding:0 4px;">
+<div style="font-size:11px;color:var(--gray-2);margin-bottom:14px;">Store ID: <strong id="ss-store-id">1</strong> &middot; Subdomain: <strong id="ss-subdomain">dcappliance</strong></div>
+
+<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;">
+<div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;">Store Information</div>
+<div class="field"><label>Store Name</label><input class="inp" id="ss-name"/></div>
+<div class="field"><label>Tagline</label><input class="inp" id="ss-tagline" placeholder="MATTRESS · OUTDOOR · ELECTRONICS"/></div>
+<div class="field"><label>Address</label><input class="inp" id="ss-address"/></div>
+<div class="frow3"><div class="field"><label>City</label><input class="inp" id="ss-city"/></div><div class="field"><label>State</label><input class="inp" id="ss-state"/></div><div class="field"><label>Zip</label><input class="inp" id="ss-zip"/></div></div>
+<div class="frow"><div class="field"><label>Phone</label><input class="inp" id="ss-phone"/></div><div class="field"><label>Email</label><input class="inp" id="ss-email" type="email"/></div></div>
+<div class="field"><label>Store Hours</label><input class="inp" id="ss-hours" placeholder="Mon-Fri 9am-6pm, Sat 9am-5pm"/></div>
+</div>
+
+<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;">
+<div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;">Branding</div>
+<div class="field"><label>Logo URL</label><input class="inp" id="ss-logo" placeholder="images/dc-appliance-logo-transparent.png"/></div>
+<div class="field"><label>Primary Brand Color</label><input class="inp" id="ss-color" type="color" style="width:80px;height:36px;padding:2px;"/></div>
+</div>
+
+<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;">
+<div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;">Tax Defaults</div>
+<div class="frow"><div class="field"><label>Default Tax County</label><input class="inp" id="ss-tax-county"/></div><div class="field"><label>Default Tax Rate (%)</label><input class="inp" id="ss-tax-rate" type="number" step="0.001"/></div></div>
+</div>
+
+<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;">
+<div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;">Invoice &amp; Documents</div>
+<div class="field"><label>Invoice Message (thank-you line on every invoice)</label><input class="inp" id="ss-invmsg"/></div>
+<div class="field"><label>Delivery Terms / Fine Print (shown on invoices)</label><textarea class="txta" id="ss-delivery-terms" rows="4" placeholder="Delivery terms, measurements, install notes..."></textarea></div>
+</div>
+
+<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;">
+<div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;">End-of-Month Checklist Fields</div>
+<div class="frow"><div class="field"><label>Rent Amount</label><input class="inp" id="ss-rent" type="number" step="0.01"/></div><div class="field"><label>Landlord Name</label><input class="inp" id="ss-landlord"/></div></div>
+<div class="field"><label>Credit Card Names (comma-separated)</label><input class="inp" id="ss-cc-names" placeholder="Visa, Mastercard, Amex, Discover"/></div>
+<div class="field"><label>Bank Names (comma-separated)</label><input class="inp" id="ss-bank-names" placeholder="First National, Community State..."/></div>
+</div>
+
+<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;">
+<div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;">Subscription (read-only)</div>
+<div class="frow"><div class="field"><label>Tier</label><input class="inp" id="ss-tier" disabled/></div><div class="field"><label>Status</label><input class="inp" id="ss-status" disabled/></div></div>
+</div>
+
+<button class="primary-btn" onclick="saveStoreSettings()" style="margin-top:4px;">Save Store Settings</button>
+</div>
 </div>
 <div class="admin-panel" id="admin-panel-mergetool">
 <div class="admin-content-title">Merge Tool</div>
@@ -2081,6 +2132,82 @@ POS Settings
 </div>
 
 <script>
+// ══════════════════════════════════════════════
+// MULTI-TENANT STORE CONTEXT (Appliance OS)
+// ══════════════════════════════════════════════
+// DC Appliance is store #1. Future stores will namespace their data by store_id.
+// Existing Redis keys (customers, users:dc-appliance, dc-deliveries, etc.) belong to store 1.
+var currentStoreId=1;
+var currentStore={
+  store_id:1,
+  store_name:'DC Appliance',
+  subdomain:'dcappliance',
+  address:'2610 Central Ave',
+  city:'Dodge City',
+  state:'KS',
+  zip:'67801',
+  phone:'620-371-6417',
+  email:'',
+  logo_url:'images/dc-appliance-logo-transparent.png',
+  primary_color:'#2563eb',
+  tax_county:'Dodge City',
+  tax_rate:0.09,
+  subscription_tier:'enterprise',
+  subscription_status:'active',
+  store_hours:'Mon-Fri 9am-6pm, Sat 9am-5pm',
+  invoice_message:'THANK YOU FOR YOUR BUSINESS!',
+  delivery_terms:'',
+  rent_amount:0,
+  landlord_name:'',
+  credit_card_names:'',
+  bank_names:'',
+  tagline:'MATTRESS · OUTDOOR · ELECTRONICS'
+};
+
+async function loadStoreConfig(){
+  try{
+    var res=await fetch('/api/admin-get?key=stores');
+    var data=await res.json();
+    if(data&&data.data&&Array.isArray(data.data)){
+      var match=data.data.find(function(s){return s.store_id===currentStoreId;});
+      if(match)currentStore=Object.assign(currentStore,match);
+    }
+    applyStoreBranding();
+  }catch(e){console.error('Store config load failed:',e);}
+}
+
+async function saveStoreConfig(){
+  try{
+    var res=await fetch('/api/admin-get?key=stores');var data=await res.json();
+    var stores=(data&&data.data&&Array.isArray(data.data))?data.data:[];
+    var idx=stores.findIndex(function(s){return s.store_id===currentStoreId;});
+    if(idx>=0)stores[idx]=currentStore;else stores.push(currentStore);
+    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'stores',data:stores})});
+    applyStoreBranding();
+    return true;
+  }catch(e){console.error('Store save failed:',e);return false;}
+}
+
+function getStoreSetting(key,fallback){return (currentStore&&currentStore[key]!==undefined&&currentStore[key]!=='')?currentStore[key]:(fallback||'');}
+
+function applyStoreBranding(){
+  // Apply primary color to CSS variables
+  if(currentStore.primary_color){
+    document.documentElement.style.setProperty('--store-primary',currentStore.primary_color);
+  }
+  // Update page title with store name
+  document.title=currentStore.store_name+' POS';
+  // Update store name displays
+  document.querySelectorAll('[data-store-name]').forEach(function(el){el.textContent=currentStore.store_name;});
+  document.querySelectorAll('[data-store-phone]').forEach(function(el){el.textContent=currentStore.phone;});
+  document.querySelectorAll('[data-store-tagline]').forEach(function(el){el.textContent=currentStore.tagline;});
+  // Update the adminInvoiceMessage to use store config
+  if(currentStore.invoice_message)adminInvoiceMessage=currentStore.invoice_message;
+}
+
+// Load store config on app startup
+if(typeof window!=='undefined'){window.addEventListener('DOMContentLoaded',function(){loadStoreConfig();});}
+
 // ══════════════════════════════════════════════
 // COMPANY LOGO (used in all prints and emails)
 // ══════════════════════════════════════════════

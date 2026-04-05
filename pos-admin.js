@@ -208,6 +208,7 @@ function renderAdminSection(){
   else if(adminSection==='serviceadmin') svcAdminLoadTechs();
   else if(adminSection==='vendors') renderVendors();
   else if(adminSection==='mergetool') renderMergeTool();
+  else if(adminSection==='storesettings') renderStoreSettings();
   else if(adminSection==='receiveinv') renderReceiveInv();
   else if(adminSection==='dataimport') renderDataImport();
   else if(adminSection==='arreport') renderARReport();
@@ -1515,6 +1516,57 @@ function adminDeleteUser(i){
 }
 
 // --- POS Settings ---
+// ═══ STORE SETTINGS (Appliance OS multi-tenant) ═══
+function renderStoreSettings(){
+  var s=currentStore||{};
+  var setVal=function(id,v){var el=document.getElementById(id);if(el)el.value=v||'';};
+  setVal('ss-store-id',s.store_id||1);
+  setVal('ss-subdomain',s.subdomain||'dcappliance');
+  document.getElementById('ss-store-id').textContent=s.store_id||1;
+  document.getElementById('ss-subdomain').textContent=s.subdomain||'dcappliance';
+  setVal('ss-name',s.store_name);
+  setVal('ss-tagline',s.tagline);
+  setVal('ss-address',s.address);
+  setVal('ss-city',s.city);setVal('ss-state',s.state);setVal('ss-zip',s.zip);
+  setVal('ss-phone',s.phone);setVal('ss-email',s.email);
+  setVal('ss-hours',s.store_hours);
+  setVal('ss-logo',s.logo_url);
+  setVal('ss-color',s.primary_color||'#2563eb');
+  setVal('ss-tax-county',s.tax_county);
+  setVal('ss-tax-rate',((s.tax_rate||0)*100).toFixed(3));
+  setVal('ss-invmsg',s.invoice_message);
+  setVal('ss-delivery-terms',s.delivery_terms);
+  setVal('ss-rent',s.rent_amount||0);
+  setVal('ss-landlord',s.landlord_name);
+  setVal('ss-cc-names',s.credit_card_names);
+  setVal('ss-bank-names',s.bank_names);
+  setVal('ss-tier',s.subscription_tier||'enterprise');
+  setVal('ss-status',s.subscription_status||'active');
+}
+
+async function saveStoreSettings(){
+  var getVal=function(id){var el=document.getElementById(id);return el?el.value.trim():'';};
+  currentStore.store_name=getVal('ss-name');
+  currentStore.tagline=getVal('ss-tagline');
+  currentStore.address=getVal('ss-address');
+  currentStore.city=getVal('ss-city');currentStore.state=getVal('ss-state');currentStore.zip=getVal('ss-zip');
+  currentStore.phone=getVal('ss-phone');currentStore.email=getVal('ss-email');
+  currentStore.store_hours=getVal('ss-hours');
+  currentStore.logo_url=getVal('ss-logo');
+  currentStore.primary_color=getVal('ss-color')||'#2563eb';
+  currentStore.tax_county=getVal('ss-tax-county');
+  currentStore.tax_rate=(parseFloat(getVal('ss-tax-rate'))||0)/100;
+  currentStore.invoice_message=getVal('ss-invmsg');
+  currentStore.delivery_terms=getVal('ss-delivery-terms');
+  currentStore.rent_amount=parseFloat(getVal('ss-rent'))||0;
+  currentStore.landlord_name=getVal('ss-landlord');
+  currentStore.credit_card_names=getVal('ss-cc-names');
+  currentStore.bank_names=getVal('ss-bank-names');
+  var ok=await saveStoreConfig();
+  if(ok){adminInvoiceMessage=currentStore.invoice_message;toast('Store settings saved','success');}
+  else{toast('Save failed','error');}
+}
+
 function renderPosSettings(){
   document.getElementById('admin-invoice-msg').value=adminInvoiceMessage;
   document.getElementById('admin-delivery-price').value=adminDeliveryPrice;

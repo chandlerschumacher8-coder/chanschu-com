@@ -537,8 +537,12 @@ function buildInvoiceHeader(o,docTitle){
   var delDate=o.deliveryDate?new Date(o.deliveryDate+'T12:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}):'';
   var h='<div class="doc-hdr">';
   h+='<div class="doc-hdr-left"><img class="doc-logo" src="'+INVOICE_LOGO_PATH+'" alt="DC Appliance" onerror="this.style.display=\'none\'"/>';
-  h+='<div class="doc-store-tag">MATTRESS &middot; OUTDOOR &middot; ELECTRONICS</div>';
-  h+='<div class="doc-store-addr">2610 Central Ave, Dodge City, KS 67801<br/>620-371-6417</div></div>';
+  var s=(typeof currentStore!=='undefined'?currentStore:{});
+  var tagline=s.tagline||'MATTRESS &middot; OUTDOOR &middot; ELECTRONICS';
+  var storeAddr=(s.address||'2610 Central Ave')+', '+(s.city||'Dodge City')+', '+(s.state||'KS')+' '+(s.zip||'67801');
+  var storePhone=s.phone||'620-371-6417';
+  h+='<div class="doc-store-tag">'+tagline+'</div>';
+  h+='<div class="doc-store-addr">'+storeAddr+'<br/>'+storePhone+'</div></div>';
   h+='<div class="doc-hdr-right">';
   h+='<div class="doc-title">'+docTitle+'</div>';
   h+='<div class="doc-info"><table>';
@@ -598,10 +602,15 @@ function buildCustomerInvoiceDoc(o){
   // Terms + totals
   h+='<div class="doc-bot">';
   h+='<div class="doc-terms">';
-  h+='<p><strong>Rebates</strong> must be filled out completely online or mailed in by Customer. Rebates are NOT the store\'s responsibility.</p>';
-  h+='<p><strong>Delivery</strong> — we will make every effort to set up a delivery time that is convenient for you. We will call and set up a date and time for delivery and call before we leave for delivery. We offer Free Drop off in the city limits between the hours of 9am &amp; 5pm, Monday thru Friday.</p>';
-  h+='<p><strong>Measurements</strong> — Customer is responsible for measuring openings and take full responsibility for wrong measurements.</p>';
-  h+='<p><strong>Install</strong> — We will make every effort to do the job properly, but should any additional work be needed, we recommend you contact a licensed contractor. We are not Electricians or Plumbers and do not hook up gas lines or do cabinet or countertop work.</p>';
+  // Use store-configured delivery terms if set, otherwise fall back to DC Appliance defaults
+  if(s.delivery_terms&&s.delivery_terms.trim()){
+    h+='<div style="white-space:pre-wrap;">'+s.delivery_terms+'</div>';
+  }else{
+    h+='<p><strong>Rebates</strong> must be filled out completely online or mailed in by Customer. Rebates are NOT the store\'s responsibility.</p>';
+    h+='<p><strong>Delivery</strong> — we will make every effort to set up a delivery time that is convenient for you. We will call and set up a date and time for delivery and call before we leave for delivery. We offer Free Drop off in the city limits between the hours of 9am &amp; 5pm, Monday thru Friday.</p>';
+    h+='<p><strong>Measurements</strong> — Customer is responsible for measuring openings and take full responsibility for wrong measurements.</p>';
+    h+='<p><strong>Install</strong> — We will make every effort to do the job properly, but should any additional work be needed, we recommend you contact a licensed contractor. We are not Electricians or Plumbers and do not hook up gas lines or do cabinet or countertop work.</p>';
+  }
   if(o.invoiceNotes)h+='<p style="margin-top:6px;padding:4px 6px;background:#fffbeb;border-left:3px solid #eab308;"><strong>Delivery Instructions:</strong> '+o.invoiceNotes+'</p>';
   h+='</div>';
   h+='<div style="width:260px;">';
@@ -1789,7 +1798,11 @@ function poViewReadOnly(id){
   var itemRows=(po.items||[]).map(function(it){var ext=(it.qtyOrdered||0)*(it.unitCost||0);return '<tr><td>'+(it.model||'')+'</td><td>'+it.name+'</td><td style="text-align:center;">'+it.qtyOrdered+'</td><td style="text-align:right;">$'+(it.unitCost||0).toFixed(2)+'</td><td style="text-align:right;font-weight:700;">$'+ext.toFixed(2)+'</td></tr>';}).join('');
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>PO '+po.id+'</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif;}body{padding:24px;font-size:12px;color:#111;}.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:16px;}.top-left img{max-width:200px;max-height:70px;}.top-left .store{font-size:10px;color:#333;margin-top:6px;line-height:1.4;}.top-right{text-align:right;}.top-right h1{font-size:26px;font-weight:800;letter-spacing:2px;margin-bottom:6px;}.top-right .meta{font-size:11px;color:#333;}.top-right .meta strong{font-size:13px;}.vendor-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 14px;margin-bottom:14px;}.vendor-box .lbl{font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:4px;}.vendor-box .v-name{font-size:14px;font-weight:700;margin-bottom:2px;}.vendor-box .v-line{font-size:11px;color:#4b5563;line-height:1.4;}table{width:100%;border-collapse:collapse;margin-bottom:12px;}th{background:#222;color:#fff;font-size:10px;padding:7px 10px;text-align:left;text-transform:uppercase;}td{padding:8px 10px;border-bottom:1px solid #ddd;font-size:11px;}.total-row{display:flex;justify-content:flex-end;margin-bottom:12px;}.total-box{background:#eee;padding:8px 18px;border-radius:6px;font-size:16px;font-weight:800;}.notes{margin-top:10px;padding:10px 14px;background:#fffbeb;border-left:4px solid #eab308;font-size:11px;border-radius:4px;}.sig-block{margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}.sig-line{border-bottom:1.5px solid #000;height:22px;margin-bottom:4px;}.sig-label{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:0.05em;}@media print{@page{margin:12mm;size:letter;}body{padding:0;}}</style></head><body>';
   // Header
-  html+='<div class="top"><div class="top-left"><img src="'+(window.DC_APPLIANCE_LOGO||'')+'" onerror="this.style.display=\'none\'" alt="DC Appliance"/><div class="store">DC Appliance<br/>2610 Central Ave, Dodge City, KS 67801<br/>620-371-6417</div></div>';
+  var cs=(typeof currentStore!=='undefined'?currentStore:{});
+  var csName=cs.store_name||'DC Appliance';
+  var csAddr=(cs.address||'2610 Central Ave')+', '+(cs.city||'Dodge City')+', '+(cs.state||'KS')+' '+(cs.zip||'67801');
+  var csPhone=cs.phone||'620-371-6417';
+  html+='<div class="top"><div class="top-left"><img src="'+(window.DC_APPLIANCE_LOGO||'')+'" onerror="this.style.display=\'none\'" alt="'+csName+'"/><div class="store">'+csName+'<br/>'+csAddr+'<br/>'+csPhone+'</div></div>';
   html+='<div class="top-right"><h1>PURCHASE ORDER</h1><div class="meta"><strong>'+po.id+'</strong><br/>Created: '+new Date(po.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'<br/>Expected: '+(po.expectedDate?new Date(po.expectedDate+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'—')+'<br/>Status: '+po.status+'</div></div></div>';
   // Vendor box
   html+='<div class="vendor-box"><div class="lbl">Vendor</div><div class="v-name">'+po.vendor+'</div>';
@@ -1840,7 +1853,7 @@ async function poEmailVendor(id){
     +'<div style="text-align:right;font-size:16px;font-weight:700;margin-top:14px;">Total: $'+(po.totalCost||0).toFixed(2)+'</div>'
     +(po.notes?'<div style="margin-top:14px;padding:12px 16px;background:#fffbeb;border-left:4px solid #f59e0b;font-size:12px;"><strong>Notes:</strong> '+po.notes+'</div>':'')
     +'<p style="font-size:13px;color:#4b5563;margin-top:24px;">Please confirm receipt of this PO. Contact me with any questions.</p>'
-    +'<p style="font-size:13px;color:#1f2937;font-weight:600;">Thank you!<br/>DC Appliance<br/>620-371-6417</p>'
+    +'<p style="font-size:13px;color:#1f2937;font-weight:600;">Thank you!<br/>'+(cs.store_name||'DC Appliance')+'<br/>'+csPhone+'</p>'
     +'</div></div></body></html>';
   toast('Sending PO email...','info');
   var res=await sendDcEmail(toEmail,vendor?vendor.name:po.vendor,'Purchase Order '+po.id+' — DC Appliance',html);
