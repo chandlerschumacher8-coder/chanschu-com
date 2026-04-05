@@ -1134,6 +1134,20 @@ function renderDataImport(){
     +'<div id="di-sales-loading" style="display:none;margin-top:10px;font-size:12px;color:var(--gold-d,#9e7228);font-weight:600;"><span style="display:inline-block;width:14px;height:14px;border:2px solid #fef3c7;border-top-color:var(--gold,#c9973a);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Reading sales journal...</div>'
     +'</div>'
     +'<div id="di-sales-preview" style="display:none;margin-top:12px;"></div></div>'
+    // Serial Number Import (full width)
+    +'<div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;">'
+    +'<div><div style="font-size:14px;font-weight:700;">Serial Number Import</div><div style="font-size:11px;color:var(--gray-2);">Import serials from SmartTouch Serial Number Report by Brand (PDF)</div></div>'
+    +'<button class="ghost-btn" onclick="diShowSerialImportHistory()" style="font-size:11px;">View Import History</button>'
+    +'</div>'
+    +'<div style="border:2px dashed #bfdbfe;border-radius:10px;padding:24px 20px;text-align:center;cursor:pointer;position:relative;background:#eff6ff;">'
+    +'<input type="file" accept=".pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="diHandleSerialFile(this.files[0])"/>'
+    +'<div style="font-size:32px;margin-bottom:6px;">&#x1F3F7;</div>'
+    +'<div style="font-size:14px;font-weight:700;color:#1e40af;">Drop Serial Number Report PDF to Import Serial Pool</div>'
+    +'<div style="font-size:11px;color:var(--gray-2);margin-top:4px;">AI extracts brand, models, serials, PLUs, cost, and condition flags. Import one brand at a time or back-to-back.</div>'
+    +'<div id="di-serial-loading" style="display:none;margin-top:10px;font-size:12px;color:#2563eb;font-weight:600;"><span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Reading serial report...</div>'
+    +'</div>'
+    +'<div id="di-serial-preview" style="display:none;margin-top:12px;"></div></div>'
     // Clear Data section
     +'<div style="border:2px solid #fca5a5;background:#fff1f1;border-radius:8px;padding:16px;">'
     +'<div style="font-size:14px;font-weight:700;margin-bottom:4px;color:#991b1b;">&#x26A0; Clear Data — Danger Zone</div>'
@@ -1685,6 +1699,200 @@ async function diShowImportHistory(){
     var st=h.stats||{};
     var statStr=(st.imported||0)+' imported, '+(st.custCreated||0)+' new cust, '+(st.custMatched||0)+' matched, '+(st.serialsRecorded||0)+' serials'+(st.skipped?', '+st.skipped+' skipped':'');
     html+='<tr><td>'+new Date(h.date).toLocaleString()+'</td><td>'+h.file+'</td><td>'+(h.dateRange||'—')+'</td><td>'+h.count+'</td><td>'+h.by+'</td><td style="font-size:11px;color:#666;">'+statStr+'</td></tr>';
+  });
+  html+='</tbody></table></body></html>';
+  win.document.write(html);win.document.close();
+}
+
+// ═══ SERIAL NUMBER IMPORT (SmartTouch PDF) ═══
+var _diSerialParsed=null;
+var _diSerialImportHistory=[];
+var CONDITION_KEYWORDS=['dented','used','damaged','scratched','open box','openbox','open-box','return','demo','floor model','floormodel','refurbished','refurb'];
+
+async function diLoadSerialImportHistory(){
+  try{var r=await fetch('/api/admin-get?key=serial-import-history');var d=await r.json();if(d&&Array.isArray(d.data))_diSerialImportHistory=d.data;}catch(e){}
+}
+async function diSaveSerialImportHistory(){
+  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'serial-import-history',data:_diSerialImportHistory})});}catch(e){}
+}
+
+function cleanSerialAndFlag(rawSerial){
+  var sn=(rawSerial||'').trim();
+  var conditions=[];
+  var lower=sn.toLowerCase();
+  CONDITION_KEYWORDS.forEach(function(kw){
+    if(lower.indexOf(kw)>=0){
+      conditions.push(kw.charAt(0).toUpperCase()+kw.slice(1));
+      // Remove the keyword from the serial
+      var re=new RegExp(kw.replace('-','\\-').replace(' ','\\s*'),'gi');
+      sn=sn.replace(re,'').trim();
+    }
+  });
+  // Clean up leftover punctuation/whitespace
+  sn=sn.replace(/^[\s\-:,]+|[\s\-:,]+$/g,'').replace(/\s{2,}/g,' ');
+  return{serial:sn,condition:conditions.join(', ')};
+}
+
+async function diHandleSerialFile(file){
+  if(!file)return;
+  document.getElementById('di-serial-loading').style.display='block';
+  document.getElementById('di-serial-preview').style.display='none';
+  try{
+    var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
+    var prompt='Extract ALL serial numbers from this SmartTouch POS Serial Number Report by Brand. Return JSON only: '
+      +'{"brand":"Brand Name","models":[{"model":"MODEL#","plu":"","serials":[{"serial":"SN123","invoice":"INV/PO#","date":"YYYY-MM-DD","cost":0}]}]}. '
+      +'Keep any prefixes like "dented", "used", "damaged", "open box" in the serial field exactly as shown. JSON only, no explanation.';
+    var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:file.type||'application/pdf',data:b64}},{type:'text',text:prompt}]}];
+    var data=await claudeApiCall({messages:msgs,max_tokens:8000});
+    var match=data.content[0].text.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('Could not parse AI response');
+    var parsed=JSON.parse(match[0]);
+    _diSerialParsed={file:file.name,data:parsed};
+    diShowSerialPreview();
+  }catch(e){
+    document.getElementById('di-serial-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;">Import failed: '+e.message+'</div>';
+    document.getElementById('di-serial-preview').style.display='block';
+  }
+  document.getElementById('di-serial-loading').style.display='none';
+}
+
+function diShowSerialPreview(){
+  var p=_diSerialParsed.data;var models=p.models||[];
+  if(!models.length){document.getElementById('di-serial-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border-radius:8px;color:#991b1b;font-size:12px;">No serial numbers found in this file.</div>';document.getElementById('di-serial-preview').style.display='block';return;}
+
+  // Flatten all serials + compute stats
+  var totalSerials=0;var unmatchedModels=[];var conditionSerials=[];
+  var allSerials=[];
+  models.forEach(function(m){
+    var prod=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===(m.model||'').toLowerCase()||(x.sku||'').toLowerCase()===(m.model||'').toLowerCase();});
+    if(!prod&&unmatchedModels.indexOf(m.model)<0)unmatchedModels.push(m.model);
+    (m.serials||[]).forEach(function(s){
+      totalSerials++;
+      var clean=cleanSerialAndFlag(s.serial);
+      var entry={model:m.model,plu:m.plu||'',serial:clean.serial,condition:clean.condition,invoice:s.invoice||'',date:s.date||'',cost:parseFloat(s.cost)||0,matched:!!prod};
+      allSerials.push(entry);
+      if(clean.condition)conditionSerials.push(entry);
+    });
+  });
+
+  var h='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Brand</div><div style="font-size:20px;font-weight:800;">'+(p.brand||'—')+'</div></div>';
+  h+='<div style="display:flex;gap:12px;">';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Models</div><div style="font-size:20px;font-weight:800;">'+models.length+'</div></div>';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Serials</div><div style="font-size:20px;font-weight:800;color:var(--green);">'+totalSerials+'</div></div>';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Condition Flagged</div><div style="font-size:20px;font-weight:800;color:#d97706;">'+conditionSerials.length+'</div></div>';
+  h+='</div></div>';
+
+  if(unmatchedModels.length){
+    h+='<div style="padding:8px 12px;background:#fffbeb;border-left:3px solid #eab308;border-radius:4px;margin-bottom:8px;font-size:11px;color:#713f12;"><strong>'+unmatchedModels.length+' model'+(unmatchedModels.length===1?'':'s')+' not found in inventory</strong> — placeholder products will be created for: '+unmatchedModels.slice(0,6).join(', ')+(unmatchedModels.length>6?' +'+(unmatchedModels.length-6)+' more':'')+'</div>';
+  }
+  if(conditionSerials.length){
+    h+='<details style="padding:8px 12px;background:#fffbeb;border-left:3px solid #d97706;border-radius:4px;margin-bottom:8px;font-size:11px;color:#713f12;"><summary style="cursor:pointer;font-weight:700;">'+conditionSerials.length+' condition-flagged serial'+(conditionSerials.length===1?'':'s')+' (click to expand)</summary>';
+    h+='<div style="margin-top:6px;max-height:100px;overflow:auto;">';
+    conditionSerials.slice(0,25).forEach(function(s){h+='<div style="padding:2px 0;font-family:monospace;font-size:10px;">'+s.serial+' — <span style="font-weight:700;">'+s.condition+'</span> ('+s.model+')</div>';});
+    if(conditionSerials.length>25)h+='<div style="font-style:italic;color:var(--gray-3);">+'+(conditionSerials.length-25)+' more</div>';
+    h+='</div></details>';
+  }
+
+  // Preview first 20 serials
+  h+='<div style="font-size:11px;font-weight:700;margin-bottom:4px;">First 20 serials:</div>';
+  h+='<div style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-bottom:12px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model</th><th>PLU</th><th>Serial #</th><th>Condition</th><th>Invoice</th><th>Date</th><th style="text-align:right;">Cost</th><th>Match</th></tr></thead><tbody>';
+  allSerials.slice(0,20).forEach(function(s){
+    var condBadge=s.condition?'<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;background:#fef3c7;color:#92400e;">'+s.condition+'</span>':'';
+    var matchBadge=s.matched?'<span style="color:#16a34a;font-weight:700;">✓</span>':'<span style="color:#dc2626;font-weight:700;">New</span>';
+    h+='<tr><td>'+s.model+'</td><td>'+s.plu+'</td><td style="font-family:monospace;">'+s.serial+'</td><td>'+condBadge+'</td><td>'+s.invoice+'</td><td>'+s.date+'</td><td style="text-align:right;">'+(s.cost?'$'+s.cost.toFixed(2):'')+'</td><td>'+matchBadge+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+
+  h+='<div id="di-serial-progress" style="display:none;margin-bottom:10px;"><div style="background:var(--bg4);border-radius:100px;height:6px;overflow:hidden;"><div id="di-serial-bar" style="height:100%;width:0%;background:var(--green);transition:width 0.2s;"></div></div><div id="di-serial-progress-text" style="font-size:10px;color:var(--gray-2);margin-top:4px;text-align:center;"></div></div>';
+  h+='<div style="display:flex;gap:8px;"><button class="primary-btn" onclick="diImportSerials()">Import '+totalSerials+' Serial Numbers</button><button class="ghost-btn" onclick="diCancelSerialImport()">Cancel</button></div>';
+  h+='</div>';
+  document.getElementById('di-serial-preview').innerHTML=h;
+  document.getElementById('di-serial-preview').style.display='block';
+  // Store flattened serials for import
+  _diSerialParsed.flat=allSerials;
+}
+
+function diCancelSerialImport(){_diSerialParsed=null;document.getElementById('di-serial-preview').style.display='none';document.getElementById('di-serial-preview').innerHTML='';}
+
+async function diImportSerials(){
+  if(!_diSerialParsed||!_diSerialParsed.flat)return;
+  var serials=_diSerialParsed.flat;
+  var brand=_diSerialParsed.data.brand||'';
+  document.getElementById('di-serial-progress').style.display='block';
+  var bar=document.getElementById('di-serial-bar');
+  var text=document.getElementById('di-serial-progress-text');
+
+  var stats={imported:0,matched:0,placeholders:0,conditionFlagged:0,skipped:0};
+  var placeholderIds={};
+
+  for(var i=0;i<serials.length;i++){
+    var s=serials[i];
+    try{
+      var prod=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===s.model.toLowerCase()||(x.sku||'').toLowerCase()===s.model.toLowerCase();});
+      if(!prod){
+        // Create placeholder unless we already made one this run
+        if(placeholderIds[s.model.toLowerCase()]){
+          prod=PRODUCTS.find(function(x){return x.id===placeholderIds[s.model.toLowerCase()];});
+        }else{
+          var newId=PRODUCTS.length+500+stats.placeholders;
+          prod={id:newId,model:s.model,sku:s.model,name:s.model+' (Needs Details)',brand:brand,cat:'',price:0,cost:s.cost||0,stock:0,sold:0,reorderPt:2,reorderQty:3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:true,vendor:brand,upc:'',serialPool:[],needsDetails:true};
+          PRODUCTS.push(prod);
+          placeholderIds[s.model.toLowerCase()]=newId;
+          stats.placeholders++;
+        }
+      }else{
+        if(!stats._matchedModels)stats._matchedModels={};
+        if(!stats._matchedModels[prod.id]){stats.matched++;stats._matchedModels[prod.id]=true;}
+      }
+      if(!prod.serialPool)prod.serialPool=[];
+      // Check if serial already exists in pool
+      var dup=prod.serialPool.find(function(x){return x.sn===s.serial;});
+      if(dup){stats.skipped++;}
+      else{
+        var entry={sn:s.serial,status:'Available',receivedAt:s.date?new Date(s.date).toISOString():new Date().toISOString(),cost:s.cost,invoice:s.invoice,vendor:brand,importedFrom:'SmartTouch',importedAt:new Date().toISOString()};
+        if(s.condition){entry.condition=s.condition;stats.conditionFlagged++;}
+        prod.serialPool.push(entry);
+        stats.imported++;
+      }
+    }catch(e){console.error('Serial import row failed:',e);}
+    // Update progress
+    var pct=Math.round(((i+1)/serials.length)*100);
+    bar.style.width=pct+'%';
+    text.textContent='Importing serial '+(i+1)+' of '+serials.length+'...';
+    if(i%25===0)await new Promise(function(r){setTimeout(r,0);});
+  }
+
+  await saveProducts();
+  delete stats._matchedModels;
+
+  // Log import
+  _diSerialImportHistory.unshift({
+    date:new Date().toISOString(),
+    file:_diSerialParsed.file,
+    brand:brand,
+    count:stats.imported,
+    by:currentEmployee?currentEmployee.name:'Admin',
+    stats:stats
+  });
+  await diSaveSerialImportHistory();
+
+  text.textContent='Complete!';
+  toast(stats.imported+' serials imported, '+stats.matched+' models matched'+(stats.placeholders?', '+stats.placeholders+' placeholders created':'')+(stats.conditionFlagged?', '+stats.conditionFlagged+' flagged':'')+(stats.skipped?', '+stats.skipped+' duplicates skipped':''),'success');
+  setTimeout(function(){diCancelSerialImport();if(typeof renderInventory==='function')renderInventory();},1500);
+}
+
+async function diShowSerialImportHistory(){
+  await diLoadSerialImportHistory();
+  if(!_diSerialImportHistory.length){alert('No serial imports yet.');return;}
+  var win=window.open('','_blank','width=720,height=600');
+  var html='<!DOCTYPE html><html><head><title>Serial Import History</title><style>body{font-family:Arial,sans-serif;padding:20px;font-size:12px;}h1{font-size:18px;margin-bottom:14px;}table{width:100%;border-collapse:collapse;}th{background:#222;color:#fff;padding:7px 10px;font-size:10px;text-align:left;}td{padding:7px 10px;border-bottom:1px solid #ddd;}</style></head><body>';
+  html+='<h1>Serial Number Import History</h1><table><thead><tr><th>Date</th><th>File</th><th>Brand</th><th>Imported</th><th>By</th><th>Details</th></tr></thead><tbody>';
+  _diSerialImportHistory.forEach(function(h){
+    var st=h.stats||{};
+    var detail=(st.matched||0)+' matched, '+(st.placeholders||0)+' new placeholders, '+(st.conditionFlagged||0)+' condition flagged'+(st.skipped?', '+st.skipped+' skipped':'');
+    html+='<tr><td>'+new Date(h.date).toLocaleString()+'</td><td>'+h.file+'</td><td>'+(h.brand||'—')+'</td><td>'+h.count+'</td><td>'+h.by+'</td><td style="font-size:11px;color:#666;">'+detail+'</td></tr>';
   });
   html+='</tbody></table></body></html>';
   win.document.write(html);win.document.close();
