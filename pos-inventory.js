@@ -732,8 +732,9 @@ function buildCustomerInvoiceDoc(o){
   h+='<div class="doc-bot">';
   h+='<div class="doc-terms">';
   // Use store-configured delivery terms if set, otherwise fall back to DC Appliance defaults
-  if(s.delivery_terms&&s.delivery_terms.trim()){
-    h+='<div style="white-space:pre-wrap;">'+s.delivery_terms+'</div>';
+  var storeCfg=(typeof currentStore!=='undefined'?currentStore:{});
+  if(storeCfg.delivery_terms&&storeCfg.delivery_terms.trim()){
+    h+='<div style="white-space:pre-wrap;">'+storeCfg.delivery_terms+'</div>';
   }else{
     h+='<p><strong>Rebates</strong> must be filled out completely online or mailed in by Customer. Rebates are NOT the store\'s responsibility.</p>';
     h+='<p><strong>Delivery</strong> — we will make every effort to set up a delivery time that is convenient for you. We will call and set up a date and time for delivery and call before we leave for delivery. We offer Free Drop off in the city limits between the hours of 9am &amp; 5pm, Monday thru Friday.</p>';
