@@ -2073,6 +2073,34 @@ POS Settings
 </div>
 
 <!-- ADMIN PASSWORD MODAL -->
+<!-- CLEAR DATA MODAL -->
+<div class="modal-bg" id="clear-data-modal">
+<div class="modal" style="max-width:480px;">
+<div class="modal-hdr"><div class="modal-title" style="color:#dc2626;">&#x26A0; Are you sure?</div><button class="modal-close" onclick="closeModal('clear-data-modal');clearDataReset();">&#x2715;</button></div>
+<div class="modal-body" style="padding:20px;">
+<div id="cd-step-1">
+<div style="font-size:13px;color:#374151;line-height:1.6;margin-bottom:14px;" id="cd-warning-msg"></div>
+<div style="padding:12px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;font-size:12px;margin-bottom:14px;" id="cd-record-counts"></div>
+<div style="font-size:12px;color:#991b1b;font-weight:600;">This cannot be undone. Other stores' data will not be affected.</div>
+</div>
+<div id="cd-step-2" style="display:none;">
+<div style="font-size:13px;color:#374151;line-height:1.6;margin-bottom:14px;">Type <strong style="color:#dc2626;font-family:monospace;">DELETE</strong> to confirm permanent deletion:</div>
+<input type="text" class="inp" id="cd-confirm-input" placeholder="Type DELETE" autocomplete="off" oninput="clearDataInputCheck()" style="font-size:16px;font-family:monospace;text-align:center;text-transform:uppercase;letter-spacing:2px;padding:12px;border-width:2px;"/>
+</div>
+<div id="cd-step-3" style="display:none;">
+<div style="font-size:13px;font-weight:700;margin-bottom:8px;">Deleting records...</div>
+<div style="background:#e5e7eb;border-radius:100px;height:8px;overflow:hidden;"><div id="cd-progress-bar" style="background:#dc2626;height:100%;width:0%;transition:width 0.2s;"></div></div>
+<div id="cd-progress-text" style="font-size:11px;color:#6b7280;margin-top:6px;text-align:center;"></div>
+</div>
+</div>
+<div class="modal-footer">
+<button class="ghost-btn" onclick="closeModal('clear-data-modal');clearDataReset();" id="cd-cancel-btn">Cancel</button>
+<button class="primary-btn" id="cd-continue-btn" style="background:#dc2626;" onclick="clearDataNextStep()">Yes, Continue</button>
+<button class="primary-btn" id="cd-delete-btn" style="background:#dc2626;display:none;opacity:0.4;cursor:not-allowed;" disabled onclick="clearDataExecute()">Permanently Delete</button>
+</div>
+</div>
+</div>
+
 <div class="modal-bg" id="admin-pw-modal">
 <div class="modal" style="max-width:360px;">
 <div class="modal-hdr"><div class="modal-title">Admin Access</div><button class="modal-close" onclick="closeModal('admin-pw-modal')">&#x2715;</button></div>

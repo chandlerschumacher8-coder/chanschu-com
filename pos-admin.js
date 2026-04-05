@@ -1133,7 +1133,17 @@ function renderDataImport(){
     +'<div style="font-size:11px;color:var(--gray-2);margin-top:4px;">AI reads the SmartTouch format and imports invoices, customers, line items, and serial numbers</div>'
     +'<div id="di-sales-loading" style="display:none;margin-top:10px;font-size:12px;color:var(--gold-d,#9e7228);font-weight:600;"><span style="display:inline-block;width:14px;height:14px;border:2px solid #fef3c7;border-top-color:var(--gold,#c9973a);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Reading sales journal...</div>'
     +'</div>'
-    +'<div id="di-sales-preview" style="display:none;margin-top:12px;"></div></div>';
+    +'<div id="di-sales-preview" style="display:none;margin-top:12px;"></div></div>'
+    // Clear Data section
+    +'<div style="border:2px solid #fca5a5;background:#fff1f1;border-radius:8px;padding:16px;">'
+    +'<div style="font-size:14px;font-weight:700;margin-bottom:4px;color:#991b1b;">&#x26A0; Clear Data — Danger Zone</div>'
+    +'<div style="font-size:11px;color:var(--gray-2);margin-bottom:14px;">Permanently delete data for Store #'+(typeof currentStoreId!=='undefined'?currentStoreId:1)+' ('+((typeof currentStore!=='undefined'&&currentStore&&currentStore.store_name)||'DC Appliance')+'). Other stores unaffected.</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">'
+    +'<button class="ghost-btn" style="border-color:#fca5a5;color:#991b1b;padding:12px 8px;font-size:11px;font-weight:700;text-align:left;" onclick="clearDataStart(\'inventory\')">Clear Inventory<br/><span style="font-weight:400;font-size:10px;opacity:0.8;">Products + serial pools</span></button>'
+    +'<button class="ghost-btn" style="border-color:#fca5a5;color:#991b1b;padding:12px 8px;font-size:11px;font-weight:700;text-align:left;" onclick="clearDataStart(\'sales\')">Clear Sales History<br/><span style="font-weight:400;font-size:10px;opacity:0.8;">All invoices + line items</span></button>'
+    +'<button class="ghost-btn" style="border-color:#fca5a5;color:#991b1b;padding:12px 8px;font-size:11px;font-weight:700;text-align:left;" onclick="clearDataStart(\'customers\')">Clear Customers<br/><span style="font-weight:400;font-size:10px;opacity:0.8;">All customer records</span></button>'
+    +'<button class="ghost-btn" style="border-color:#dc2626;color:#fff;background:#dc2626;padding:12px 8px;font-size:11px;font-weight:700;text-align:left;" onclick="clearDataStart(\'all\')">CLEAR ALL<br/><span style="font-weight:400;font-size:10px;opacity:0.9;">Inventory + Sales + Customers</span></button>'
+    +'</div></div>';
 }
 
 var _diInvRows=[];
@@ -1220,6 +1230,111 @@ function diConfirmCust(){
   saveCustomers();_diCustRows=[];
   document.getElementById('di-cust-preview').style.display='none';
   toast(added+' added, '+updated+' updated','success');
+}
+
+// ═══ CLEAR DATA (Admin danger zone) ═══
+var _clearType='';
+var _clearStep=1;
+
+function clearDataStart(type){
+  // Role check — only Owner/Admin can clear data
+  var role=(typeof currentEmployee!=='undefined'&&currentEmployee)?(currentEmployee.posRole||''):'Owner/Admin';
+  if(role!=='Owner/Admin'&&role!=='General Manager'){toast('Only Owner/Admin can clear data','error');return;}
+  _clearType=type;_clearStep=1;
+  var productCount=PRODUCTS.length;
+  var orderCount=(orders||[]).length;
+  var custCount=(customers||[]).length;
+  var titles={inventory:'All Inventory',sales:'All Sales History',customers:'All Customer Records',all:'ALL Data (Inventory + Sales + Customers)'};
+  var counts={
+    inventory:productCount+' products (and their serial pools)',
+    sales:orderCount+' sales/invoices (and all line items)',
+    customers:custCount+' customer records (and their ledgers)',
+    all:productCount+' products, '+orderCount+' sales, '+custCount+' customers'
+  };
+  var storeName=(typeof currentStore!=='undefined'&&currentStore&&currentStore.store_name)||'DC Appliance';
+  document.getElementById('cd-warning-msg').innerHTML='This will <strong>permanently delete</strong> '+titles[type]+' for <strong>'+storeName+'</strong>.';
+  document.getElementById('cd-record-counts').innerHTML='<strong>Will delete:</strong> '+counts[type];
+  document.getElementById('cd-step-1').style.display='block';
+  document.getElementById('cd-step-2').style.display='none';
+  document.getElementById('cd-step-3').style.display='none';
+  document.getElementById('cd-continue-btn').style.display='';
+  document.getElementById('cd-delete-btn').style.display='none';
+  document.getElementById('cd-cancel-btn').style.display='';
+  document.getElementById('cd-confirm-input').value='';
+  openModal('clear-data-modal');
+}
+
+function clearDataReset(){_clearType='';_clearStep=1;}
+
+function clearDataNextStep(){
+  _clearStep=2;
+  document.getElementById('cd-step-1').style.display='none';
+  document.getElementById('cd-step-2').style.display='block';
+  document.getElementById('cd-continue-btn').style.display='none';
+  document.getElementById('cd-delete-btn').style.display='';
+  setTimeout(function(){document.getElementById('cd-confirm-input').focus();},100);
+}
+
+function clearDataInputCheck(){
+  var val=document.getElementById('cd-confirm-input').value.trim().toUpperCase();
+  var btn=document.getElementById('cd-delete-btn');
+  if(val==='DELETE'){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
+  else{btn.disabled=true;btn.style.opacity='0.4';btn.style.cursor='not-allowed';}
+}
+
+async function clearDataExecute(){
+  if(document.getElementById('cd-confirm-input').value.trim().toUpperCase()!=='DELETE')return;
+  document.getElementById('cd-step-2').style.display='none';
+  document.getElementById('cd-step-3').style.display='block';
+  document.getElementById('cd-cancel-btn').style.display='none';
+  document.getElementById('cd-delete-btn').style.display='none';
+  var bar=document.getElementById('cd-progress-bar');
+  var text=document.getElementById('cd-progress-text');
+  var deletedCounts={products:0,orders:0,customers:0};
+  var tasks=[];
+  if(_clearType==='inventory'||_clearType==='all')tasks.push('inventory');
+  if(_clearType==='sales'||_clearType==='all')tasks.push('sales');
+  if(_clearType==='customers'||_clearType==='all')tasks.push('customers');
+  for(var i=0;i<tasks.length;i++){
+    var pct=Math.round(((i)/tasks.length)*100);
+    bar.style.width=pct+'%';text.textContent='Clearing '+tasks[i]+'...';
+    await new Promise(function(r){setTimeout(r,100);});
+    if(tasks[i]==='inventory'){
+      deletedCounts.products=PRODUCTS.length;
+      PRODUCTS.length=0;
+      await saveProducts();
+    }else if(tasks[i]==='sales'){
+      deletedCounts.orders=(orders||[]).length;
+      orders.length=0;
+      nextOrderId=1001;nextQuoteId=1;
+      await saveOrders();
+    }else if(tasks[i]==='customers'){
+      deletedCounts.customers=(customers||[]).length;
+      customers.length=0;
+      await saveCustomers();
+    }
+  }
+  bar.style.width='100%';text.textContent='Complete!';
+
+  // Log the clear action
+  try{
+    var logRes=await fetch('/api/admin-get?key=data-clear-log');
+    var logData=await logRes.json();
+    var log=(logData&&Array.isArray(logData.data))?logData.data:[];
+    log.unshift({ts:new Date().toISOString(),by:(currentEmployee&&currentEmployee.name)||'Admin',type:_clearType,storeId:(typeof currentStoreId!=='undefined'?currentStoreId:1),deleted:deletedCounts});
+    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'data-clear-log',data:log.slice(0,100)})});
+  }catch(e){console.error('Clear log save failed:',e);}
+
+  var total=deletedCounts.products+deletedCounts.orders+deletedCounts.customers;
+  setTimeout(function(){
+    closeModal('clear-data-modal');
+    clearDataReset();
+    toast('Successfully cleared '+total+' records','success');
+    // Refresh current views
+    if(typeof renderInventory==='function')renderInventory();
+    if(typeof renderOrders==='function')renderOrders();
+    if(typeof custFilterList==='function')custFilterList();
+  },1400);
 }
 
 // ═══ SALES HISTORY IMPORT (SmartTouch PDF/CSV) ═══
