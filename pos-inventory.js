@@ -492,13 +492,13 @@ async function emailOrderReceipt(id){
   }else{if(!confirm('Send receipt to '+custEmail+'?'))return;}
   toast('Sending receipt...','info');
   var html=buildInvoiceEmailHtml(o);
-  var res=await sendDcEmail(custEmail,o.customer,'Invoice '+o.id+' — DC Appliance',html);
+  var res=await sendDcEmail(custEmail,o.customer,'Invoice '+o.id+' — DC Appliance',html,o.id);
   if(res.ok){
     if(!o.emailLog)o.emailLog=[];
     o.emailLog.push({ts:new Date().toISOString(),to:custEmail,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});
     saveOrders();renderOrderDetail();
-    toast('Receipt sent to '+custEmail,'success');
-  }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
+    toast('Email sent to '+custEmail,'success');
+  }else{toast('Email failed: '+(res.error||'Unknown error'),'error');}
 }
 function confirmItemDelivery(id){
   var o=orders.find(function(x){return x.id===id;});if(!o)return;

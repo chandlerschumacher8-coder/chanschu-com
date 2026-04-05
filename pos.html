@@ -2321,20 +2321,38 @@ async function claudeApiCall(body){
 // ══════════════════════════════════════════════
 emailjs.init('8rsxIaKLiiRqq5Yo0');
 var EMAILJS_SERVICE='service_gx9g5vj';
-var EMAILJS_TEMPLATE='template_dc_email';
+var EMAILJS_TEMPLATE='template_0eo26t5';
 
-async function sendDcEmail(toEmail,toName,subject,htmlBody){
+async function sendDcEmail(toEmail,toName,subject,htmlBody,refNumber){
+  // Extract invoice/ref number from subject if not explicitly passed (e.g. "Invoice ORD-1005 — DC Appliance")
+  if(!refNumber&&subject){
+    var m=subject.match(/\b([A-Z]+[-\s]?\d+[\w\-]*)/);
+    refNumber=m?m[1]:'';
+  }
+  var params={
+    to_email:toEmail,
+    customer_name:toName||'Customer',
+    invoice_number:refNumber||'',
+    invoice_html:htmlBody||'',
+    // Legacy params for backward compat
+    to_name:toName||'',
+    subject:subject||'',
+    message_html:htmlBody||''
+  };
+  console.log('[EmailJS] Sending to',toEmail,'template',EMAILJS_TEMPLATE);
   try{
-    var res=await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
-      to_email:toEmail,
-      to_name:toName,
-      subject:subject,
-      message_html:htmlBody
-    });
+    var res=await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,params);
+    console.log('[EmailJS] Success:',res);
     return{ok:true,status:res.status};
   }catch(e){
-    console.error('Email send error:',e);
-    return{ok:false,error:e.text||e.message||'Unknown error'};
+    console.error('[EmailJS] Send failed:',e);
+    // Extract specific error message
+    var errMsg='Unknown error';
+    if(typeof e==='string')errMsg=e;
+    else if(e&&e.text)errMsg=e.text;
+    else if(e&&e.message)errMsg=e.message;
+    else if(e&&e.status)errMsg='HTTP '+e.status+(e.text?': '+e.text:'');
+    return{ok:false,error:errMsg};
   }
 }
 
@@ -5924,13 +5942,13 @@ async function promptEmailReceipt(orderId){
   }
   var html=buildInvoiceEmailHtml(order);
   toast('Sending receipt...','info');
-  var res=await sendDcEmail(custEmail,order.customer,'Invoice '+order.id+' — DC Appliance',html);
+  var res=await sendDcEmail(custEmail,order.customer,'Invoice '+order.id+' — DC Appliance',html,order.id);
   if(res.ok){
     if(!order.emailLog)order.emailLog=[];
     order.emailLog.push({ts:new Date().toISOString(),to:custEmail,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});
     saveOrders();
-    toast('Receipt sent to '+custEmail,'success');
-  }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
+    toast('Email sent to '+custEmail,'success');
+  }else{toast('Email failed: '+(res.error||'Unknown error'),'error');}
   var bar=document.getElementById('checkout-bar');if(bar)bar.remove();
 }
 function scheduleDeliveryFromSale(){

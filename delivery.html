@@ -715,7 +715,7 @@ const DC_APPLIANCE_LOGO = "/images/logos/dc-appliance-logo-transparent.png";
 // ═══ EMAILJS ═══
 emailjs.init('8rsxIaKLiiRqq5Yo0');
 var EMAILJS_SERVICE='service_gx9g5vj';
-var EMAILJS_TEMPLATE='template_dc_email';
+var EMAILJS_TEMPLATE='template_0eo26t5';
 
 function buildDeliveryEmailHtml(d){
   var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:''}];
@@ -783,21 +783,13 @@ function buildInvoiceEmailHtml(order){
     +'</div></div></body></html>';
 }
 
-async function sendDcEmail(toEmail,toName,subject,htmlBody){
-  try{
-    var res=await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{
-      to_email:toEmail,
-      to_name:toName,
-      subject:subject,
-      message_html:htmlBody
-    });
-    return{ok:true,status:res.status};
-  }catch(e){
-    console.error('Email send error:',e);
-    return{ok:false,error:e.text||e.message||'Unknown error'};
-  }
+async function sendDcEmail(toEmail,toName,subject,htmlBody,refNumber){
+  if(!refNumber&&subject){var m=subject.match(/\b([A-Z]+[-\s]?\d+[\w\-]*)/);refNumber=m?m[1]:'';}
+  var params={to_email:toEmail,customer_name:toName||'Customer',invoice_number:refNumber||'',invoice_html:htmlBody||'',to_name:toName||'',subject:subject||'',message_html:htmlBody||''};
+  console.log('[EmailJS] Sending to',toEmail);
+  try{var res=await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,params);return{ok:true,status:res.status};}
+  catch(e){console.error('[EmailJS] Send failed:',e);var m2='Unknown error';if(typeof e==='string')m2=e;else if(e&&e.text)m2=e.text;else if(e&&e.message)m2=e.message;return{ok:false,error:m2};}
 }
-
 // ═══ CONFIG ═══
 var PASSWORD='DCDelivery2026';
 var HOURS_START=7,HOURS_END=20;
