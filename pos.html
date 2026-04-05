@@ -4964,10 +4964,18 @@ function renderCart(){
   document.getElementById('cart-tax').textContent=fmt(tax);
   document.getElementById('cart-total').textContent=fmt(sub+tax);
   var rlbl=document.getElementById('cart-tax-rate-lbl');if(rlbl)rlbl.textContent='('+(cartTaxRate*100).toFixed(3)+'%)';
-  // Populate clerk dropdown
+  // Populate clerk dropdown — only Sales / General Manager / Owner-Admin / Manager roles
   var clerkSel=document.getElementById('cart-clerk');
-  if(clerkSel&&clerkSel.options.length<=1){
-    clerkSel.innerHTML='<option value="">Clerk...</option>'+adminUsers.filter(function(u){return u.active!==false;}).map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
+  var salesRoles=['Sales','General Manager','Owner/Admin','Manager'];
+  var empCount=adminUsers.filter(function(u){return u.active!==false&&salesRoles.indexOf(u.posRole||'Sales')>=0;}).length;
+  // Repopulate if options mismatch (accounts for new/deactivated employees)
+  if(clerkSel&&clerkSel.options.length!==(empCount+1)){
+    var eligible=adminUsers.filter(function(u){return u.active!==false&&salesRoles.indexOf(u.posRole||'Sales')>=0;});
+    var prev=clerkSel.value;
+    clerkSel.innerHTML='<option value="">Select Salesperson...</option>'+eligible.map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
+    // Restore previous selection, or auto-fill logged-in employee
+    if(prev)clerkSel.value=prev;
+    else if(currentEmployee&&salesRoles.indexOf(currentEmployee.posRole||'Sales')>=0)clerkSel.value=currentEmployee.name;
   }
 }
 function cartSerial(idx,val){if(cart[idx])cart[idx].serial=val;}
@@ -4984,7 +4992,13 @@ function getSaleFields(){
 }
 function clearSaleForm(){
   ['cart-sold-name','cart-sold-addr','cart-sold-city','cart-sold-state','cart-sold-zip','cart-sold-phone','cart-ship-name','cart-ship-addr','cart-ship-city','cart-ship-state','cart-ship-zip','cart-po','cart-job','cart-invoice-notes','cart-shipper-notes'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
-  var cl=document.getElementById('cart-clerk');if(cl)cl.selectedIndex=0;
+  // Reset clerk to logged-in employee if they're a salesperson, otherwise blank
+  var cl=document.getElementById('cart-clerk');
+  if(cl){
+    var salesRoles=['Sales','General Manager','Owner/Admin','Manager'];
+    if(currentEmployee&&salesRoles.indexOf(currentEmployee.posRole||'Sales')>=0){cl.value=currentEmployee.name;}
+    else{cl.selectedIndex=0;}
+  }
 }
 var _pendingCheckoutMethod=null;
 var _checklistConfirmed=false;
