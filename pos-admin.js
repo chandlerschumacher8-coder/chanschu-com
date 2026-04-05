@@ -1531,6 +1531,9 @@ function renderStoreSettings(){
   setVal('ss-phone',s.phone);setVal('ss-email',s.email);
   setVal('ss-hours',s.store_hours);
   setVal('ss-logo',s.logo_url);
+  // Show logo preview
+  var prev=document.getElementById('ss-logo-preview-img');
+  if(prev&&s.logo_url){prev.src=s.logo_url;prev.style.display='block';prev.onerror=function(){prev.style.display='none';};}
   setVal('ss-color',s.primary_color||'#2563eb');
   setVal('ss-tax-county',s.tax_county);
   setVal('ss-tax-rate',((s.tax_rate||0)*100).toFixed(3));
@@ -1542,6 +1545,27 @@ function renderStoreSettings(){
   setVal('ss-bank-names',s.bank_names);
   setVal('ss-tier',s.subscription_tier||'enterprise');
   setVal('ss-status',s.subscription_status||'active');
+}
+
+async function uploadStoreLogo(file){
+  if(!file)return;
+  var status=document.getElementById('ss-logo-upload-status');
+  status.innerHTML='<span style="color:#2563eb;">Uploading logo...</span>';
+  try{
+    var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
+    // Use delivery-photo-upload (Vercel Blob) — stored as logos/{store_id}/logo.{ext}
+    var ext=(file.name.split('.').pop()||'png').toLowerCase();
+    var safeName='logo-'+Date.now()+'.'+ext;
+    var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:safeName,contentType:file.type,data:b64,deliveryId:'store-'+currentStoreId+'-logo'})});
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error||'Upload failed');
+    document.getElementById('ss-logo').value=data.url;
+    var prev=document.getElementById('ss-logo-preview-img');
+    prev.src=data.url;prev.style.display='block';
+    status.innerHTML='<span style="color:#16a34a;">&#x2713; Logo uploaded — click Save Store Settings to apply</span>';
+  }catch(e){
+    status.innerHTML='<span style="color:#dc2626;">Upload failed: '+e.message+'</span>';
+  }
 }
 
 async function saveStoreSettings(){

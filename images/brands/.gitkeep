@@ -1,0 +1,4 @@
+# Brand logos (Whirlpool, LG, Samsung, GE, Maytag, KitchenAid, etc.)
+#
+# File naming: {brand-slug}.png  (lowercase, dashes for spaces)
+# Example: whirlpool.png, ge-appliances.png, kitchen-aid.png

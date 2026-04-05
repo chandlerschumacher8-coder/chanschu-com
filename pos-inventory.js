@@ -503,7 +503,12 @@ function printAddrBlock(label,addr){
   return '<div style="margin-bottom:8px;"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:2px;">'+label+'</div><div style="font-weight:700;">'+addr.name+'</div>'+(addr.addr?'<div>'+addr.addr+'</div>':'')+(addr.city?'<div>'+addr.city+(addr.state?', '+addr.state:'')+' '+(addr.zip||'')+'</div>':'')+(addr.phone?'<div>'+addr.phone+'</div>':'')+'</div>';
 }
 // ── SHARED INVOICE DOCUMENT STYLES ──
-var INVOICE_LOGO_PATH='images/dc-appliance-logo-transparent.png';
+function getStoreLogoPath(){
+  var s=(typeof currentStore!=='undefined'?currentStore:null);
+  return (s&&s.logo_url)||'/images/logos/dc-appliance-logo-transparent.png';
+}
+var INVOICE_LOGO_PATH='/images/logos/dc-appliance-logo-transparent.png';
+Object.defineProperty(window,'INVOICE_LOGO_PATH',{get:function(){return getStoreLogoPath();}});
 function invoiceDocStyles(){
   return '<style>*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#000;background:#fff;}'

@@ -1,0 +1,6 @@
+# Product images storage
+#
+# Product images go here as:
+# products/{store_id}/{model_number}.jpg
+#
+# Falls back to /images/products/placeholder-product.png if no image exists.

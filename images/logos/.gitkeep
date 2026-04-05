@@ -1,0 +1,8 @@
+# Store logo assets here
+#
+# Required files:
+# - dc-appliance-logo-transparent.png  (main logo, used in headers, prints, emails)
+# - dc-appliance-logo-white.png        (white version for dark backgrounds)
+# - placeholder-logo.png               (fallback when no store logo uploaded)
+#
+# Per-store uploaded logos live under logos/{store_id}/logo.png

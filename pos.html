@@ -1690,7 +1690,9 @@ POS Settings
 
 <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;">
 <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--gray-2);margin-bottom:10px;">Branding</div>
-<div class="field"><label>Logo URL</label><input class="inp" id="ss-logo" placeholder="images/dc-appliance-logo-transparent.png"/></div>
+<div class="field"><label>Logo URL</label><input class="inp" id="ss-logo" placeholder="/images/logos/dc-appliance-logo-transparent.png"/><div style="font-size:10px;color:#6b7280;margin-top:4px;">Enter a URL or drag/drop a logo file below. White-label support: each store's logo replaces DC Appliance branding.</div></div>
+<div class="field"><label>Upload New Logo</label><input type="file" id="ss-logo-file" accept="image/*" onchange="uploadStoreLogo(this.files[0])"/><div id="ss-logo-upload-status" style="font-size:10px;color:#6b7280;margin-top:4px;"></div></div>
+<div id="ss-logo-preview" style="margin-top:8px;"><img id="ss-logo-preview-img" src="" style="max-width:200px;max-height:80px;object-fit:contain;display:none;border:1px solid #e5e7eb;border-radius:6px;padding:6px;background:#fff;"/></div>
 <div class="field"><label>Primary Brand Color</label><input class="inp" id="ss-color" type="color" style="width:80px;height:36px;padding:2px;"/></div>
 </div>
 
@@ -2164,7 +2166,7 @@ var currentStore={
   zip:'67801',
   phone:'620-371-6417',
   email:'',
-  logo_url:'images/dc-appliance-logo-transparent.png',
+  logo_url:'/images/logos/dc-appliance-logo-transparent.png',
   primary_color:'#2563eb',
   tax_county:'Dodge City',
   tax_rate:0.09,
@@ -2217,6 +2219,8 @@ function applyStoreBranding(){
   document.querySelectorAll('[data-store-name]').forEach(function(el){el.textContent=currentStore.store_name;});
   document.querySelectorAll('[data-store-phone]').forEach(function(el){el.textContent=currentStore.phone;});
   document.querySelectorAll('[data-store-tagline]').forEach(function(el){el.textContent=currentStore.tagline;});
+  // Update store logo images
+  document.querySelectorAll('[data-store-logo]').forEach(function(el){el.src=currentStore.logo_url||'/images/logos/placeholder-logo.png';});
   // Update the adminInvoiceMessage to use store config
   if(currentStore.invoice_message)adminInvoiceMessage=currentStore.invoice_message;
 }

@@ -12,7 +12,7 @@ window.DC_STORE = {
   city: 'Dodge City',
   state: 'KS',
   zip: '67801',
-  logo_url: '/images/dc-appliance-logo-transparent.png'
+  logo_url: '/images/logos/dc-appliance-logo-transparent.png'
 };
 
 // Department configuration — maps department names to icons and inventory categories
@@ -183,7 +183,7 @@ function dcRenderHeader() {
     <div class="dc-header-top">Free local delivery on orders over $499 &middot; Call <a href="tel:${window.DC_STORE.phone}">${window.DC_STORE.phone}</a></div>
     <div class="dc-header-main">
       <a href="index.html" class="dc-logo">
-        <img src="${window.DC_STORE.logo_url}" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" alt="DC Appliance"/>
+        <img src="${window.DC_STORE.logo_url}" onerror="this.onerror=null;this.src='/images/logos/placeholder-logo.png';this.onerror=function(){this.style.display='none';this.nextElementSibling.style.display='block';}" alt="${window.DC_STORE.store_name}"/>
         <span class="dc-logo-text" style="display:none;">${window.DC_STORE.store_name}</span>
       </a>
       <nav class="dc-nav">
@@ -269,12 +269,20 @@ function dcRenderFooter() {
 }
 
 // ─── PRODUCT CARD ───
+function dcGetProductImageUrl(p) {
+  // Product-specific image (uploaded to Vercel Blob or external URL)
+  if (p.imageUrl || p.image) return p.imageUrl || p.image;
+  // Convention-based fallback: /images/products/{store_id}/{model}.jpg
+  const model = (p.model || p.sku || '').replace(/[^a-zA-Z0-9.-]/g, '_');
+  if (model) return '/images/products/' + window.DC_STORE_ID + '/' + model + '.jpg';
+  return '/images/products/placeholder-product.png';
+}
 function dcProductCardHtml(p) {
   const stock = dcGetStockBadge(p);
   const outOfStock = dcGetStock(p) <= 0;
-  const imgSrc = p.imageUrl || p.image || '';
+  const imgSrc = dcGetProductImageUrl(p);
   return `<div class="dc-prod-card">
-    <div class="dc-prod-img">${imgSrc ? `<img src="${imgSrc}" alt="${p.name}" onerror="this.parentElement.innerHTML='📦'"/>` : '📦'}</div>
+    <div class="dc-prod-img"><img src="${imgSrc}" alt="${p.name}" onerror="this.onerror=null;this.src='/images/products/placeholder-product.png';this.onerror=function(){this.parentElement.innerHTML='📦';}"/></div>
     <div class="dc-prod-body">
       <div class="dc-prod-brand">${p.brand || ''}</div>
       <div class="dc-prod-name">${p.name || ''}</div>
