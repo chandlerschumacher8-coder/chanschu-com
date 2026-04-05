@@ -207,6 +207,7 @@ function renderAdminSection(){
   else if(adminSection==='permissions') renderPermEditor();
   else if(adminSection==='serviceadmin') svcAdminLoadTechs();
   else if(adminSection==='vendors') renderVendors();
+  else if(adminSection==='mergetool') renderMergeTool();
   else if(adminSection==='receiveinv') renderReceiveInv();
   else if(adminSection==='dataimport') renderDataImport();
   else if(adminSection==='arreport') renderARReport();
@@ -799,6 +800,223 @@ function vendorEdit(i){
 function vendorDelete(i){
   if(!confirm('Delete vendor "'+adminVendors[i].name+'"?'))return;
   adminVendors.splice(i,1);saveVendors();renderVendors();toast('Vendor deleted','info');
+}
+
+// ═══ MERGE TOOL ═══
+var _mtCat='brands';
+var _mtGroups=[];
+var mergeHistory=[];
+var mtIgnored={}; // category -> array of groupKey strings
+
+async function loadMergeData(){
+  try{var r=await fetch('/api/admin-get?key=merge-history');var d=await r.json();if(d&&d.data)mergeHistory=d.data.history||[];if(d&&d.data&&d.data.ignored)mtIgnored=d.data.ignored||{};}catch(e){}
+}
+async function saveMergeData(){
+  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'merge-history',data:{history:mergeHistory,ignored:mtIgnored}})});}catch(e){}
+}
+
+function mtNormalize(s){return (s||'').toString().toLowerCase().replace(/[\s\-_.,]+/g,'').trim();}
+function mtLevenshtein(a,b){if(!a||!b)return 99;var m=[];for(var i=0;i<=b.length;i++)m[i]=[i];for(var j=0;j<=a.length;j++)m[0][j]=j;for(i=1;i<=b.length;i++){for(j=1;j<=a.length;j++){if(b.charAt(i-1)===a.charAt(j-1))m[i][j]=m[i-1][j-1];else m[i][j]=Math.min(m[i-1][j-1]+1,m[i][j-1]+1,m[i-1][j]+1);}}return m[b.length][a.length];}
+function mtSimilar(a,b){var na=mtNormalize(a),nb=mtNormalize(b);if(!na||!nb)return false;if(na===nb)return true;var dist=mtLevenshtein(na,nb);var maxLen=Math.max(na.length,nb.length);return dist<=2||(maxLen>5&&dist/maxLen<=0.25);}
+
+function renderMergeTool(){
+  loadMergeData().then(function(){mtSwitchCat(_mtCat||'brands');});
+}
+
+function mtSwitchCat(cat){
+  _mtCat=cat;
+  document.querySelectorAll('[data-mt-cat]').forEach(function(b){b.classList.toggle('active',b.dataset.mtCat===cat);});
+  var tb=document.getElementById('mt-toolbar');
+  var exp=document.getElementById('mt-export-history');
+  if(cat==='history'){if(tb)tb.querySelectorAll('.primary-btn,.ghost-btn:not(#mt-export-history)').forEach(function(b){b.style.display='none';});if(exp)exp.style.display='';mtRenderHistory();}
+  else{if(tb)tb.querySelectorAll('.primary-btn,.ghost-btn').forEach(function(b){b.style.display=b.id==='mt-export-history'?'none':'';});_mtGroups=[];document.getElementById('mt-content').innerHTML='<div class="admin-empty" style="padding:30px;">Click "Scan for Duplicates" to find matching '+cat+'.</div>';}
+}
+
+function mtGetRecords(cat){
+  if(cat==='brands')return adminBrands.map(function(b,i){return{id:i,key:b,name:b,_refs:PRODUCTS.filter(function(p){return (p.brand||'').toLowerCase()===b.toLowerCase();}).length};});
+  if(cat==='contacts')return (typeof customers!=='undefined'?customers:[]).map(function(c,i){return{id:i,key:c.name,name:c.name,phone:c.phone||'',email:c.email||'',address:c.address||'',_refs:orders.filter(function(o){return o.customer===c.name;}).length};});
+  if(cat==='departments'){var depts=(typeof DEPARTMENTS!=='undefined'?DEPARTMENTS:[]);return depts.map(function(d,i){return{id:i,key:d.name,name:d.name,_refs:PRODUCTS.filter(function(p){return (d.cats||[]).indexOf(p.cat)>=0;}).length};});}
+  if(cat==='vendors')return (adminVendors||[]).map(function(v,i){return{id:i,key:v.name,name:v.name,phone:v.phone||'',email:v.email||'',accountNum:v.accountNum||'',_refs:PRODUCTS.filter(function(p){return (p.vendor||'').toLowerCase()===(v.name||'').toLowerCase();}).length};});
+  if(cat==='skus')return PRODUCTS.map(function(p,i){return{id:p.id,key:p.sku||p.model||'',name:p.sku||p.model||'','product':p.name,'brand':p.brand||'',_refs:0};}).filter(function(r){return r.key;});
+  if(cat==='models')return PRODUCTS.map(function(p,i){return{id:p.id,key:p.model||p.sku||'',name:p.model||p.sku||'','product':p.name,'brand':p.brand||'',_refs:0};}).filter(function(r){return r.key;});
+  return[];
+}
+
+function mtScanDuplicates(){
+  if(_mtCat==='history')return;
+  var records=mtGetRecords(_mtCat);
+  var groups=[];
+  var assigned={};
+  for(var i=0;i<records.length;i++){
+    if(assigned[i])continue;
+    var group=[records[i]];
+    for(var j=i+1;j<records.length;j++){
+      if(assigned[j])continue;
+      var isDup=mtSimilar(records[i].key,records[j].key);
+      // Extra matchers for contacts/vendors
+      if(!isDup&&_mtCat==='contacts'){
+        if(records[i].phone&&records[i].phone===records[j].phone)isDup=true;
+        else if(records[i].email&&records[i].email.toLowerCase()===(records[j].email||'').toLowerCase())isDup=true;
+      }
+      if(!isDup&&_mtCat==='vendors'){
+        if(records[i].phone&&records[i].phone===records[j].phone)isDup=true;
+        else if(records[i].email&&records[i].email.toLowerCase()===(records[j].email||'').toLowerCase())isDup=true;
+      }
+      if(isDup){group.push(records[j]);assigned[j]=true;}
+    }
+    if(group.length>1){assigned[i]=true;groups.push(group);}
+  }
+  // Filter out ignored groups
+  var ignoredList=mtIgnored[_mtCat]||[];
+  groups=groups.filter(function(g){var k=g.map(function(r){return r.key;}).sort().join('|');return ignoredList.indexOf(k)<0;});
+  _mtGroups=groups;
+  if(!groups.length){document.getElementById('mt-content').innerHTML='<div class="admin-empty" style="padding:30px;color:var(--green);">&#x2713; No duplicates found in '+_mtCat+'.</div>';return;}
+  mtRenderGroups();
+}
+
+function mtRenderGroups(){
+  var el=document.getElementById('mt-content');
+  var h='<div style="font-size:12px;font-weight:600;margin-bottom:10px;">Found '+_mtGroups.length+' duplicate set'+(_mtGroups.length===1?'':'s')+':</div>';
+  _mtGroups.forEach(function(group,gi){
+    h+='<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;background:var(--bg3);">';
+    h+='<div style="font-size:11px;font-weight:700;color:var(--gray-2);text-transform:uppercase;margin-bottom:8px;">Duplicate Set #'+(gi+1)+'</div>';
+    h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+    group.forEach(function(rec,ri){
+      var checked=ri===0?'checked':'';
+      h+='<label style="flex:1;min-width:180px;background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 10px;cursor:pointer;">';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><input type="radio" name="mt-master-'+gi+'" value="'+ri+'" '+checked+' style="accent-color:var(--gold,#2563eb);"/><strong style="font-size:12px;">'+rec.name+'</strong></div>';
+      if(rec.phone)h+='<div style="font-size:10px;color:var(--gray-2);">'+rec.phone+'</div>';
+      if(rec.email)h+='<div style="font-size:10px;color:var(--gray-2);">'+rec.email+'</div>';
+      if(rec.product)h+='<div style="font-size:10px;color:var(--gray-2);">'+rec.product+(rec.brand?' ('+rec.brand+')':'')+'</div>';
+      if(rec.accountNum)h+='<div style="font-size:10px;color:var(--gray-2);">Acct: '+rec.accountNum+'</div>';
+      h+='<div style="font-size:10px;color:var(--blue);margin-top:4px;font-weight:600;">'+rec._refs+' refs</div>';
+      h+='</label>';
+    });
+    h+='</div>';
+    h+='<div style="display:flex;gap:6px;"><button class="primary-btn" onclick="mtMergeGroup('+gi+')">Merge</button><button class="ghost-btn" onclick="mtSkipGroup('+gi+')">Skip</button><button class="ghost-btn" style="border-color:#fca5a5;color:#dc2626;" onclick="mtNotDuplicate('+gi+')">Not a Duplicate</button></div>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+function mtSkipGroup(gi){_mtGroups.splice(gi,1);mtRenderGroups();if(!_mtGroups.length)document.getElementById('mt-content').innerHTML='<div class="admin-empty" style="padding:30px;">All groups handled.</div>';}
+
+function mtNotDuplicate(gi){
+  var group=_mtGroups[gi];if(!group)return;
+  var key=group.map(function(r){return r.key;}).sort().join('|');
+  if(!mtIgnored[_mtCat])mtIgnored[_mtCat]=[];
+  mtIgnored[_mtCat].push(key);
+  saveMergeData();mtSkipGroup(gi);
+  toast('Group marked as not a duplicate','info');
+}
+
+async function mtMergeGroup(gi){
+  var group=_mtGroups[gi];if(!group)return;
+  var masterIdx=parseInt((document.querySelector('input[name="mt-master-'+gi+'"]:checked')||{}).value||0);
+  var master=group[masterIdx];
+  var losers=group.filter(function(_,i){return i!==masterIdx;});
+  if(!confirm('This will merge '+losers.length+' record'+(losers.length===1?'':'s')+' into "'+master.name+'". This cannot be undone. Continue?'))return;
+  await mtExecuteMerge(_mtCat,master,losers);
+  // Log
+  mergeHistory.unshift({ts:new Date().toISOString(),by:currentEmployee?currentEmployee.name:'Admin',category:_mtCat,kept:master.name,merged:losers.map(function(l){return l.name;})});
+  await saveMergeData();
+  _mtGroups.splice(gi,1);
+  mtRenderGroups();
+  if(!_mtGroups.length)document.getElementById('mt-content').innerHTML='<div class="admin-empty" style="padding:30px;color:var(--green);">&#x2713; All duplicates merged.</div>';
+  toast('Merged '+losers.length+' record'+(losers.length===1?'':'s')+' into '+master.name,'success');
+}
+
+async function mtExecuteMerge(cat,master,losers){
+  var loserKeys=losers.map(function(l){return l.key;});
+  var loserIds=losers.map(function(l){return l.id;});
+  if(cat==='brands'){
+    // Update products
+    PRODUCTS.forEach(function(p){if(loserKeys.some(function(k){return mtNormalize(p.brand)===mtNormalize(k);}))p.brand=master.name;});
+    adminBrands=adminBrands.filter(function(b){return !loserKeys.some(function(k){return mtNormalize(b)===mtNormalize(k);});});
+    await saveProducts();await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-brands',data:adminBrands})});
+  }else if(cat==='contacts'){
+    // Update customer records and orders
+    var masterCust=customers.find(function(c){return c.name===master.key;});
+    orders.forEach(function(o){if(loserKeys.indexOf(o.customer)>=0)o.customer=master.name;});
+    losers.forEach(function(l){
+      var lc=customers.find(function(c){return c.name===l.key;});
+      if(lc&&masterCust){
+        // Merge payments, adjustments, refunds, notes
+        if(lc.payments)masterCust.payments=(masterCust.payments||[]).concat(lc.payments);
+        if(lc.adjustments)masterCust.adjustments=(masterCust.adjustments||[]).concat(lc.adjustments);
+        if(lc.refunds)masterCust.refunds=(masterCust.refunds||[]).concat(lc.refunds);
+        if(lc.ledgerNotes)masterCust.ledgerNotes=(masterCust.ledgerNotes||[]).concat(lc.ledgerNotes);
+        if(lc.contacts)masterCust.contacts=(masterCust.contacts||[]).concat(lc.contacts);
+        // Fill missing fields from loser
+        ['phone','cell','fax','email','address','city','state','zip','arNum'].forEach(function(f){if(!masterCust[f]&&lc[f])masterCust[f]=lc[f];});
+      }
+    });
+    customers=customers.filter(function(c){return loserKeys.indexOf(c.name)<0;});
+    await saveCustomers();await saveOrders();
+  }else if(cat==='vendors'){
+    // Update products + remove losers from adminVendors
+    PRODUCTS.forEach(function(p){if(loserKeys.some(function(k){return mtNormalize(p.vendor)===mtNormalize(k);}))p.vendor=master.name;});
+    adminVendors=adminVendors.filter(function(v){return !loserKeys.some(function(k){return mtNormalize(v.name)===mtNormalize(k);});});
+    await saveProducts();saveVendors();
+  }else if(cat==='departments'){
+    // Reassign dept cats
+    if(typeof DEPARTMENTS!=='undefined'){
+      var masterDept=DEPARTMENTS.find(function(d){return d.name===master.name;});
+      if(masterDept){losers.forEach(function(l){var ld=DEPARTMENTS.find(function(d){return d.name===l.key;});if(ld){ld.cats.forEach(function(c){if(masterDept.cats.indexOf(c)<0)masterDept.cats.push(c);});}});
+      // Remove losers
+      for(var i=DEPARTMENTS.length-1;i>=0;i--){if(loserKeys.indexOf(DEPARTMENTS[i].name)>=0)DEPARTMENTS.splice(i,1);}}
+    }
+  }else if(cat==='skus'||cat==='models'){
+    // Merge product records — keep master, migrate loser product IDs to master
+    var masterProduct=PRODUCTS.find(function(p){return p.id===master.id;});
+    losers.forEach(function(l){
+      var loserProd=PRODUCTS.find(function(p){return p.id===l.id;});
+      if(loserProd&&masterProduct){
+        // Combine stock + sold
+        masterProduct.stock=(masterProduct.stock||0)+(loserProd.stock||0);
+        masterProduct.sold=(masterProduct.sold||0)+(loserProd.sold||0);
+        // Update orders + POs referencing loser product id
+        orders.forEach(function(o){(o.items||[]).forEach(function(it){if(it.id===l.id)it.id=master.id;});});
+        (typeof purchaseOrders!=='undefined'?purchaseOrders:[]).forEach(function(po){(po.items||[]).forEach(function(it){if(it.productId===l.id)it.productId=master.id;});});
+      }
+    });
+    PRODUCTS=PRODUCTS.filter(function(p){return loserIds.indexOf(p.id)<0;});
+    await saveProducts();await saveOrders();
+    if(typeof savePOs==='function')savePOs();
+  }
+}
+
+function mtManualMerge(){
+  if(_mtCat==='history')return;
+  var records=mtGetRecords(_mtCat);
+  if(records.length<2){toast('Not enough records to merge','error');return;}
+  var opts=records.map(function(r,i){return (i+1)+'. '+r.name+(r.phone?' ('+r.phone+')':'')+(r.brand?' ['+r.brand+']':'')+' — '+r._refs+' refs';}).slice(0,50).join('\n');
+  var sel=prompt('Enter the numbers of 2+ records to merge (comma-separated):\n\n'+opts+(records.length>50?'\n...and '+(records.length-50)+' more':''),'1,2');
+  if(!sel)return;
+  var nums=sel.split(',').map(function(s){return parseInt(s.trim())-1;}).filter(function(n){return n>=0&&n<records.length;});
+  if(nums.length<2){toast('Select at least 2 records','error');return;}
+  var group=nums.map(function(n){return records[n];});
+  _mtGroups=[group];
+  mtRenderGroups();
+}
+
+function mtRenderHistory(){
+  var el=document.getElementById('mt-content');
+  if(!mergeHistory.length){el.innerHTML='<div class="admin-empty" style="padding:30px;">No merges yet.</div>';return;}
+  var h='<table class="admin-table" style="font-size:11px;"><thead><tr><th>Date</th><th>Employee</th><th>Category</th><th>Kept</th><th>Merged</th></tr></thead><tbody>';
+  mergeHistory.forEach(function(m){
+    h+='<tr><td>'+new Date(m.ts).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+'</td><td>'+m.by+'</td><td style="text-transform:capitalize;">'+m.category+'</td><td style="font-weight:600;">'+m.kept+'</td><td style="font-size:10px;color:var(--gray-2);">'+(m.merged||[]).join(', ')+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  el.innerHTML=h;
+}
+
+function mtExportHistoryCSV(){
+  if(!mergeHistory.length){toast('No history to export','error');return;}
+  var csv='Date,Employee,Category,Kept,Merged\n';
+  mergeHistory.forEach(function(m){csv+='"'+new Date(m.ts).toISOString()+'","'+m.by+'","'+m.category+'","'+m.kept+'","'+(m.merged||[]).join('; ')+'"\n';});
+  var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='merge-history.csv';a.click();
+  toast('CSV exported','success');
 }
 
 // ═══ RECEIVE INVENTORY ═══
