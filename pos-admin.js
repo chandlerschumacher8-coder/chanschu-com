@@ -1311,7 +1311,10 @@ function proceedToInvPreview(){
     var name=getVal('name')||model; // fallback to model if no name
     var price=parseFloat(getVal('price'))||0;
     if(!model){errors.push('Row '+(rowIdx+2)+': missing model number');return;}
-    var flagNeedsPricing=price<=0;
+    var existing=PRODUCTS.find(function(p){return (p.model||'').toLowerCase()===model.toLowerCase()||(p.sku||'').toLowerCase()===model.toLowerCase();});
+    // Only flag needsPricing if no valid new price AND no existing price will be preserved
+    var existingPrice=existing?(existing.price||0):0;
+    var flagNeedsPricing=price<=0&&existingPrice<=0;
     if(flagNeedsPricing)needsPricing++;
     var brand=getVal('brand');
     var vendor=getVal('vendor');
@@ -1321,7 +1324,6 @@ function proceedToInvPreview(){
     if(vendor&&!existingVendors[vendor.toLowerCase()])newVendors[vendor]=true;
     if(cat){if(existingCats[cat.toLowerCase()])matchedCats[cat]=true;else newCats[cat]=true;}
     if(dept){if(existingDepts[dept.toLowerCase()])matchedDepts[dept]=true;else newDepts[dept]=true;}
-    var existing=PRODUCTS.find(function(p){return (p.model||'').toLowerCase()===model.toLowerCase()||(p.sku||'').toLowerCase()===model.toLowerCase();});
     _diInvRows.push({
       model:model,name:name,brand:brand,vendor:vendor,
       upc:getVal('upc'),cat:cat,dept:dept,sku:getVal('sku'),
@@ -1356,7 +1358,18 @@ function proceedToInvPreview(){
   if(errors.length){h+='<div style="padding:8px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;margin-bottom:10px;font-size:11px;color:#991b1b;max-height:80px;overflow:auto;"><strong>'+errors.length+' row'+(errors.length===1?'':'s')+' will be skipped:</strong><br/>'+errors.slice(0,8).join('<br/>')+(errors.length>8?'<br/>... +'+(errors.length-8)+' more':'')+'</div>';}
   if(needsPricing){h+='<div style="padding:8px 12px;background:#fffbeb;border-left:3px solid #eab308;border-radius:4px;margin-bottom:10px;font-size:11px;color:#713f12;"><strong>'+needsPricing+' product'+(needsPricing===1?'':'s')+' will be flagged as Needs Pricing</strong> — no price in file. You can set prices later in Inventory.</div>';}
   h+='<div style="max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-bottom:10px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model</th><th>Name</th><th>Brand</th><th>Vendor</th><th style="text-align:right;">Price</th><th>Status</th></tr></thead><tbody>';
-  _diInvRows.slice(0,15).forEach(function(r){h+='<tr><td>'+r.model+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.name+'</td><td>'+r.brand+'</td><td>'+r.vendor+'</td><td style="text-align:right;">$'+(r.price||0).toFixed(2)+'</td><td style="font-weight:700;color:'+(r.isUpdate?'#2563eb':'#16a34a')+';">'+(r.isUpdate?'Update':'New')+'</td></tr>';});
+  _diInvRows.slice(0,15).forEach(function(r){
+    // For existing products with no valid new price, show "Keeping existing price"
+    var priceCell;
+    if(r.isUpdate&&!(r.price>0)){
+      priceCell='<span style="color:#9ca3af;font-style:italic;font-size:10px;">Keeping existing</span>';
+    }else if(r.price>0){
+      priceCell='$'+r.price.toFixed(2);
+    }else{
+      priceCell='<span style="color:#d97706;font-style:italic;font-size:10px;">Needs pricing</span>';
+    }
+    h+='<tr><td>'+r.model+'</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+r.name+'</td><td>'+r.brand+'</td><td>'+r.vendor+'</td><td style="text-align:right;">'+priceCell+'</td><td style="font-weight:700;color:'+(r.isUpdate?'#2563eb':'#16a34a')+';">'+(r.isUpdate?'Update':'New')+'</td></tr>';
+  });
   if(_diInvRows.length>15)h+='<tr><td colspan="6" style="text-align:center;color:var(--gray-3);font-style:italic;">... and '+(_diInvRows.length-15)+' more rows</td></tr>';
   h+='</tbody></table></div>';
   h+='<div style="display:flex;gap:8px;">';
@@ -1416,14 +1429,22 @@ async function diConfirmInv(){
   _diInvRows.forEach(function(r){
     var p=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===r.model.toLowerCase()||(x.sku||'').toLowerCase()===r.model.toLowerCase();});
     if(p){
-      if(r.name)p.name=r.name;if(r.brand)p.brand=r.brand;if(r.cat)p.cat=r.cat;
-      if(r.upc)p.upc=r.upc;
-      if(r.sku)p.sku=r.sku;
-      if(r.cost)p.cost=r.cost;if(r.price)p.price=r.price;if(r.vendor)p.vendor=r.vendor;
-      if(r.reorderPt!=null)p.reorderPt=r.reorderPt;
-      if(r.reorderQty!=null)p.reorderQty=r.reorderQty;
-      if(r.qty)p.stock=(p.stock||0)+r.qty;
-      if(r.needsPricing)p.needsPricing=true;else if(r.price>0)delete p.needsPricing;
+      // Never overwrite existing values with blank, null, or zero
+      var hasStr=function(v){return v&&String(v).trim().length>0;};
+      var hasNum=function(v){return typeof v==='number'&&!isNaN(v)&&v>0;};
+      if(hasStr(r.name))p.name=r.name;
+      if(hasStr(r.brand))p.brand=r.brand;
+      if(hasStr(r.cat))p.cat=r.cat;
+      if(hasStr(r.upc))p.upc=r.upc;
+      if(hasStr(r.sku))p.sku=r.sku;
+      if(hasNum(r.cost))p.cost=r.cost;
+      if(hasNum(r.price))p.price=r.price;
+      if(hasStr(r.vendor))p.vendor=r.vendor;
+      if(r.reorderPt!=null&&hasNum(r.reorderPt))p.reorderPt=r.reorderPt;
+      if(r.reorderQty!=null&&hasNum(r.reorderQty))p.reorderQty=r.reorderQty;
+      if(hasNum(r.qty))p.stock=(p.stock||0)+r.qty;
+      // Only set needsPricing if still no valid price after update
+      if(!(p.price>0))p.needsPricing=true;else delete p.needsPricing;
       updated++;
     }else{
       var st=String(r.serialTracked||'').toLowerCase();
