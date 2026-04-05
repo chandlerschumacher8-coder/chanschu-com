@@ -1141,6 +1141,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="inv-main">
 <div class="inv-toolbar">
 <input id="inv-search" placeholder="Search all inventory (active &amp; inactive)..." oninput="renderInventory()"/>
+<select id="inv-vendor-filter" onchange="renderInventory()" style="font-size:11px;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;background:#fff;font-family:inherit;"><option value="">All Vendors</option></select>
 <div class="inv-active-toggle">
 <button class="inv-toggle-btn active" id="inv-tog-active" onclick="invSetView('active')">Active</button>
 <button class="inv-toggle-btn" id="inv-tog-inactive" onclick="invSetView('inactive')">Inactive</button>
@@ -1151,7 +1152,22 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 <div class="inv-table-wrap">
 <table class="inv-table">
-<thead><tr><th>Model#</th><th>Product</th><th>Brand</th><th>Dept</th><th>Category</th><th>UPC</th><th>Available</th><th>Sold</th><th>Avail&minus;Sold</th><th>Status</th><th>Retail</th><th>Cost</th><th style="width:70px;"></th></tr></thead>
+<thead><tr>
+<th onclick="invSortBy('model')" style="cursor:pointer;">Model# <span id="inv-sort-model"></span></th>
+<th onclick="invSortBy('name')" style="cursor:pointer;">Product <span id="inv-sort-name"></span></th>
+<th onclick="invSortBy('brand')" style="cursor:pointer;">Brand <span id="inv-sort-brand"></span></th>
+<th onclick="invSortBy('vendor')" style="cursor:pointer;">Vendor <span id="inv-sort-vendor"></span></th>
+<th>Dept</th>
+<th>Category</th>
+<th>UPC</th>
+<th onclick="invSortBy('stock')" style="cursor:pointer;">Available <span id="inv-sort-stock"></span></th>
+<th>Sold</th>
+<th>Avail&minus;Sold</th>
+<th>Status</th>
+<th onclick="invSortBy('price')" style="cursor:pointer;">Retail <span id="inv-sort-price"></span></th>
+<th>Cost</th>
+<th style="width:70px;"></th>
+</tr></thead>
 <tbody id="inv-tbody"></tbody>
 </table>
 </div>

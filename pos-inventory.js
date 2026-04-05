@@ -83,14 +83,51 @@ function getProductDept(p){
   }
   return p.dept||'';
 }
+var _invSort={col:'name',dir:'asc'};
+function invSortBy(col){
+  if(_invSort.col===col)_invSort.dir=_invSort.dir==='asc'?'desc':'asc';
+  else{_invSort.col=col;_invSort.dir='asc';}
+  renderInventory();
+}
+function invFilterByVendor(vendor){
+  var sel=document.getElementById('inv-vendor-filter');if(sel)sel.value=vendor||'';
+  renderInventory();
+}
+function invPopulateVendorFilter(){
+  var sel=document.getElementById('inv-vendor-filter');if(!sel)return;
+  var expected=Object.keys(PRODUCTS.reduce(function(a,p){if(p.vendor)a[p.vendor]=true;return a;},{})).length;
+  if(sel.options.length===expected+1)return; // already populated
+  var cur=sel.value;
+  var vendors={};PRODUCTS.forEach(function(p){if(p.vendor)vendors[p.vendor]=(vendors[p.vendor]||0)+1;});
+  var names=Object.keys(vendors).sort();
+  sel.innerHTML='<option value="">All Vendors</option>'+names.map(function(v){return '<option value="'+v+'">'+v+' ('+vendors[v]+')</option>';}).join('');
+  if(cur)sel.value=cur;
+}
+
 function renderInventory(){
+  invPopulateVendorFilter();
   var s=(document.getElementById('inv-search')||{}).value||'';s=s.toLowerCase();
+  var vendorFilter=(document.getElementById('inv-vendor-filter')||{}).value||'';
   var hasSearch=s.length>0;
   var filtered=PRODUCTS.filter(function(p){
     var isActive=p.active!==false;
-    var matchesSearch=!s||p.name.toLowerCase().includes(s)||p.brand.toLowerCase().includes(s)||(p.model||'').toLowerCase().includes(s)||(p.upc||'').toLowerCase().includes(s);
-    if(hasSearch) return matchesSearch; // search shows both
-    return matchesSearch&&(invViewMode==='active'?isActive:!isActive);
+    var matchesSearch=!s||p.name.toLowerCase().includes(s)||p.brand.toLowerCase().includes(s)||(p.model||'').toLowerCase().includes(s)||(p.upc||'').toLowerCase().includes(s)||(p.vendor||'').toLowerCase().includes(s);
+    var matchesVendor=!vendorFilter||(p.vendor||'')===vendorFilter;
+    if(hasSearch) return matchesSearch&&matchesVendor;
+    return matchesSearch&&matchesVendor&&(invViewMode==='active'?isActive:!isActive);
+  });
+  // Sort
+  var col=_invSort.col,dir=_invSort.dir==='asc'?1:-1;
+  filtered.sort(function(a,b){
+    var va,vb;
+    if(col==='stock'){va=(a.stock||0)-(a.sold||0);vb=(b.stock||0)-(b.sold||0);}
+    else if(col==='price'){va=a.price||0;vb=b.price||0;}
+    else{va=(a[col]||'').toString().toLowerCase();vb=(b[col]||'').toString().toLowerCase();}
+    if(va<vb)return -1*dir;if(va>vb)return 1*dir;return 0;
+  });
+  // Sort indicators
+  ['model','name','brand','vendor','stock','price'].forEach(function(c){
+    var el=document.getElementById('inv-sort-'+c);if(el)el.textContent=(c===col)?(dir===1?'↑':'↓'):'';
   });
   var tb=document.getElementById('inv-tbody');
   tb.innerHTML=filtered.map(function(p){
@@ -106,7 +143,8 @@ function renderInventory(){
       '<button class="inv-act-btn deactivate" onclick="invDeactivate('+p.id+')">Deactivate</button>':
       '<button class="inv-act-btn activate" onclick="invActivate('+p.id+')">Activate</button>';
     var snBadge=isSerialTracked(p)?'<span style="font-size:8px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;margin-left:4px;">SN</span>':'';
-    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+(p.model||'')+'</td><td>'+p.name+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
+    var vendorCell=p.vendor?'<a href="#" onclick="event.preventDefault();invFilterByVendor(\''+(p.vendor||'').replace(/'/g,"\\'")+'\')" style="color:#2563eb;font-weight:600;text-decoration:none;">'+p.vendor+'</a>':'<span style="color:#9ca3af;">—</span>';
+    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+(p.model||'')+'</td><td>'+p.name+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+vendorCell+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
   }).join('');
   // Low stock alerts — active items only, based on Avail-Sold
   var alerts=PRODUCTS.filter(function(p){var ams=p.stock-(p.sold||0);return p.active!==false&&ams<=p.reorderPt;});
