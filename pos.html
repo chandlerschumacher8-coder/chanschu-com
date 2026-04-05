@@ -5020,6 +5020,39 @@ function cartQty(pid,delta){
 }
 function cartRemove(pid){cart=cart.filter(function(x){return x.id!==pid;});renderCart();}
 
+function cartEditPrice(idx){
+  var c=cart[idx];if(!c)return;
+  var prod=PRODUCTS.find(function(p){return p.id===c.id;});
+  if(prod&&prod.priceLocked===true){alert('Price is locked — see manager');return;}
+  var input=prompt('New price for '+c.name+' (current: '+fmt(c.price)+'):',c.price.toFixed(2));
+  if(input===null)return;
+  var newPrice=parseFloat(input);
+  if(isNaN(newPrice)||newPrice<0){toast('Invalid price','error');return;}
+  if(c.origPrice==null)c.origPrice=c.price;
+  c.price=newPrice;
+  // Check if below cost and auto-log
+  if(prod&&prod.cost&&newPrice<prod.cost){
+    var clerk=(document.getElementById('cart-clerk')||{}).value||(currentEmployee&&currentEmployee.name)||'Unknown';
+    var note='Price adjusted below cost on '+(c.model||c.name)+' — $'+newPrice.toFixed(2)+' (cost $'+prod.cost.toFixed(2)+') — approved by '+clerk;
+    var n=document.getElementById('cart-invoice-notes');
+    if(n&&n.value.indexOf(note)<0){n.value=(n.value?n.value+'\n':'')+note;}
+  }
+  renderCart();
+}
+
+function cartEditDiscount(idx){
+  var c=cart[idx];if(!c)return;
+  var prod=PRODUCTS.find(function(p){return p.id===c.id;});
+  if(prod&&prod.priceLocked===true){alert('Price is locked — see manager');return;}
+  var cur=c.discountPct||0;
+  var input=prompt('Discount % for '+c.name+' (enter 10 for 10%):',cur);
+  if(input===null)return;
+  var pct=parseFloat(input);
+  if(isNaN(pct)||pct<0||pct>100){toast('Enter 0-100','error');return;}
+  c.discountPct=pct;
+  renderCart();
+}
+
 // ═══ PRICE MATCH TOOL ═══
 function openPriceMatch(idx){
   var item=cart[idx];if(!item)return;
@@ -5224,9 +5257,33 @@ function renderCart(){
   if(cart.length===0){el.innerHTML='<div class="cart-empty">Cart is empty. Click a product to add it.</div>';document.getElementById('cart-subtotal').textContent='$0.00';document.getElementById('cart-tax').textContent='$0.00';document.getElementById('cart-total').textContent='$0.00';var rl=document.getElementById('cart-tax-rate-lbl');if(rl)rl.textContent='('+(cartTaxRate*100).toFixed(3)+'%)';return;}
   el.innerHTML=cart.map(function(c,idx){
     var pmBadge=c.priceMatched?' <span style="font-size:9px;background:#dcfce7;color:#16a34a;padding:1px 5px;border-radius:3px;font-weight:700;">&#x2713; PM</span>':'';
-    return '<div class="cart-item" style="flex-wrap:wrap;"><div class="ci-info"><div class="ci-name">'+c.name+pmBadge+'</div><div class="ci-price">'+fmt(c.price)+' x '+c.qty+(c.model?' &middot; '+c.model:'')+'</div></div><div class="ci-qty"><button onclick="cartQty('+c.id+',-1)">-</button><span>'+c.qty+'</span><button onclick="cartQty('+c.id+',1)">+</button></div><div class="ci-total">'+fmt(c.price*c.qty)+'</div><button class="ci-rm" onclick="cartRemove('+c.id+')">&#x2715;</button>'+(c.isService?'':'<input class="ci-serial" placeholder="Serial #" value="'+(c.serial||'')+'" onchange="cartSerial('+idx+',this.value)"/>')+'<button onclick="openPriceMatch('+idx+')" style="font-size:9px;font-weight:700;padding:2px 7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;margin-left:4px;" title="Price Match">PM</button></div>';
+    var prod=PRODUCTS.find(function(p){return p.id===c.id;});
+    var origPrice=c.origPrice!=null?c.origPrice:(prod?prod.price:c.price);
+    var adjusted=(origPrice!=c.price)&&!c.isService;
+    var adjBadge=adjusted?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;">Adjusted</span>':'';
+    var locked=(prod&&prod.priceLocked===true);
+    var lockIcon=locked?' <span title="Price locked" style="color:#6b7280;">&#x1F512;</span>':'';
+    var priceClick=locked?"alert('Price is locked — see manager');":"cartEditPrice("+idx+")";
+    var cost=prod?(prod.cost||0):0;
+    var belowCost=!c.isService&&cost>0&&c.price<cost;
+    var costWarn=belowCost?'<div style="font-size:9px;color:#dc2626;font-weight:700;margin-top:2px;">&#x26A0; Below cost ($'+cost.toFixed(2)+')</div>':'';
+    var disc=c.discountPct||0;
+    var ext=c.price*c.qty*(1-disc/100);
+    var priceDisplay=adjusted?'<span style="text-decoration:line-through;color:#9ca3af;font-size:10px;">'+fmt(origPrice)+'</span> <span style="font-weight:700;cursor:'+(locked?'not-allowed':'pointer')+';color:#1d4ed8;" onclick="'+priceClick+'">'+fmt(c.price)+'</span>':'<span style="cursor:'+(locked?'not-allowed':'pointer')+';" onclick="'+priceClick+'" title="Click to edit price">'+fmt(c.price)+'</span>';
+    var discDisplay='<span style="cursor:pointer;color:'+(disc>0?'#dc2626':'#9ca3af')+';" onclick="cartEditDiscount('+idx+')" title="Click to edit discount %">'+(disc>0?('−'+disc+'%'):'—')+'</span>';
+    return '<div class="cart-item" style="flex-wrap:wrap;" id="ci-row-'+idx+'">'
+      +'<div class="ci-info"><div class="ci-name">'+c.name+pmBadge+adjBadge+lockIcon+'</div>'
+      +'<div class="ci-price">Price: '+priceDisplay+' &middot; Disc: '+discDisplay+' &middot; Qty: '+c.qty+(c.model?' &middot; '+c.model:'')+'</div>'
+      +costWarn
+      +'</div>'
+      +'<div class="ci-qty"><button onclick="cartQty('+c.id+',-1)">-</button><span>'+c.qty+'</span><button onclick="cartQty('+c.id+',1)">+</button></div>'
+      +'<div class="ci-total">'+fmt(ext)+'</div>'
+      +'<button class="ci-rm" onclick="cartRemove('+c.id+')">&#x2715;</button>'
+      +(c.isService?'':'<input class="ci-serial" placeholder="Serial #" value="'+(c.serial||'')+'" onchange="cartSerial('+idx+',this.value)"/>')
+      +'<button onclick="openPriceMatch('+idx+')" style="font-size:9px;font-weight:700;padding:2px 7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;margin-left:4px;" title="Price Match">PM</button>'
+      +'</div>';
   }).join('');
-  var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
+  var sub=cart.reduce(function(s,c){var d=c.discountPct||0;return s+c.price*c.qty*(1-d/100);},0);
   var tax=sub*cartTaxRate;
   document.getElementById('cart-subtotal').textContent=fmt(sub);
   document.getElementById('cart-tax').textContent=fmt(tax);
@@ -5333,7 +5390,7 @@ function checkout(method){
     return;
   }
   _checklistConfirmed=false;
-  var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
+  var sub=cart.reduce(function(s,c){var d=c.discountPct||0;return s+c.price*c.qty*(1-d/100);},0);
   var rate=cartTaxRate;
   var tax=sub*rate;
   var zoneName=cartTaxName;
@@ -5341,7 +5398,9 @@ function checkout(method){
   var orderItems=cart.map(function(c){
     var p=PRODUCTS.find(function(x){return x.id===c.id;});
     var tracked=p?isSerialTracked(p):false;
-    var item={id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||'',serialTracked:tracked};
+    var discPct=c.discountPct||0;
+    var discAmt=c.price*c.qty*(discPct/100);
+    var item={id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||'',serialTracked:tracked,discount:discAmt,discountPct:discPct,origPrice:c.origPrice||c.price};
     if(isQuickSale){
       // Auto-mark delivered for quick sales
       item.delivered=true;item.deliveredAt=new Date().toISOString();item.deliveredBy=f.clerk||'Admin';

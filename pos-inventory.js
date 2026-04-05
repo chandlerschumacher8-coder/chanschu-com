@@ -143,8 +143,9 @@ function renderInventory(){
       '<button class="inv-act-btn deactivate" onclick="invDeactivate('+p.id+')">Deactivate</button>':
       '<button class="inv-act-btn activate" onclick="invActivate('+p.id+')">Activate</button>';
     var snBadge=isSerialTracked(p)?'<span style="font-size:8px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;margin-left:4px;">SN</span>':'';
+    var lockBadge=p.priceLocked?' <span title="Price locked" style="cursor:pointer;" onclick="togglePriceLock('+p.id+')">&#x1F512;</span>':' <span title="Click to lock price" style="cursor:pointer;color:#d1d5db;" onclick="togglePriceLock('+p.id+')">&#x1F513;</span>';
     var vendorCell=p.vendor?'<a href="#" onclick="event.preventDefault();invFilterByVendor(\''+(p.vendor||'').replace(/'/g,"\\'")+'\')" style="color:#2563eb;font-weight:600;text-decoration:none;">'+p.vendor+'</a>':'<span style="color:#9ca3af;">—</span>';
-    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+(p.model||'')+'</td><td>'+p.name+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+vendorCell+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
+    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+(p.model||'')+'</td><td>'+p.name+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+vendorCell+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+lockBadge+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
   }).join('');
   // Low stock alerts — active items only, based on Avail-Sold
   var alerts=PRODUCTS.filter(function(p){var ams=p.stock-(p.sold||0);return p.active!==false&&ams<=p.reorderPt;});
@@ -163,6 +164,15 @@ function invActivate(pid){
   saveProducts();
   renderInventory();refreshSaleView();
   toast(p.name+' activated with '+p.stock+' available','success');
+}
+function togglePriceLock(pid){
+  // Only Owner/Admin can lock/unlock prices
+  var role=(currentEmployee&&currentEmployee.posRole)||'Owner/Admin';
+  if(role!=='Owner/Admin'&&role!=='General Manager'){toast('Only Owner/Admin can lock prices','error');return;}
+  var p=PRODUCTS.find(function(x){return x.id===pid;});if(!p)return;
+  p.priceLocked=!p.priceLocked;
+  saveProducts();renderInventory();
+  toast(p.name+(p.priceLocked?' — price locked':' — price unlocked'),'info');
 }
 function invDeactivate(pid){
   var p=PRODUCTS.find(function(x){return x.id===pid;});if(!p)return;
