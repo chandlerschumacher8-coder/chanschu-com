@@ -1881,68 +1881,103 @@ async function diExtractPdfText(file){
 }
 
 function diParseSmartTouchSerials(text){
-  // SmartTouch format:
-  // Header: may mention brand name near top
-  // MODEL# PLU#
-  // SERIAL# INVOICE# MM-DD-YYYY NOT SPECIFIED $COST
-  // Optional prefix on serial: "dented ", "used ", etc
+  console.log('[Serial Parser] Raw extracted text length:',text.length);
+  console.log('[Serial Parser] First 500 chars:',text.slice(0,500));
   var lines=text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
-  // Detect brand from top of file (first 5 lines)
+  console.log('[Serial Parser] Total lines after trim+filter:',lines.length);
+
+  // Known conditions that may prefix a serial with no space
+  var conditions=['dented','used','damaged','scratched','openbox','return','demo','floormodel','refurbished','refurb'];
+  // Regex patterns based on exact SmartTouch format
+  // MODEL LINE: "MK2220AB 19905" or "MTK2227PZ S22924"
+  var modelRe=/^([A-Z0-9][A-Z0-9\-_\/.]*)\s+(S?\d{3,8})$/;
+  // SERIAL LINE: "XVA0800143 2404 02-15-2022 NOT SPECIFIED $67.00"
+  // With condition: "dentedFD4301309 6082 10-31-2024 NOT SPECIFIED $372.00"
+  var serialRe=/^(dented|used|damaged|scratched|openbox|return|demo|floormodel|refurbished|refurb)?([A-Z0-9][A-Z0-9\-_]+)\s+(\S+)\s+(\d{2}-\d{2}-\d{4})\s+NOT\s+SPECIFIED\s+\$([0-9,]+\.\d{2})$/i;
+  // Skip patterns — lines that aren't model/serial data
+  var skipPatterns=[
+    /^page\s+\d+/i,
+    /^serialized\s+inventory/i,
+    /^serial\s+number\s+report/i,
+    /^report\s+date/i,
+    /^print\s+date/i,
+    /^copyright/i,
+    /^©/,
+    /^subtotal/i,
+    /^total/i,
+    /^grand\s+total/i,
+    /^brand\s*:/i,
+    /^store\s*:/i,
+    /^report\s+by/i,
+    /^\d+\s+of\s+\d+$/i, // page X of Y
+    /^_+$/, // separators
+    /^-+$/,
+    /^=+$/
+  ];
+
+  function isSkipLine(line){
+    for(var i=0;i<skipPatterns.length;i++){if(skipPatterns[i].test(line))return true;}
+    return false;
+  }
+
+  // Detect brand: look for ALL CAPS single-word lines near the top (before the first model line)
   var brand='';
-  var brandMatch=text.match(/(?:Brand|BRAND|Manufacturer)\s*[:=]?\s*([A-Za-z][A-Za-z0-9 &.\-]{2,40})/);
-  if(brandMatch)brand=brandMatch[1].trim();
-  // Common brand keywords in SmartTouch reports
-  var commonBrands=['Whirlpool','Maytag','KitchenAid','Amana','LG','Samsung','GE','Frigidaire','Electrolux','Bosch','Sonos','Weber','Traeger','Sealy','Serta','Stearns','Tempur'];
-  if(!brand){
-    for(var i=0;i<Math.min(lines.length,10);i++){
-      for(var j=0;j<commonBrands.length;j++){
-        var re=new RegExp('\\b'+commonBrands[j]+'\\b','i');
-        if(re.test(lines[i])){brand=commonBrands[j];break;}
-      }
-      if(brand)break;
+  for(var i=0;i<Math.min(lines.length,20);i++){
+    var line=lines[i];
+    if(isSkipLine(line))continue;
+    // If we hit a model line, stop looking
+    if(modelRe.test(line))break;
+    // ALL CAPS brand name (letters only, possibly multi-word)
+    if(/^[A-Z][A-Z\s&.\-]{2,30}$/.test(line)&&line.length<=30){
+      brand=line.trim();
+      console.log('[Serial Parser] Detected brand:',brand);
+      break;
     }
   }
 
   var models=[];
   var currentModel=null;
-  // Serial line regex: optional condition prefix + serial + invoice# + date + "NOT SPECIFIED" + $cost
-  // Example: "CF0201673 6761 01-20-2026 NOT SPECIFIED $562.00"
-  // With prefix: "dented CF0201673 6761 01-20-2026 NOT SPECIFIED $562.00"
-  var serialRe=/^(?:(dented|used|damaged|scratched|open\s*box|return|demo|floor\s*model|refurbished|refurb)\s+)?([A-Za-z0-9][A-Za-z0-9\-_]{3,})\s+(\d+)\s+(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\s+(?:NOT\s+SPECIFIED|NOT SPECIFIED|[A-Z ]+)\s+\$?([\d,]+(?:\.\d{1,2})?)/i;
-  // Model line regex: model number (alphanumeric, typically all caps or mixed) + PLU (numeric)
-  // Example: "WTW6157PB 21895"
-  var modelRe=/^([A-Z][A-Z0-9][A-Z0-9\-_\/.]{2,25})\s+(\d{3,8})\s*$/;
+  var modelLinesFound=0,serialLinesFound=0,skippedCount=0;
 
-  lines.forEach(function(line){
-    // Try serial first
+  lines.forEach(function(line,lineIdx){
+    if(isSkipLine(line)){skippedCount++;return;}
+
+    // Try serial line FIRST (more specific match)
     var sm=line.match(serialRe);
-    if(sm&&currentModel){
-      var condition=sm[1]?(sm[1].charAt(0).toUpperCase()+sm[1].slice(1).toLowerCase()):'';
-      var cost=parseFloat(sm[5].replace(/,/g,''))||0;
-      // Normalize date YYYY-MM-DD
-      var dParts=sm[4].split(/[-\/]/);
-      var dateStr='';
-      if(dParts.length===3){
-        var mm=dParts[0].padStart(2,'0');
-        var dd=dParts[1].padStart(2,'0');
-        var yyyy=dParts[2].length===2?('20'+dParts[2]):dParts[2];
-        dateStr=yyyy+'-'+mm+'-'+dd;
+    if(sm){
+      if(!currentModel){
+        console.warn('[Serial Parser] Serial found but no current model (line '+lineIdx+'):',line);
+        return;
       }
+      var rawCondition=sm[1]||'';
+      var condition=rawCondition?rawCondition.charAt(0).toUpperCase()+rawCondition.slice(1).toLowerCase():'';
+      var cost=parseFloat(sm[5].replace(/,/g,''))||0;
+      // Normalize date MM-DD-YYYY → YYYY-MM-DD
+      var dParts=sm[4].split('-');
+      var dateStr=dParts[2]+'-'+dParts[0]+'-'+dParts[1];
       currentModel.serials.push({serial:sm[2],invoice:sm[3],date:dateStr,cost:cost,condition:condition});
+      serialLinesFound++;
       return;
     }
-    // Try model header
+
+    // Try model line
     var mm=line.match(modelRe);
     if(mm){
       currentModel={model:mm[1],plu:mm[2],serials:[]};
       models.push(currentModel);
+      modelLinesFound++;
       return;
     }
+
+    // Unmatched line — log for debugging
+    if(line.length<120)console.log('[Serial Parser] Unmatched line '+lineIdx+':',JSON.stringify(line));
   });
 
-  // Filter out empty models
-  models=models.filter(function(m){return m.serials.length>0;});
-  return{brand:brand,models:models};
+  console.log('[Serial Parser] Summary — models:',modelLinesFound,'serials:',serialLinesFound,'skipped:',skippedCount);
+  // Keep all models (even with 0 serials) for debugging, but filter for final output
+  var nonEmpty=models.filter(function(m){return m.serials.length>0;});
+  console.log('[Serial Parser] Models with serials:',nonEmpty.length);
+  return{brand:brand,models:nonEmpty};
 }
 
 async function diHandleSerialFile(file){
