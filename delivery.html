@@ -710,7 +710,7 @@ async function claudeApiCall(body){
 }
 
 // ═══ COMPANY LOGO ═══
-const DC_APPLIANCE_LOGO = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAAAUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAByAQADASIAAhEBAxEB/8QAHQAAAQQDAQEAAAAAAAAAAAAAAAQFBgcCAwgBCf/EAFUQAAEDAwIDAgkJAwYIDgMAAAECAwQABREGEgchMRNBCBQWIlFWYZHRFVRxgZOUodLhMkKxFyMkUpLBNFdicoKFovAlJiczNkNERkdTY4aVlqOy0//EABoBAAMBAQEBAAAAAAAAAAAAAAABAwIEBQb/xAAwEQABAwIDBgUEAwEBAAAAAAABAAIDBBESITETQVFhodEFFHGR8BUiMoFCweHxsf/aAAwDAQACEQMRAD8A";
+const DC_APPLIANCE_LOGO = "/images/logos/dc-appliance-logo-transparent.png";
 
 // ═══ EMAILJS ═══
 emailjs.init('8rsxIaKLiiRqq5Yo0');
@@ -723,7 +723,7 @@ function buildDeliveryEmailHtml(d){
   var dateStr=new Date(d.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">'
     +'<div style="max-width:600px;margin:0 auto;background:#fff;">'
-    +'<div style="background:#1a2744;padding:20px 32px;text-align:center;"><img src="'+DC_APPLIANCE_LOGO+'" style="max-width:160px;height:auto;display:block;margin:0 auto 8px;" alt="DC Appliance"/><h1 style="margin:0;color:#fff;font-size:22px;">DC Appliance</h1><p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">Delivery Confirmation</p></div>'
+    +'<div style="background:#1a2744;padding:20px 32px;text-align:center;"><img src="/images/logos/dc-appliance-logo-transparent.png" style="max-width:160px;height:auto;display:block;margin:0 auto 8px;" alt="DC Appliance"/><h1 style="margin:0;color:#fff;font-size:22px;">DC Appliance</h1><p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">Delivery Confirmation</p></div>'
     +'<div style="padding:28px 32px;">'
     +'<p style="font-size:16px;color:#1f2937;">Hi <strong>'+d.name+'</strong>,</p>'
     +'<p style="font-size:14px;color:#4b5563;line-height:1.6;">Your delivery has been scheduled. Here are the details:</p>'
@@ -756,7 +756,7 @@ function buildInvoiceEmailHtml(order){
   var thankYou=typeof adminInvoiceMessage!=='undefined'?adminInvoiceMessage:'THANK YOU FOR YOUR BUSINESS!';
   return '<!DOCTYPE html><html><head><meta charset="UTF-8"/></head><body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">'
     +'<div style="max-width:600px;margin:0 auto;background:#fff;">'
-    +'<div style="background:#1a2744;padding:20px 32px;text-align:center;"><img src="'+DC_APPLIANCE_LOGO+'" style="max-width:160px;height:auto;display:block;margin:0 auto 8px;" alt="DC Appliance"/><h1 style="margin:0;color:#fff;font-size:22px;">DC Appliance</h1><p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">Invoice / Receipt</p></div>'
+    +'<div style="background:#1a2744;padding:20px 32px;text-align:center;"><img src="/images/logos/dc-appliance-logo-transparent.png" style="max-width:160px;height:auto;display:block;margin:0 auto 8px;" alt="DC Appliance"/><h1 style="margin:0;color:#fff;font-size:22px;">DC Appliance</h1><p style="margin:4px 0 0;color:#94a3b8;font-size:13px;">Invoice / Receipt</p></div>'
     +'<div style="padding:28px 32px;">'
     +'<div style="display:flex;justify-content:space-between;margin-bottom:20px;"><div><p style="margin:0;font-size:13px;color:#6b7280;font-weight:700;">INVOICE</p><p style="margin:2px 0 0;font-size:18px;font-weight:700;color:#1f2937;">'+order.id+'</p></div><div style="text-align:right;"><p style="margin:0;font-size:13px;color:#6b7280;font-weight:700;">DATE</p><p style="margin:2px 0 0;font-size:14px;color:#1f2937;">'+dateStr+'</p></div></div>'
     +'<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin-bottom:20px;">'
@@ -1888,7 +1888,7 @@ function runPrintManifest(printTeam){
   '</style></head><body>';
   var selDt=new Date(selectedDate+'T12:00:00');
   var selDtStr=selDt.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  html+='<div class="hdr"><div style="display:flex;align-items:center;gap:14px;"><img src="'+DC_APPLIANCE_LOGO+'" style="max-width:180px;height:auto;object-fit:contain;" alt="DC Appliance"/><div><h1>DC Appliance — Delivery Manifest</h1><div style="font-size:10px;color:#555;margin-top:2px;">'+(printTeam==='all'?'All Teams':printTeam)+' · '+selDtStr+'</div></div></div><div style="font-size:10px;text-align:right;color:#555;">(620) 371-6417 · Dodge City, KS<br/>'+stops.length+' total stops</div></div>';
+  html+='<div class="hdr"><div style="display:flex;align-items:center;gap:14px;"><img src="/images/logos/dc-appliance-logo-transparent.png" style="max-width:180px;height:auto;object-fit:contain;" alt="DC Appliance"/><div><h1>DC Appliance — Delivery Manifest</h1><div style="font-size:10px;color:#555;margin-top:2px;">'+(printTeam==='all'?'All Teams':printTeam)+' · '+selDtStr+'</div></div></div><div style="font-size:10px;text-align:right;color:#555;">(620) 371-6417 · Dodge City, KS<br/>'+stops.length+' total stops</div></div>';
   if(stops.length===0){html+='<p style="text-align:center;padding:20px;color:#999;">No deliveries for this date.</p>';}
   else{
     html+='<table><thead><tr><th style="width:28px;">#</th><th style="width:28%;">Customer</th><th style="width:14%;">Time</th><th>Appliances, Serial # &amp; Notes</th></tr></thead><tbody>';
