@@ -1173,7 +1173,8 @@ var DI_INV_FIELDS=[
   {key:'cost',label:'Cost',req:false,aliases:['cost','wholesale','wholesale cost','unit cost','unitcost','our cost']},
   {key:'vendor',label:'Vendor',req:false,aliases:['vendor','supplier','distributor']},
   {key:'sku',label:'PLU / SKU',req:false,aliases:['sku','plu','item#','item number','itemnum','plu#']},
-  {key:'cat',label:'Department / Category',req:false,aliases:['category','cat','department','dept','product category','type']},
+  {key:'cat',label:'Category',req:false,aliases:['category','cat','product category','type']},
+  {key:'dept',label:'Department',req:false,aliases:['department','dept','dept.']},
   {key:'serialTracked',label:'Serial Tracked',req:false,aliases:['serial tracked','serialtracked','sn tracked','tracks serial','serialized','track serial']},
   {key:'reorderPt',label:'Min Quantity',req:false,aliases:['min qty','min quantity','min','reorder pt','reorder point','reorderpt','minimum','min stock']},
   {key:'reorderQty',label:'Reorder Quantity',req:false,aliases:['reorder qty','reorderqty','reorder quantity','order qty','reorder']},
@@ -1290,9 +1291,14 @@ function proceedToInvPreview(){
   // Build rows using mapping
   _diInvRows=[];
   var newCount=0,updateCount=0,needsPricing=0;
-  var newBrands={},newVendors={};
+  var newBrands={},newVendors={},newCats={},newDepts={};
+  var matchedCats={},matchedDepts={};
   var existingBrands={};(adminBrands||[]).forEach(function(b){existingBrands[(b||'').toLowerCase()]=true;});
   var existingVendors={};(adminVendors||[]).forEach(function(v){if(v.name)existingVendors[v.name.toLowerCase()]=true;});
+  var existingCats={};(adminCategories||[]).forEach(function(c){if(c&&c.name)existingCats[c.name.toLowerCase()]=true;});
+  var existingDepts={};
+  (typeof DEPARTMENTS!=='undefined'?DEPARTMENTS:[]).forEach(function(d){if(d&&d.name)existingDepts[d.name.toLowerCase()]=true;});
+  (adminCategories||[]).forEach(function(c){if(c&&c.dept)existingDepts[c.dept.toLowerCase()]=true;});
   var errors=[];
   _diInvRawRows.forEach(function(cols,rowIdx){
     var getVal=function(key){
@@ -1309,12 +1315,16 @@ function proceedToInvPreview(){
     if(flagNeedsPricing)needsPricing++;
     var brand=getVal('brand');
     var vendor=getVal('vendor');
+    var cat=getVal('cat');
+    var dept=getVal('dept');
     if(brand&&!existingBrands[brand.toLowerCase()])newBrands[brand]=true;
     if(vendor&&!existingVendors[vendor.toLowerCase()])newVendors[vendor]=true;
+    if(cat){if(existingCats[cat.toLowerCase()])matchedCats[cat]=true;else newCats[cat]=true;}
+    if(dept){if(existingDepts[dept.toLowerCase()])matchedDepts[dept]=true;else newDepts[dept]=true;}
     var existing=PRODUCTS.find(function(p){return (p.model||'').toLowerCase()===model.toLowerCase()||(p.sku||'').toLowerCase()===model.toLowerCase();});
     _diInvRows.push({
       model:model,name:name,brand:brand,vendor:vendor,
-      upc:getVal('upc'),cat:getVal('cat'),sku:getVal('sku'),
+      upc:getVal('upc'),cat:cat,dept:dept,sku:getVal('sku'),
       cost:parseFloat(getVal('cost'))||0,price:price,
       reorderPt:parseInt(getVal('reorderPt'))||null,
       reorderQty:parseInt(getVal('reorderQty'))||null,
@@ -1326,14 +1336,23 @@ function proceedToInvPreview(){
   // Build summary screen
   var newBrandList=Object.keys(newBrands);
   var newVendorList=Object.keys(newVendors);
+  var newCatList=Object.keys(newCats);
+  var newDeptList=Object.keys(newDepts);
+  var matchedCatCount=Object.keys(matchedCats).length;
+  var matchedDeptCount=Object.keys(matchedDepts).length;
   var h='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;">';
   h+='<div style="font-size:12px;font-weight:700;margin-bottom:10px;">Step 2 — Review &amp; Confirm Import</div>';
-  h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">';
+  h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px;">';
   h+='<div style="padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#166534;text-transform:uppercase;">Products to Create</div><div style="font-size:20px;font-weight:800;color:#16a34a;">'+newCount+'</div></div>';
   h+='<div style="padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#1e40af;text-transform:uppercase;">Products to Update</div><div style="font-size:20px;font-weight:800;color:#2563eb;">'+updateCount+'</div></div>';
   h+='<div style="padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#92400e;text-transform:uppercase;">New Brands</div><div style="font-size:20px;font-weight:800;color:#d97706;">'+newBrandList.length+'</div>'+(newBrandList.length?'<div style="font-size:10px;color:#92400e;margin-top:2px;">'+newBrandList.slice(0,5).join(', ')+(newBrandList.length>5?' +'+(newBrandList.length-5)+' more':'')+'</div>':'')+'</div>';
   h+='<div style="padding:10px 14px;background:#faf5ff;border:1px solid #c4b5fd;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#5b21b6;text-transform:uppercase;">New Vendors</div><div style="font-size:20px;font-weight:800;color:#7c3aed;">'+newVendorList.length+'</div>'+(newVendorList.length?'<div style="font-size:10px;color:#5b21b6;margin-top:2px;">'+newVendorList.slice(0,5).join(', ')+(newVendorList.length>5?' +'+(newVendorList.length-5)+' more':'')+' — add contact details later</div>':'')+'</div>';
+  h+='<div style="padding:10px 14px;background:#ecfeff;border:1px solid #67e8f9;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#155e75;text-transform:uppercase;">New Categories</div><div style="font-size:20px;font-weight:800;color:#0891b2;">'+newCatList.length+'</div>'+(newCatList.length?'<div style="font-size:10px;color:#155e75;margin-top:2px;">'+newCatList.slice(0,5).join(', ')+(newCatList.length>5?' +'+(newCatList.length-5)+' more':'')+'</div>':'<div style="font-size:10px;color:#155e75;margin-top:2px;">'+matchedCatCount+' matched</div>')+'</div>';
+  h+='<div style="padding:10px 14px;background:#f0f9ff;border:1px solid #7dd3fc;border-radius:6px;"><div style="font-size:9px;font-weight:700;color:#075985;text-transform:uppercase;">New Departments</div><div style="font-size:20px;font-weight:800;color:#0284c7;">'+newDeptList.length+'</div>'+(newDeptList.length?'<div style="font-size:10px;color:#075985;margin-top:2px;">'+newDeptList.slice(0,5).join(', ')+(newDeptList.length>5?' +'+(newDeptList.length-5)+' more':'')+'</div>':'<div style="font-size:10px;color:#075985;margin-top:2px;">'+matchedDeptCount+' matched</div>')+'</div>';
   h+='</div>';
+  if(matchedCatCount||matchedDeptCount){
+    h+='<div style="font-size:10px;color:var(--gray-2);margin-bottom:10px;">'+matchedCatCount+' categor'+(matchedCatCount===1?'y':'ies')+' matched, '+matchedDeptCount+' department'+(matchedDeptCount===1?'':'s')+' matched to existing records</div>';
+  }
   if(errors.length){h+='<div style="padding:8px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;margin-bottom:10px;font-size:11px;color:#991b1b;max-height:80px;overflow:auto;"><strong>'+errors.length+' row'+(errors.length===1?'':'s')+' will be skipped:</strong><br/>'+errors.slice(0,8).join('<br/>')+(errors.length>8?'<br/>... +'+(errors.length-8)+' more':'')+'</div>';}
   if(needsPricing){h+='<div style="padding:8px 12px;background:#fffbeb;border-left:3px solid #eab308;border-radius:4px;margin-bottom:10px;font-size:11px;color:#713f12;"><strong>'+needsPricing+' product'+(needsPricing===1?'':'s')+' will be flagged as Needs Pricing</strong> — no price in file. You can set prices later in Inventory.</div>';}
   h+='<div style="max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-bottom:10px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model</th><th>Name</th><th>Brand</th><th>Vendor</th><th style="text-align:right;">Price</th><th>Status</th></tr></thead><tbody>';
@@ -1348,7 +1367,7 @@ function proceedToInvPreview(){
 }
 
 async function diConfirmInv(){
-  var added=0,updated=0,brandsAdded=0,vendorsAdded=0;
+  var added=0,updated=0,brandsAdded=0,vendorsAdded=0,catsAdded=0,deptsAdded=0;
   // Auto-create brands
   var existingBrandMap={};(adminBrands||[]).forEach(function(b){existingBrandMap[(b||'').toLowerCase()]=true;});
   _diInvRows.forEach(function(r){
@@ -1366,6 +1385,33 @@ async function diConfirmInv(){
     }
   });
   if(vendorsAdded)saveVendors();
+  // Auto-create categories
+  var existingCatMap={};(adminCategories||[]).forEach(function(c){if(c&&c.name)existingCatMap[c.name.toLowerCase()]=c;});
+  // Auto-create departments
+  var existingDeptMap={};
+  (typeof DEPARTMENTS!=='undefined'?DEPARTMENTS:[]).forEach(function(d){if(d&&d.name)existingDeptMap[d.name.toLowerCase()]=d;});
+  (adminCategories||[]).forEach(function(c){if(c&&c.dept&&!existingDeptMap[c.dept.toLowerCase()])existingDeptMap[c.dept.toLowerCase()]={name:c.dept,cats:[]};});
+  _diInvRows.forEach(function(r){
+    // Department first
+    if(r.dept&&!existingDeptMap[r.dept.toLowerCase()]){
+      var newDept={name:r.dept,cats:[]};
+      if(typeof DEPARTMENTS!=='undefined')DEPARTMENTS.push(newDept);
+      existingDeptMap[r.dept.toLowerCase()]=newDept;
+      deptsAdded++;
+    }
+    // Then category, associate with department if provided
+    if(r.cat&&!existingCatMap[r.cat.toLowerCase()]){
+      var newCat={name:r.cat,dept:r.dept||''};
+      adminCategories.push(newCat);existingCatMap[r.cat.toLowerCase()]=newCat;catsAdded++;
+      // Also add category to its department's cats list
+      if(r.dept&&existingDeptMap[r.dept.toLowerCase()]){
+        var deptObj=existingDeptMap[r.dept.toLowerCase()];
+        if(!deptObj.cats)deptObj.cats=[];
+        if(deptObj.cats.indexOf(r.cat)<0)deptObj.cats.push(r.cat);
+      }
+    }
+  });
+  if(catsAdded){try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-categories',data:adminCategories})});}catch(e){}}
   // Process products
   _diInvRows.forEach(function(r){
     var p=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===r.model.toLowerCase()||(x.sku||'').toLowerCase()===r.model.toLowerCase();});
@@ -1391,6 +1437,8 @@ async function diConfirmInv(){
   var parts=[added+' added',updated+' updated'];
   if(brandsAdded)parts.push(brandsAdded+' brands created');
   if(vendorsAdded)parts.push(vendorsAdded+' vendors created');
+  if(catsAdded)parts.push(catsAdded+' categories created');
+  if(deptsAdded)parts.push(deptsAdded+' departments created');
   toast(parts.join(', '),'success');
 }
 
