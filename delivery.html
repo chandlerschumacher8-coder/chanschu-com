@@ -1478,8 +1478,21 @@ function openDeliveryDetail(id){
       '<div><div class="dl">Delivery Type</div><div class="dv">'+(d.deliveryType||'Full Install')+'</div></div>'+
       (d.invoice?'<div><div class="dl">Invoice #</div><div class="dv">'+d.invoice+'</div></div>':'<div></div>')+
     '</div>'+
-    '<div style="margin-bottom:10px;"><div class="dl" style="margin-bottom:4px;">Appliances</div>'+
-      apps.map(function(a){return '<div style="font-size:12px;color:var(--text);margin-bottom:3px;">'+a.a+(a.m?' <span style="color:var(--text2);font-size:11px;">'+a.m+'</span>':'')+(a.serial?' <span style="color:var(--green);font-size:11px;font-weight:600;">SN: '+a.serial+'</span>':'')+' </div>';}).join('')+
+    '<div style="margin-bottom:10px;"><div class="dl" style="margin-bottom:6px;">Appliances</div>'+
+      apps.map(function(a,i){
+        // Determine tracking state: tracked=true by default for major appliances
+        var majorAppliances=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Freezer','Ice Maker'];
+        var tracked=a.tracked!==false&&(a.tracked===true||majorAppliances.indexOf(a.a)>=0);
+        var snLine='';
+        if(!tracked){
+          snLine='<span style="color:var(--text3);font-size:11px;">— Not Tracked</span>';
+        }else if(a.serial){
+          snLine='<span style="color:var(--green);font-size:11px;font-weight:600;">&#x2713; Serial: '+a.serial+'</span>';
+        }else{
+          snLine='<span style="color:#d97706;font-size:11px;font-weight:600;">&#x26A0; Serial Pending</span>';
+        }
+        return '<div style="padding:6px 8px;margin-bottom:3px;background:var(--bg3);border-radius:4px;border-left:3px solid '+(a.serial?'var(--green)':tracked?'#d97706':'var(--border2)')+';"><div style="font-size:12px;color:var(--text);font-weight:600;">'+a.a+(a.m?' <span style="color:var(--text2);font-size:11px;font-weight:400;">'+a.m+'</span>':'')+'</div><div style="margin-top:2px;">'+snLine+'</div></div>';
+      }).join('')+
     '</div>'+
     (d.notes?'<div class="dl" style="margin-bottom:4px;">Notes</div><div class="notes-blk">'+d.notes+'</div>':'')+
     (d.deliveredAt?'<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered: '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>':'')+
@@ -1517,9 +1530,61 @@ function openNoteDetail(id){
 }
 async function setStatus(id,status){
   var d=deliveries.find(function(x){return x.id===id;}); if(!d)return;
+  // If marking delivered — check for missing serials on tracked items
+  if(status==='Delivered'){
+    var apps=d.appliances&&d.appliances.length?d.appliances:[];
+    var majorAppliances=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Freezer','Ice Maker'];
+    var missing=apps.filter(function(a){var tracked=a.tracked!==false&&(a.tracked===true||majorAppliances.indexOf(a.a)>=0);return tracked&&!a.serial;});
+    if(missing.length){
+      showSerialPrompt(id,missing);
+      return;
+    }
+  }
   d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;
   await saveData();closeModal('detail-modal');renderEvents();
 }
+
+function showSerialPrompt(id,missing){
+  var body=document.getElementById('det-body');
+  if(!body)return;
+  // Build inline serial input panel
+  var html='<div style="background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:14px;margin-top:10px;">';
+  html+='<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;">&#x26A0; Missing Serial Numbers</div>';
+  html+='<div style="font-size:12px;color:#713f12;margin-bottom:10px;">The following items are missing serial numbers:</div>';
+  missing.forEach(function(a,idx){
+    html+='<div style="margin-bottom:8px;"><label style="font-size:11px;font-weight:600;color:#713f12;display:block;margin-bottom:3px;">'+a.a+(a.m?' — '+a.m:'')+'</label>';
+    html+='<input class="inp ds-serial-input" data-appliance="'+encodeURIComponent(a.a)+'" placeholder="Enter serial number" style="width:100%;font-size:12px;padding:6px 10px;"/></div>';
+  });
+  html+='<div style="display:flex;gap:8px;margin-top:10px;">';
+  html+='<button class="abtn green" onclick="confirmSerialsAndDeliver(\''+id+'\')" style="flex:1;">Enter Serial Numbers</button>';
+  html+='<button class="abtn orange" onclick="markDeliveredAnyway(\''+id+'\')" style="flex:1;">Mark Delivered Anyway</button>';
+  html+='<button class="abtn gray" onclick="cancelSerialPrompt(\''+id+'\')" style="flex:1;">Cancel</button>';
+  html+='</div></div>';
+  body.insertAdjacentHTML('beforeend',html);
+}
+
+async function confirmSerialsAndDeliver(id){
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  var apps=d.appliances||[];
+  document.querySelectorAll('.ds-serial-input').forEach(function(inp){
+    var name=decodeURIComponent(inp.dataset.appliance);
+    var val=inp.value.trim();
+    if(val){
+      var match=apps.find(function(a){return a.a===name&&!a.serial;});
+      if(match)match.serial=val;
+    }
+  });
+  d.status='Delivered';d.deliveredAt=new Date().toISOString();
+  await saveData();closeModal('detail-modal');renderEvents();
+}
+
+async function markDeliveredAnyway(id){
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  d.status='Delivered';d.deliveredAt=new Date().toISOString();
+  await saveData();closeModal('detail-modal');renderEvents();
+}
+
+function cancelSerialPrompt(id){openDeliveryDetail(id);}
 async function sendDeliveryConfirmEmail(id){
   var d=deliveries.find(function(x){return x.id===id;});if(!d||!d.email)return;
   // Check customer opt-out
