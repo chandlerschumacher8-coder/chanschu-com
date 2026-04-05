@@ -1184,7 +1184,26 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 <!-- SUB: RECEIVING -->
 <div class="inv-sub-panel" id="inv-sub-receiving">
-<div class="recv-wrap">
+<!-- AI AUTO-RECEIVE DROPZONE -->
+<div id="recv-ai-zone" style="padding:14px 18px;background:#f8fafc;border-bottom:1px solid #e5e7eb;flex-shrink:0;">
+  <div id="recv-ai-dropzone" style="border:2px dashed #bfdbfe;border-radius:12px;padding:18px 20px;text-align:center;background:#eff6ff;cursor:pointer;position:relative;transition:all 0.15s;"
+    ondragover="event.preventDefault();this.style.borderColor='#2563eb';this.style.background='#dbeafe';"
+    ondragleave="this.style.borderColor='#bfdbfe';this.style.background='#eff6ff';"
+    ondrop="recvAiHandleDrop(event)">
+    <input type="file" accept=".pdf,.csv,.xlsx,.xls,image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="recvAiHandleFile(this.files[0])"/>
+    <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">
+      <div style="font-size:32px;">&#x1F4E6;</div>
+      <div style="text-align:left;">
+        <div style="font-size:15px;font-weight:700;color:#1e40af;">Drop Vendor Invoice Here to Auto-Receive</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">AI reads PDF / image / CSV / Excel and extracts items, quantities, serial numbers &middot; or click to browse</div>
+        <div style="display:flex;gap:10px;margin-top:6px;font-size:10px;color:#9ca3af;"><span>&#x1F4C4; PDF</span><span>&#x1F5BC; JPG/PNG</span><span>&#x1F4CA; CSV/XLSX</span></div>
+      </div>
+    </div>
+    <div id="recv-ai-loading" style="display:none;margin-top:10px;font-size:12px;color:#2563eb;font-weight:600;"><div style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></div>Reading invoice...</div>
+  </div>
+  <div id="recv-ai-preview" style="display:none;margin-top:12px;"></div>
+</div>
+<div class="recv-wrap" style="flex:1;overflow:hidden;">
 <div class="recv-left">
 <div class="recv-left-hdr">
 <div class="recv-left-title">Purchase Orders</div>

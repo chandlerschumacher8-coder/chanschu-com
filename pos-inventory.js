@@ -1946,6 +1946,157 @@ async function recvHandleSlip(file){
   }catch(e){toast('Could not read slip: '+e.message,'error');}
   finally{var rl=document.getElementById('recv-loading');if(rl)rl.style.display='none';}
 }
+// ═══ AI AUTO-RECEIVE (drag-drop invoice reader) ═══
+var _recvAiParsed=null;
+
+function recvAiHandleDrop(e){
+  e.preventDefault();
+  var dz=document.getElementById('recv-ai-dropzone');
+  if(dz){dz.style.borderColor='#bfdbfe';dz.style.background='#eff6ff';}
+  if(e.dataTransfer.files.length)recvAiHandleFile(e.dataTransfer.files[0]);
+}
+
+async function recvAiHandleFile(file){
+  if(!file)return;
+  document.getElementById('recv-ai-loading').style.display='block';
+  document.getElementById('recv-ai-preview').style.display='none';
+  try{
+    var b64=await toB64(file);
+    var contentType=file.type==='application/pdf'?'document':'image';
+    if(file.name.match(/\.(csv|xlsx|xls)$/i))contentType='document';
+    var msgs=[{role:'user',content:[
+      {type:contentType,source:{type:'base64',media_type:file.type||'application/octet-stream',data:b64}},
+      {type:'text',text:'Extract all items from this vendor invoice/packing list. Return JSON only: {"vendor":"Vendor Name","poNumber":"PO#IfReferenced","invoiceDate":"YYYY-MM-DD","items":[{"model":"MODEL#","description":"Product Name","qty":1,"unitCost":0,"serials":["SN1","SN2"]}]}. Include ALL serial numbers found. If a field is missing use empty string. JSON only, no explanation.'}
+    ]}];
+    var data=await claudeApiCall({messages:msgs,max_tokens:2000});
+    var match=data.content[0].text.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('Could not parse AI response');
+    var parsed=JSON.parse(match[0]);
+    // Try to match PO
+    var matchedPO=null;
+    if(parsed.poNumber){
+      matchedPO=purchaseOrders.find(function(po){return po.id.toLowerCase().indexOf(parsed.poNumber.toLowerCase())>=0||parsed.poNumber.toLowerCase().indexOf(po.id.toLowerCase())>=0;});
+    }
+    if(!matchedPO&&parsed.vendor){
+      var openPOs=purchaseOrders.filter(function(po){return (po.status==='Pending'||po.status==='Partially Received')&&po.vendor&&po.vendor.toLowerCase()===parsed.vendor.toLowerCase();});
+      if(openPOs.length===1)matchedPO=openPOs[0];
+    }
+    _recvAiParsed={data:parsed,matchedPO:matchedPO};
+    recvAiShowPreview();
+  }catch(e){
+    document.getElementById('recv-ai-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;">Could not read invoice: '+e.message+'</div>';
+    document.getElementById('recv-ai-preview').style.display='block';
+  }
+  document.getElementById('recv-ai-loading').style.display='none';
+}
+
+function recvAiShowPreview(){
+  var p=_recvAiParsed.data;var linkedPO=_recvAiParsed.matchedPO;
+  var vendorOpts=(typeof adminVendors!=='undefined'?adminVendors:[]).sort(function(a,b){return a.name.localeCompare(b.name);}).map(function(v){return '<option value="'+v.name+'"'+(v.name.toLowerCase()===(p.vendor||'').toLowerCase()?' selected':'')+'>'+v.name+'</option>';}).join('');
+  var poOpts=purchaseOrders.filter(function(po){return po.status==='Pending'||po.status==='Partially Received';}).map(function(po){return '<option value="'+po.id+'"'+(linkedPO&&linkedPO.id===po.id?' selected':'')+'>'+po.id+' — '+po.vendor+'</option>';}).join('');
+
+  var h='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">';
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">';
+  h+='<div style="font-size:13px;font-weight:700;color:#1f2937;">Review Extracted Invoice</div>';
+  if(linkedPO)h+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:#dcfce7;color:#16a34a;">&#x2713; Matched to '+linkedPO.id+'</span>';
+  h+='<button class="ghost-btn" style="margin-left:auto;font-size:10px;padding:4px 10px;" onclick="recvAiCancel()">Cancel</button>';
+  h+='</div>';
+  h+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px;">';
+  h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Vendor</label><select id="recv-ai-vendor" class="sel" style="font-size:11px;"><option value="">Select...</option>'+vendorOpts+'</select></div>';
+  h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Link to PO</label><select id="recv-ai-po" class="sel" style="font-size:11px;"><option value="">None</option>'+poOpts+'</select></div>';
+  h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Invoice Date</label><input id="recv-ai-date" class="inp" type="date" value="'+(p.invoiceDate||'')+'" style="font-size:11px;"/></div>';
+  h+='</div>';
+  // Items table
+  h+='<div style="max-height:400px;overflow:auto;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:10px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model #</th><th>Description</th><th style="width:60px;">Qty</th><th style="width:80px;">Unit Cost</th><th>Serials</th><th style="width:80px;">Match</th></tr></thead><tbody>';
+  (p.items||[]).forEach(function(it,i){
+    var prod=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===(it.model||'').toLowerCase()||(x.sku||'').toLowerCase()===(it.model||'').toLowerCase();});
+    var statusBadge=prod?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#dcfce7;color:#16a34a;">Matched</span>':'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#fee2e2;color:#dc2626;">Not Found</span>';
+    var serialStr=(it.serials||[]).join(', ');
+    h+='<tr'+(!prod?' style="background:#fef2f2;"':'')+'>';
+    h+='<td><input class="inp recv-ai-model" data-idx="'+i+'" value="'+(it.model||'')+'" style="font-size:10px;padding:4px 6px;width:100%;" oninput="recvAiRematch('+i+')"/></td>';
+    h+='<td><input class="inp recv-ai-desc" data-idx="'+i+'" value="'+(it.description||'').replace(/"/g,'&quot;')+'" style="font-size:10px;padding:4px 6px;width:100%;"/></td>';
+    h+='<td><input class="inp recv-ai-qty" data-idx="'+i+'" type="number" min="0" value="'+(it.qty||0)+'" style="font-size:10px;padding:4px 6px;width:50px;text-align:center;"/></td>';
+    h+='<td><input class="inp recv-ai-cost" data-idx="'+i+'" type="number" step="0.01" value="'+(it.unitCost||0)+'" style="font-size:10px;padding:4px 6px;width:70px;text-align:right;"/></td>';
+    h+='<td><input class="inp recv-ai-serials" data-idx="'+i+'" value="'+serialStr+'" placeholder="SN1, SN2..." style="font-size:10px;padding:4px 6px;width:100%;"/></td>';
+    h+='<td id="recv-ai-match-'+i+'">'+statusBadge+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  var total=(p.items||[]).reduce(function(s,it){return s+(it.qty||0)*(it.unitCost||0);},0);
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">';
+  h+='<div style="font-size:14px;font-weight:700;">Total: '+fmt(total)+'</div>';
+  h+='<div style="display:flex;gap:6px;"><button class="ghost-btn" onclick="recvAiCancel()">Cancel</button><button class="primary-btn" onclick="recvAiConfirm()">Confirm &amp; Receive</button></div>';
+  h+='</div>';
+  h+='</div>';
+  document.getElementById('recv-ai-preview').innerHTML=h;
+  document.getElementById('recv-ai-preview').style.display='block';
+}
+
+function recvAiRematch(i){
+  var model=document.querySelector('.recv-ai-model[data-idx="'+i+'"]').value;
+  var prod=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===model.toLowerCase()||(x.sku||'').toLowerCase()===model.toLowerCase();});
+  var el=document.getElementById('recv-ai-match-'+i);
+  if(prod)el.innerHTML='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#dcfce7;color:#16a34a;">Matched</span>';
+  else el.innerHTML='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#fee2e2;color:#dc2626;">Not Found</span>';
+}
+
+function recvAiCancel(){_recvAiParsed=null;document.getElementById('recv-ai-preview').style.display='none';document.getElementById('recv-ai-preview').innerHTML='';}
+
+async function recvAiConfirm(){
+  if(!_recvAiParsed)return;
+  var poId=(document.getElementById('recv-ai-po')||{}).value||'';
+  var vendorName=(document.getElementById('recv-ai-vendor')||{}).value||'';
+  var linkedPO=poId?purchaseOrders.find(function(po){return po.id===poId;}):null;
+  var updated=0,notFound=0,serialsAdded=0;
+  // Read current form values
+  var items=[];
+  document.querySelectorAll('.recv-ai-model').forEach(function(el){
+    var i=parseInt(el.dataset.idx);
+    var model=el.value.trim();
+    var desc=(document.querySelector('.recv-ai-desc[data-idx="'+i+'"]')||{}).value||'';
+    var qty=parseInt((document.querySelector('.recv-ai-qty[data-idx="'+i+'"]')||{}).value)||0;
+    var cost=parseFloat((document.querySelector('.recv-ai-cost[data-idx="'+i+'"]')||{}).value)||0;
+    var snStr=(document.querySelector('.recv-ai-serials[data-idx="'+i+'"]')||{}).value||'';
+    var serials=snStr.split(',').map(function(s){return s.trim();}).filter(Boolean);
+    items.push({model:model,desc:desc,qty:qty,cost:cost,serials:serials});
+  });
+  // Apply to inventory
+  items.forEach(function(it){
+    if(!it.qty)return;
+    var p=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===it.model.toLowerCase()||(x.sku||'').toLowerCase()===it.model.toLowerCase();});
+    if(p){
+      p.stock=(p.stock||0)+it.qty;
+      if(it.cost)p.cost=it.cost;
+      if(!p.serialPool)p.serialPool=[];
+      it.serials.forEach(function(sn){p.serialPool.push({sn:sn,status:'Available',receivedAt:new Date().toISOString(),vendor:vendorName});serialsAdded++;});
+      updated++;
+    }else{
+      // Auto-create new product
+      PRODUCTS.push({id:PRODUCTS.length+300+notFound,model:it.model,sku:it.model,name:it.desc||it.model,brand:'',cat:'',price:0,cost:it.cost,stock:it.qty,sold:0,reorderPt:2,reorderQty:3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:true,vendor:vendorName,serialPool:it.serials.map(function(sn){return{sn:sn,status:'Available',receivedAt:new Date().toISOString(),vendor:vendorName};})});
+      notFound++;serialsAdded+=it.serials.length;
+    }
+  });
+  // Update linked PO status
+  if(linkedPO){
+    var allFull=true;
+    linkedPO.items.forEach(function(poItem){
+      var received=items.find(function(it){return it.model.toLowerCase()===(poItem.model||'').toLowerCase();});
+      if(received){var newRecv=(poItem.qtyReceived||0)+received.qty;poItem.qtyReceived=newRecv;if(newRecv<poItem.qtyOrdered)allFull=false;}
+      else if((poItem.qtyReceived||0)<poItem.qtyOrdered)allFull=false;
+    });
+    linkedPO.status=allFull?'Received':'Partially Received';
+    if(allFull)linkedPO.receivedDate=new Date().toISOString();
+    linkedPO.receivedBy=currentEmployee?currentEmployee.name:'Admin';
+    if(!linkedPO.receiveLog)linkedPO.receiveLog=[];
+    linkedPO.receiveLog.push({ts:new Date().toISOString(),by:linkedPO.receivedBy,source:'AI auto-receive'});
+    await savePOs();
+  }
+  await saveProducts();
+  recvAiCancel();
+  renderReceiving();renderInventory();refreshSaleView();
+  toast('Received '+updated+' matched'+(notFound?' + '+notFound+' new':'')+' items, '+serialsAdded+' serials added','success');
+}
+
 async function recvComplete(){
   if(!selectedPO)return;
   // Calculate if this is partial or full
