@@ -5062,56 +5062,78 @@ function buildOrderFromCart(idOverride){
   };
 }
 
-function printCartInvoice(){
-  var o=buildOrderFromCart();if(!o)return;
+function openPrintWindow(title,bodyHtml,order){
+  console.log('[Print]',title,'order data:',order);
+  if(!bodyHtml||!bodyHtml.trim()){
+    alert('No sale data found — please make sure a sale is open before printing');
+    return;
+  }
+  var styles=invoiceDocStyles();
+  var full='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>'+title+'</title>'+styles+'</head><body>'+bodyHtml+'<script>window.onload=function(){setTimeout(function(){window.print();},300);};<\/script></body></html>';
   var win=window.open('','_blank');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildCustomerInvoiceDoc(o)+'</body></html>';
-  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
+  if(!win){alert('Popup blocked — allow popups to print');return;}
+  win.document.open();
+  win.document.write(full);
+  win.document.close();
+}
+
+function printCartInvoice(){
+  try{
+    var o=buildOrderFromCart();
+    if(!o){alert('No sale data found — please make sure a sale is open before printing');return;}
+    console.log('[Print Invoice] cart data:',o);
+    if(typeof buildCustomerInvoiceDoc!=='function'){alert('Print template not loaded — refresh the page');return;}
+    var body=buildCustomerInvoiceDoc(o);
+    openPrintWindow('Invoice '+o.id,body,o);
+  }catch(e){console.error('Print Invoice failed:',e);alert('Print failed: '+e.message);}
 }
 
 function printCartShipper(){
-  var o=buildOrderFromCart();if(!o)return;
-  var win=window.open('','_blank');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Shipper Copy '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildShipperCopyDoc(o)+'</body></html>';
-  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
+  try{
+    var o=buildOrderFromCart();
+    if(!o){alert('No sale data found — please make sure a sale is open before printing');return;}
+    console.log('[Print Shipper] cart data:',o);
+    if(typeof buildShipperCopyDoc!=='function'){alert('Print template not loaded — refresh the page');return;}
+    var body=buildShipperCopyDoc(o);
+    openPrintWindow('Shipper Copy '+o.id,body,o);
+  }catch(e){console.error('Print Shipper failed:',e);alert('Print failed: '+e.message);}
 }
 
 function printCartBoth(){
-  var o=buildOrderFromCart();if(!o)return;
-  var win=window.open('','_blank');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice &amp; Shipper '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildCustomerInvoiceDoc(o)+buildShipperCopyDoc(o)+'</body></html>';
-  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
+  try{
+    var o=buildOrderFromCart();
+    if(!o){alert('No sale data found — please make sure a sale is open before printing');return;}
+    console.log('[Print Both] cart data:',o);
+    var body=buildCustomerInvoiceDoc(o)+buildShipperCopyDoc(o);
+    openPrintWindow('Invoice & Shipper '+o.id,body,o);
+  }catch(e){console.error('Print Both failed:',e);alert('Print failed: '+e.message);}
 }
 
 function printCartQuote(){
-  if(cart.length===0){toast('Cart is empty','error');return;}
-  // Generate quote number: Q-YYYYMMDD-NNN
-  var now=new Date();
-  var ymd=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
-  var seq=1;
-  try{var stored=JSON.parse(localStorage.getItem('pos-quote-counter')||'{}');if(stored.date===ymd)seq=(stored.seq||0)+1;stored={date:ymd,seq:seq};localStorage.setItem('pos-quote-counter',JSON.stringify(stored));}catch(e){}
-  var quoteId='Q-'+ymd+'-'+String(seq).padStart(3,'0');
-  var expiry=new Date(now.getTime()+30*86400000).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-  var o=buildOrderFromCart(quoteId);
-  o.status='Quote';o.payment='Quote';
-  // Override the doc to show Quote styling
-  var win=window.open('','_blank');
-  var doc=buildCustomerInvoiceDoc(o);
-  // Patch invoice title → QUOTE
-  doc=doc.replace(/>INVOICE</,'>QUOTE<');
-  doc=doc.replace(/CUSTOMER COPY/,'QUOTE');
-  doc=doc.replace(/Del\/Pick Up Date/,'Expires');
-  // Replace the del date value with expiry
-  doc=doc.replace(/<span class="lbl">Expires<\/span><span class="val">[^<]*<\/span>/,'<span class="lbl">Expires</span><span class="val">'+expiry+'</span>');
-  // Hide ledger table + paid stamp (Quote shouldn't have payment history)
-  doc=doc.replace(/<table class="doc-ledger">[\s\S]*?<\/table>/,'');
-  doc=doc.replace(/<div class="doc-paid">PAID<\/div>/,'');
-  doc=doc.replace(/<div style="text-align:right;font-size:14px;font-weight:800;color:#c00;margin-top:6px;">Balance Due:[^<]*<\/div>/,'');
-  // Append validity line above footer
-  doc=doc.replace(/<div class="doc-footer">/,'<div style="margin-top:14px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:10px;color:#4b5563;text-align:center;"><strong>This quote is valid until '+expiry+'.</strong> Prices subject to change.</div><div class="doc-footer">');
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Quote '+quoteId+'</title>'+invoiceDocStyles()+'</head><body>'+doc+'</body></html>';
-  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
-  toast('Quote '+quoteId+' printed','success');
+  try{
+    if(cart.length===0){alert('Cart is empty — add items before printing a quote');return;}
+    var now=new Date();
+    var ymd=now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0');
+    var seq=1;
+    try{var stored=JSON.parse(localStorage.getItem('pos-quote-counter')||'{}');if(stored.date===ymd)seq=(stored.seq||0)+1;stored={date:ymd,seq:seq};localStorage.setItem('pos-quote-counter',JSON.stringify(stored));}catch(e){}
+    var quoteId='Q-'+ymd+'-'+String(seq).padStart(3,'0');
+    var expiry=new Date(now.getTime()+30*86400000).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    var o=buildOrderFromCart(quoteId);
+    if(!o){alert('No sale data found');return;}
+    o.status='Quote';o.payment='Quote';
+    console.log('[Print Quote] quote data:',o);
+    var doc=buildCustomerInvoiceDoc(o);
+    doc=doc.replace(/>INVOICE</,'>QUOTE<');
+    doc=doc.replace(/CUSTOMER COPY/,'QUOTE');
+    doc=doc.replace(/Del\/Pick Up Date/,'Expires');
+    doc=doc.replace(/<span class="lbl">Expires<\/span><span class="val">[^<]*<\/span>/,'<span class="lbl">Expires</span><span class="val">'+expiry+'</span>');
+    doc=doc.replace(/<table class="doc-ledger">[\s\S]*?<\/table>/,'');
+    doc=doc.replace(/<div class="doc-paid">PAID<\/div>/,'');
+    doc=doc.replace(/<div style="text-align:right;font-size:14px;font-weight:800;color:#c00;margin-top:6px;">Balance Due:[^<]*<\/div>/,'');
+    doc=doc.replace(/<div class="doc-footer">/,'<div style="margin-top:14px;padding:10px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:10px;color:#4b5563;text-align:center;"><strong>This quote is valid until '+expiry+'.</strong> Prices subject to change.</div><div class="doc-footer">');
+    openPrintWindow('Quote '+quoteId,doc,o);
+    toast('Quote '+quoteId+' printed','success');
+  }catch(e){console.error('Print Quote failed:',e);alert('Print failed: '+e.message);}
 }
 
 function cartEditPrice(idx){
