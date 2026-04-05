@@ -1102,7 +1102,7 @@ function recvConfirm(){
 // ═══ DATA IMPORT ═══
 function renderDataImport(){
   var wrap=document.getElementById('data-import-content');
-  wrap.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
+  wrap.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">'
     // Inventory import
     +'<div style="border:1px solid var(--border);border-radius:8px;padding:16px;">'
     +'<div style="font-size:14px;font-weight:700;margin-bottom:8px;">Inventory Import</div>'
@@ -1119,7 +1119,21 @@ function renderDataImport(){
     +'<input type="file" accept=".csv,.xlsx,.xls" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="diHandleCustFile(this.files[0])"/>'
     +'<div style="font-size:12px;font-weight:600;color:var(--gold);">Drop customer file or click to browse</div></div>'
     +'<div id="di-cust-preview" style="display:none;margin-top:12px;"></div></div>'
-    +'</div>';
+    +'</div>'
+    // Sales History Import (full width)
+    +'<div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;">'
+    +'<div><div style="font-size:14px;font-weight:700;">Sales History Import</div><div style="font-size:11px;color:var(--gray-2);">Import historical sales from SmartTouch POS Sales Journal (PDF) or CSV</div></div>'
+    +'<button class="ghost-btn" onclick="diShowImportHistory()" style="font-size:11px;">View Import History</button>'
+    +'</div>'
+    +'<div style="border:2px dashed var(--gold,#c9973a);border-radius:10px;padding:24px 20px;text-align:center;cursor:pointer;position:relative;background:#fffbeb;">'
+    +'<input type="file" accept=".pdf,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="diHandleSalesFile(this.files[0])"/>'
+    +'<div style="font-size:32px;margin-bottom:6px;">&#x1F4D2;</div>'
+    +'<div style="font-size:14px;font-weight:700;color:var(--gold-d,#9e7228);">Drop Sales Journal PDF or CSV to Import Sales History</div>'
+    +'<div style="font-size:11px;color:var(--gray-2);margin-top:4px;">AI reads the SmartTouch format and imports invoices, customers, line items, and serial numbers</div>'
+    +'<div id="di-sales-loading" style="display:none;margin-top:10px;font-size:12px;color:var(--gold-d,#9e7228);font-weight:600;"><span style="display:inline-block;width:14px;height:14px;border:2px solid #fef3c7;border-top-color:var(--gold,#c9973a);border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Reading sales journal...</div>'
+    +'</div>'
+    +'<div id="di-sales-preview" style="display:none;margin-top:12px;"></div></div>';
 }
 
 var _diInvRows=[];
@@ -1206,6 +1220,218 @@ function diConfirmCust(){
   saveCustomers();_diCustRows=[];
   document.getElementById('di-cust-preview').style.display='none';
   toast(added+' added, '+updated+' updated','success');
+}
+
+// ═══ SALES HISTORY IMPORT (SmartTouch PDF/CSV) ═══
+var _diSalesParsed=null;
+var _diSalesImportHistory=[];
+
+async function diLoadImportHistory(){
+  try{var r=await fetch('/api/admin-get?key=sales-import-history');var d=await r.json();if(d&&Array.isArray(d.data))_diSalesImportHistory=d.data;}catch(e){}
+}
+async function diSaveImportHistory(){
+  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'sales-import-history',data:_diSalesImportHistory})});}catch(e){}
+}
+
+async function diHandleSalesFile(file){
+  if(!file)return;
+  document.getElementById('di-sales-loading').style.display='block';
+  document.getElementById('di-sales-preview').style.display='none';
+  try{
+    var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
+    var contentType=file.name.match(/\.pdf$/i)?'document':'document';
+    var prompt='Extract ALL sales invoices from this SmartTouch POS Sales Journal. Return JSON only: '
+      +'{"invoices":[{"invoiceNumber":"","date":"YYYY-MM-DD","customer":"","clerkInitials":"","taxCounty":"","status":"Sold",'
+      +'"items":[{"plu":"","dept":"","model":"","description":"","serial":"","so":"","qty":1,"unitPrice":0,"discount":0,"extPrice":0}],'
+      +'"subtotal":0,"salesTax":0,"total":0}]}. '
+      +'For walk-ins the customer will be "Cash", "Check", or "Charge". JSON only, no explanation.';
+    var msgs=[{role:'user',content:[{type:contentType,source:{type:'base64',media_type:file.type||'application/pdf',data:b64}},{type:'text',text:prompt}]}];
+    var data=await claudeApiCall({messages:msgs,max_tokens:8000});
+    var match=data.content[0].text.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('Could not parse AI response');
+    var parsed=JSON.parse(match[0]);
+    _diSalesParsed={file:file.name,data:parsed};
+    diShowSalesPreview();
+  }catch(e){
+    document.getElementById('di-sales-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;">Import failed: '+e.message+'</div>';
+    document.getElementById('di-sales-preview').style.display='block';
+  }
+  document.getElementById('di-sales-loading').style.display='none';
+}
+
+function diShowSalesPreview(){
+  var p=_diSalesParsed.data;var invoices=p.invoices||[];
+  if(!invoices.length){document.getElementById('di-sales-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border-radius:8px;color:#991b1b;font-size:12px;">No invoices found in this file.</div>';document.getElementById('di-sales-preview').style.display='block';return;}
+
+  // Analyze
+  var dates=invoices.map(function(i){return i.date;}).filter(Boolean).sort();
+  var dateRange=dates.length?dates[0]+' to '+dates[dates.length-1]:'—';
+  var totalSales=invoices.reduce(function(s,i){return s+(parseFloat(i.total)||0);},0);
+  var clerkInitials={};invoices.forEach(function(i){if(i.clerkInitials)clerkInitials[i.clerkInitials]=(clerkInitials[i.clerkInitials]||0)+1;});
+  var existingInitials={};(adminUsers||[]).forEach(function(u){
+    if(u.name){var parts=u.name.split(' ');var init=parts[0][0]+(parts.length>1?parts[parts.length-1][0]:'');existingInitials[init.toUpperCase()]=u.name;}
+    if(u.initials)existingInitials[u.initials.toUpperCase()]=u.name;
+  });
+  var unmatchedClerks=Object.keys(clerkInitials).filter(function(k){return !existingInitials[k.toUpperCase()];});
+  // Duplicate check
+  var existingIds={};(orders||[]).forEach(function(o){if(o.id)existingIds[o.id]=true;if(o.importedInvoice)existingIds[o.importedInvoice]=true;});
+  var duplicates=invoices.filter(function(i){return existingIds[i.invoiceNumber];}).length;
+  var walkIns=invoices.filter(function(i){var c=(i.customer||'').toLowerCase();return c==='cash'||c==='check'||c==='charge'||!c;}).length;
+
+  var h='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;">';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Invoices</div><div style="font-size:20px;font-weight:800;">'+invoices.length+'</div></div>';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Date Range</div><div style="font-size:11px;font-weight:600;">'+dateRange+'</div></div>';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Total Sales</div><div style="font-size:20px;font-weight:800;color:var(--green);">'+fmt(totalSales)+'</div></div>';
+  h+='<div><div style="font-size:10px;font-weight:700;color:var(--gray-2);text-transform:uppercase;">Walk-Ins</div><div style="font-size:20px;font-weight:800;color:var(--gray-2);">'+walkIns+'</div></div>';
+  h+='</div>';
+
+  // Flags
+  if(duplicates){h+='<div style="padding:8px 12px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:4px;margin-bottom:8px;font-size:11px;color:#991b1b;"><strong>'+duplicates+' duplicate invoice'+(duplicates===1?'':'s')+'</strong> already exist in the system — will be skipped.</div>';}
+  if(unmatchedClerks.length){
+    h+='<div style="padding:8px 12px;background:#fffbeb;border-left:3px solid #eab308;border-radius:4px;margin-bottom:8px;font-size:11px;color:#713f12;"><strong>Unmatched clerk initials:</strong> '+unmatchedClerks.join(', ')+' — <a href="#" onclick="event.preventDefault();diShowClerkMatch();" style="color:#1d4ed8;font-weight:700;">match manually</a></div>';
+    h+='<div id="di-clerk-match" style="display:none;padding:10px 12px;background:#fff;border:1px solid #eab308;border-radius:6px;margin-bottom:8px;"><div style="font-size:11px;font-weight:700;margin-bottom:6px;">Assign employees:</div>';
+    unmatchedClerks.forEach(function(init){
+      var empOpts='<option value="">(leave unmatched)</option>'+(adminUsers||[]).filter(function(u){return u.active!==false;}).map(function(u){return '<option value="'+u.name+'">'+u.name+'</option>';}).join('');
+      h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:11px;"><span style="font-weight:700;min-width:40px;">'+init+'</span><span>→</span><select class="sel di-clerk-assign" data-init="'+init+'" style="font-size:11px;padding:4px 8px;">'+empOpts+'</select><span style="color:var(--gray-3);">('+clerkInitials[init]+' invoices)</span></div>';
+    });
+    h+='</div>';
+  }
+
+  // Options
+  h+='<div style="display:flex;gap:16px;margin-bottom:12px;font-size:12px;">';
+  h+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="di-skip-dup" checked style="accent-color:var(--gold,#2563eb);"/> Skip duplicates</label>';
+  h+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="di-skip-walkin" style="accent-color:var(--gold,#2563eb);"/> Skip walk-in sales</label>';
+  h+='</div>';
+
+  // Preview table
+  h+='<div style="font-size:11px;font-weight:700;margin-bottom:4px;">First 10 invoices:</div>';
+  h+='<div style="max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:6px;margin-bottom:12px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th>Clerk</th><th style="text-align:center;">Items</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
+  invoices.slice(0,10).forEach(function(inv){
+    var isDup=existingIds[inv.invoiceNumber];
+    h+='<tr'+(isDup?' style="background:#fef2f2;"':'')+'><td style="font-weight:600;">'+inv.invoiceNumber+'</td><td>'+inv.date+'</td><td>'+(inv.customer||'—')+'</td><td>'+(inv.clerkInitials||'—')+'</td><td style="text-align:center;">'+((inv.items||[]).length)+'</td><td style="text-align:right;font-weight:600;">'+fmt(parseFloat(inv.total)||0)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+
+  h+='<div id="di-sales-progress" style="display:none;margin-bottom:10px;"><div style="background:var(--bg4);border-radius:100px;height:6px;overflow:hidden;"><div id="di-sales-bar" style="height:100%;width:0%;background:var(--green);transition:width 0.2s;"></div></div><div id="di-sales-progress-text" style="font-size:10px;color:var(--gray-2);margin-top:4px;text-align:center;"></div></div>';
+  h+='<div style="display:flex;gap:8px;"><button class="primary-btn" onclick="diImportSales()">Import '+invoices.length+' Invoices</button><button class="ghost-btn" onclick="diCancelSalesImport()">Cancel</button></div>';
+  h+='</div>';
+  document.getElementById('di-sales-preview').innerHTML=h;
+  document.getElementById('di-sales-preview').style.display='block';
+}
+
+function diShowClerkMatch(){var el=document.getElementById('di-clerk-match');if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function diCancelSalesImport(){_diSalesParsed=null;document.getElementById('di-sales-preview').style.display='none';document.getElementById('di-sales-preview').innerHTML='';}
+
+async function diImportSales(){
+  if(!_diSalesParsed)return;
+  var invoices=_diSalesParsed.data.invoices||[];
+  var skipDup=document.getElementById('di-skip-dup').checked;
+  var skipWalkIn=document.getElementById('di-skip-walkin').checked;
+  // Build clerk mapping
+  var clerkMap={};document.querySelectorAll('.di-clerk-assign').forEach(function(sel){if(sel.value)clerkMap[sel.dataset.init]=sel.value;});
+  var existingInitials={};(adminUsers||[]).forEach(function(u){if(u.name){var parts=u.name.split(' ');var init=parts[0][0]+(parts.length>1?parts[parts.length-1][0]:'');existingInitials[init.toUpperCase()]=u.name;}if(u.initials)existingInitials[u.initials.toUpperCase()]=u.name;});
+  var existingIds={};(orders||[]).forEach(function(o){if(o.id)existingIds[o.id]=true;if(o.importedInvoice)existingIds[o.importedInvoice]=true;});
+
+  document.getElementById('di-sales-progress').style.display='block';
+  var bar=document.getElementById('di-sales-bar');
+  var text=document.getElementById('di-sales-progress-text');
+
+  var stats={imported:0,custCreated:0,custMatched:0,serialsRecorded:0,skipped:0,errors:0};
+
+  for(var i=0;i<invoices.length;i++){
+    var inv=invoices[i];
+    try{
+      // Skip duplicate
+      if(skipDup&&existingIds[inv.invoiceNumber]){stats.skipped++;continue;}
+      // Skip walk-in if requested
+      var custName=(inv.customer||'').trim();
+      var isWalkIn=['cash','check','charge',''].indexOf(custName.toLowerCase())>=0;
+      if(skipWalkIn&&isWalkIn){stats.skipped++;continue;}
+
+      // Map clerk initials to employee name
+      var clerkName=clerkMap[inv.clerkInitials]||existingInitials[(inv.clerkInitials||'').toUpperCase()]||inv.clerkInitials||'';
+
+      // Match or create customer
+      var custRecord=null;
+      if(!isWalkIn&&custName){
+        custRecord=customers.find(function(c){return c.name.toLowerCase()===custName.toLowerCase();});
+        if(custRecord){stats.custMatched++;}
+        else{
+          custRecord={name:custName,phone:'',email:'',address:'',city:'',state:'',zip:'',customerNum:'IMP-'+Date.now()+'-'+stats.custCreated,notes:'Imported from SmartTouch',payments:[]};
+          customers.push(custRecord);stats.custCreated++;
+        }
+      }
+
+      // Build order items
+      var orderItems=(inv.items||[]).map(function(it){
+        if(it.serial)stats.serialsRecorded++;
+        var prod=PRODUCTS.find(function(p){return (p.model||'').toLowerCase()===(it.model||'').toLowerCase()||(p.sku||'').toLowerCase()===(it.model||'').toLowerCase();});
+        return{id:prod?prod.id:null,plu:it.plu||'',dept:it.dept||'',model:it.model||'',name:it.description||'',price:parseFloat(it.unitPrice)||0,qty:parseInt(it.qty)||1,serial:it.serial||'',discount:parseFloat(it.discount)||0,so:it.so||''};
+      });
+
+      var order={
+        id:inv.invoiceNumber||'IMP-'+Date.now()+'-'+i,
+        importedInvoice:inv.invoiceNumber,
+        importedFrom:'SmartTouch',
+        importedAt:new Date().toISOString(),
+        customer:isWalkIn?'Walk-In Customer':custName,
+        items:orderItems,
+        subtotal:parseFloat(inv.subtotal)||0,
+        tax:parseFloat(inv.salesTax)||0,
+        total:parseFloat(inv.total)||0,
+        taxZone:inv.taxCounty||'',
+        payment:isWalkIn?(custName||'Cash'):'Charge Customer',
+        status:inv.status==='Return'?'Return':'Delivered',
+        date:inv.date?new Date(inv.date).toISOString():new Date().toISOString(),
+        clerk:clerkName,
+        soldTo:{name:isWalkIn?'':custName,addr:'',city:'',state:'',zip:'',phone:''},
+        shipTo:{name:'',addr:'',city:'',state:'',zip:''},
+        notes:'',address:'',deliveryDate:'',po:'',job:'',invoiceNotes:'',shipperNotes:''
+      };
+      orders.unshift(order);existingIds[order.id]=true;
+      stats.imported++;
+    }catch(e){stats.errors++;console.error('Import row failed:',e);}
+    // Update progress
+    var pct=Math.round(((i+1)/invoices.length)*100);
+    bar.style.width=pct+'%';
+    text.textContent='Importing invoice '+(i+1)+' of '+invoices.length+'...';
+    if(i%10===0)await new Promise(function(r){setTimeout(r,0);}); // yield to UI
+  }
+
+  // Save everything
+  await saveOrders();
+  await saveCustomers();
+
+  // Log import
+  _diSalesImportHistory.unshift({
+    date:new Date().toISOString(),
+    file:_diSalesParsed.file,
+    dateRange:invoices.map(function(i){return i.date;}).filter(Boolean).sort().slice(0,1).concat(invoices.map(function(i){return i.date;}).filter(Boolean).sort().slice(-1)).join(' to '),
+    count:stats.imported,
+    by:currentEmployee?currentEmployee.name:'Admin',
+    stats:stats
+  });
+  await diSaveImportHistory();
+
+  text.textContent='Complete!';
+  toast(stats.imported+' invoices imported, '+stats.custCreated+' customers created, '+stats.serialsRecorded+' serials recorded'+(stats.skipped?', '+stats.skipped+' skipped':''),'success');
+  setTimeout(function(){diCancelSalesImport();renderOrders();},1500);
+}
+
+async function diShowImportHistory(){
+  await diLoadImportHistory();
+  if(!_diSalesImportHistory.length){alert('No imports yet.');return;}
+  var win=window.open('','_blank','width=720,height=600');
+  var html='<!DOCTYPE html><html><head><title>Sales Import History</title><style>body{font-family:Arial,sans-serif;padding:20px;font-size:12px;}h1{font-size:18px;margin-bottom:14px;}table{width:100%;border-collapse:collapse;}th{background:#222;color:#fff;padding:7px 10px;font-size:10px;text-align:left;}td{padding:7px 10px;border-bottom:1px solid #ddd;}</style></head><body>';
+  html+='<h1>Sales Import History</h1><table><thead><tr><th>Date</th><th>File</th><th>Date Range</th><th>Invoices</th><th>Imported By</th><th>Stats</th></tr></thead><tbody>';
+  _diSalesImportHistory.forEach(function(h){
+    var st=h.stats||{};
+    var statStr=(st.imported||0)+' imported, '+(st.custCreated||0)+' new cust, '+(st.custMatched||0)+' matched, '+(st.serialsRecorded||0)+' serials'+(st.skipped?', '+st.skipped+' skipped':'');
+    html+='<tr><td>'+new Date(h.date).toLocaleString()+'</td><td>'+h.file+'</td><td>'+(h.dateRange||'—')+'</td><td>'+h.count+'</td><td>'+h.by+'</td><td style="font-size:11px;color:#666;">'+statStr+'</td></tr>';
+  });
+  html+='</tbody></table></body></html>';
+  win.document.write(html);win.document.close();
 }
 
 // ═══ ACCOUNTS RECEIVABLE ═══
