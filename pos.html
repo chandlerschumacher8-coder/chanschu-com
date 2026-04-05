@@ -2021,6 +2021,33 @@ POS Settings
 // ══════════════════════════════════════════════
 const DC_APPLIANCE_LOGO = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAAAUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAByAQADASIAAhEBAxEB/8QAHQAAAQQDAQEAAAAAAAAAAAAAAAQFBgcCAwgBCf/EAFUQAAEDAwIDAgkJAwYIDgMAAAECAwQABREGEgchMRNBCBQWIlFWYZHRFVRxgZOUodLhMkKxFyMkUpLBNFdicoKFovAlJiczNkNERkdTY4aVlqOy0//EABoBAAMBAQEBAAAAAAAAAAAAAAABAwIEBQb/xAAwEQABAwIDBgUEAwEBAAAAAAABAAIDBBESITETQVFhodEFFHGR8BUiMoFCweHxsf/aAAwDAQACEQMRAD8A";
 // ══════════════════════════════════════════════
+// CLAUDE API HELPER — retry + timeout + friendly errors
+// ══════════════════════════════════════════════
+async function claudeApiCall(body){
+  var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
+  var lastError=null;
+  for(var attempt=0;attempt<MAX_RETRIES;attempt++){
+    try{
+      var ctrl=new AbortController();
+      var tid=setTimeout(function(){ctrl.abort();},TIMEOUT);
+      var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+      clearTimeout(tid);
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      var data=await res.json();
+      if(!data.ok)throw new Error(data.error||'API error');
+      return data;
+    }catch(e){
+      lastError=e;
+      if(e.name==='AbortError')lastError=new Error('Request timed out');
+      console.error('Claude API attempt '+(attempt+1)+' failed:',lastError.message);
+      if(attempt<MAX_RETRIES-1)await new Promise(function(r){setTimeout(r,RETRY_DELAY);});
+    }
+  }
+  var err=new Error('Connection issue — please try again');
+  err.ok=false;err.original=lastError;throw err;
+}
+
+// ══════════════════════════════════════════════
 // EMAILJS SETUP
 // ══════════════════════════════════════════════
 emailjs.init('8rsxIaKLiiRqq5Yo0');

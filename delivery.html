@@ -685,6 +685,30 @@
 </div>
 
 <script>
+// ═══ CLAUDE API HELPER ═══
+async function claudeApiCall(body){
+  var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
+  var lastError=null;
+  for(var attempt=0;attempt<MAX_RETRIES;attempt++){
+    try{
+      var ctrl=new AbortController();
+      var tid=setTimeout(function(){ctrl.abort();},TIMEOUT);
+      var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+      clearTimeout(tid);
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      var data=await res.json();
+      if(!data.ok)throw new Error(data.error||'API error');
+      return data;
+    }catch(e){
+      lastError=e;
+      if(e.name==='AbortError')lastError=new Error('Request timed out');
+      console.error('Claude API attempt '+(attempt+1)+' failed:',lastError.message);
+      if(attempt<MAX_RETRIES-1)await new Promise(function(r){setTimeout(r,RETRY_DELAY);});
+    }
+  }
+  var err=new Error('Connection issue — please try again');err.ok=false;err.original=lastError;throw err;
+}
+
 // ═══ COMPANY LOGO ═══
 const DC_APPLIANCE_LOGO = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAAAUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAByAQADASIAAhEBAxEB/8QAHQAAAQQDAQEAAAAAAAAAAAAAAAQFBgcCAwgBCf/EAFUQAAEDAwIDAgkJAwYIDgMAAAECAwQABREGEgchMRNBCBQWIlFWYZHRFVRxgZOUodLhMkKxFyMkUpLBNFdicoKFovAlJiczNkNERkdTY4aVlqOy0//EABoBAAMBAQEBAAAAAAAAAAAAAAABAwIEBQb/xAAwEQABAwIDBgUEAwEBAAAAAAABAAIDBBESITETQVFhodEFFHGR8BUiMoFCweHxsf/aAAwDAQACEQMRAD8A";
 
@@ -1565,8 +1589,7 @@ async function handleInvoiceFile(file){
   try{
     var b64=await toB64(file);
     var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"a":"Refrigerator","m":"Model123","invoice":"INV-001"}]}'}]}];
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,max_tokens:800})});
-    var data=await res.json();if(!data.ok)throw new Error(data.error);
+    var data=await claudeApiCall({messages:msgs,max_tokens:800});
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
     var cu=parsed.customer||{};
     if(cu.name)document.getElementById('f-name').value=cu.name;
@@ -1953,22 +1976,16 @@ async function bsProcessSerialPhoto(file,idx){
   statusEl.innerHTML='<div class="bs-ai-reading"><div class="bs-spinner"></div> Reading serial number...</div>';
   try{
     var b64=await toB64(file);
-    var res=await fetch('/api/ai-chat',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
-            {type:'text',text:'This is a photo of an appliance tag/label. Extract the model number and serial number. Return JSON only: {"model":"MODEL_HERE","serial":"SERIAL_HERE"}. If you cannot read either, use empty string. JSON only, no explanation.'}
-          ]
-        }],
-        max_tokens:200
-      })
+    var data=await claudeApiCall({
+      messages:[{
+        role:'user',
+        content:[
+          {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
+          {type:'text',text:'This is a photo of an appliance tag/label. Extract the model number and serial number. Return JSON only: {"model":"MODEL_HERE","serial":"SERIAL_HERE"}. If you cannot read either, use empty string. JSON only, no explanation.'}
+        ]
+      }],
+      max_tokens:200
     });
-    var data=await res.json();
-    if(!data.ok)throw new Error(data.error||'API error');
     var txt=data.content[0].text;
     var match=txt.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('No JSON');

@@ -167,9 +167,7 @@ async function lookupModel(){
     var prompt='Look up appliance model number "'+sku+'" from manufacturer sources (Whirlpool, Maytag, KitchenAid, Amana, LG, Samsung, GE Appliances, Frigidaire/Electrolux). '
       +'Return JSON only: {"brand":"Brand Name","description":"Full product description with key features","category":"Category","specs":{"dimensions":"","capacity":"","features":""},"specSheetUrl":"","found":true}. '
       +'If you cannot find reliable info, return {"found":false}. JSON only, no explanation.';
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],max_tokens:600})});
-    var data=await res.json();
-    if(!data.ok)throw new Error(data.error||'API error');
+    var data=await claudeApiCall({messages:[{role:'user',content:prompt}],max_tokens:600});
     var match=data.content[0].text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('No JSON found');
     var parsed=JSON.parse(match[0]);
@@ -933,7 +931,7 @@ function delHandleInvoiceDrop(e){e.preventDefault();document.getElementById('del
 async function delHandleInvoiceFile(file){
   if(!file)return;document.getElementById('del-idz-loading').style.display='block';
   try{var b64=await toB64(file);var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"a":"Refrigerator","m":"Model123","invoice":"INV-001"}]}'}]}];
-  var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,max_tokens:800})});var data=await res.json();if(!data.ok)throw new Error(data.error);
+  var data=await claudeApiCall({messages:msgs,max_tokens:800});
   var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);var cu=parsed.customer||{};
   if(cu.name)document.getElementById('del-f-name').value=cu.name;if(cu.phone)document.getElementById('del-f-phone').value=cu.phone;if(cu.email)document.getElementById('del-f-email').value=cu.email;if(cu.address)document.getElementById('del-f-address').value=cu.address;if(cu.city)document.getElementById('del-f-city').value=cu.city;
   var apps=parsed.appliances||[];if(apps.length>0){if(apps[0].invoice)document.getElementById('del-f-invoice').value=apps[0].invoice;delInitAppRows(apps);}
@@ -1284,7 +1282,7 @@ async function svcHandleInvoiceFile(file){
   if(!file)return;svcPendingInvoiceFile=file;var loading=document.getElementById('svc-idz-loading');if(loading)loading.style.display='block';
   try{var b64=await toB64(file);var isPdf=file.type==='application/pdf';
   var msgs=[{role:'user',content:[{type:isPdf?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract customer info and appliance from this invoice. JSON: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"appliance":"Washer","brand":"Samsung","model":"WF45R6100AW","serial":"ABC123","invoice":"INV-001"}]}'}]}];
-  var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,max_tokens:1000})});var data=await res.json();if(!data.ok)throw new Error(data.error);
+  var data=await claudeApiCall({messages:msgs,max_tokens:1000});
   var text=data.content[0].text;var match=text.match(/\{[\s\S]*\}/);if(!match)throw new Error('No data');var parsed=JSON.parse(match[0]);var cust=parsed.customer||{};
   if(cust.name)document.getElementById('svc-f-name').value=cust.name;if(cust.phone)document.getElementById('svc-f-phone').value=cust.phone;if(cust.email)document.getElementById('svc-f-email').value=cust.email;if(cust.address)document.getElementById('svc-f-address').value=cust.address;if(cust.city)document.getElementById('svc-f-city').value=cust.city;
   var apps=parsed.appliances||[];if(apps.length>0){var a=apps[0];if(a.appliance){var sel=document.getElementById('svc-f-appliance');for(var i=0;i<sel.options.length;i++){if(sel.options[i].value&&a.appliance.toLowerCase().includes(sel.options[i].value.toLowerCase().split('/')[0].trim())){sel.selectedIndex=i;break;}}}if(a.brand)document.getElementById('svc-f-brand').value=a.brand;if(a.model)document.getElementById('svc-f-model').value=a.model;if(a.serial)document.getElementById('svc-f-serial').value=a.serial;if(a.invoice)document.getElementById('svc-f-invoice').value=a.invoice;}
@@ -1471,8 +1469,7 @@ async function recvHandleSlip(file){
     var b64=await toB64(file);
     var itemList=selectedPO.items.map(function(it){return (it.model||'')+': '+it.name+' (ordered: '+it.qtyOrdered+')';}).join(', ');
     var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract received quantities from this packing slip/invoice. Match to these PO items: '+itemList+'. Return JSON only: {"received":[{"model":"MODEL#","qty":NUMBER}]}'}]}];
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,max_tokens:600})});
-    var data=await res.json();if(!data.ok)throw new Error(data.error);
+    var data=await claudeApiCall({messages:msgs,max_tokens:600});
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
     if(parsed.received){
       parsed.received.forEach(function(r){

@@ -232,9 +232,7 @@ async function rptAiGenerate(){
   ];
 
   try{
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,messages:msgs,max_tokens:4000})});
-    var data=await res.json();
-    if(!data.ok)throw new Error(data.error||'API error');
+    var data=await claudeApiCall({system:sys,messages:msgs,max_tokens:4000});
     var text=(data.content&&data.content[0]&&data.content[0].text)||'';
     // Extract JSON from response
     var jsonMatch=text.match(/\{[\s\S]*\}/);

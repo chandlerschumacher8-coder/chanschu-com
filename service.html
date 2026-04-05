@@ -720,6 +720,30 @@
 
 <script>
 var currentUser=null,companies=[],jobs=[],nextId=1,techList=['Unassigned'],editUsers=[],editCompanyId=null,FILTER='all',chatHistory=[],pendingInvoiceFile=null;
+
+// ─── CLAUDE API HELPER ───
+async function claudeApiCall(body){
+  var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
+  var lastError=null;
+  for(var attempt=0;attempt<MAX_RETRIES;attempt++){
+    try{
+      var ctrl=new AbortController();
+      var tid=setTimeout(function(){ctrl.abort();},TIMEOUT);
+      var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+      clearTimeout(tid);
+      if(!res.ok)throw new Error('HTTP '+res.status);
+      var data=await res.json();
+      if(!data.ok)throw new Error(data.error||'API error');
+      return data;
+    }catch(e){
+      lastError=e;
+      if(e.name==='AbortError')lastError=new Error('Request timed out');
+      console.error('Claude API attempt '+(attempt+1)+' failed:',lastError.message);
+      if(attempt<MAX_RETRIES-1)await new Promise(function(r){setTimeout(r,RETRY_DELAY);});
+    }
+  }
+  var err=new Error('Connection issue — please try again');err.ok=false;err.original=lastError;throw err;
+}
 var _isMobile=window.matchMedia('(max-width:767px)').matches;
 window.matchMedia('(max-width:767px)').addEventListener('change',function(e){_isMobile=e.matches;});
 
@@ -1235,8 +1259,7 @@ async function handleInvoiceFile(file){
   try{
     var b64=await toB64(file);var isPdf=file.type==='application/pdf';
     var messages=[{role:'user',content:[{type:isPdf?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'This is a sales invoice. Extract ALL appliances listed and customer info. Respond ONLY in JSON: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"appliance":"Washer","brand":"Samsung","model":"WF45R6100AW","serial":"ABC123","invoice":"INV-001"}]}'}]}];
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:messages,max_tokens:1000})});
-    var data=await res.json();if(!data.ok)throw new Error(data.error);
+    var data=await claudeApiCall({messages:messages,max_tokens:1000});
     var text=data.content[0].text;var match=text.match(/\{[\s\S]*\}/);if(!match)throw new Error('No data found');
     var parsed=JSON.parse(match[0]);
     var cust=parsed.customer||{};
@@ -1282,8 +1305,7 @@ async function sendChat(){
   var techs=techList.filter(function(t){return t!=='Unassigned';}).join(', ')||'Unassigned';
   var sys='You are a service scheduling assistant. Today is '+new Date().toLocaleDateString('en-US',{weekday:"long",month:"long",day:"numeric",year:"numeric"})+'. Today='+today+', Tomorrow='+tomorrow+'. Available techs: '+techs+'. When you have enough info respond with ONLY this JSON: {"action":"create_job","name":"","phone":"","email":"","address":"","city":"","appliance":"","brand":"","model":"","serial":"","issue":"","date":"'+today+'","time":"Morning (8am-12pm)","tech":"Unassigned","priority":"Medium","notes":""}. Valid times: "Morning (8am-12pm)","Afternoon (12pm-5pm)","All Day","Call Ahead". Ask if info is missing.';
   try{
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,messages:chatHistory,max_tokens:600})});
-    var data=await res.json();if(!data.ok)throw new Error(data.error||'API error');
+    var data=await claudeApiCall({system:sys,messages:chatHistory,max_tokens:600});
     var reply=data.content[0].text||'Sorry, I had trouble. Try again.';
     chatHistory.push({role:'assistant',content:reply});typing.remove();
     var jm=reply.match(/\{[\s\S]*"action"\s*:\s*"create_job"[\s\S]*\}/);

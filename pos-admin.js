@@ -17,8 +17,8 @@ async function aiSend(){
   inp.value='';btn.disabled=true;aiAddMsg('user',text);aiHistory.push({role:'user',content:text});
   var typing=aiAddMsg('ai','<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
   var sys='You are an AI assistant for DC Appliance, an appliance retail store. Current tab: '+currentTab+'. You help with pricing, quotes, inventory management, service scheduling, delivery logistics, and general business questions. Be concise and helpful. Today is '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'.';
-  try{var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,messages:aiHistory,max_tokens:600})});var data=await res.json();if(!data.ok)throw new Error(data.error||'API error');var reply=data.content[0].text||'Sorry, try again.';aiHistory.push({role:'assistant',content:reply});typing.remove();aiAddMsg('ai',reply);}
-  catch(e){typing.remove();aiAddMsg('ai','Connection error: '+e.message);}btn.disabled=false;inp.focus();
+  try{var data=await claudeApiCall({system:sys,messages:aiHistory,max_tokens:600});var reply=data.content[0].text||'Sorry, try again.';aiHistory.push({role:'assistant',content:reply});typing.remove();aiAddMsg('ai',reply);}
+  catch(e){typing.remove();aiAddMsg('ai',e.message||'Connection issue — please try again');}btn.disabled=false;inp.focus();
 }
 
 // ══════════════════════════════════════════════
@@ -826,9 +826,7 @@ async function recvHandleFile(file){
     var contentType=file.type==='application/pdf'?'document':'image';
     if(file.name.match(/\.(csv|xlsx|xls)$/i))contentType='document';
     var msgs=[{role:'user',content:[{type:contentType,source:{type:'base64',media_type:file.type||'application/octet-stream',data:b64}},{type:'text',text:'Extract all items from this vendor invoice/packing list. Return JSON only: {"vendor":"Vendor Name","items":[{"model":"MODEL#","description":"Product Name","qty":1,"cost":0,"serials":["SN1","SN2"]}]}. Include ALL serial numbers found. JSON only, no explanation.'}]}];
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,max_tokens:2000})});
-    var data=await res.json();
-    if(!data.ok)throw new Error(data.error||'AI error');
+    var data=await claudeApiCall({messages:msgs,max_tokens:2000});
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
     recvShowPreview(parsed);
   }catch(e){toast('Could not read invoice: '+e.message,'error');console.error(e);}
@@ -1540,8 +1538,7 @@ async function puHandleFile(file){
   try{
     var b64=await toB64(file);var isPdf=file.type==='application/pdf';
     var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:file.type||'text/csv',data:b64}},{type:'text',text:'This is a pricing spreadsheet from an appliance buying group. Extract model numbers and new sell prices. Return JSON array only: [{"model":"MODEL#","description":"Item Name","newPrice":999.99}]. Include ALL rows. JSON only, no explanation.'}]}];
-    var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:msgs,max_tokens:4000})});
-    var data=await res.json();if(!data.ok)throw new Error(data.error);
+    var data=await claudeApiCall({messages:msgs,max_tokens:4000});
     var text=data.content[0].text;var match=text.match(/\[[\s\S]*\]/);if(!match)throw new Error('Could not parse pricing data');
     var parsed=JSON.parse(match[0]);
     puPendingChanges=[];var up=0,down=0,same=0;
