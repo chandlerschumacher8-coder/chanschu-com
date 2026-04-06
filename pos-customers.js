@@ -198,6 +198,7 @@ function renderCpTabs(){
     {k:'ledger',lbl:'LEDGER'},
     {k:'quotes',lbl:'QUOTES'},
     {k:'history',lbl:'HISTORY'},
+    {k:'appliances',lbl:'APPLIANCES'},
     {k:'service',lbl:'SERVICE'},
     {k:'contacts',lbl:'CONTACTS'},
     {k:'demographics',lbl:'DEMOGRAPHICS'}
@@ -244,6 +245,7 @@ function renderCpRight(){
   if(_cpTab==='ledger')el.innerHTML=renderCpLedger(c);
   else if(_cpTab==='quotes')el.innerHTML=renderCpQuotes(c);
   else if(_cpTab==='history')el.innerHTML=renderCpHistory(c);
+  else if(_cpTab==='appliances')el.innerHTML=renderCpAppliances(c);
   else if(_cpTab==='service')el.innerHTML=renderCpService(c);
   else if(_cpTab==='contacts')el.innerHTML=renderCpContacts(c);
   else if(_cpTab==='demographics')el.innerHTML=renderCpDemographics(c);
@@ -313,10 +315,50 @@ function renderCpHistory(c){
   if(!custOrders.length)return h+'<div style="text-align:center;padding:30px;color:#9ca3af;">No purchase history</div>';
   h+='<div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;"><table class="admin-table" style="font-size:11px;margin:0;"><thead><tr><th>Invoice</th><th>Date</th><th>Items</th><th>Clerk</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
   custOrders.forEach(function(o){
-    var items=(o.items||[]).map(function(i){return i.name;}).join(', ');if(items.length>60)items=items.slice(0,57)+'...';
+    var items=(o.items||[]).map(function(i){return i.name+(i.serial?' <span style="color:#22c55e;font-weight:600;">(SN:'+i.serial+')</span>':'');}).join(', ');
     h+='<tr><td><a href="#" style="color:#2563eb;font-weight:600;" onclick="event.preventDefault();printInvoice(\''+o.id+'\')">'+o.id+'</a></td><td>'+o.date.slice(0,10)+'</td><td style="font-size:10px;">'+items+'</td><td>'+(o.clerk||'—')+'</td><td style="text-align:right;font-weight:600;">'+fmt(o.total)+'</td></tr>';
   });
   h+='</tbody></table></div>';return h;
+}
+
+function renderCpAppliances(c){
+  // Combine: applianceHistory from customer record + serials from order items
+  var appliances=[];
+  // From customer's applianceHistory (set by delivery sync)
+  (c.applianceHistory||[]).forEach(function(a){
+    appliances.push({appliance:a.appliance,model:a.model,serial:a.serial,deliveredAt:a.deliveredAt,invoice:a.invoice,source:'delivery'});
+  });
+  // From order items with serials
+  var custOrders=orders.filter(function(o){return o.customer===c.name&&o.status!=='Quote';});
+  custOrders.forEach(function(o){
+    (o.items||[]).forEach(function(i){
+      if(!i.serial)return;
+      // Avoid duplicates already in applianceHistory
+      var dup=appliances.find(function(a){return a.serial===i.serial;});
+      if(!dup){
+        appliances.push({appliance:i.name,model:i.model||'',serial:i.serial,deliveredAt:i.deliveredAt||o.date,invoice:o.id,source:'order'});
+      }
+    });
+  });
+  if(!appliances.length)return '<div style="text-align:center;padding:40px;color:#9ca3af;">No appliances with serial numbers recorded yet.</div>';
+  // Sort by date descending
+  appliances.sort(function(a,b){return new Date(b.deliveredAt||0)-new Date(a.deliveredAt||0);});
+  var h='<div style="font-size:12px;color:#6b7280;margin-bottom:12px;">'+appliances.length+' appliance'+(appliances.length!==1?'s':'')+' on file</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:8px;">';
+  appliances.forEach(function(a){
+    var dateStr=a.deliveredAt?new Date(a.deliveredAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+    h+='<div style="padding:12px;border:1px solid #e5e7eb;border-radius:8px;border-left:3px solid #22c55e;">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;">';
+    h+='<div style="font-size:13px;font-weight:700;color:#1f2937;">'+a.appliance+'</div>';
+    h+='<div style="font-size:10px;color:#6b7280;">'+dateStr+'</div>';
+    h+='</div>';
+    if(a.model)h+='<div style="font-size:11px;color:#6b7280;margin-top:2px;">Model: '+a.model+'</div>';
+    h+='<div style="font-size:12px;color:#22c55e;font-weight:600;margin-top:4px;">Serial: '+a.serial+'</div>';
+    if(a.invoice)h+='<div style="font-size:10px;color:#6b7280;margin-top:2px;">Invoice: '+a.invoice+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  return h;
 }
 
 function renderCpService(c){
@@ -618,8 +660,7 @@ async function custSendInvoiceEmail(idx){
   var idx2=parseInt(pick)-1;if(isNaN(idx2)||idx2<0||idx2>=custOrders.length)return;
   var order=custOrders[idx2];
   toast('Sending invoice...','info');
-  var html=buildInvoiceEmailHtml(order);
-  var res=await sendDcEmail(c.email,c.name,'Invoice '+order.id+' — DC Appliance',html);
+  var res=await sendInvoiceEmail(order,c.email);
   if(res.ok){
     if(!order.emailLog)order.emailLog=[];
     order.emailLog.push({ts:new Date().toISOString(),to:c.email,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});

@@ -2323,6 +2323,36 @@ emailjs.init('8rsxIaKLiiRqq5Yo0');
 var EMAILJS_SERVICE='service_gx9g5vj';
 var EMAILJS_TEMPLATE='template_0eo26t5';
 
+function buildInvoiceEmailParams(order,toEmail){
+  var dateStr=new Date(order.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  var lineItems=order.items.map(function(it){
+    var lt=it.price*it.qty;
+    return (it.name||'')+(it.model?' ('+it.model+')':'')+' x'+it.qty+' — $'+lt.toFixed(2);
+  }).join('\n');
+  var paidAmt=0;
+  if(order.payments&&order.payments.length){
+    order.payments.forEach(function(p){paidAmt+=p.amount||0;});
+  }
+  var paymentStatus=(paidAmt>=order.total)?'PAID':'Balance Due: $'+(order.total-paidAmt).toFixed(2);
+  if(order.payment&&order.payment.toLowerCase().indexOf('paid')>=0)paymentStatus='PAID';
+  var delDate=order.deliveryDate?new Date(order.deliveryDate+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}):'Not yet scheduled';
+  return{
+    to_email:toEmail,
+    customer_name:order.soldTo?order.soldTo.name:order.customer||'Customer',
+    invoice_number:order.id||'',
+    invoice_date:dateStr,
+    salesperson:order.clerk||'',
+    line_items:lineItems,
+    subtotal:'$'+order.subtotal.toFixed(2),
+    sales_tax:'$'+order.tax.toFixed(2),
+    total:'$'+order.total.toFixed(2),
+    payment_status:paymentStatus,
+    delivery_date:delDate,
+    store_phone:'620-371-6417',
+    store_address:'2610 Central Ave, Dodge City, KS 67801'
+  };
+}
+
 async function sendDcEmail(toEmail,toName,subject,htmlBody,refNumber){
   // Extract invoice/ref number from subject if not explicitly passed (e.g. "Invoice ORD-1005 — DC Appliance")
   if(!refNumber&&subject){
@@ -2347,6 +2377,24 @@ async function sendDcEmail(toEmail,toName,subject,htmlBody,refNumber){
   }catch(e){
     console.error('[EmailJS] Send failed:',e);
     // Extract specific error message
+    var errMsg='Unknown error';
+    if(typeof e==='string')errMsg=e;
+    else if(e&&e.text)errMsg=e.text;
+    else if(e&&e.message)errMsg=e.message;
+    else if(e&&e.status)errMsg='HTTP '+e.status+(e.text?': '+e.text:'');
+    return{ok:false,error:errMsg};
+  }
+}
+
+async function sendInvoiceEmail(order,toEmail){
+  var params=buildInvoiceEmailParams(order,toEmail);
+  console.log('[EmailJS] Sending invoice to',toEmail,'template',EMAILJS_TEMPLATE);
+  try{
+    var res=await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,params);
+    console.log('[EmailJS] Success:',res);
+    return{ok:true,status:res.status};
+  }catch(e){
+    console.error('[EmailJS] Send failed:',e);
     var errMsg='Unknown error';
     if(typeof e==='string')errMsg=e;
     else if(e&&e.text)errMsg=e.text;
@@ -5921,7 +5969,7 @@ function startReturn(){
 function showCheckoutBar(orderId){
   var existing=document.querySelector('.checkout-bar');if(existing)existing.remove();
   var bar=document.createElement('div');bar.className='checkout-bar';bar.id='checkout-bar';
-  bar.innerHTML='<span class="checkout-bar-msg">Order '+orderId+' placed!</span><button class="checkout-bar-btn" style="background:#7c3aed;color:#fff;" onclick="promptEmailReceipt(\''+orderId+'\')">&#x2709; Email Receipt</button><button class="checkout-bar-btn checkout-bar-delivery" onclick="scheduleDeliveryFromSale()">Schedule Delivery</button><button class="checkout-bar-btn checkout-bar-dismiss" onclick="this.parentElement.remove()">Dismiss</button>';
+  bar.innerHTML='<span class="checkout-bar-msg">Order '+orderId+' placed!</span><button class="checkout-bar-btn" style="background:#7c3aed;color:#fff;" onclick="promptEmailReceipt(\''+orderId+'\')">&#x2709; Email Receipt</button><button class="checkout-bar-btn" style="background:#5b21b6;color:#fff;" onclick="emailInvoicePdf(\''+orderId+'\')">&#x1F4CE; Email Full Invoice (PDF)</button><button class="checkout-bar-btn checkout-bar-delivery" onclick="scheduleDeliveryFromSale()">Schedule Delivery</button><button class="checkout-bar-btn checkout-bar-dismiss" onclick="this.parentElement.remove()">Dismiss</button>';
   document.body.appendChild(bar);
   setTimeout(function(){var b=document.getElementById('checkout-bar');if(b)b.remove();},15000);
 }
@@ -5940,9 +5988,8 @@ async function promptEmailReceipt(orderId){
   }else{
     if(!confirm('Send receipt to '+custEmail+'?'))return;
   }
-  var html=buildInvoiceEmailHtml(order);
   toast('Sending receipt...','info');
-  var res=await sendDcEmail(custEmail,order.customer,'Invoice '+order.id+' — DC Appliance',html,order.id);
+  var res=await sendInvoiceEmail(order,custEmail);
   if(res.ok){
     if(!order.emailLog)order.emailLog=[];
     order.emailLog.push({ts:new Date().toISOString(),to:custEmail,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});

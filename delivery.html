@@ -960,7 +960,7 @@ async function saveData(){
 var _delPollTimer=null,_lastDelHash='';
 function startPolling(){
   if(_delPollTimer)clearInterval(_delPollTimer);
-  _delPollTimer=setInterval(pollDeliveries,15000);
+  _delPollTimer=setInterval(pollDeliveries,5000);
 }
 function stopPolling(){if(_delPollTimer){clearInterval(_delPollTimer);_delPollTimer=null;}}
 async function pollDeliveries(){
@@ -971,6 +971,7 @@ async function pollDeliveries(){
     var hash=JSON.stringify({d:data.deliveries,n:data.notes});
     if(hash===_lastDelHash)return;
     _lastDelHash=hash;
+    console.log('[Delivery Sync] Data changed — refreshing calendar');
     deliveries=data.deliveries||[];nextDelId=data.nextId||1;
     notes=Array.isArray(data.notes)?data.notes:[];nextNoteId=data.nextNoteId||1;
     renderEvents();
@@ -1091,7 +1092,8 @@ function renderEvents(){
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;';
         ev.setAttribute('data-id',d.id);
         var warn=hasFlag(d);
-        ev.innerHTML=(warn?'<div class="ev-warn">&#x26A0;</div>':'')+
+        var snPending=hasPendingSerials(d);
+        ev.innerHTML=(warn?'<div class="ev-warn">&#x26A0;</div>':'')+(snPending?'<div class="ev-warn" style="right:'+(warn?'18':'2')+'px;color:#d97706;" title="Serial numbers pending">&#x26A0;</div>':'')+
           '<div class="ev-name">'+d.name+'</div>'+
           (height>28?'<div class="ev-sub">'+apps+(d.city?' · '+d.city:'')+'</div>':'')+
           (height>46?'<div class="ev-time-lbl">'+d.time+(dur?' – '+endTime:'')+'</div>':'')+
@@ -1365,6 +1367,15 @@ function hasFlag(d){
   if(!d.log||!d.log.length)return false;
   return d.log.some(function(e){return FLAG_WORDS.test(e.text);});
 }
+function hasPendingSerials(d){
+  if(d.status==='Delivered')return false;
+  var apps=d.appliances||[];if(!apps.length)return false;
+  var majorAppliances=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Freezer','Ice Maker'];
+  return apps.some(function(a){
+    var tracked=a.tracked!==false&&(a.tracked===true||majorAppliances.indexOf(a.a)>=0);
+    return tracked&&!a.serial;
+  });
+}
 
 function renderLogHtml(d,isMobile){
   var entries=d.log||[];
@@ -1567,7 +1578,9 @@ async function confirmSerialsAndDeliver(id){
     }
   });
   d.status='Delivered';d.deliveredAt=new Date().toISOString();
-  await saveData();closeModal('detail-modal');renderEvents();
+  await saveData();
+  await syncSerialsToOrder(d);
+  closeModal('detail-modal');renderEvents();
 }
 
 async function markDeliveredAnyway(id){
@@ -2114,6 +2127,95 @@ async function bsUploadPhotoFiles(files){
   }
 }
 
+// ── SYNC SERIALS TO ORDER & CUSTOMER ──
+async function syncSerialsToOrder(d){
+  var apps=d.appliances||[];
+  var serialsToSync=apps.filter(function(a){return a.serial;});
+  if(!serialsToSync.length)return;
+
+  serialsToSync.forEach(function(a){
+    console.log('[Serial Save] Delivery '+d.id+': '+a.a+(a.m?' '+a.m:'')+' → Serial: '+a.serial);
+  });
+
+  // Load current orders from backend
+  try{
+    var r=await fetch('/api/admin-get?key=orders');var data=await r.json();
+    if(!data||!data.data)return;
+    var allOrders=data.data.orders||[];
+    var changed=false;
+
+    // Find matching order by invoice number
+    var inv=d.invoice||'';
+    var order=inv?allOrders.find(function(o){return o.id===inv;}):null;
+
+    // Fallback: match by customer name
+    if(!order){
+      order=allOrders.find(function(o){
+        return o.customer===d.name&&o.status!=='Quote'&&o.status!=='Delivered';
+      });
+    }
+
+    if(order){
+      serialsToSync.forEach(function(a){
+        // Match by model number
+        var item=order.items.find(function(i){
+          return i.model&&a.m&&i.model.toLowerCase()===a.m.toLowerCase()&&!i.serial;
+        });
+        // Fallback: match by appliance name
+        if(!item){
+          item=order.items.find(function(i){
+            return i.name&&a.a&&i.name.toLowerCase().indexOf(a.a.toLowerCase())>=0&&!i.serial;
+          });
+        }
+        if(item){
+          item.serial=a.serial;
+          item.delivered=true;
+          item.deliveredAt=d.deliveredAt||new Date().toISOString();
+          item.deliveredBy='Delivery';
+          changed=true;
+          console.log('[Serial Sync] Order '+order.id+' item "'+item.name+'" → Serial: '+a.serial);
+        }
+      });
+      // Update order status
+      if(order.items.every(function(i){return !!i.delivered;}))order.status='Delivered';
+      else if(order.items.some(function(i){return !!i.delivered;}))order.status='Partial';
+    }
+
+    if(changed){
+      await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:allOrders,nextOrderId:data.data.nextOrderId,nextQuoteId:data.data.nextQuoteId}})});
+      console.log('[Serial Sync] Orders saved to backend');
+    }
+  }catch(e){console.error('[Serial Sync] Failed to sync to orders:',e);}
+
+  // Sync to customer profile — add appliance history
+  try{
+    var cr=await fetch('/api/admin-get?key=customers');var cdata=await cr.json();
+    if(!cdata||!cdata.data||!Array.isArray(cdata.data))return;
+    var allCustomers=cdata.data;
+    var cust=allCustomers.find(function(c){return c.name===d.name;});
+    if(cust){
+      if(!cust.applianceHistory)cust.applianceHistory=[];
+      serialsToSync.forEach(function(a){
+        // Avoid duplicates
+        var exists=cust.applianceHistory.find(function(h){return h.serial===a.serial;});
+        if(!exists){
+          cust.applianceHistory.push({
+            appliance:a.a,
+            model:a.m||'',
+            serial:a.serial,
+            deliveredAt:d.deliveredAt||new Date().toISOString(),
+            invoice:d.invoice||'',
+            deliveryId:d.id
+          });
+          console.log('[Serial Sync] Customer "'+cust.name+'" appliance history: '+a.a+' → '+a.serial);
+        }
+      });
+      await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'customers',data:allCustomers})});
+      console.log('[Serial Sync] Customer profile saved');
+    }
+  }catch(e){console.error('[Serial Sync] Failed to sync to customer:',e);}
+}
+
 // ── CONFIRM DELIVERY ──
 async function bsheetConfirmDelivery(){
   if(!_bsDeliveryId)return;
@@ -2139,6 +2241,10 @@ async function bsheetConfirmDelivery(){
   btn.disabled=true;btn.textContent='Saving...';
 
   await saveData();
+
+  // Sync serials to order and customer records
+  await syncSerialsToOrder(d);
+
   closeBSheet();
 
   // Success animation

@@ -470,7 +470,7 @@ function renderOrderDetail(){
   } else {
     actionsHtml='<div class="ood-actions">';
     if(!allDelivered)actionsHtml+='<button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;font-weight:700;" onclick="confirmItemDelivery(\''+o.id+'\')">&#x2713; Confirm Delivery</button>';
-    actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#93c5fd;color:#2563eb;" onclick="editOrder(\''+o.id+'\')">Edit</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;" onclick="orderRecordPayment(\''+o.id+'\')">Record Payment</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Invoice</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper Copy</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;" onclick="printBothDocuments(\''+o.id+'\')">Print Both</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
+    actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#93c5fd;color:#2563eb;" onclick="editOrder(\''+o.id+'\')">Edit</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;" onclick="orderRecordPayment(\''+o.id+'\')">Record Payment</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Invoice</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailInvoicePdf(\''+o.id+'\')">&#x1F4CE; Email Full Invoice (PDF)</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper Copy</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;" onclick="printBothDocuments(\''+o.id+'\')">Print Both</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   }
   el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+'</div><div class="ood-meta"><a href="#" style="color:var(--blue);text-decoration:none;font-weight:600;" onclick="event.preventDefault();openCustomerProfile(\''+o.customer.replace(/'/g,"\\'")+'\')">'+o.customer+'</a> &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
@@ -491,8 +491,7 @@ async function emailOrderReceipt(id){
     if(!custEmail||!custEmail.includes('@'))return;
   }else{if(!confirm('Send receipt to '+custEmail+'?'))return;}
   toast('Sending receipt...','info');
-  var html=buildInvoiceEmailHtml(o);
-  var res=await sendDcEmail(custEmail,o.customer,'Invoice '+o.id+' — DC Appliance',html,o.id);
+  var res=await sendInvoiceEmail(o,custEmail);
   if(res.ok){
     if(!o.emailLog)o.emailLog=[];
     o.emailLog.push({ts:new Date().toISOString(),to:custEmail,type:'invoice_receipt',by:currentEmployee?currentEmployee.name:'Admin'});
@@ -804,6 +803,13 @@ function buildShipperCopyDoc(o){
 
 function printInvoice(id){
   var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  var win=window.open('','_blank');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildCustomerInvoiceDoc(o)+'</body></html>';
+  win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
+}
+function emailInvoicePdf(id){
+  var o=orders.find(function(x){return x.id===id;});if(!o)return;
+  toast('Use Print dialog to Save as PDF, then attach to email manually.','info');
   var win=window.open('','_blank');
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Invoice '+o.id+'</title>'+invoiceDocStyles()+'</head><body>'+buildCustomerInvoiceDoc(o)+'</body></html>';
   win.document.write(html);win.document.close();setTimeout(function(){win.print();},400);
@@ -2479,3 +2485,34 @@ function taxImportCancel(){
   document.getElementById('tax-import-preview').style.display='none';
   document.getElementById('tax-import-input').value='';
 }
+
+// ══════════════════════════════════════════════
+// ORDER POLLING — real-time sync for serial updates from delivery
+// ══════════════════════════════════════════════
+var _orderPollTimer=null,_lastOrderHash='';
+function startOrderPolling(){
+  if(_orderPollTimer)clearInterval(_orderPollTimer);
+  _lastOrderHash=JSON.stringify(orders.map(function(o){return{id:o.id,s:o.status,items:o.items.map(function(i){return{sn:i.serial||'',d:!!i.delivered};})}}));
+  _orderPollTimer=setInterval(pollOrders,10000);
+}
+async function pollOrders(){
+  try{
+    var r=await fetch('/api/admin-get?key=orders&t='+Date.now());var d=await r.json();
+    if(!d||!d.data)return;
+    var fresh=d.data.orders||[];
+    var hash=JSON.stringify(fresh.map(function(o){return{id:o.id,s:o.status,items:(o.items||[]).map(function(i){return{sn:i.serial||'',d:!!i.delivered};})}}));
+    if(hash===_lastOrderHash)return;
+    _lastOrderHash=hash;
+    console.log('[Order Sync] Data changed — refreshing orders (serial/delivery update detected)');
+    orders=fresh;
+    if(d.data.nextOrderId)nextOrderId=d.data.nextOrderId;
+    if(d.data.nextQuoteId)nextQuoteId=d.data.nextQuoteId;
+    renderOrders();
+    if(selectedOrder){
+      var updated=orders.find(function(o){return o.id===selectedOrder.id;});
+      if(updated){selectedOrder=updated;renderOrderDetail();}
+    }
+  }catch(e){}
+}
+// Auto-start polling when page loads
+setTimeout(startOrderPolling,3000);
