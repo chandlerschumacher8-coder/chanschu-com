@@ -598,8 +598,7 @@ function getStoreLogoPath(){
   var s=(typeof currentStore!=='undefined'?currentStore:null);
   return (s&&s.logo_url)||'/images/logos/dc-appliance-logo-transparent.png';
 }
-var INVOICE_LOGO_PATH='/images/logos/dc-appliance-logo-transparent.png';
-Object.defineProperty(window,'INVOICE_LOGO_PATH',{get:function(){return getStoreLogoPath();}});
+try{Object.defineProperty(window,'INVOICE_LOGO_PATH',{get:function(){return getStoreLogoPath();},configurable:true});}catch(e){window.INVOICE_LOGO_PATH=getStoreLogoPath();}
 function invoiceDocStyles(){
   return '<style>*{box-sizing:border-box;margin:0;padding:0;}'
     +'body{font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#000;background:#fff;}'
@@ -998,10 +997,10 @@ function truckFlyTo(idx){
 function truckMapShowDeliveryStops(){
   if(!_truckMap)return;
   // Clear old delivery markers
-  _deliveryMarkers.forEach(function(m){_truckMap.removeLayer(m);});
+  if(_deliveryMarkers&&_deliveryMarkers.length){_deliveryMarkers.forEach(function(m){try{_truckMap.removeLayer(m);}catch(e){}});}
   _deliveryMarkers=[];
   // Get today's deliveries
-  var today=new Date().toISOString().slice(0,10);
+  var today=ds(new Date());
   var allDels=(typeof delDeliveries!=='undefined'&&delDeliveries.length)?delDeliveries:(typeof deliveries!=='undefined'?deliveries:[]);
   var todayDels=allDels.filter(function(d){return d.date===today&&d.status!=='Delivered';});
   if(!todayDels.length)return;
@@ -1109,7 +1108,7 @@ function delRenderEvents(){
     var col=document.getElementById('del-col-'+dayStr);if(!col){console.warn('[POS Delivery] Missing column for',dayStr);return;}
     var dayDels=delDeliveries.filter(function(d){
       if(d.date!==dayStr)return false;
-      if(DEL_TEAM==='attention')return d.log&&d.log.some(function(e){return DEL_FLAG_WORDS.test(e.text);});
+      if(DEL_TEAM==='attention')return d.log&&Array.isArray(d.log)&&d.log.some(function(e){return e&&e.text&&typeof DEL_FLAG_WORDS!=='undefined'&&DEL_FLAG_WORDS.test(e.text);});
       return DEL_TEAM==='all'||d.team===DEL_TEAM;
     });
     if(!dayDels.length)return;
@@ -1134,7 +1133,7 @@ function delRenderEvents(){
         ev.className='del-event '+sc+(d.status==='Delivered'?' del-ev-delivered':'');
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;';
         ev.setAttribute('data-id',d.id);
-        var _warn=d.log&&d.log.some(function(e){return DEL_FLAG_WORDS.test(e.text);});
+        var _warn=d.log&&Array.isArray(d.log)&&d.log.some(function(e){return e&&e.text&&typeof DEL_FLAG_WORDS!=='undefined'&&DEL_FLAG_WORDS.test(e.text);});
         ev.innerHTML=(_warn?'<div style="position:absolute;top:2px;right:4px;font-size:11px;z-index:5;">&#x26A0;</div>':'')+
           '<div class="del-ev-name">'+d.name+'</div>'+(height>28?'<div class="del-ev-sub">'+apps+(d.city?' &middot; '+d.city:'')+'</div>':'')+(height>46?'<div class="del-ev-time">'+d.time+(dur?' - '+endTime:'')+'</div>':'')+'<div class="del-resize-handle" data-resize="true"></div>';
         ev.onclick=(function(id){return function(e){e.stopPropagation();delOpenDetail(id);};})(d.id);
