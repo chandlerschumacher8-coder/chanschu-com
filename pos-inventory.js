@@ -900,49 +900,60 @@ function truckMapInit(){
   _truckTimer=setInterval(truckMapLoad,60000);
 }
 
+var _truckMockData=[
+  {name:'Truck 1 - DC Appliance',driver:'Jeff',lat:37.753,lng:-100.017,speed:0,heading:0,lastUpdated:null},
+  {name:'Truck 2 - DC Appliance',driver:'Justin',lat:37.748,lng:-100.005,speed:0,heading:0,lastUpdated:null},
+  {name:'Truck 3 - DC Appliance',driver:'',lat:37.745,lng:-99.998,speed:0,heading:0,lastUpdated:null}
+];
 async function truckMapLoad(){
   var badge=document.getElementById('truck-map-status');
+  var data=null;
   try{
-    var res=await fetch('/api/trucks?_t='+Date.now(),{cache:'no-store'});var data=await res.json();
-    if(!data.ok)throw new Error(data.error||'API error');
-    // Clear old markers
-    _truckMarkers.forEach(function(m){_truckMap.removeLayer(m);});
-    _truckMarkers=[];
-    var trucks=data.trucks||[];
-    _truckUpdateParkState(trucks);
-    var bounds=[];
-    trucks.forEach(function(t){
-      var st=_truckGetStatus(t);
-      var icon=L.divIcon({
-        className:'',
-        html:'<div style="background:#1a2332;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid '+(st.moving?'#60a5fa':st.color)+';font-family:\'Plus Jakarta Sans\',sans-serif;">'+
-          '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+st.color+';margin-right:4px;"></span>'+
-          (t.name||'Truck')+' <span style="font-weight:400;opacity:0.7;font-size:9px;">\u00B7 '+st.label+'</span></div>',
-        iconSize:[null,null],
-        iconAnchor:[12,12]
-      });
-      var popup='<div style="font-family:\'Plus Jakarta Sans\',sans-serif;">'
-        +'<div style="font-weight:700;font-size:13px;color:#1f2937;margin-bottom:4px;">'+(t.name||'Truck')+'</div>'
-        +(t.driver?'<div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Driver: <b>'+t.driver+'</b></div>':'')
-        +'<div style="font-size:11px;margin-bottom:2px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+st.color+';margin-right:4px;vertical-align:0px;"></span><b style="color:'+(st.moving?'#16a34a':st.minutes>=30?'#dc2626':'#ca8a04')+';">'+st.label+'</b></div>'
-        +(t.speed?'<div style="font-size:11px;color:#6b7280;">Speed: '+t.speed+' mph</div>':'')
-        +(t.lastUpdated?'<div style="font-size:10px;color:#9ca3af;margin-top:4px;">Updated: '+new Date(t.lastUpdated).toLocaleTimeString()+'</div>':'')
-        +'</div>';
-      var m=L.marker([t.lat,t.lng],{icon:icon}).addTo(_truckMap).bindPopup(popup);
-      _truckMarkers.push(m);
-      bounds.push([t.lat,t.lng]);
-    });
-    if(bounds.length>1)_truckMap.fitBounds(bounds,{padding:[30,30],maxZoom:14});
-    else if(bounds.length===1)_truckMap.setView(bounds[0],14);
-    _truckData=trucks;
-    truckRenderBadges();
-    var src=data.source==='live'?'Live':'Mock';
-    var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    if(badge)badge.textContent=trucks.length+' truck'+(trucks.length!==1?'s':'')+' \u00B7 '+src+' \u00B7 '+now;
+    var res=await fetch('/api/trucks?_t='+Date.now(),{cache:'no-store'});
+    data=await res.json();
+    if(!data||!data.ok)data=null;
   }catch(e){
-    console.error('[Map] Truck data load failed:',e);
-    if(badge){badge.textContent='No GPS data';badge.style.color='#6b7280';}
+    console.error('[Map] Truck API failed, using local fallback:',e.message);
+    data=null;
   }
+  // Fallback to client-side mock data if API fails
+  var trucks=data?data.trucks||[]:_truckMockData;
+  var source=data?data.source:'local';
+  if(!_truckMap)return;
+  // Clear old markers
+  _truckMarkers.forEach(function(m){_truckMap.removeLayer(m);});
+  _truckMarkers=[];
+  _truckUpdateParkState(trucks);
+  var bounds=[];
+  trucks.forEach(function(t){
+    if(!t.lat&&!t.lng)return;
+    var st=_truckGetStatus(t);
+    var icon=L.divIcon({
+      className:'',
+      html:'<div style="background:#1a2332;color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid '+(st.moving?'#60a5fa':st.color)+';font-family:\'Plus Jakarta Sans\',sans-serif;">'+
+        '<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:'+st.color+';margin-right:4px;"></span>'+
+        (t.name||'Truck')+' <span style="font-weight:400;opacity:0.7;font-size:9px;">\u00B7 '+st.label+'</span></div>',
+      iconSize:[null,null],
+      iconAnchor:[12,12]
+    });
+    var popup='<div style="font-family:\'Plus Jakarta Sans\',sans-serif;">'
+      +'<div style="font-weight:700;font-size:13px;color:#1f2937;margin-bottom:4px;">'+(t.name||'Truck')+'</div>'
+      +(t.driver?'<div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Driver: <b>'+t.driver+'</b></div>':'')
+      +'<div style="font-size:11px;margin-bottom:2px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+st.color+';margin-right:4px;vertical-align:0px;"></span><b style="color:'+(st.moving?'#16a34a':st.minutes>=30?'#dc2626':'#ca8a04')+';">'+st.label+'</b></div>'
+      +(t.speed?'<div style="font-size:11px;color:#6b7280;">Speed: '+t.speed+' mph</div>':'')
+      +(t.lastUpdated?'<div style="font-size:10px;color:#9ca3af;margin-top:4px;">Updated: '+new Date(t.lastUpdated).toLocaleTimeString()+'</div>':'')
+      +'</div>';
+    var m=L.marker([t.lat,t.lng],{icon:icon}).addTo(_truckMap).bindPopup(popup);
+    _truckMarkers.push(m);
+    bounds.push([t.lat,t.lng]);
+  });
+  if(bounds.length>1)_truckMap.fitBounds(bounds,{padding:[30,30],maxZoom:14});
+  else if(bounds.length===1)_truckMap.setView(bounds[0],14);
+  _truckData=trucks;
+  truckRenderBadges();
+  var srcLabel=source==='live'?'Live':source==='mock'?'API Mock':'Local';
+  var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  if(badge){badge.textContent=trucks.length+' truck'+(trucks.length!==1?'s':'')+' \u00B7 '+srcLabel+' \u00B7 '+now;badge.style.color='';}
 }
 
 function truckMapToggle(){
