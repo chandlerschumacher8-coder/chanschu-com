@@ -1109,8 +1109,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="cart-footer">
 <div class="cf-row"><span>Subtotal</span><span id="cart-subtotal">$0.00</span></div>
 <div class="cf-row"><span>Tax <span id="cart-tax-rate-lbl" style="font-size:10px;color:#9ca3af;font-weight:400;"></span></span><span id="cart-tax">$0.00</span></div>
-<div class="cf-row total"><span>Total + Tax</span><span id="cart-total">$0.00</span></div>
-<button class="ghost-btn" onclick="hbAmtWithTax()" style="width:100%;margin-top:6px;font-size:11px;padding:7px;border-color:#bfdbfe;color:#2563eb;background:#eff6ff;" title="Enter a final amount including tax — system will back-calculate and add a line item">&#x1F4B0; Amt w/ Tax (reverse calc)</button>
+<div class="cf-row total"><span>Total</span><span id="cart-total">$0.00</span></div>
 <div class="pay-btns">
 <button class="pay-btn" onclick="checkout('Card')">Card</button>
 <button class="pay-btn" onclick="checkout('Cash')">Cash</button>
@@ -5068,46 +5067,7 @@ function hbCatShortcut(catName){
   nav('sale',document.querySelector('.tb-tab[onclick*="sale"]'));
   setTimeout(function(){saleOpenCat(catName);},50);
 }
-function hbAmtWithTax(){
-  var input=prompt('Enter the total amount INCLUDING tax:','');
-  if(!input||!input.trim())return;
-  var totalWithTax=parseFloat(input);
-  if(isNaN(totalWithTax)||totalWithTax<=0){toast('Invalid amount','error');return;}
-  // Back-calculate: subtotal = total / (1 + taxRate)
-  var rate=cartTaxRate;
-  var subtotal=totalWithTax/(1+rate);
-  var tax=totalWithTax-subtotal;
-  var sid=9000+Date.now()+(Math.random()*1000|0);
-  // Clear cart and add a single line item for the exact pre-tax amount
-  cart.push({id:sid,name:'Custom Amount (incl. tax '+fmt(totalWithTax)+')',price:Math.round(subtotal*100)/100,qty:1,sku:'AMT',serial:'',isService:true});
-  renderCart();
-  toast('Added '+fmt(totalWithTax)+' total ('+fmt(subtotal)+' + '+fmt(tax)+' tax)','success');
-}
-function hbTotalPlusTax(){
-  // If cart has items, show the calculated total
-  var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
-  var rate=cartTaxRate;
-  var tax=sub*rate;
-  var total=sub+tax;
-  var msg='Current subtotal: '+fmt(sub)+'\nTax ('+((rate*100).toFixed(3))+'%): '+fmt(tax)+'\nTotal with tax: '+fmt(total);
-  var input=prompt(msg+'\n\nOr enter a pre-tax amount to calculate total:',sub>0?'':'');
-  if(input===null)return;
-  input=input.trim();
-  if(!input&&sub>0){
-    toast('Total with tax: '+fmt(total),'info');return;
-  }
-  var amt=parseFloat(input);
-  if(isNaN(amt)||amt<=0){if(!input)return;toast('Invalid amount','error');return;}
-  var calcTax=amt*rate;
-  var calcTotal=amt+calcTax;
-  var addIt=confirm('Pre-tax: '+fmt(amt)+'\nTax: '+fmt(calcTax)+'\nTotal: '+fmt(calcTotal)+'\n\nAdd this as a line item?');
-  if(addIt){
-    var sid=9000+Date.now()+(Math.random()*1000|0);
-    cart.push({id:sid,name:'Custom Amount',price:Math.round(amt*100)/100,qty:1,sku:'AMT',serial:'',isService:true});
-    renderCart();
-    toast('Added '+fmt(amt)+' + tax = '+fmt(calcTotal),'success');
-  }
-}
+// hbAmtWithTax and hbTotalPlusTax removed — totals are always displayed in cart footer
 function cartQty(pid,delta){
   var ci=cart.find(function(x){return x.id===pid;});if(!ci)return;
   ci.qty+=delta;if(ci.qty<=0)cart=cart.filter(function(x){return x.id!==pid;});
