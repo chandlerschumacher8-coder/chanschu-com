@@ -809,13 +809,23 @@ var _pinValue='';
 
 function getMidnight(){var d=new Date();d.setHours(23,59,59,999);return d.getTime();}
 
+// Role resolution: admin (full access), staff (view all, limited controls), tech (own jobs only)
+function _resolveRole(posRole,authType){
+  var r=(posRole||'').toLowerCase();
+  if(r==='owner/admin'||r==='general manager'||r==='admin'||r==='manager')return 'admin';
+  if(authType==='contractor')return 'tech';
+  if(r.indexOf('tech')>=0||r.indexOf('service')>=0)return 'tech';
+  // CSR, Sales, Delivery, etc. = staff (can view all jobs, limited controls)
+  return 'staff';
+}
+
 function checkSession(){
   try{
     var s=JSON.parse(localStorage.getItem(SESSION_KEY));
     if(s&&s.name&&s.expiry&&Date.now()<s.expiry){
       var role=s.role;var authType=s.authType||'employee';
-      var isAdmin=role==='Owner/Admin'||role==='General Manager'||role==='admin'||role==='Manager';
-      currentUser={name:s.name,role:isAdmin?'admin':'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:role,authType:authType,techName:s.techName||s.name};
+      var svcRole=_resolveRole(role,authType);
+      currentUser={name:s.name,role:svcRole,companyId:'dc-appliance',companyName:'DC Appliance',posRole:role,authType:authType,techName:s.techName||s.name};
       return true;
     }
   }catch(e){}
@@ -856,8 +866,9 @@ function pinSubmit(){
     var u=matches[0];
     u._authType='employee';
     saveSession(u);
-    var isAdmin=u.posRole==='Owner/Admin'||u.posRole==='General Manager'||u.posRole==='Manager';
-    currentUser={name:u.name,role:isAdmin?'admin':'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:u.posRole||'Sales',authType:'employee',techName:u.tech||u.name};
+    var svcRole=_resolveRole(u.posRole||'Sales','employee');
+    currentUser={name:u.name,role:svcRole,companyId:'dc-appliance',companyName:'DC Appliance',posRole:u.posRole||'Sales',authType:'employee',techName:u.tech||u.name};
+    console.log('[Service Login] User:',u.name,'posRole:',u.posRole,'svcRole:',svcRole);
     enterApp();
   }else{
     document.getElementById('login-err').style.display='block';
@@ -900,7 +911,8 @@ function pwSubmit(){
   if(tech){
     var entry={name:tech.tech||tech.name,tech:tech.tech||tech.name,posRole:'Contractor Tech',role:'tech',_authType:'contractor'};
     saveSession(entry);
-    currentUser={name:entry.name,role:'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:'Contractor Tech',authType:'contractor',techName:entry.tech};
+    currentUser={name:entry.name,role:_resolveRole('Contractor Tech','contractor'),companyId:'dc-appliance',companyName:'DC Appliance',posRole:'Contractor Tech',authType:'contractor',techName:entry.tech};
+    console.log('[Service Login] Contractor:',entry.name,'role:',currentUser.role);
     enterApp();
   }else{
     document.getElementById('login-err').style.display='block';
@@ -914,27 +926,40 @@ async function enterApp(){
   document.getElementById('app').style.display='block';
   document.getElementById('h-user').textContent='Welcome, '+currentUser.name;
   document.getElementById('h-company').textContent='DC Appliance';
-  // Role-based access
-  var role=currentUser.posRole||currentUser.role;
-  var isAdmin=role==='Owner/Admin'||role==='General Manager'||role==='admin'||role==='Manager';
-  var isContractor=currentUser.authType==='contractor';
-  if(isAdmin){
+  // Role-based access: admin = full, staff = view all + schedule, tech = own jobs only
+  var svcRole=currentUser.role; // 'admin', 'staff', or 'tech'
+  var posRole=currentUser.posRole||'';
+  console.log('[Service enterApp] name:',currentUser.name,'svcRole:',svcRole,'posRole:',posRole);
+  if(svcRole==='admin'){
+    // Full access — show create form, users button, AI chat
     document.getElementById('btn-users').style.display='inline-block';
     try{document.getElementById('chat-fab').style.display='flex';}catch(e){}
+  }else if(svcRole==='staff'){
+    // CSR/Sales/Delivery — can view all jobs + schedule new ones (CSR), but no admin
+    var canSchedule=posRole==='CSR'||posRole==='Sales';
+    if(canSchedule){
+      // Show the create form for scheduling
+      try{document.getElementById('form-panel').style.display='';}catch(e){}
+    }else{
+      // Delivery/other staff — view only, hide create form
+      try{document.getElementById('form-panel').style.display='none';document.getElementById('two-col').style.gridTemplateColumns='1fr';}catch(e){}
+    }
+    try{document.getElementById('chat-fab').style.display='none';}catch(e){}
   }else{
-    // Techs (employee or contractor) — hide create form, show jobs only
+    // Tech (employee or contractor) — own jobs only, hide create form
     try{document.getElementById('form-panel').style.display='none';document.getElementById('two-col').style.gridTemplateColumns='1fr';}catch(e){}
     try{document.getElementById('chat-fab').style.display='none';}catch(e){}
   }
   await loadTechs();await loadJobs();startPolling();
   try{document.getElementById('f-date').valueAsDate=new Date();}catch(e){}
-  // Auto-filter to logged-in tech's jobs (employee techs and contractors)
-  var techName=currentUser.techName||currentUser.name;
-  if(!isAdmin&&techName){
+  // Auto-filter to logged-in tech's assigned jobs only (tech role)
+  if(svcRole==='tech'){
+    var techName=currentUser.techName||currentUser.name;
     FILTER='all';
     try{var fsel=document.getElementById('tech-filter');if(fsel){for(var i=0;i<fsel.options.length;i++){if(fsel.options[i].value===techName){fsel.selectedIndex=i;break;}}}}catch(e){}
     renderJobs();
   }
+  console.log('[Service enterApp] Jobs loaded:',jobs.length);
 }
 
 // Polling for live job updates
@@ -1199,8 +1224,15 @@ async function saveUsersOrTechs(){
 
 // ── JOBS ──
 async function loadJobs(){
-  var res=await fetch('/api/jobs-get?companyId='+currentUser.companyId);var data=await res.json();
-  jobs=data.jobs||[];nextId=data.nextId||1;renderJobs();updateStats();
+  try{
+    var res=await fetch('/api/jobs-get?companyId='+currentUser.companyId);var data=await res.json();
+    jobs=data.jobs||[];nextId=data.nextId||1;
+    console.log('[Service loadJobs] Loaded',jobs.length,'jobs for',currentUser.name,'('+currentUser.role+')');
+  }catch(e){
+    console.error('[Service loadJobs] Error:',e);
+    jobs=[];nextId=1;
+  }
+  renderJobs();updateStats();
 }
 async function saveJobs(){
   await fetch('/api/jobs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:currentUser.companyId,jobs:jobs,nextId:nextId})});
@@ -1245,7 +1277,7 @@ function renderJobs(){
   var search=(document.getElementById('search')&&document.getElementById('search').value||'').toLowerCase();
   var techFilter=(document.getElementById('tech-filter')&&document.getElementById('tech-filter').value)||'';
   var filtered=jobs.filter(function(j){
-    // Non-admin techs (employee or contractor) only see their assigned jobs
+    // Only 'tech' role filters to assigned jobs; 'admin' and 'staff' see all
     if(currentUser&&currentUser.role==='tech'){var myTech=currentUser.techName||currentUser.name;if(j.tech!==myTech)return false;}
     // Map old statuses for backwards compat
     var displayStatus=j.status==='Open'?'New':j.status==='Completed'?'Complete':j.status;
@@ -1256,7 +1288,10 @@ function renderJobs(){
   });
   var list=document.getElementById('jobs-list');if(!list)return;
   if(filtered.length===0){list.innerHTML='<div class="empty-state">No jobs found.</div>';return;}
-  var isAdmin=currentUser&&currentUser.role!=='tech';
+  var svcRole=currentUser?currentUser.role:'';
+  var isAdmin=svcRole==='admin';
+  var canEdit=svcRole==='admin';  // only admin can assign, delete, edit
+  var canAddNotes=true;           // everyone can add notes
   list.innerHTML=filtered.map(function(j){
     var statusDisplay=j.status==='Open'?'New':j.status==='Completed'?'Complete':j.status;
     var sc=statusDisplay==='New'?'s-new':statusDisplay==='In Progress'?'s-prog':statusDisplay==='Service Complete'?'s-svcomplete':statusDisplay==='Needs Claimed'?'s-needsclaimed':statusDisplay==='Complete'?'s-done':'s-new';
@@ -1273,7 +1308,7 @@ function renderJobs(){
       '<div class="jc-meta"><span>'+fd+'</span><span>'+j.time+'</span><span>'+j.address.split(',')[0]+(j.city?', '+j.city:'')+'</span></div>'+
       '<div class="job-detail" id="detail-'+j.id+'">'+
         '<div class="print-header" id="phdr-'+j.id+'"><h2>Service Work Order</h2><p>'+(j.invoice?'Invoice: '+j.invoice+'  |  ':'')+j.id+'  |  '+fd+'</p></div>'+
-        (isAdmin?'<div class="assign-row" onclick="event.stopPropagation()"><label>Assign:</label><select class="assign-sel" onchange="assignTech(\''+j.id+'\',this.value)">'+_buildTechOptions(j.tech)+'</select></div>':'')+
+        (canEdit?'<div class="assign-row" onclick="event.stopPropagation()"><label>Assign:</label><select class="assign-sel" onchange="assignTech(\''+j.id+'\',this.value)">'+_buildTechOptions(j.tech)+'</select></div>':'')+
         '<div class="dg">'+
           '<div class="df"><label>Phone</label><div class="dv"><a href="tel:'+j.phone+'" onclick="event.stopPropagation()">'+j.phone+'</a></div></div>'+
           (j.email?'<div class="df"><label>Email</label><div class="dv"><a href="mailto:'+j.email+'" onclick="event.stopPropagation()">'+j.email+'</a></div></div>':'<div class="df"><label>Email</label><div class="dv" style="color:var(--gray-2)">--</div></div>')+
@@ -1288,13 +1323,13 @@ function renderJobs(){
         '<div class="df" style="margin-bottom:10px;"><label>Issue</label><div class="notes-blk">'+j.issue+'</div></div>'+
         (j.notes?'<div class="df" style="margin-bottom:10px;"><label>Notes</label><div class="notes-blk">'+j.notes+'</div></div>':'')+
         '<div class="act-row" onclick="event.stopPropagation()">'+
-          (j.status!=='In Progress'?'<button class="abtn orange" onclick="setStatus(\''+j.id+'\',\'In Progress\')" style="font-size:10px;padding:4px 10px;">In Progress</button>':'')+
-          (j.status!=='Service Complete'?'<button class="abtn" style="font-size:10px;padding:4px 10px;border-color:rgba(20,184,166,0.35);color:#2dd4bf;background:rgba(20,184,166,0.06);" onclick="setStatus(\''+j.id+'\',\'Service Complete\')">Svc Complete</button>':'')+
-          (j.status!=='Needs Claimed'?'<button class="abtn" style="font-size:10px;padding:4px 10px;border-color:rgba(234,179,8,0.35);color:#fbbf24;background:rgba(234,179,8,0.06);" onclick="setStatus(\''+j.id+'\',\'Needs Claimed\')">Needs Claimed</button>':'')+
-          (j.status!=='Complete'?'<button class="abtn green" onclick="setStatus(\''+j.id+'\',\'Complete\')" style="font-size:10px;padding:4px 10px;">Complete</button>':'')+
-          (j.status!=='New'?'<button class="abtn blue" onclick="setStatus(\''+j.id+'\',\'New\')" style="font-size:10px;padding:4px 10px;">Set New</button>':'')+
-          '<button class="abtn blue" onclick="openEditJob(\''+j.id+'\');event.stopPropagation()">Edit</button>'+
-          (isAdmin?'<button class="abtn red" onclick="deleteJob(\''+j.id+'\')">Delete</button>':'')+
+          (svcRole!=='staff'&&j.status!=='In Progress'?'<button class="abtn orange" onclick="setStatus(\''+j.id+'\',\'In Progress\')" style="font-size:10px;padding:4px 10px;">In Progress</button>':'')+
+          (svcRole!=='staff'&&j.status!=='Service Complete'?'<button class="abtn" style="font-size:10px;padding:4px 10px;border-color:rgba(20,184,166,0.35);color:#2dd4bf;background:rgba(20,184,166,0.06);" onclick="setStatus(\''+j.id+'\',\'Service Complete\')">Svc Complete</button>':'')+
+          (svcRole!=='staff'&&j.status!=='Needs Claimed'?'<button class="abtn" style="font-size:10px;padding:4px 10px;border-color:rgba(234,179,8,0.35);color:#fbbf24;background:rgba(234,179,8,0.06);" onclick="setStatus(\''+j.id+'\',\'Needs Claimed\')">Needs Claimed</button>':'')+
+          (svcRole!=='staff'&&j.status!=='Complete'?'<button class="abtn green" onclick="setStatus(\''+j.id+'\',\'Complete\')" style="font-size:10px;padding:4px 10px;">Complete</button>':'')+
+          (svcRole!=='staff'&&j.status!=='New'?'<button class="abtn blue" onclick="setStatus(\''+j.id+'\',\'New\')" style="font-size:10px;padding:4px 10px;">Set New</button>':'')+
+          (canEdit?'<button class="abtn blue" onclick="openEditJob(\''+j.id+'\');event.stopPropagation()">Edit</button>':'')+
+          (canEdit?'<button class="abtn red" onclick="deleteJob(\''+j.id+'\')">Delete</button>':'')+
           '<button class="print-btn" onclick="printJob(\''+j.id+'\')" style="margin-left:auto;">Print</button>'+
         '</div>'+
         (j.status==='In Progress'?
@@ -1705,13 +1740,16 @@ function openSvcBSheet(id){
   h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Issue</div><div class="svc-bs-issue">'+j.issue+'</div></div>';
   if(j.notes)h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Notes</div><div class="svc-bs-issue">'+j.notes+'</div></div>';
   h+='</div>';
-  // Actions
+  // Actions (role-based)
+  var bsRole=currentUser?currentUser.role:'';
   h+='<div class="svc-bs-section"><div class="svc-bs-section-title">Actions</div><div class="svc-bs-actions">';
-  if(j.status!=='In Progress')h+='<button class="svc-bs-btn orange" onclick="svcBsSetStatus(\''+j.id+'\',\'In Progress\')">Mark In Progress</button>';
-  if(j.status!=='Service Complete')h+='<button class="svc-bs-btn teal" onclick="svcBsSetStatus(\''+j.id+'\',\'Service Complete\')">Mark Svc Complete</button>';
-  if(j.status!=='Needs Claimed')h+='<button class="svc-bs-btn gold" onclick="svcBsSetStatus(\''+j.id+'\',\'Needs Claimed\')">Mark Needs Claimed</button>';
-  if(j.status!=='Complete')h+='<button class="svc-bs-btn green" onclick="svcBsSetStatus(\''+j.id+'\',\'Complete\')">Mark Complete</button>';
-  h+='<button class="svc-bs-btn blue" onclick="closeSvcBSheet();openEditJob(\''+j.id+'\')">Edit Job</button>';
+  if(bsRole!=='staff'){
+    if(j.status!=='In Progress')h+='<button class="svc-bs-btn orange" onclick="svcBsSetStatus(\''+j.id+'\',\'In Progress\')">Mark In Progress</button>';
+    if(j.status!=='Service Complete')h+='<button class="svc-bs-btn teal" onclick="svcBsSetStatus(\''+j.id+'\',\'Service Complete\')">Mark Svc Complete</button>';
+    if(j.status!=='Needs Claimed')h+='<button class="svc-bs-btn gold" onclick="svcBsSetStatus(\''+j.id+'\',\'Needs Claimed\')">Mark Needs Claimed</button>';
+    if(j.status!=='Complete')h+='<button class="svc-bs-btn green" onclick="svcBsSetStatus(\''+j.id+'\',\'Complete\')">Mark Complete</button>';
+  }
+  if(bsRole==='admin')h+='<button class="svc-bs-btn blue" onclick="closeSvcBSheet();openEditJob(\''+j.id+'\')">Edit Job</button>';
   h+='</div></div>';
   // Job log
   h+='<div class="svc-bs-section"><div class="svc-bs-section-title">Job Log</div>';
