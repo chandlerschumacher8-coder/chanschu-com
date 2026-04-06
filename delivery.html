@@ -523,6 +523,7 @@
           <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off w/ Connections"/> Drop Off w/ Connections</label>
           <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Inside"/> Drop Off Inside</label>
           <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Outside"/> Drop Off Outside</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Furniture Delivery"/> Furniture Delivery</label>
         </div>
       </div>
       <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gold-d);margin-bottom:6px;">Appliances <span class="req">*</span></div>
@@ -793,7 +794,7 @@ async function sendDcEmail(toEmail,toName,subject,htmlBody,refNumber){
 // ═══ CONFIG ═══
 var PASSWORD='DCDelivery2026';
 var HOURS_START=7,HOURS_END=20;
-var APP_OPTIONS=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker','TV','Mattress','Grill','Furniture','Other'];
+var APP_OPTIONS=['Refrigerator','Washer','Dryer','Pedestal','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker','Garbage Disposal','AC Unit','TV','Mattress','Grill','Furniture','Other'];
 var NOTE_COLORS=[
   {key:'yellow',label:'Yellow',bg:'#fef9c3',bd:'#ca8a04',txt:'#713f12'},
   {key:'red',label:'Red',bg:'#fee2e2',bd:'#dc2626',txt:'#7f1d1d'},
@@ -809,7 +810,7 @@ var NOTE_COLORS=[
 var selectedColor='yellow';
 
 // ═══ SERIAL TRACKED APPLIANCES (central list) ═══
-var SERIAL_TRACKED_APPLIANCES=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker'];
+var SERIAL_TRACKED_APPLIANCES=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker','Garbage Disposal','AC Unit','TV'];
 function isApplianceSerialTracked(a){
   if(a.tracked===false)return false;
   if(a.tracked===true)return true;

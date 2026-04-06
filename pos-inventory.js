@@ -193,7 +193,7 @@ function exportCSV(){
 // Category names (from inventory data) that require serial tracking
 var SERIAL_TRACKED_CATS=['BOTTOM MOUNT FRIDGE','BUILT IN','COMBO WASHER DRYER','COOK TOP','DISHWASHERS','DRYERS','FREEZER','FRENCH DOOR FRIDGE','ICEMKR','RANGES','SIDE BY SIDE FRIDGE','TOP MOUNT','TRASH COMPACTOR','WASHERS','BEVERAGE CENTER','Refrigerators','Washers & Dryers','Dishwashers','Ovens & Ranges','Wall Ovens','Microwaves','MICROWAVE','OTR MICROWAVE','COUNTERTOP MICROWAVE','BUILT-IN MICROWAVE','Ice Makers','ICE MAKER'];
 // Appliance type names (from delivery dropdown) that require serial tracking
-var SERIAL_TRACKED_APPLIANCES=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker'];
+var SERIAL_TRACKED_APPLIANCES=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker','Garbage Disposal','AC Unit','TV'];
 
 function isSerialTracked(p){
   if(p.serialTracked!==undefined)return !!p.serialTracked;
