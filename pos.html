@@ -1302,6 +1302,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <button class="del-tpill active" id="del-tf-all" onclick="delSetTeam('all',this)">All</button>
 <button class="del-tpill" id="del-tf-main" onclick="delSetTeam('Main Delivery Team',this)">Main</button>
 <button class="del-tpill" id="del-tf-other" onclick="delSetTeam('Other Delivery Team',this)">Other</button>
+<button class="del-tpill" id="del-tf-attention" onclick="delSetTeam('attention',this)">&#x26A0; Attention</button>
 </div>
 <span class="del-sync" id="del-sync-badge">Updated</span>
 <button class="del-add-btn" onclick="delOpenAddDelivery(null,null)">+ Delivery</button>
@@ -4912,7 +4913,7 @@ function nav(viewId,tabEl){
   if(tabEl)tabEl.classList.add('active');
   else{document.querySelectorAll('.tb-tab').forEach(function(t){if(t.textContent.trim()==='Inventory')t.classList.add('active');});}
   updateAIChips();
-  if(viewId==='delivery'){delLoadData();truckMapInit();}
+  if(viewId==='delivery'){if(!delWeekStart)delWeekStart=getWeekStart(new Date());delLoadData();truckMapInit();}
   if(viewId==='service'){svcLoadJobs();}
   if(viewId==='inventory'){renderInventory();if(invSubTab==='ordering')renderReorder();if(invSubTab==='receiving')renderReceiving();if(invSubTab==='purchaseorders')renderPOList();}
   if(viewId==='dashboard'){renderDashboard();}

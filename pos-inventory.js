@@ -1042,8 +1042,12 @@ function truckMapShowDeliveryStops(){
 // ══════════════════════════════════════════════
 function delInit(){delWeekStart=getWeekStart(new Date());delLoadData();}
 async function delLoadData(){
-  try{var r=await fetch('/api/deliveries-get');var d=await r.json();delDeliveries=d.deliveries||[];delNextId=d.nextId||1;delNotes=Array.isArray(d.notes)?d.notes:[];delNextNoteId=d.nextNoteId||1;}catch(e){delDeliveries=[];delNotes=[];delNextId=1;delNextNoteId=1;}
-  _lastDelHash=JSON.stringify({d:delDeliveries,n:delNotes});delRenderCalendar();delStartPolling();
+  try{var r=await fetch('/api/deliveries-get');var d=await r.json();delDeliveries=d.deliveries||[];delNextId=d.nextId||1;delNotes=Array.isArray(d.notes)?d.notes:[];delNextNoteId=d.nextNoteId||1;
+  console.log('[POS Delivery] Loaded '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
+  }catch(e){console.error('[POS Delivery] Load error:',e);delDeliveries=[];delNotes=[];delNextId=1;delNextNoteId=1;}
+  _lastDelHash=JSON.stringify({d:delDeliveries,n:delNotes});
+  if(!delWeekStart)delWeekStart=getWeekStart(new Date());
+  delRenderCalendar();delStartPolling();
   if(_truckMap)truckMapShowDeliveryStops();
 }
 async function delSaveData(){
@@ -1052,7 +1056,9 @@ async function delSaveData(){
 function delStartPolling(){if(_delPollTimer)clearInterval(_delPollTimer);_delPollTimer=setInterval(delPoll,15000);}
 function delStopPolling(){if(_delPollTimer){clearInterval(_delPollTimer);_delPollTimer=null;}}
 async function delPoll(){
-  try{var res=await fetch('/api/deliveries-get?t='+Date.now());var data=await res.json();var hash=JSON.stringify({d:data.deliveries,n:data.notes});if(hash===_lastDelHash)return;_lastDelHash=hash;delDeliveries=data.deliveries||[];delNextId=data.nextId||1;delNotes=Array.isArray(data.notes)?data.notes:[];delNextNoteId=data.nextNoteId||1;delRenderEvents();var b=document.getElementById('del-sync-badge');if(b){b.style.opacity='1';setTimeout(function(){b.style.opacity='0';},2000);}}catch(e){}
+  try{var res=await fetch('/api/deliveries-get?t='+Date.now());var data=await res.json();var hash=JSON.stringify({d:data.deliveries,n:data.notes});if(hash===_lastDelHash)return;_lastDelHash=hash;delDeliveries=data.deliveries||[];delNextId=data.nextId||1;delNotes=Array.isArray(data.notes)?data.notes:[];delNextNoteId=data.nextNoteId||1;
+  console.log('[POS Delivery] Poll update: '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
+  delRenderEvents();var b=document.getElementById('del-sync-badge');if(b){b.style.opacity='1';setTimeout(function(){b.style.opacity='0';},2000);}}catch(e){}
 }
 function delChangeWeek(d){delWeekStart=new Date(delWeekStart);delWeekStart.setDate(delWeekStart.getDate()+d*7);delRenderCalendar();}
 function delGoToday(){delWeekStart=getWeekStart(new Date());delRenderCalendar();}
@@ -1088,7 +1094,11 @@ function delRenderEvents(){
   // Deliveries
   days.forEach(function(dayStr){
     var col=document.getElementById('del-col-'+dayStr);if(!col)return;
-    var dayDels=delDeliveries.filter(function(d){return d.date===dayStr&&(DEL_TEAM==='all'||d.team===DEL_TEAM);});
+    var dayDels=delDeliveries.filter(function(d){
+      if(d.date!==dayStr)return false;
+      if(DEL_TEAM==='attention')return d.log&&d.log.some(function(e){return DEL_FLAG_WORDS.test(e.text);});
+      return DEL_TEAM==='all'||d.team===DEL_TEAM;
+    });
     if(!dayDels.length)return;
     var slots=[];
     dayDels.forEach(function(d){
