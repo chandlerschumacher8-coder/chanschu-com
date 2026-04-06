@@ -2919,12 +2919,13 @@ var PIN_TIMEOUT_MS=5*60*1000;
 var _posPinValue='';
 
 // PIN pad functions
-function posPinKey(n){if(_posPinValue.length>=4)return;_posPinValue+=n;posUpdatePinDots();if(_posPinValue.length===4)posPinSubmit();}
+function posPinKey(n){if(_posPinValue.length>=4)return;_posPinValue+=n;posUpdatePinDots();if(_posPinValue.length===4){if(_posTcMode)posTcPinSubmit();else posPinSubmit();}}
 function posPinBack(){_posPinValue=_posPinValue.slice(0,-1);posUpdatePinDots();}
 function posPinClear(){_posPinValue='';posUpdatePinDots();document.getElementById('pos-login-err').style.display='none';}
 function posUpdatePinDots(){
   for(var i=0;i<4;i++){var d=document.getElementById('pos-pd'+i);if(d)d.classList.toggle('filled',i<_posPinValue.length);}
   var btn=document.getElementById('pos-login-btn');if(btn)btn.disabled=_posPinValue.length<4;
+  var tcBtn=document.getElementById('pos-tc-btn');if(tcBtn)tcBtn.disabled=_posPinValue.length<4;
 }
 
 function posPinSubmit(){
@@ -2968,8 +2969,7 @@ function empSwitchUser(){
   currentEmployee=null;
   document.getElementById('pos-login').style.display='flex';
   document.getElementById('tb-user-badge').style.display='none';
-  _posPinValue='';posUpdatePinDots();
-  document.getElementById('pos-login-err').style.display='none';
+  posExitTcMode();
 }
 function empLogoutMaster(){empSwitchUser();}
 function applyPermissions(){
@@ -3001,6 +3001,105 @@ function resetInactivity(){
 }
 document.addEventListener('click',resetInactivity);
 document.addEventListener('keydown',resetInactivity);
+
+// ── TIME CLOCK ON LOGIN SCREEN ──
+var _posTcMode=false;
+var _posTcUser=null;
+
+function posEnterTcMode(){
+  _posTcMode=true;
+  document.getElementById('pos-login-mode').style.display='none';
+  document.getElementById('pos-tc-mode').style.display='block';
+  document.getElementById('pos-tc-result').style.display='none';
+  document.getElementById('pos-login-err').style.display='none';
+  var sub=document.getElementById('pos-login-sub');if(sub)sub.textContent='Time Clock — Enter your PIN';
+  _posPinValue='';posUpdatePinDots();
+}
+function posExitTcMode(){
+  _posTcMode=false;
+  document.getElementById('pos-tc-mode').style.display='none';
+  document.getElementById('pos-tc-result').style.display='none';
+  document.getElementById('pos-login-mode').style.display='block';
+  document.getElementById('pos-login-err').style.display='none';
+  // Restore pin pad visibility (may have been hidden by TC result)
+  var box=document.querySelector('.pos-login-box');
+  if(box){var pd=box.querySelector('.pos-pin-display');if(pd)pd.style.display='';var pp=box.querySelector('.pos-pin-pad');if(pp)pp.style.display='';}
+  var sub=document.getElementById('pos-login-sub');if(sub)sub.textContent='ApexPOS \u2014 Enter your PIN';
+  _posPinValue='';posUpdatePinDots();
+}
+function posTcPinSubmit(){
+  if(_posPinValue.length<4)return;
+  if(!adminUsers.length){
+    adminLoad().then(function(){_doTcPinLookup();});
+  }else{
+    _doTcPinLookup();
+  }
+}
+function _doTcPinLookup(){
+  var matches=adminUsers.filter(function(u){return u.active!==false&&u.pin===_posPinValue;});
+  if(matches.length===1){
+    _posTcUser=matches[0];
+    _showTcResult();
+  }else{
+    document.getElementById('pos-login-err').style.display='block';
+    document.getElementById('pos-login-err').textContent='Incorrect PIN — please try again';
+    _posPinValue='';posUpdatePinDots();
+  }
+}
+function _showTcResult(){
+  if(!_posTcUser)return;
+  // Load punches then show status
+  tcLoadPunches().then(function(){
+    var active=(typeof tcPunches!=='undefined')?tcPunches.find(function(p){return p.employee===_posTcUser.name&&!p.clockOut;}):null;
+    document.getElementById('pos-tc-name').textContent=_posTcUser.name;
+    var now=new Date();
+    var timeStr=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    document.getElementById('pos-tc-status').textContent=active?'Currently clocked in since '+new Date(active.clockIn).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'Not clocked in — '+timeStr;
+    // Show appropriate buttons
+    var btns=document.getElementById('pos-tc-btns');
+    btns.style.display='flex';
+    btns.querySelector('.pos-tc-btn-in').style.display=active?'none':'';
+    btns.querySelector('.pos-tc-btn-out').style.display=active?'':'none';
+    document.getElementById('pos-tc-confirm').textContent='';
+    // Hide pad, show result
+    document.getElementById('pos-tc-mode').style.display='none';
+    var box=document.querySelector('.pos-login-box');
+    var pd=box.querySelector('.pos-pin-display');if(pd)pd.style.display='none';
+    var pp=box.querySelector('.pos-pin-pad');if(pp)pp.style.display='none';
+    document.getElementById('pos-tc-result').style.display='block';
+  });
+}
+function posDoTcPunch(action){
+  if(!_posTcUser)return;
+  var empName=_posTcUser.name;
+  var active=(typeof tcPunches!=='undefined')?tcPunches.find(function(p){return p.employee===empName&&!p.clockOut;}):null;
+  var nowISO=new Date().toISOString();
+  var todayStr=nowISO.slice(0,10);
+  var fmtTime=function(iso){return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});};
+  var confirmEl=document.getElementById('pos-tc-confirm');
+  var btnsEl=document.getElementById('pos-tc-btns');
+  var hour=new Date().getHours();
+  var greeting=hour<12?'Good morning':'Good afternoon';
+
+  if(action==='in'){
+    if(active){confirmEl.textContent=empName+' is already clocked in';confirmEl.style.color='#ea580c';return;}
+    tcPunches.push({id:'TC-'+Date.now(),employee:empName,date:todayStr,clockIn:nowISO,clockOut:null,type:'regular',hours:0});
+    confirmEl.innerHTML='<span style="color:#16a34a;">'+greeting+', '+empName+'</span><br>Clocked in at '+fmtTime(nowISO);
+  }else{
+    if(!active){confirmEl.textContent=empName+' is not clocked in';confirmEl.style.color='#ea580c';return;}
+    active.clockOut=nowISO;
+    active.hours=Math.round(((new Date(active.clockOut)-new Date(active.clockIn))/3600000)*100)/100;
+    confirmEl.innerHTML='<span style="color:#dc2626;">'+empName+' clocked out</span><br>'+active.hours.toFixed(2)+' hours logged';
+  }
+  btnsEl.style.display='none';
+  if(typeof tcSavePunches==='function')tcSavePunches();
+  // Auto-return to login after 3 seconds
+  setTimeout(function(){posCloseTcResult();},3000);
+}
+function posCloseTcResult(){
+  _posTcUser=null;
+  posExitTcMode();
+}
 
 // Init — preload users for fast PIN lookup
 adminLoad();

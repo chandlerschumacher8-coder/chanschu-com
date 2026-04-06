@@ -834,6 +834,18 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .pos-login-btn{width:100%;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
 .pos-login-btn:hover{background:#3b82f6;}
 .pos-login-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.pos-tc-link{color:#6b7280;font-size:11px;margin-top:14px;cursor:pointer;text-decoration:none;display:inline-block;transition:color 0.15s;font-family:'Plus Jakarta Sans',sans-serif;}
+.pos-tc-link:hover{color:#2563eb;}
+.pos-tc-result{display:none;text-align:center;padding:10px 0;}
+.pos-tc-result-name{font-size:18px;font-weight:700;color:#1f2937;margin-bottom:6px;}
+.pos-tc-result-status{font-size:12px;color:#6b7280;margin-bottom:14px;}
+.pos-tc-result-btns{display:flex;gap:8px;justify-content:center;margin-bottom:10px;}
+.pos-tc-btn-in{padding:10px 28px;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:#16a34a;color:#fff;}
+.pos-tc-btn-in:hover{background:#15803d;}
+.pos-tc-btn-out{padding:10px 28px;border:none;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;background:#dc2626;color:#fff;}
+.pos-tc-btn-out:hover{background:#b91c1c;}
+.pos-tc-confirm{font-size:13px;font-weight:600;padding:14px 0;line-height:1.5;}
+.pos-tc-time{font-size:11px;color:#6b7280;margin-bottom:6px;}
 .tb-user-badge{font-size:10px;font-weight:600;color:#93c5fd;margin-right:6px;padding:3px 10px;background:rgba(37,99,235,0.15);border:1px solid rgba(96,165,250,0.3);border-radius:100px;cursor:pointer;}
 .tb-user-badge:hover{background:rgba(37,99,235,0.25);}
 /* Employee Time Clock on Login Screen */
@@ -978,7 +990,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="pos-login" id="pos-login">
 <div class="pos-login-box">
 <div style="font-family:'Playfair Display',serif;font-size:20px;color:#1f2937;margin-bottom:2px;">DC <span style="color:#2563eb;">Appliance</span></div>
-<div style="font-size:11px;color:#6b7280;margin-bottom:24px;">ApexPOS &mdash; Enter your PIN</div>
+<div style="font-size:11px;color:#6b7280;margin-bottom:24px;" id="pos-login-sub">ApexPOS &mdash; Enter your PIN</div>
 <div class="pos-pin-display"><div class="pos-pin-dot" id="pos-pd0"></div><div class="pos-pin-dot" id="pos-pd1"></div><div class="pos-pin-dot" id="pos-pd2"></div><div class="pos-pin-dot" id="pos-pd3"></div></div>
 <div class="pos-pin-pad">
 <div class="pos-pin-key" onclick="posPinKey('1')">1</div><div class="pos-pin-key" onclick="posPinKey('2')">2</div><div class="pos-pin-key" onclick="posPinKey('3')">3</div>
@@ -986,7 +998,24 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="pos-pin-key" onclick="posPinKey('7')">7</div><div class="pos-pin-key" onclick="posPinKey('8')">8</div><div class="pos-pin-key" onclick="posPinKey('9')">9</div>
 <div class="pos-pin-key action" onclick="posPinClear()">Clear</div><div class="pos-pin-key" onclick="posPinKey('0')">0</div><div class="pos-pin-key action" onclick="posPinBack()">&#x232B;</div>
 </div>
+<div id="pos-login-mode">
 <button class="pos-login-btn" onclick="posPinSubmit()" id="pos-login-btn" disabled>Sign In</button>
+<div><a href="#" class="pos-tc-link" onclick="event.preventDefault();posEnterTcMode()">Clock In / Clock Out</a></div>
+</div>
+<div id="pos-tc-mode" style="display:none;">
+<button class="pos-login-btn" onclick="posTcPinSubmit()" id="pos-tc-btn" disabled style="background:#0d9488;">Clock In / Out</button>
+<div><a href="#" class="pos-tc-link" onclick="event.preventDefault();posExitTcMode()">&#8592; Back to Login</a></div>
+</div>
+<div class="pos-tc-result" id="pos-tc-result">
+<div class="pos-tc-result-name" id="pos-tc-name"></div>
+<div class="pos-tc-result-status" id="pos-tc-status"></div>
+<div class="pos-tc-result-btns" id="pos-tc-btns">
+<button class="pos-tc-btn-in" onclick="posDoTcPunch('in')">Clock In</button>
+<button class="pos-tc-btn-out" onclick="posDoTcPunch('out')">Clock Out</button>
+</div>
+<div class="pos-tc-confirm" id="pos-tc-confirm"></div>
+<div><a href="#" class="pos-tc-link" onclick="event.preventDefault();posCloseTcResult()">&#8592; Back</a></div>
+</div>
 <div class="pos-login-err" id="pos-login-err"></div>
 </div>
 </div>

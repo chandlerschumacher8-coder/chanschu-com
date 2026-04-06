@@ -466,7 +466,7 @@
         <div class="pin-key action" onclick="pinClear()">Clear</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key action" onclick="pinBack()">&#x232B;</div>
       </div>
       <button class="login-btn" onclick="pinSubmit()" id="login-submit-btn" disabled>Sign In</button>
-      <a href="#" class="contractor-link" onclick="event.preventDefault();showContractorLogin()">Contractor? Use Password</a>
+      <a href="#" class="contractor-link" onclick="event.preventDefault();showContractorLogin()">Contractor Login</a>
     </div>
     <!-- Contractor password login -->
     <div id="login-pw-section" class="pw-section">
@@ -477,7 +477,7 @@
         <button class="pw-toggle" id="pw-toggle-btn" onclick="togglePwVis()" type="button">Show</button>
       </div>
       <button class="login-btn" onclick="pwSubmit()">Sign In</button>
-      <div style="margin-top:10px;"><a href="#" class="contractor-link" onclick="event.preventDefault();showPinLogin()">&#8592; Use PIN instead</a></div>
+      <div style="margin-top:10px;"><a href="#" class="contractor-link" onclick="event.preventDefault();showPinLogin()">&#8592; Back to PIN</a></div>
     </div>
     <div class="login-err" id="login-err"></div>
   </div>
@@ -937,15 +937,22 @@ async function enterApp(){
   }
 }
 
-function doLogout(){stopPolling();
+// Polling for live job updates
+var _svcPollTimer=null;
+function startPolling(){stopPolling();_svcPollTimer=setInterval(function(){try{loadJobs();}catch(e){}},15000);}
+function stopPolling(){if(_svcPollTimer){clearInterval(_svcPollTimer);_svcPollTimer=null;}}
+
+function doLogout(){
+  try{stopPolling();}catch(e){}
   currentUser=null;jobs=[];nextId=1;techList=['Unassigned'];
   localStorage.removeItem(SESSION_KEY);
-  document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
   showPinLogin();
-  document.getElementById('h-user').textContent='';document.getElementById('h-company').textContent='';
-  document.getElementById('btn-companies').style.display='none';document.getElementById('btn-users').style.display='none';
-  document.getElementById('form-panel').style.display='';document.getElementById('two-col').style.gridTemplateColumns='';
-  document.getElementById('chat-fab').style.display='none';
+  try{document.getElementById('h-user').textContent='';document.getElementById('h-company').textContent='';}catch(e){}
+  try{document.getElementById('btn-companies').style.display='none';document.getElementById('btn-users').style.display='none';}catch(e){}
+  try{document.getElementById('form-panel').style.display='';document.getElementById('two-col').style.gridTemplateColumns='';}catch(e){}
+  try{document.getElementById('chat-fab').style.display='none';}catch(e){}
 }
 
 // ── COMPANIES ──
