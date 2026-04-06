@@ -870,34 +870,36 @@ var _deliveryMarkers=[];
 function truckMapInit(){
   var el=document.getElementById('truck-map');if(!el)return;
   var badge=document.getElementById('truck-map-status');
-  try{
-    if(!_truckMap){
-      if(typeof L==='undefined'){
-        el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:12px;">Map unavailable — Leaflet not loaded</div>';
-        if(badge)badge.textContent='Unavailable';badge.style.color='#6b7280';
-        return;
-      }
-      _truckMap=L.map('truck-map',{zoomControl:true,attributionControl:false}).setView([37.7528,-100.0171],13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_truckMap);
-    }
-  }catch(e){
-    console.error('[Map] Init failed:',e);
-    el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:12px;">Map unavailable</div>';
-    if(badge){badge.textContent='Unavailable';badge.style.color='#6b7280';}
-    return;
-  }
-  // Ensure map-hidden is removed on init so side panel is visible
+  // Ensure map panel is visible first so container has dimensions
   var row=document.getElementById('del-body-row');
   if(row)row.classList.remove('map-hidden');
   _truckMapVisible=true;
   var btn=document.querySelector('.truck-map-toggle');
   if(btn)btn.textContent='Hide Map';
-  // invalidateSize after layout settles
-  setTimeout(function(){if(_truckMap)_truckMap.invalidateSize();},100);
-  truckMapLoad();
-  truckMapShowDeliveryStops();
-  if(_truckTimer)clearInterval(_truckTimer);
-  _truckTimer=setInterval(truckMapLoad,60000);
+  // Delay init so container has layout dimensions
+  setTimeout(function(){
+    try{
+      if(!_truckMap){
+        if(typeof L==='undefined'){
+          el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:12px;">Map unavailable — Leaflet not loaded</div>';
+          if(badge){badge.textContent='Unavailable';badge.style.color='#6b7280';}
+          return;
+        }
+        _truckMap=L.map('truck-map',{zoomControl:true,attributionControl:false}).setView([37.7528,-100.0171],13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_truckMap);
+      }
+      _truckMap.invalidateSize();
+    }catch(e){
+      console.error('[Map] Init failed:',e);
+      el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:12px;">Map unavailable</div>';
+      if(badge){badge.textContent='Unavailable';badge.style.color='#6b7280';}
+      return;
+    }
+    truckMapLoad();
+    truckMapShowDeliveryStops();
+    if(_truckTimer)clearInterval(_truckTimer);
+    _truckTimer=setInterval(truckMapLoad,60000);
+  },200);
 }
 
 var _truckMockData=[
@@ -909,11 +911,14 @@ async function truckMapLoad(){
   var badge=document.getElementById('truck-map-status');
   var data=null;
   try{
-    var res=await fetch('/api/trucks?_t='+Date.now(),{cache:'no-store'});
+    var controller=new AbortController();
+    var timeout=setTimeout(function(){controller.abort();},5000);
+    var res=await fetch('/api/trucks?_t='+Date.now(),{cache:'no-store',signal:controller.signal});
+    clearTimeout(timeout);
     data=await res.json();
     if(!data||!data.ok)data=null;
   }catch(e){
-    console.error('[Map] Truck API failed, using local fallback:',e.message);
+    console.log('[Map] Truck API unavailable, using local fallback');
     data=null;
   }
   // Fallback to client-side mock data if API fails
