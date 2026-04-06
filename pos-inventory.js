@@ -189,13 +189,19 @@ function exportCSV(){
   var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='inventory.csv';a.click();
   toast('CSV exported','success');
 }
-// Categories that require serial number tracking by default
-var SERIAL_TRACKED_CATS=['BOTTOM MOUNT FRIDGE','BUILT IN','COMBO WASHER DRYER','COOK TOP','DISHWASHERS','DRYERS','FREEZER','FRENCH DOOR FRIDGE','ICEMKR','RANGES','SIDE BY SIDE FRIDGE','TOP MOUNT','TRASH COMPACTOR','WASHERS','BEVERAGE CENTER','Refrigerators','Washers & Dryers','Dishwashers','Ovens & Ranges','Wall Ovens'];
+// ═══ SERIAL TRACKED — central lists ═══
+// Category names (from inventory data) that require serial tracking
+var SERIAL_TRACKED_CATS=['BOTTOM MOUNT FRIDGE','BUILT IN','COMBO WASHER DRYER','COOK TOP','DISHWASHERS','DRYERS','FREEZER','FRENCH DOOR FRIDGE','ICEMKR','RANGES','SIDE BY SIDE FRIDGE','TOP MOUNT','TRASH COMPACTOR','WASHERS','BEVERAGE CENTER','Refrigerators','Washers & Dryers','Dishwashers','Ovens & Ranges','Wall Ovens','Microwaves','MICROWAVE','OTR MICROWAVE','COUNTERTOP MICROWAVE','BUILT-IN MICROWAVE','Ice Makers','ICE MAKER'];
+// Appliance type names (from delivery dropdown) that require serial tracking
+var SERIAL_TRACKED_APPLIANCES=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker'];
 
 function isSerialTracked(p){
   if(p.serialTracked!==undefined)return !!p.serialTracked;
-  // Default: true for major appliance categories
-  return SERIAL_TRACKED_CATS.indexOf(p.cat)!==-1;
+  // Check by category name
+  if(SERIAL_TRACKED_CATS.indexOf(p.cat)!==-1)return true;
+  // Check by product name containing a tracked appliance type
+  var nm=(p.name||'').toLowerCase();
+  return SERIAL_TRACKED_APPLIANCES.some(function(a){return nm.indexOf(a.toLowerCase())>=0;});
 }
 
 function populateVendorDropdown(selId){

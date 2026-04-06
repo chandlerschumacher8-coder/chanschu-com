@@ -808,6 +808,14 @@ var NOTE_COLORS=[
 ];
 var selectedColor='yellow';
 
+// ═══ SERIAL TRACKED APPLIANCES (central list) ═══
+var SERIAL_TRACKED_APPLIANCES=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker'];
+function isApplianceSerialTracked(a){
+  if(a.tracked===false)return false;
+  if(a.tracked===true)return true;
+  return SERIAL_TRACKED_APPLIANCES.indexOf(a.a)>=0;
+}
+
 // ═══ STATE ═══
 var deliveries=[],notes=[],nextDelId=1,nextNoteId=1;
 var weekStart=getWeekStart(new Date());
@@ -1370,11 +1378,7 @@ function hasFlag(d){
 function hasPendingSerials(d){
   if(d.status==='Delivered')return false;
   var apps=d.appliances||[];if(!apps.length)return false;
-  var majorAppliances=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Freezer','Ice Maker'];
-  return apps.some(function(a){
-    var tracked=a.tracked!==false&&(a.tracked===true||majorAppliances.indexOf(a.a)>=0);
-    return tracked&&!a.serial;
-  });
+  return apps.some(function(a){return isApplianceSerialTracked(a)&&!a.serial;});
 }
 
 function renderLogHtml(d,isMobile){
@@ -1484,8 +1488,7 @@ function openDeliveryDetail(id){
     '<div style="margin-bottom:10px;"><div class="dl" style="margin-bottom:6px;">Appliances</div>'+
       apps.map(function(a,i){
         // Determine tracking state: tracked=true by default for major appliances
-        var majorAppliances=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Freezer','Ice Maker'];
-        var tracked=a.tracked!==false&&(a.tracked===true||majorAppliances.indexOf(a.a)>=0);
+        var tracked=isApplianceSerialTracked(a);
         var snLine='';
         if(!tracked){
           snLine='<span style="color:var(--text3);font-size:11px;">— Not Tracked</span>';
@@ -1536,8 +1539,7 @@ async function setStatus(id,status){
   // If marking delivered — check for missing serials on tracked items
   if(status==='Delivered'){
     var apps=d.appliances&&d.appliances.length?d.appliances:[];
-    var majorAppliances=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Freezer','Ice Maker'];
-    var missing=apps.filter(function(a){var tracked=a.tracked!==false&&(a.tracked===true||majorAppliances.indexOf(a.a)>=0);return tracked&&!a.serial;});
+    var missing=apps.filter(function(a){return isApplianceSerialTracked(a)&&!a.serial;});
     if(missing.length){
       showSerialPrompt(id,missing);
       return;
