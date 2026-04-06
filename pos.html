@@ -71,6 +71,29 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .primary-btn:hover{background:#3b82f6;}
 .ghost-btn{background:transparent;border:1px solid #d1d5db;color:#6b7280;border-radius:7px;padding:8px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
 .ghost-btn:hover{color:#1f2937;border-color:#9ca3af;}
+/* Product Card */
+.pc-tab{padding:10px 16px;font-size:11px;font-weight:700;color:#6b7280;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s;}
+.pc-tab:hover{color:#1f2937;background:#f9fafb;}
+.pc-tab.active{color:#2563eb;border-bottom-color:#2563eb;}
+.pc-field{margin-bottom:10px;}
+.pc-field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:3px;}
+.pc-field input,.pc-field select,.pc-field textarea{width:100%;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;color:#1f2937;background:#fff;outline:none;}
+.pc-field input:focus,.pc-field select:focus{border-color:#2563eb;}
+.pc-field input[readonly],.pc-field select[disabled]{background:#f3f4f6;color:#6b7280;cursor:default;}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pc-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.pc-section{padding:16px 18px;border-bottom:1px solid #f3f4f6;}
+.pc-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:10px;}
+.pc-stat{text-align:center;padding:10px;background:#f8fafc;border-radius:8px;}
+.pc-stat-val{font-size:18px;font-weight:800;color:#1f2937;}
+.pc-stat-lbl{font-size:9px;color:#6b7280;margin-top:2px;}
+.pc-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.pc-tbl th{text-align:left;padding:8px 10px;background:#f8fafc;color:#6b7280;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #e5e7eb;}
+.pc-tbl td{padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#1f2937;}
+.pc-tbl tr:hover{background:#f9fafb;}
+.pc-badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.pc-link{color:#2563eb;cursor:pointer;text-decoration:none;font-weight:600;}
+.pc-link:hover{text-decoration:underline;}
 .danger-btn{background:transparent;border:1px solid #fca5a5;color:#dc2626;border-radius:7px;padding:8px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
 .danger-btn:hover{background:#fef2f2;}
 
@@ -2205,6 +2228,31 @@ POS Settings
 <div id="cust-csv-error" style="display:none;color:var(--red);font-size:12px;padding:10px;background:rgba(224,112,112,0.08);border-radius:8px;margin-top:8px;"></div>
 </div>
 <div class="modal-footer"><button class="ghost-btn" onclick="closeModal('cust-csv-modal');custCsvReset();">Cancel</button><button class="primary-btn" id="cust-csv-import-btn" onclick="custCsvImport()" style="display:none;">Import All</button></div>
+</div>
+</div>
+
+<!-- ═══ PRODUCT INVENTORY CARD MODAL ═══ -->
+<div class="modal-bg" id="product-card-modal" onclick="if(event.target===this)closeProductCard()">
+<div class="modal" style="max-width:900px;height:90vh;display:flex;flex-direction:column;" id="pc-modal-inner">
+<div class="modal-hdr" style="flex-shrink:0;">
+<div style="display:flex;align-items:center;gap:10px;">
+<span style="font-size:20px;" id="pc-icon">&#x1F4E6;</span>
+<div><div class="modal-title" id="pc-title">Product Card</div><div style="font-size:11px;color:#6b7280;" id="pc-subtitle"></div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;">
+<span id="pc-readonly-badge" style="display:none;font-size:9px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-weight:700;">VIEW ONLY</span>
+<button class="modal-close" onclick="closeProductCard()">&#x2715;</button>
+</div>
+</div>
+<div style="display:flex;border-bottom:1px solid #e5e7eb;flex-shrink:0;overflow-x:auto;" id="pc-tabs">
+<div class="pc-tab active" data-tab="info" onclick="pcSwitchTab('info')">Product Info</div>
+<div class="pc-tab" data-tab="pricing" onclick="pcSwitchTab('pricing')">Pricing &amp; Cost</div>
+<div class="pc-tab" data-tab="serials" onclick="pcSwitchTab('serials')">Serial Pool</div>
+<div class="pc-tab" data-tab="received" onclick="pcSwitchTab('received')">Received</div>
+<div class="pc-tab" data-tab="sales" onclick="pcSwitchTab('sales')">Sales</div>
+<div class="pc-tab" data-tab="stock" onclick="pcSwitchTab('stock')">Stock</div>
+</div>
+<div class="modal-body" style="flex:1;overflow-y:auto;padding:0;" id="pc-body"></div>
 </div>
 </div>
 
@@ -5430,7 +5478,7 @@ function renderCart(){
     var discInp='<input type="number" step="0.5" min="0" max="100" value="'+(disc||0)+'" data-cart-disc="'+idx+'" onchange="cartCommitDisc('+idx+',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="width:42px;font-size:11px;font-weight:700;padding:2px 4px;border:1px solid '+(disc>0?'#fca5a5':'#d1d5db')+';border-radius:4px;text-align:right;background:#fff;color:'+(disc>0?'#dc2626':'#1f2937')+';outline:none;"'+(locked?' readonly onclick="toast(\'Price is locked — see manager\',\'error\')"':'')+'/>%';
     return '<div class="cart-item" style="flex-wrap:wrap;" id="ci-row-'+idx+'">'
       +'<div class="ci-info"><div class="ci-name">'+c.name+pmBadge+adjBadge+lockIcon+'</div>'
-      +'<div class="ci-price" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">Price: '+origStrike+priceInp+' <span style="color:#d1d5db;">&middot;</span> Disc: '+discInp+' <span style="color:#d1d5db;">&middot;</span> Qty: '+c.qty+(c.model?' <span style="color:#d1d5db;">&middot;</span> '+c.model:'')+'</div>'
+      +'<div class="ci-price" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">Price: '+origStrike+priceInp+' <span style="color:#d1d5db;">&middot;</span> Disc: '+discInp+' <span style="color:#d1d5db;">&middot;</span> Qty: '+c.qty+(c.model?' <span style="color:#d1d5db;">&middot;</span> <a class="pc-link" style="font-size:10px;" onclick="event.stopPropagation();openProductCard('+c.id+',{readOnly:true,cartIdx:'+idx+'})">'+c.model+'</a>':'')+'</div>'
       +costWarn
       +'</div>'
       +'<div class="ci-qty"><button onclick="cartQty('+c.id+',-1)">-</button><span>'+c.qty+'</span><button onclick="cartQty('+c.id+',1)">+</button></div>'

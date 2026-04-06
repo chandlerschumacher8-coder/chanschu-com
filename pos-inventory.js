@@ -145,7 +145,7 @@ function renderInventory(){
     var snBadge=isSerialTracked(p)?'<span style="font-size:8px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;margin-left:4px;">SN</span>':'';
     var lockBadge=p.priceLocked?' <span title="Price locked" style="cursor:pointer;" onclick="togglePriceLock('+p.id+')">&#x1F512;</span>':' <span title="Click to lock price" style="cursor:pointer;color:#d1d5db;" onclick="togglePriceLock('+p.id+')">&#x1F513;</span>';
     var vendorCell=p.vendor?'<a href="#" onclick="event.preventDefault();invFilterByVendor(\''+(p.vendor||'').replace(/'/g,"\\'")+'\')" style="color:#2563eb;font-weight:600;text-decoration:none;">'+p.vendor+'</a>':'<span style="color:#9ca3af;">—</span>';
-    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td>'+(p.model||'')+'</td><td>'+p.name+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+vendorCell+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+lockBadge+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
+    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td><a class="pc-link" onclick="openProductCard('+p.id+')">'+(p.model||'—')+'</a></td><td><a class="pc-link" style="color:#1f2937;" onclick="openProductCard('+p.id+')">'+p.name+'</a>'+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+vendorCell+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+lockBadge+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
   }).join('');
   // Low stock alerts — active items only, based on Avail-Sold
   var alerts=PRODUCTS.filter(function(p){var ams=p.stock-(p.sold||0);return p.active!==false&&ams<=p.reorderPt;});
@@ -464,7 +464,7 @@ function renderOrderDetail(){
         deliveryHtml='<div style="display:flex;align-items:center;gap:6px;margin-top:6px;"><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--gray-2);cursor:pointer;"><input type="checkbox" id="ood-del-'+idx+'" style="accent-color:var(--green);"/> Mark Delivered</label></div>';
       }
     }
-    return '<div class="ood-item" style="flex-wrap:wrap;"><div class="ood-item-info"><div class="ood-item-name">'+i.name+'</div><div class="ood-item-meta">'+(i.model||'')+' x '+i.qty+(inStock?' <span style="color:var(--green);">In Stock</span>':' <span style="color:var(--red);">Low/Out</span>')+'</div></div><div class="ood-item-price">'+fmt(i.price*i.qty)+'</div><div style="width:100%;">'+deliveryHtml+'</div></div>';
+    return '<div class="ood-item" style="flex-wrap:wrap;"><div class="ood-item-info"><div class="ood-item-name">'+i.name+'</div><div class="ood-item-meta">'+(i.model?'<a class="pc-link" onclick="openProductCardByModel(\''+i.model.replace(/'/g,"\\'")+'\')">'+i.model+'</a>':'')+' x '+i.qty+(inStock?' <span style="color:var(--green);">In Stock</span>':' <span style="color:var(--red);">Low/Out</span>')+'</div></div><div class="ood-item-price">'+fmt(i.price*i.qty)+'</div><div style="width:100%;">'+deliveryHtml+'</div></div>';
   }).join('');
   var isQuote=o.status==='Quote';
   var notesHtml='';
@@ -2069,7 +2069,7 @@ function renderRecvDetail(){
     var back=Math.max(0,it.qtyOrdered-recv);
     var icon=recv>=it.qtyOrdered?'&#x2705;':recv>0?'&#x26A0;&#xFE0F;':'&#x274C;';
     var disabled=po.status==='Received'?'disabled':'';
-    body+='<tr><td>'+(it.model||'')+'</td><td>'+it.name+'</td><td style="text-align:center;">'+it.qtyOrdered+'</td><td><input type="number" class="recv-qty-inp" value="'+recv+'" min="0" max="'+it.qtyOrdered+'" onchange="recvSetQty('+it.productId+',parseInt(this.value)||0)" '+disabled+'/></td><td style="text-align:center;">'+back+'</td><td>'+fmt(it.unitCost)+'</td><td>'+fmt(it.unitCost*it.qtyOrdered)+'</td><td style="text-align:center;">'+icon+'</td></tr>';
+    body+='<tr><td>'+(it.model?'<a class="pc-link" onclick="openProductCardByModel(\''+it.model.replace(/'/g,"\\'")+'\')">'+it.model+'</a>':'')+'</td><td>'+it.name+'</td><td style="text-align:center;">'+it.qtyOrdered+'</td><td><input type="number" class="recv-qty-inp" value="'+recv+'" min="0" max="'+it.qtyOrdered+'" onchange="recvSetQty('+it.productId+',parseInt(this.value)||0)" '+disabled+'/></td><td style="text-align:center;">'+back+'</td><td>'+fmt(it.unitCost)+'</td><td>'+fmt(it.unitCost*it.qtyOrdered)+'</td><td style="text-align:center;">'+icon+'</td></tr>';
   });
   body+='</tbody></table></div>';
   var totalOrdered=po.items.reduce(function(s,i){return s+i.unitCost*i.qtyOrdered;},0);
@@ -2522,3 +2522,369 @@ async function pollOrders(){
 }
 // Auto-start polling when page loads
 setTimeout(startOrderPolling,3000);
+
+// ══════════════════════════════════════════════
+// PRODUCT INVENTORY CARD
+// ══════════════════════════════════════════════
+var _pcProduct=null,_pcTab='info',_pcReadOnly=false,_pcCartIdx=-1;
+
+function openProductCard(productId,opts){
+  opts=opts||{};
+  var p=PRODUCTS.find(function(x){return x.id===productId;});
+  if(!p){toast('Product not found','error');return;}
+  _pcProduct=p;
+  _pcTab='info';
+  _pcReadOnly=!!opts.readOnly;
+  _pcCartIdx=opts.cartIdx!=null?opts.cartIdx:-1;
+  document.getElementById('pc-title').textContent=p.name||'Product';
+  document.getElementById('pc-subtitle').textContent=(p.model||p.sku||'')+(p.brand?' — '+p.brand:'');
+  document.getElementById('pc-icon').innerHTML=p.icon||'&#x1F4E6;';
+  document.getElementById('pc-readonly-badge').style.display=_pcReadOnly?'inline-block':'none';
+  // Set active tab
+  document.querySelectorAll('.pc-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab==='info');});
+  pcRenderTab();
+  openModal('product-card-modal');
+}
+function openProductCardByModel(model,opts){
+  var p=PRODUCTS.find(function(x){return x.model===model||x.sku===model;});
+  if(!p){toast('Product "'+model+'" not found in inventory','error');return;}
+  openProductCard(p.id,opts);
+}
+function closeProductCard(){closeModal('product-card-modal');_pcProduct=null;}
+function pcSwitchTab(tab){
+  _pcTab=tab;
+  document.querySelectorAll('.pc-tab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===tab);});
+  pcRenderTab();
+}
+function pcRenderTab(){
+  var el=document.getElementById('pc-body');
+  if(!_pcProduct){el.innerHTML='';return;}
+  if(_pcTab==='info')el.innerHTML=pcTabInfo();
+  else if(_pcTab==='pricing')el.innerHTML=pcTabPricing();
+  else if(_pcTab==='serials')el.innerHTML=pcTabSerials();
+  else if(_pcTab==='received')el.innerHTML=pcTabReceived();
+  else if(_pcTab==='sales')el.innerHTML=pcTabSales();
+  else if(_pcTab==='stock')el.innerHTML=pcTabStock();
+}
+
+// ── TAB 1: PRODUCT INFO ──
+function pcTabInfo(){
+  var p=_pcProduct,ro=_pcReadOnly;
+  var v=(typeof adminVendors!=='undefined')?adminVendors.find(function(x){return x.name===p.vendor;}):null;
+  var vendorOpts=(typeof adminVendors!=='undefined')?adminVendors.map(function(x){return '<option'+(x.name===p.vendor?' selected':'')+'>'+x.name+'</option>';}).join(''):'';
+  var brandSet={};PRODUCTS.forEach(function(x){if(x.brand)brandSet[x.brand]=true;});
+  var brands=Object.keys(brandSet).sort();
+  var brandOpts=brands.map(function(b){return '<option'+(b===p.brand?' selected':'')+'>'+b+'</option>';}).join('');
+  var catOpts='';
+  if(typeof DEPARTMENTS!=='undefined')DEPARTMENTS.forEach(function(d){d.cats.forEach(function(c){catOpts+='<option'+(c===p.cat?' selected':'')+'>'+c+'</option>';});});
+  var deptOpts='';
+  if(typeof DEPARTMENTS!=='undefined')DEPARTMENTS.forEach(function(d){deptOpts+='<option'+(d.name===(p.dept||getProductDept(p))?' selected':'')+'>'+d.name+'</option>';});
+  var rd=ro?' readonly':'';
+  var dis=ro?' disabled':'';
+  var h='<div class="pc-section">';
+  h+='<div class="pc-grid">';
+  h+='<div class="pc-field"><label>Model Number</label><input id="pc-model" value="'+(p.model||'')+'"'+rd+'/></div>';
+  h+='<div class="pc-field"><label>PLU / SKU</label><input id="pc-sku" value="'+(p.sku||'')+'"'+rd+'/></div>';
+  h+='</div>';
+  h+='<div class="pc-field"><label>Description</label><input id="pc-name" value="'+((p.name||'').replace(/"/g,'&quot;'))+'"'+rd+'/></div>';
+  h+='<div class="pc-grid">';
+  h+='<div class="pc-field"><label>Brand</label>'+(ro?'<input value="'+(p.brand||'')+'" readonly/>':'<select id="pc-brand"><option value="">—</option>'+brandOpts+'</select>')+'</div>';
+  h+='<div class="pc-field"><label>Vendor</label>'+(ro?'<input value="'+(p.vendor||'')+'" readonly/>':'<select id="pc-vendor" onchange="pcVendorChanged()"><option value="">—</option>'+vendorOpts+'</select>')+'</div>';
+  h+='</div>';
+  h+='<div class="pc-grid3">';
+  h+='<div class="pc-field"><label>Vendor Rep</label><input value="'+(v?v.repName||'':'—')+'" readonly/></div>';
+  h+='<div class="pc-field"><label>Rep Phone</label><input value="'+(v?v.phone||'':'—')+'" readonly/></div>';
+  h+='<div class="pc-field"><label>Account #</label><input value="'+(v?v.accountNum||'':'—')+'" readonly/></div>';
+  h+='</div>';
+  h+='<div class="pc-grid">';
+  h+='<div class="pc-field"><label>Category</label>'+(ro?'<input value="'+(p.cat||'')+'" readonly/>':'<select id="pc-cat">'+catOpts+'</select>')+'</div>';
+  h+='<div class="pc-field"><label>Department</label>'+(ro?'<input value="'+(p.dept||getProductDept(p)||'')+'" readonly/>':'<select id="pc-dept">'+deptOpts+'</select>')+'</div>';
+  h+='</div>';
+  h+='<div class="pc-grid3">';
+  h+='<div class="pc-field"><label>UPC</label><input id="pc-upc" value="'+(p.upc||'')+'"'+rd+'/></div>';
+  h+='<div class="pc-field"><label>Warranty</label><input id="pc-warranty" value="'+(p.warranty||'')+'"'+rd+'/></div>';
+  h+='<div class="pc-field"><label>Icon</label><input id="pc-icon-field" value="'+(p.icon||'')+'"'+rd+'/></div>';
+  h+='</div>';
+  h+='<div class="pc-grid3">';
+  h+='<div class="pc-field"><label>Serial Tracked</label><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1f2937;cursor:pointer;margin-top:4px;"><input type="checkbox" id="pc-serial-tracked"'+(p.serialTracked!==false&&isSerialTracked(p)?' checked':'')+(ro?' disabled':'')+' style="accent-color:#2563eb;"/> Yes</label></div>';
+  h+='<div class="pc-field"><label>Price Locked</label><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1f2937;cursor:pointer;margin-top:4px;"><input type="checkbox" id="pc-price-locked"'+(p.priceLocked?' checked':'')+(ro?' disabled':'')+' style="accent-color:#dc2626;"/> &#x1F512; Locked</label></div>';
+  h+='<div></div>';
+  h+='</div>';
+  h+='<div class="pc-grid3">';
+  h+='<div class="pc-field"><label>Min Qty (Reorder Pt)</label><input id="pc-reorder" type="number" value="'+(p.reorderPt||0)+'"'+rd+'/></div>';
+  h+='<div class="pc-field"><label>Reorder Qty</label><input id="pc-reorderqty" type="number" value="'+(p.reorderQty||0)+'"'+rd+'/></div>';
+  h+='<div class="pc-field"><label>Stock</label><input value="'+(p.stock||0)+'" readonly/></div>';
+  h+='</div>';
+  if(!ro)h+='<div style="margin-top:14px;text-align:right;"><button class="primary-btn" onclick="pcSaveInfo()">Save Changes</button></div>';
+  h+='</div>';
+  return h;
+}
+function pcVendorChanged(){
+  var sel=document.getElementById('pc-vendor');
+  if(!sel)return;
+  var v=(typeof adminVendors!=='undefined')?adminVendors.find(function(x){return x.name===sel.value;}):null;
+  // Re-render to update vendor rep fields
+  pcRenderTab();
+  if(v)setTimeout(function(){var s=document.getElementById('pc-vendor');if(s)s.value=v.name;},0);
+}
+function pcSaveInfo(){
+  var p=_pcProduct;if(!p||_pcReadOnly)return;
+  p.model=(document.getElementById('pc-model').value||'').trim();
+  p.sku=(document.getElementById('pc-sku').value||'').trim();
+  p.name=(document.getElementById('pc-name').value||'').trim();
+  var brandSel=document.getElementById('pc-brand');if(brandSel)p.brand=brandSel.value;
+  var vendorSel=document.getElementById('pc-vendor');if(vendorSel)p.vendor=vendorSel.value;
+  var catSel=document.getElementById('pc-cat');if(catSel)p.cat=catSel.value;
+  var deptSel=document.getElementById('pc-dept');if(deptSel)p.dept=deptSel.value;
+  p.upc=(document.getElementById('pc-upc').value||'').trim();
+  p.warranty=(document.getElementById('pc-warranty').value||'').trim();
+  p.icon=(document.getElementById('pc-icon-field').value||'').trim();
+  p.serialTracked=document.getElementById('pc-serial-tracked').checked;
+  p.priceLocked=document.getElementById('pc-price-locked').checked;
+  p.reorderPt=parseInt(document.getElementById('pc-reorder').value)||0;
+  p.reorderQty=parseInt(document.getElementById('pc-reorderqty').value)||0;
+  saveProducts();renderInventory();toast('Product saved','success');
+  document.getElementById('pc-subtitle').textContent=(p.model||p.sku||'')+(p.brand?' — '+p.brand:'');
+  document.getElementById('pc-title').textContent=p.name||'Product';
+}
+
+// ── TAB 2: PRICING & COST ──
+function pcTabPricing(){
+  var p=_pcProduct,ro=_pcReadOnly;
+  var margin=p.price>0?((p.price-(p.cost||0))/p.price*100):0;
+  var marginDollar=p.price-(p.cost||0);
+  var cartPrice=(_pcCartIdx>=0&&cart[_pcCartIdx])?cart[_pcCartIdx].price:null;
+  var h='<div class="pc-section">';
+  h+='<div class="pc-grid3" style="margin-bottom:14px;">';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+fmt(p.price)+'</div><div class="pc-stat-lbl">Retail Price</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+fmt(p.cost||0)+'</div><div class="pc-stat-lbl">Cost</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val" style="color:'+(margin>=0?'#16a34a':'#dc2626')+';">'+margin.toFixed(1)+'%</div><div class="pc-stat-lbl">Margin</div></div>';
+  h+='</div>';
+  if(cartPrice!==null&&cartPrice!==p.price){
+    h+='<div style="padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;margin-bottom:14px;font-size:12px;"><strong style="color:#2563eb;">Cart Price:</strong> '+fmt(cartPrice)+' <span style="color:#6b7280;">(Retail: '+fmt(p.price)+')</span></div>';
+  }
+  h+='<div class="pc-grid">';
+  h+='<div class="pc-field"><label>Cost</label><input id="pc-cost" type="number" step="0.01" value="'+(p.cost||0).toFixed(2)+'"'+(ro?' readonly':'')+'/></div>';
+  h+='<div class="pc-field"><label>Retail Price</label><input id="pc-price" type="number" step="0.01" value="'+(p.price||0).toFixed(2)+'"'+(ro?' readonly':'')+'/></div>';
+  h+='</div>';
+  h+='<div class="pc-grid">';
+  h+='<div class="pc-field"><label>Margin %</label><input value="'+margin.toFixed(1)+'%" readonly/></div>';
+  h+='<div class="pc-field"><label>Margin $</label><input value="'+fmt(marginDollar)+'" readonly/></div>';
+  h+='</div>';
+  if(!ro)h+='<div style="margin-top:14px;text-align:right;"><button class="primary-btn" onclick="pcSavePricing()">Save Changes</button></div>';
+  h+='</div>';
+  // Pricing history
+  h+='<div class="pc-section"><div class="pc-section-title">Pricing History</div>';
+  var history=p.priceHistory||[];
+  if(!history.length){h+='<div style="text-align:center;padding:20px;color:#9ca3af;font-size:11px;">No pricing changes recorded yet</div>';}
+  else{
+    h+='<table class="pc-tbl"><thead><tr><th>Date</th><th>Field</th><th>Old</th><th>New</th><th>By</th></tr></thead><tbody>';
+    history.slice().reverse().forEach(function(e){
+      h+='<tr><td>'+new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</td><td>'+e.field+'</td><td>'+fmt(e.oldVal)+'</td><td>'+fmt(e.newVal)+'</td><td>'+(e.by||'—')+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='</div>';
+  return h;
+}
+function pcSavePricing(){
+  var p=_pcProduct;if(!p||_pcReadOnly)return;
+  var newCost=parseFloat(document.getElementById('pc-cost').value)||0;
+  var newPrice=parseFloat(document.getElementById('pc-price').value)||0;
+  var by=currentEmployee?currentEmployee.name:'Admin';
+  if(!p.priceHistory)p.priceHistory=[];
+  if(newCost!==p.cost)p.priceHistory.push({date:new Date().toISOString(),field:'Cost',oldVal:p.cost||0,newVal:newCost,by:by});
+  if(newPrice!==p.price)p.priceHistory.push({date:new Date().toISOString(),field:'Price',oldVal:p.price||0,newVal:newPrice,by:by});
+  p.cost=newCost;p.price=newPrice;
+  saveProducts();renderInventory();pcRenderTab();toast('Pricing saved','success');
+}
+
+// ── TAB 3: SERIAL POOL ──
+function pcTabSerials(){
+  var p=_pcProduct;
+  var pool=p.serialPool||[];
+  var avail=pool.filter(function(s){return s.status==='Available';}).length;
+  var assigned=pool.filter(function(s){return s.status!=='Available'&&s.status!=='Returned';}).length;
+  var returned=pool.filter(function(s){return s.status==='Returned';}).length;
+  var h='<div class="pc-section">';
+  h+='<div class="pc-grid3" style="margin-bottom:14px;">';
+  h+='<div class="pc-stat"><div class="pc-stat-val" style="color:#16a34a;">'+avail+'</div><div class="pc-stat-lbl">Available</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val" style="color:#2563eb;">'+assigned+'</div><div class="pc-stat-lbl">Assigned</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val" style="color:#d97706;">'+returned+'</div><div class="pc-stat-lbl">Returned</div></div>';
+  h+='</div>';
+  if(!_pcReadOnly)h+='<button class="ghost-btn" onclick="pcAddSerial()" style="margin-bottom:12px;">+ Add Serial Manually</button>';
+  if(!pool.length){h+='<div style="text-align:center;padding:20px;color:#9ca3af;font-size:11px;">No serial numbers in pool</div>';}
+  else{
+    h+='<table class="pc-tbl"><thead><tr><th>Serial #</th><th>Status</th><th>Received</th><th>Condition</th><th>Assigned To</th></tr></thead><tbody>';
+    pool.forEach(function(s){
+      var stColor=s.status==='Available'?'#dcfce7;color:#16a34a':s.status==='Returned'?'#fef3c7;color:#92400e':'#dbeafe;color:#1d4ed8';
+      // Find assignment
+      var assignInfo='—';
+      if(s.status!=='Available'&&s.status!=='Returned'){
+        var match=orders.find(function(o){return(o.items||[]).some(function(i){return i.serial===s.sn;});});
+        if(match)assignInfo='<a class="pc-link" onclick="closeProductCard();printInvoice(\''+match.id+'\')">'+match.id+'</a> — '+match.customer;
+      }
+      h+='<tr><td style="font-weight:700;font-family:monospace;">'+s.sn+'</td><td><span class="pc-badge" style="background:'+stColor+'">'+s.status+'</span></td><td>'+(s.receivedAt?new Date(s.receivedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}):'—')+'</td><td>'+(s.condition||'New')+'</td><td>'+assignInfo+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  // If opened from cart, allow selecting a serial
+  if(_pcCartIdx>=0&&avail>0){
+    h+='<div style="margin-top:12px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;color:#1d4ed8;">Click an available serial above to assign it to the cart item, or use the <strong>Select Serial #</strong> button in the cart.</div>';
+  }
+  h+='</div>';
+  return h;
+}
+function pcAddSerial(){
+  var p=_pcProduct;if(!p)return;
+  var sn=prompt('Enter serial number:');if(!sn||!sn.trim())return;
+  if(!p.serialPool)p.serialPool=[];
+  if(p.serialPool.find(function(s){return s.sn===sn.trim();})){toast('Serial already exists','error');return;}
+  p.serialPool.push({sn:sn.trim(),status:'Available',receivedAt:new Date().toISOString(),vendor:p.vendor||''});
+  saveProducts();pcRenderTab();toast('Serial added','success');
+}
+
+// ── TAB 4: RECEIVED HISTORY ──
+function pcTabReceived(){
+  var p=_pcProduct;
+  var pos=(typeof purchaseOrders!=='undefined')?purchaseOrders:[];
+  var entries=[];
+  pos.forEach(function(po){
+    (po.items||[]).forEach(function(item){
+      if(item.productId===p.id||(item.model&&p.model&&item.model===p.model)){
+        if(item.qtyReceived>0||po.status==='Received'){
+          entries.push({date:po.receivedDate||po.date,poId:po.id,qty:item.qtyReceived||item.qtyOrdered,cost:item.unitCost||0,by:po.receivedBy||'—',vendor:po.vendor||''});
+        }
+      }
+    });
+  });
+  var totalReceived=entries.reduce(function(s,e){return s+e.qty;},0);
+  var h='<div class="pc-section">';
+  h+='<div class="pc-stat" style="margin-bottom:14px;"><div class="pc-stat-val">'+totalReceived+'</div><div class="pc-stat-lbl">Total Units Received (All Time)</div></div>';
+  if(!entries.length){h+='<div style="text-align:center;padding:20px;color:#9ca3af;font-size:11px;">No receiving records found</div>';}
+  else{
+    h+='<table class="pc-tbl"><thead><tr><th>Date</th><th>PO #</th><th>Vendor</th><th>Qty</th><th>Unit Cost</th><th>Received By</th></tr></thead><tbody>';
+    entries.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    entries.forEach(function(e){
+      h+='<tr><td>'+new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</td><td><a class="pc-link" onclick="closeProductCard();poReceive(\''+e.poId+'\')">'+e.poId+'</a></td><td>'+e.vendor+'</td><td>'+e.qty+'</td><td>'+fmt(e.cost)+'</td><td>'+e.by+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='</div>';
+  return h;
+}
+
+// ── TAB 5: SALES HISTORY ──
+function pcTabSales(){
+  var p=_pcProduct;
+  var entries=[];
+  orders.forEach(function(o){
+    if(o.status==='Quote')return;
+    (o.items||[]).forEach(function(i){
+      if(i.id===p.id||(i.model&&p.model&&i.model===p.model)){
+        entries.push({invoice:o.id,date:o.date,customer:o.customer,clerk:o.clerk||'—',qty:i.qty,price:i.price,serial:i.serial||'',discount:i.discountPct||i.discount||0});
+      }
+    });
+  });
+  var totalUnits=entries.reduce(function(s,e){return s+e.qty;},0);
+  var totalRev=entries.reduce(function(s,e){return s+e.price*e.qty;},0);
+  var avgPrice=entries.length?totalRev/totalUnits:0;
+  var avgDisc=entries.length?(entries.reduce(function(s,e){return s+(e.discount||0);},0)/entries.length):0;
+  var h='<div class="pc-section">';
+  h+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+totalUnits+'</div><div class="pc-stat-lbl">Units Sold</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+fmt(totalRev)+'</div><div class="pc-stat-lbl">Revenue</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+fmt(avgPrice)+'</div><div class="pc-stat-lbl">Avg Price</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+(avgDisc>0?avgDisc.toFixed(1)+'%':'—')+'</div><div class="pc-stat-lbl">Avg Discount</div></div>';
+  h+='</div>';
+  if(!entries.length){h+='<div style="text-align:center;padding:20px;color:#9ca3af;font-size:11px;">No sales found for this product</div>';}
+  else{
+    h+='<table class="pc-tbl"><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Salesperson</th><th>Qty</th><th>Price</th><th>Serial</th><th>Disc</th></tr></thead><tbody>';
+    entries.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    entries.forEach(function(e){
+      h+='<tr><td><a class="pc-link" onclick="closeProductCard();printInvoice(\''+e.invoice+'\')">'+e.invoice+'</a></td><td>'+new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})+'</td><td><a class="pc-link" onclick="closeProductCard();openCustomerProfile(\''+e.customer.replace(/'/g,"\\'")+'\')">'+e.customer+'</a></td><td>'+e.clerk+'</td><td>'+e.qty+'</td><td>'+fmt(e.price)+'</td><td style="font-family:monospace;font-size:10px;">'+(e.serial||'—')+'</td><td>'+(e.discount?e.discount+'%':'—')+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  h+='</div>';
+  return h;
+}
+
+// ── TAB 6: STOCK LEVELS ──
+function pcTabStock(){
+  var p=_pcProduct;
+  var now=new Date();
+  var thisMonth=now.toISOString().slice(0,7);
+  // Units sold this month
+  var soldThisMonth=0;
+  orders.forEach(function(o){
+    if(o.status==='Quote'||!o.date)return;
+    if(o.date.slice(0,7)!==thisMonth)return;
+    (o.items||[]).forEach(function(i){if(i.id===p.id||(i.model&&p.model&&i.model===p.model))soldThisMonth+=i.qty;});
+  });
+  // Units received this month
+  var recvThisMonth=0;
+  var pos=(typeof purchaseOrders!=='undefined')?purchaseOrders:[];
+  pos.forEach(function(po){
+    if(!po.receivedDate||po.receivedDate.slice(0,7)!==thisMonth)return;
+    (po.items||[]).forEach(function(item){
+      if(item.productId===p.id||(item.model&&p.model&&item.model===p.model))recvThisMonth+=(item.qtyReceived||0);
+    });
+  });
+  // Units on open POs
+  var onOrder=0;
+  pos.forEach(function(po){
+    if(po.status!=='Pending'&&po.status!=='Partially Received')return;
+    (po.items||[]).forEach(function(item){
+      if(item.productId===p.id||(item.model&&p.model&&item.model===p.model))onOrder+=Math.max(0,(item.qtyOrdered||0)-(item.qtyReceived||0));
+    });
+  });
+  var stock=p.stock||0;
+  var statusBadge,statusColor;
+  if(stock<=0){statusBadge='Out of Stock';statusColor='background:#fee2e2;color:#dc2626';}
+  else if(stock<(p.reorderPt||0)){statusBadge='Low Stock';statusColor='background:#fef3c7;color:#92400e';}
+  else{statusBadge='In Stock';statusColor='background:#dcfce7;color:#16a34a';}
+  if(stock<0){statusBadge='Oversold';statusColor='background:#fee2e2;color:#dc2626';}
+
+  var h='<div class="pc-section">';
+  h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;"><span class="pc-badge" style="font-size:12px;padding:6px 14px;'+statusColor+'">'+statusBadge+'</span></div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+stock+'</div><div class="pc-stat-lbl">On Hand</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+soldThisMonth+'</div><div class="pc-stat-lbl">Sold This Month</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+recvThisMonth+'</div><div class="pc-stat-lbl">Received This Month</div></div>';
+  h+='</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">';
+  h+='<div class="pc-stat"><div class="pc-stat-val" style="color:#2563eb;">'+onOrder+'</div><div class="pc-stat-lbl">On Order (PO)</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+(p.reorderPt||0)+'</div><div class="pc-stat-lbl">Min Qty Threshold</div></div>';
+  h+='<div class="pc-stat"><div class="pc-stat-val">'+(p.reorderQty||0)+'</div><div class="pc-stat-lbl">Reorder Qty</div></div>';
+  h+='</div>';
+  // Simple 6-month stock chart
+  h+='<div class="pc-section-title">Stock Trend (6 Months)</div>';
+  h+='<div style="display:flex;align-items:flex-end;gap:4px;height:100px;padding:10px 0;">';
+  var months=[];
+  for(var m=5;m>=0;m--){
+    var d=new Date(now.getFullYear(),now.getMonth()-m,1);
+    var ym=d.toISOString().slice(0,7);
+    var label=d.toLocaleDateString('en-US',{month:'short'});
+    var sold=0,recv=0;
+    orders.forEach(function(o){if(o.date&&o.date.slice(0,7)===ym)(o.items||[]).forEach(function(i){if(i.id===p.id||(i.model&&p.model&&i.model===p.model))sold+=i.qty;});});
+    pos.forEach(function(po){if(po.receivedDate&&po.receivedDate.slice(0,7)===ym)(po.items||[]).forEach(function(item){if(item.productId===p.id||(item.model&&p.model&&item.model===p.model))recv+=(item.qtyReceived||0);});});
+    months.push({label:label,sold:sold,recv:recv,net:recv-sold});
+  }
+  var maxVal=Math.max(1,Math.max.apply(null,months.map(function(m){return Math.max(m.sold,m.recv);})));
+  months.forEach(function(m){
+    var sh=Math.max(2,m.sold/maxVal*70);
+    var rh=Math.max(2,m.recv/maxVal*70);
+    h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">';
+    h+='<div style="display:flex;gap:2px;align-items:flex-end;height:70px;">';
+    h+='<div style="width:12px;height:'+rh+'px;background:#93c5fd;border-radius:2px 2px 0 0;" title="Received: '+m.recv+'"></div>';
+    h+='<div style="width:12px;height:'+sh+'px;background:#fca5a5;border-radius:2px 2px 0 0;" title="Sold: '+m.sold+'"></div>';
+    h+='</div>';
+    h+='<div style="font-size:9px;color:#6b7280;">'+m.label+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div style="display:flex;gap:12px;justify-content:center;font-size:9px;color:#6b7280;margin-top:4px;"><span><span style="display:inline-block;width:8px;height:8px;background:#93c5fd;border-radius:1px;"></span> Received</span><span><span style="display:inline-block;width:8px;height:8px;background:#fca5a5;border-radius:1px;"></span> Sold</span></div>';
+  h+='</div>';
+  return h;
+}

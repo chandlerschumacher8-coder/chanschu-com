@@ -315,7 +315,7 @@ function renderCpHistory(c){
   if(!custOrders.length)return h+'<div style="text-align:center;padding:30px;color:#9ca3af;">No purchase history</div>';
   h+='<div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;"><table class="admin-table" style="font-size:11px;margin:0;"><thead><tr><th>Invoice</th><th>Date</th><th>Items</th><th>Clerk</th><th style="text-align:right;">Total</th></tr></thead><tbody>';
   custOrders.forEach(function(o){
-    var items=(o.items||[]).map(function(i){return i.name+(i.serial?' <span style="color:#22c55e;font-weight:600;">(SN:'+i.serial+')</span>':'');}).join(', ');
+    var items=(o.items||[]).map(function(i){var ml=i.model?'<a class="pc-link" style="font-size:10px;" onclick="openProductCardByModel(\''+i.model.replace(/'/g,"\\'")+'\')">'+i.model+'</a> ':'';return ml+i.name+(i.serial?' <span style="color:#22c55e;font-weight:600;">(SN:'+i.serial+')</span>':'');}).join(', ');
     h+='<tr><td><a href="#" style="color:#2563eb;font-weight:600;" onclick="event.preventDefault();printInvoice(\''+o.id+'\')">'+o.id+'</a></td><td>'+o.date.slice(0,10)+'</td><td style="font-size:10px;">'+items+'</td><td>'+(o.clerk||'—')+'</td><td style="text-align:right;font-weight:600;">'+fmt(o.total)+'</td></tr>';
   });
   h+='</tbody></table></div>';return h;
@@ -352,7 +352,7 @@ function renderCpAppliances(c){
     h+='<div style="font-size:13px;font-weight:700;color:#1f2937;">'+a.appliance+'</div>';
     h+='<div style="font-size:10px;color:#6b7280;">'+dateStr+'</div>';
     h+='</div>';
-    if(a.model)h+='<div style="font-size:11px;color:#6b7280;margin-top:2px;">Model: '+a.model+'</div>';
+    if(a.model)h+='<div style="font-size:11px;color:#6b7280;margin-top:2px;">Model: <a class="pc-link" onclick="openProductCardByModel(\''+a.model.replace(/'/g,"\\'")+'\')">'+a.model+'</a></div>';
     h+='<div style="font-size:12px;color:#22c55e;font-weight:600;margin-top:4px;">Serial: '+a.serial+'</div>';
     if(a.invoice)h+='<div style="font-size:10px;color:#6b7280;margin-top:2px;">Invoice: '+a.invoice+'</div>';
     h+='</div>';
