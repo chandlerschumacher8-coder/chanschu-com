@@ -1186,14 +1186,20 @@ function renderDataImport(){
     // Serial Number Import (full width)
     +'<div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px;">'
-    +'<div><div style="font-size:14px;font-weight:700;">Serial Number Import</div><div style="font-size:11px;color:var(--gray-2);">Import serials from SmartTouch Serial Number Report by Brand (PDF)</div></div>'
+    +'<div><div style="font-size:14px;font-weight:700;">Serial Number Import</div><div style="font-size:11px;color:var(--gray-2);">Import serials from SmartTouch spreadsheet (XLS/XLSX) or PDF report</div></div>'
     +'<button class="ghost-btn" onclick="diShowSerialImportHistory()" style="font-size:11px;">View Import History</button>'
     +'</div>'
+    +'<div style="margin-bottom:10px;display:flex;gap:10px;align-items:center;">'
+    +'<label style="font-size:11px;font-weight:700;color:var(--gray-2);">Brand Override:</label>'
+    +'<select id="di-serial-brand" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;background:#fff;"><option value="">(Auto-detect from filename)</option>'
+    +(typeof adminBrands!=='undefined'?adminBrands.map(function(b){return '<option value="'+b+'">'+b+'</option>';}).join(''):'')
+    +'</select>'
+    +'</div>'
     +'<div style="border:2px dashed #bfdbfe;border-radius:10px;padding:24px 20px;text-align:center;cursor:pointer;position:relative;background:#eff6ff;">'
-    +'<input type="file" accept=".pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="diHandleSerialFile(this.files[0])"/>'
-    +'<div style="font-size:32px;margin-bottom:6px;">&#x1F3F7;</div>'
-    +'<div style="font-size:14px;font-weight:700;color:#1e40af;">Drop Serial Number Report PDF to Import Serial Pool</div>'
-    +'<div style="font-size:11px;color:var(--gray-2);margin-top:4px;">AI extracts brand, models, serials, PLUs, cost, and condition flags. Import one brand at a time or back-to-back.</div>'
+    +'<input type="file" accept=".xls,.xlsx,.csv,.pdf" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="diHandleSerialFile(this.files[0])"/>'
+    +'<div style="font-size:32px;margin-bottom:6px;">&#x1F4CA;</div>'
+    +'<div style="font-size:14px;font-weight:700;color:#1e40af;">Drop Serial Number Report to Import</div>'
+    +'<div style="font-size:11px;color:var(--gray-2);margin-top:4px;">Accepts XLS, XLSX, CSV, or PDF. Extracts brand, models, serials, PO numbers, date received, and condition flags.</div>'
     +'<div id="di-serial-loading" style="display:none;margin-top:10px;font-size:12px;color:#2563eb;font-weight:600;"><span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Reading serial report...</div>'
     +'</div>'
     +'<div id="di-serial-preview" style="display:none;margin-top:12px;"></div></div>'
@@ -2029,46 +2035,109 @@ function diParseSmartTouchSerials(text){
   return{brand:brand,models:nonEmpty};
 }
 
+// ── Spreadsheet serial parser (XLS/XLSX/CSV) ──
+function diParseSerialSpreadsheet(workbook,filename){
+  var sheet=workbook.Sheets[workbook.SheetNames[0]];
+  var rows=XLSX.utils.sheet_to_json(sheet,{header:1,raw:false,dateNF:'MM-DD-YYYY'});
+  // Detect brand from filename (e.g. "serialnumbersbybrandwhirlpool.xls")
+  var brandSel=document.getElementById('di-serial-brand');
+  var brand=(brandSel&&brandSel.value)?brandSel.value:'';
+  if(!brand){
+    var fn=filename.toLowerCase().replace(/[^a-z0-9]/g,'');
+    var knownBrands=(typeof adminBrands!=='undefined'?adminBrands:['Samsung','LG','Whirlpool','Bosch','GE','KitchenAid','Maytag','Frigidaire','Blomberg']);
+    for(var b=0;b<knownBrands.length;b++){if(fn.indexOf(knownBrands[b].toLowerCase())>=0){brand=knownBrands[b];break;}}
+  }
+  console.log('[Serial XLS] Brand:',brand||'(unknown)','| Total rows:',rows.length);
+  var models=[],currentModel=null,modelMap={};
+  for(var i=0;i<rows.length;i++){
+    var row=rows[i];if(!row||!row.length)continue;
+    var colA=(row[0]||'').toString().trim();
+    var colB=(row[1]||'').toString().trim();
+    var colC=(row[2]||'').toString().trim();
+    var colD=(row[3]||'').toString().trim();
+    // If column A has a value → model row
+    if(colA&&!colB){
+      // Skip header rows
+      if(colA.toLowerCase()==='model'||colA.toLowerCase()==='item')continue;
+      currentModel=colA;
+      if(!modelMap[currentModel]){modelMap[currentModel]={model:currentModel,plu:'',serials:[]};models.push(modelMap[currentModel]);}
+      continue;
+    }
+    // If column A blank and column B has a value → serial row
+    if(!colA&&colB&&currentModel){
+      var cleaned=cleanSerialAndFlag(colB);
+      // Convert Excel date serial number if colD is numeric
+      var dateStr=colD;
+      if(dateStr&&!isNaN(Number(dateStr))){
+        try{var dt=XLSX.SSF.parse_date_code(Number(dateStr));dateStr=(dt.m<10?'0':'')+dt.m+'-'+(dt.d<10?'0':'')+dt.d+'-'+dt.y;}catch(e){}
+      }
+      // Normalize date to YYYY-MM-DD
+      if(dateStr){
+        var dm=dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+        if(dm){var yr=dm[3].length===2?'20'+dm[3]:dm[3];dateStr=yr+'-'+(dm[1].length===1?'0':'')+dm[1]+'-'+(dm[2].length===1?'0':'')+dm[2];}
+      }
+      if(!modelMap[currentModel])continue;
+      modelMap[currentModel].serials.push({serial:cleaned.serial,invoice:colC,date:dateStr,cost:0,condition:cleaned.condition});
+    }
+  }
+  var nonEmpty=models.filter(function(m){return m.serials.length>0;});
+  console.log('[Serial XLS] Parsed',nonEmpty.length,'models,',nonEmpty.reduce(function(s,m){return s+m.serials.length;},0),'serials');
+  return{brand:brand,models:nonEmpty};
+}
+
 async function diHandleSerialFile(file){
   if(!file)return;
   var loadingEl=document.getElementById('di-serial-loading');
+  var spinHtml='<span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>';
   loadingEl.style.display='block';
   document.getElementById('di-serial-preview').style.display='none';
+  var isSpreadsheet=file.name.match(/\.(xls|xlsx|csv)$/i);
+  var isPdf=file.name.match(/\.pdf$/i)||file.type.match(/pdf/i);
   try{
-    if(!file.type.match(/pdf/i)&&!file.name.match(/\.pdf$/i)){
-      throw new Error('Please upload a PDF file');
-    }
-    // Step 1: extract text from PDF client-side
-    loadingEl.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Extracting PDF text...';
-    var text=await diExtractPdfText(file);
-    console.log('Extracted '+text.length+' chars from PDF. Preview:',text.slice(0,500));
-    // Step 2: parse SmartTouch format client-side
-    loadingEl.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Parsing serial numbers...';
-    var parsed=diParseSmartTouchSerials(text);
-    var totalSerials=(parsed.models||[]).reduce(function(s,m){return s+m.serials.length;},0);
-    console.log('Parser found '+parsed.models.length+' models, '+totalSerials+' serials. Brand:',parsed.brand);
-    // Step 3: fallback to Claude API if no serials found
-    if(totalSerials===0){
-      console.warn('Client-side parser found 0 serials. Text dump (first 2000 chars):',text.slice(0,2000));
-      loadingEl.innerHTML='<span style="display:inline-block;width:14px;height:14px;border:2px solid #fcd34d;border-top-color:#d97706;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Pattern match found no serials — trying AI fallback...';
-      try{
-        var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
-        var prompt='Extract ALL serial numbers from this SmartTouch POS Serial Number Report by Brand. Return JSON only: {"brand":"Brand Name","models":[{"model":"MODEL#","plu":"","serials":[{"serial":"SN123","invoice":"INV/PO#","date":"YYYY-MM-DD","cost":0}]}]}. Keep any prefixes like "dented", "used", "damaged", "open box" in the serial field exactly as shown. JSON only, no explanation.';
-        var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:prompt}]}];
-        var data=await claudeApiCall({messages:msgs,max_tokens:8000});
-        var m=data.content[0].text.match(/\{[\s\S]*\}/);
-        if(m)parsed=JSON.parse(m[0]);
-      }catch(apiErr){
-        console.error('AI fallback failed:',apiErr);
+    var parsed=null;
+    if(isSpreadsheet){
+      // ── Spreadsheet path (XLS/XLSX/CSV) ──
+      loadingEl.innerHTML=spinHtml+'Reading spreadsheet...';
+      var ab=await file.arrayBuffer();
+      if(!window.XLSX)throw new Error('XLSX library not loaded — please refresh the page');
+      var wb=XLSX.read(ab,{type:'array',cellDates:false,raw:false});
+      loadingEl.innerHTML=spinHtml+'Parsing serial numbers...';
+      parsed=diParseSerialSpreadsheet(wb,file.name);
+    }else if(isPdf){
+      // ── PDF path (legacy SmartTouch format) ──
+      loadingEl.innerHTML=spinHtml+'Extracting PDF text...';
+      var text=await diExtractPdfText(file);
+      console.log('Extracted '+text.length+' chars from PDF. Preview:',text.slice(0,500));
+      loadingEl.innerHTML=spinHtml+'Parsing serial numbers...';
+      parsed=diParseSmartTouchSerials(text);
+      var totalSerials=(parsed.models||[]).reduce(function(s,m){return s+m.serials.length;},0);
+      console.log('Parser found '+parsed.models.length+' models, '+totalSerials+' serials. Brand:',parsed.brand);
+      if(totalSerials===0){
+        console.warn('Client-side parser found 0 serials. Trying AI fallback...');
+        loadingEl.innerHTML=spinHtml.replace('#2563eb','#d97706').replace('#bfdbfe','#fcd34d')+'Pattern match found no serials — trying AI fallback...';
+        try{
+          var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
+          var prompt='Extract ALL serial numbers from this SmartTouch POS Serial Number Report by Brand. Return JSON only: {"brand":"Brand Name","models":[{"model":"MODEL#","plu":"","serials":[{"serial":"SN123","invoice":"INV/PO#","date":"YYYY-MM-DD","cost":0}]}]}. Keep any prefixes like "dented", "used", "damaged", "open box" in the serial field exactly as shown. JSON only, no explanation.';
+          var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:prompt}]}];
+          var data=await claudeApiCall({messages:msgs,max_tokens:8000});
+          var m=data.content[0].text.match(/\{[\s\S]*\}/);
+          if(m)parsed=JSON.parse(m[0]);
+        }catch(apiErr){console.error('AI fallback failed:',apiErr);}
       }
+    }else{
+      throw new Error('Unsupported file format. Please upload XLS, XLSX, CSV, or PDF.');
     }
-    var finalSerialCount=(parsed.models||[]).reduce(function(s,m){return s+m.serials.length;},0);
-    if(finalSerialCount===0){
-      document.getElementById('di-serial-preview').innerHTML='<div style="padding:14px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;"><strong>Could not parse file</strong> — please verify this is a SmartTouch Serial Number Report by Brand.<br/><br/><button class="ghost-btn" onclick="document.querySelector(\'#di-serial-preview\').style.display=\'none\';" style="margin-top:8px;">Try Another File</button> <button class="ghost-btn" onclick="console.log(\'Check console for PDF text dump\')" style="margin-top:8px;">Show Debug Info</button></div>';
+    // Check results
+    var finalSerialCount=(parsed&&parsed.models||[]).reduce(function(s,m){return s+m.serials.length;},0);
+    if(!finalSerialCount){
+      document.getElementById('di-serial-preview').innerHTML='<div style="padding:14px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;"><strong>Could not parse file</strong> — no serial numbers found. Check format and try again.<br/><button class="ghost-btn" onclick="document.getElementById(\'di-serial-preview\').style.display=\'none\';" style="margin-top:8px;">Try Another File</button></div>';
       document.getElementById('di-serial-preview').style.display='block';
       loadingEl.style.display='none';
       return;
     }
+    // Apply brand override if set
+    var brandSel=document.getElementById('di-serial-brand');
+    if(brandSel&&brandSel.value)parsed.brand=brandSel.value;
     _diSerialParsed={file:file.name,data:parsed};
     diShowSerialPreview();
   }catch(e){
