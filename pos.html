@@ -4955,7 +4955,7 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 // UTILITY
 // ══════════════════════════════════════════════
 function fmt(n){return '$'+n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
-function ds(d){return d.toISOString().slice(0,10);}
+function ds(d){var y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate();return y+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;}
 function getWeekStart(d){var dt=new Date(d);dt.setDate(dt.getDate()-dt.getDay());dt.setHours(0,0,0,0);return dt;}
 function delTimeToMins(t){if(!t||t==='Call Ahead')return DEL_HOURS_START*60;var m=t.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return DEL_HOURS_START*60;var h=parseInt(m[1]),mn=parseInt(m[2]),ap=m[3].toUpperCase();if(ap==='PM'&&h!==12)h+=12;if(ap==='AM'&&h===12)h=0;return h*60+mn;}
 function delMinsToTime(mins){var h=Math.floor(mins/60)%24,mn=mins%60,ap=h>=12?'PM':'AM',h12=h>12?h-12:(h===0?12:h);return h12+':'+(mn<10?'0':'')+mn+' '+ap;}

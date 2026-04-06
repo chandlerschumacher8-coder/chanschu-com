@@ -1043,7 +1043,11 @@ function truckMapShowDeliveryStops(){
 function delInit(){delWeekStart=getWeekStart(new Date());delLoadData();}
 async function delLoadData(){
   try{var r=await fetch('/api/deliveries-get');var d=await r.json();delDeliveries=d.deliveries||[];delNextId=d.nextId||1;delNotes=Array.isArray(d.notes)?d.notes:[];delNextNoteId=d.nextNoteId||1;
+  // Diagnostic logging
+  var allDates={};delDeliveries.forEach(function(x){allDates[x.date]=(allDates[x.date]||0)+1;});
   console.log('[POS Delivery] Loaded '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
+  console.log('[POS Delivery] Delivery dates in data:',JSON.stringify(allDates));
+  console.log('[POS Delivery] delWeekStart:',delWeekStart,'ds:',delWeekStart?ds(delWeekStart):'null');
   }catch(e){console.error('[POS Delivery] Load error:',e);delDeliveries=[];delNotes=[];delNextId=1;delNextNoteId=1;}
   _lastDelHash=JSON.stringify({d:delDeliveries,n:delNotes});
   if(!delWeekStart)delWeekStart=getWeekStart(new Date());
@@ -1066,10 +1070,14 @@ function delSetTeam(t,btn){DEL_TEAM=t;document.querySelectorAll('.del-tpill').fo
 function delToggleNoteTime(){document.getElementById('del-note-time-fields').style.display=document.getElementById('del-n-allday').value==='no'?'block':'none';}
 
 function delRenderCalendar(){
+  if(!delWeekStart)delWeekStart=getWeekStart(new Date());
   var days=[];for(var i=0;i<7;i++){var d=new Date(delWeekStart);d.setDate(d.getDate()+i);days.push(d);}
   var ws=days[0],we=days[6];
   document.getElementById('del-week-title').textContent=ws.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' - '+we.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   var today=ds(new Date()),dows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  // Log the week range and column dates
+  var colDates=days.map(function(d){return ds(d);});
+  console.log('[POS Delivery] Week range: '+colDates[0]+' to '+colDates[6]+' | columns: '+colDates.join(', '));
   document.getElementById('del-days-hdr').innerHTML=days.map(function(d,i){
     var isTod=ds(d)===today;
     return '<div class="del-dhc'+(isTod?' today-col':'')+'" onclick="delShowCtx(event,\''+ds(d)+'\',null)"><div class="del-dhc-dow">'+dows[i]+'</div><div class="del-dhc-num">'+d.getDate()+'</div></div>';
@@ -1089,11 +1097,16 @@ function delRenderCalendar(){
 
 function delRenderEvents(){
   document.querySelectorAll('.del-event').forEach(function(e){e.remove();});
+  if(!delWeekStart)delWeekStart=getWeekStart(new Date());
   var days=[];for(var i=0;i<7;i++){var d=new Date(delWeekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
   var maxH=(DEL_HOURS_END-DEL_HOURS_START)*60;
+  // Log delivery dates for diagnosis
+  var dateCounts={};delDeliveries.forEach(function(d){dateCounts[d.date]=(dateCounts[d.date]||0)+1;});
+  var noteCounts={};delNotes.forEach(function(n){noteCounts[n.date]=(noteCounts[n.date]||0)+1;});
+  console.log('[POS Delivery] renderEvents — week columns:',days.join(', '),'| delivery dates in data:',JSON.stringify(dateCounts),'| note dates:',JSON.stringify(noteCounts));
   // Deliveries
   days.forEach(function(dayStr){
-    var col=document.getElementById('del-col-'+dayStr);if(!col)return;
+    var col=document.getElementById('del-col-'+dayStr);if(!col){console.warn('[POS Delivery] Missing column for',dayStr);return;}
     var dayDels=delDeliveries.filter(function(d){
       if(d.date!==dayStr)return false;
       if(DEL_TEAM==='attention')return d.log&&d.log.some(function(e){return DEL_FLAG_WORDS.test(e.text);});
