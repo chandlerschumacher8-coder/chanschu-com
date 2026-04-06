@@ -29,17 +29,11 @@
     .login-box{background:#0c1c30;border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;text-align:center;}
     .login-logo{font-family:'Playfair Display',serif;font-size:22px;color:#f8f7f5;margin-bottom:4px;}
     .login-logo span{color:#c9973a;}
-    .login-sub{font-size:12px;color:#8a8880;margin-bottom:20px;}
+    .login-sub{font-size:12px;color:#8a8880;margin-bottom:24px;}
     .login-btn{width:100%;background:#c9973a;color:#07111f;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
     .login-btn:hover{background:#e4b96a;}
     .login-btn:disabled{opacity:0.5;cursor:not-allowed;}
-    .login-err{font-size:12px;color:#e07070;margin-top:8px;display:none;}
-    /* Employee selector */
-    .emp-list{max-height:180px;overflow-y:auto;margin-bottom:16px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;}
-    .emp-list-item{padding:10px 14px;color:#f8f7f5;font-size:14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;transition:background 0.1s;}
-    .emp-list-item:hover,.emp-list-item.selected{background:rgba(201,151,58,0.15);}
-    .emp-list-item.selected{border-left:3px solid #c9973a;}
-    .emp-list-role{font-size:10px;color:#8a8880;}
+    .login-err{font-size:12px;color:#e07070;margin-top:10px;display:none;}
     /* PIN pad */
     .pin-display{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
     .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);transition:all 0.15s;}
@@ -403,20 +397,15 @@
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">DC <span>Appliance</span></div>
-    <div class="login-sub">Delivery Schedule</div>
-    <div class="emp-list" id="login-emp-list"></div>
-    <div id="login-pin-section" style="display:none;">
-      <div style="color:#f8f7f5;font-size:14px;font-weight:600;margin-bottom:12px;" id="login-pin-name"></div>
-      <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
-      <div class="pin-pad">
-        <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
-        <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
-        <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
-        <div class="pin-key action" onclick="pinClear()">Clear</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key action" onclick="pinBack()">&#x232B;</div>
-      </div>
-      <button class="login-btn" onclick="pinSubmit()" id="login-submit-btn" disabled>Sign In</button>
-      <div style="margin-top:8px;"><a href="#" onclick="event.preventDefault();pinBackToList()" style="color:#8a8880;font-size:12px;text-decoration:none;">&#8592; Back to employee list</a></div>
+    <div class="login-sub">Delivery Schedule — Enter your PIN</div>
+    <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
+    <div class="pin-pad">
+      <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
+      <div class="pin-key" onclick="pinKey('4')">4</div><div class="pin-key" onclick="pinKey('5')">5</div><div class="pin-key" onclick="pinKey('6')">6</div>
+      <div class="pin-key" onclick="pinKey('7')">7</div><div class="pin-key" onclick="pinKey('8')">8</div><div class="pin-key" onclick="pinKey('9')">9</div>
+      <div class="pin-key action" onclick="pinClear()">Clear</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key action" onclick="pinBack()">&#x232B;</div>
     </div>
+    <button class="login-btn" onclick="pinSubmit()" id="login-submit-btn" disabled>Sign In</button>
     <div class="login-err" id="login-err"></div>
   </div>
 </div>
@@ -823,10 +812,9 @@ var weekStart=getWeekStart(new Date());
 var TEAM_FILTER='all';
 var pendingFiles=[];
 
-// ═══ AUTH — SHARED PIN LOGIN ═══
-var SESSION_KEY='dc-emp-session';
-var _loginEmployees=[];
-var _selectedEmpIdx=-1;
+// ═══ AUTH — PIN-ONLY LOGIN ═══
+var SESSION_KEY='dc-del-session';
+var _allEmployees=[];
 var _pinValue='';
 var _currentUser=null;
 
@@ -848,56 +836,28 @@ function saveSession(user){
   _currentUser=s;
 }
 
-async function loadLoginEmployees(){
+async function loadEmployees(){
   try{
     var res=await fetch('/api/employees-get?companyId=dc-appliance');
     var data=await res.json();
-    if(data.ok&&data.users)_loginEmployees=data.users.filter(function(u){return u.active!==false;});
+    if(data.ok&&data.users)_allEmployees=data.users.filter(function(u){return u.active!==false;});
   }catch(e){}
-}
-
-function renderEmpList(){
-  var el=document.getElementById('login-emp-list');
-  el.innerHTML=_loginEmployees.map(function(u,i){
-    return '<div class="emp-list-item" onclick="empSelect('+i+')"><span>'+u.name+'</span><span class="emp-list-role">'+(u.posRole||'Sales')+'</span></div>';
-  }).join('')||'<div style="padding:20px;color:#8a8880;font-size:12px;">Loading employees...</div>';
-}
-
-function empSelect(i){
-  _selectedEmpIdx=i;
-  var u=_loginEmployees[i];
-  if(!u.pin){
-    document.getElementById('login-err').style.display='block';
-    document.getElementById('login-err').textContent='No PIN on file — see your manager';
-    return;
-  }
-  document.getElementById('login-emp-list').style.display='none';
-  document.getElementById('login-pin-section').style.display='block';
-  document.getElementById('login-pin-name').textContent=u.name;
-  document.getElementById('login-err').style.display='none';
-  _pinValue='';updatePinDots();
-}
-
-function pinBackToList(){
-  _selectedEmpIdx=-1;_pinValue='';updatePinDots();
-  document.getElementById('login-emp-list').style.display='';
-  document.getElementById('login-pin-section').style.display='none';
-  document.getElementById('login-err').style.display='none';
 }
 
 function pinKey(n){if(_pinValue.length>=4)return;_pinValue+=n;updatePinDots();if(_pinValue.length===4)pinSubmit();}
 function pinBack(){_pinValue=_pinValue.slice(0,-1);updatePinDots();}
-function pinClear(){_pinValue='';updatePinDots();}
+function pinClear(){_pinValue='';updatePinDots();document.getElementById('login-err').style.display='none';}
 function updatePinDots(){
   for(var i=0;i<4;i++){var d=document.getElementById('pd'+i);if(d)d.classList.toggle('filled',i<_pinValue.length);}
   var btn=document.getElementById('login-submit-btn');if(btn)btn.disabled=_pinValue.length<4;
 }
 
 function pinSubmit(){
-  if(_selectedEmpIdx<0)return;
-  var u=_loginEmployees[_selectedEmpIdx];
-  if(_pinValue===u.pin){
-    saveSession(u);enterApp();
+  if(_pinValue.length<4)return;
+  // Look up which employee has this PIN
+  var matches=_allEmployees.filter(function(u){return u.pin===_pinValue;});
+  if(matches.length===1){
+    saveSession(matches[0]);enterApp();
   }else{
     document.getElementById('login-err').style.display='block';
     document.getElementById('login-err').textContent='Incorrect PIN — please try again';
@@ -917,19 +877,13 @@ function enterApp(){
 function applyRoleAccess(){
   if(!_currentUser)return;
   var role=_currentUser.role;
-  // Hide add/edit/delete for Delivery role and CSR/Sales
   var isAdmin=role==='Owner/Admin'||role==='General Manager'||role==='Manager';
   var isDelivery=role==='Delivery';
-  // CSR/Sales can view + add only
-  var addBtns=document.querySelectorAll('.hbtn.gold');
-  // For non-admin/non-delivery: hide edit/delete in detail modals (handled dynamically)
 }
 
 function doLogout(){
   stopPolling();localStorage.removeItem(SESSION_KEY);_currentUser=null;
   document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';
-  document.getElementById('login-emp-list').style.display='';
-  document.getElementById('login-pin-section').style.display='none';
   document.getElementById('login-err').style.display='none';
   _pinValue='';updatePinDots();
 }
@@ -942,7 +896,7 @@ setInterval(function(){
 // On page load — check session or show login
 window.addEventListener('DOMContentLoaded',function(){
   if(checkSession()){enterApp();}
-  else{loadLoginEmployees().then(renderEmpList);}
+  else{loadEmployees();}
 });
 
 // ═══ DATA ═══

@@ -822,28 +822,18 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .pu-hist-stats{color:var(--gray-2);margin-top:3px;}
 /* Login */
 .pos-login{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:10000;}
-.pos-login-box{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:40px 36px;width:100%;max-width:340px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.2);}
-.pos-login-box input{width:100%;background:#fff;border:1px solid #d1d5db;border-radius:8px;padding:12px 16px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;margin:16px 0 12px;outline:none;}
-.pos-login-box input:focus{border-color:#2563eb;}
-.pos-login-box button{width:100%;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
-.pos-login-box button:hover{background:#3b82f6;}
-.pos-login-err{font-size:12px;color:#dc2626;margin-top:8px;display:none;}
-/* Employee Select Screen */
-.emp-select{position:fixed;inset:0;background:#f3f4f6;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:24px;}
-.emp-select.show{display:flex;}
-.emp-select-title{font-family:'Playfair Display',serif;font-size:20px;color:#1f2937;margin-bottom:4px;}
-.emp-select-sub{font-size:12px;color:#6b7280;margin-bottom:24px;}
-.emp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;max-width:600px;width:100%;margin-bottom:20px;}
-.emp-tile{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .15s;font-size:13px;font-weight:600;color:#1f2937;}
-.emp-tile:hover{border-color:#2563eb;background:#eff6ff;}
-.emp-pin-prompt{display:none;text-align:center;}
-.emp-pin-prompt.show{display:block;}
-.emp-pin-name{font-size:16px;font-weight:700;color:#1f2937;margin-bottom:12px;}
-.emp-pin-input{width:160px;text-align:center;font-size:22px;letter-spacing:10px;padding:10px;background:#fff;border:2px solid #e5e7eb;border-radius:8px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;outline:none;}
-.emp-pin-input:focus{border-color:#2563eb;}
-.emp-pin-err{font-size:12px;color:#dc2626;margin-top:8px;display:none;}
-.emp-pin-back{font-size:12px;color:#6b7280;margin-top:12px;cursor:pointer;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;}
-.emp-pin-back:hover{color:#2563eb;}
+.pos-login-box{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.2);}
+.pos-login-err{font-size:12px;color:#dc2626;margin-top:10px;display:none;}
+.pos-pin-display{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
+.pos-pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid #d1d5db;transition:all 0.15s;}
+.pos-pin-dot.filled{background:#2563eb;border-color:#2563eb;}
+.pos-pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:0 auto;}
+.pos-pin-key{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:10px;color:#1f2937;font-size:22px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;padding:16px;cursor:pointer;transition:all 0.1s;min-height:56px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none;}
+.pos-pin-key:active{background:#dbeafe;border-color:#2563eb;}
+.pos-pin-key.action{font-size:13px;font-weight:600;color:#6b7280;}
+.pos-login-btn{width:100%;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
+.pos-login-btn:hover{background:#3b82f6;}
+.pos-login-btn:disabled{opacity:0.5;cursor:not-allowed;}
 .tb-user-badge{font-size:10px;font-weight:600;color:#93c5fd;margin-right:6px;padding:3px 10px;background:rgba(37,99,235,0.15);border:1px solid rgba(96,165,250,0.3);border-radius:100px;cursor:pointer;}
 .tb-user-badge:hover{background:rgba(37,99,235,0.25);}
 /* Employee Time Clock on Login Screen */
@@ -988,29 +978,17 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="pos-login" id="pos-login">
 <div class="pos-login-box">
 <div style="font-family:'Playfair Display',serif;font-size:20px;color:#1f2937;margin-bottom:2px;">DC <span style="color:#2563eb;">Appliance</span></div>
-<div style="font-size:11px;color:#6b7280;">ApexPOS</div>
-<input type="password" id="pos-pw" placeholder="Enter password..." onkeydown="if(event.key==='Enter')posLogin()"/>
-<button onclick="posLogin()">Sign In</button>
-<div class="pos-login-err" id="pos-login-err">Incorrect password</div>
+<div style="font-size:11px;color:#6b7280;margin-bottom:24px;">ApexPOS &mdash; Enter your PIN</div>
+<div class="pos-pin-display"><div class="pos-pin-dot" id="pos-pd0"></div><div class="pos-pin-dot" id="pos-pd1"></div><div class="pos-pin-dot" id="pos-pd2"></div><div class="pos-pin-dot" id="pos-pd3"></div></div>
+<div class="pos-pin-pad">
+<div class="pos-pin-key" onclick="posPinKey('1')">1</div><div class="pos-pin-key" onclick="posPinKey('2')">2</div><div class="pos-pin-key" onclick="posPinKey('3')">3</div>
+<div class="pos-pin-key" onclick="posPinKey('4')">4</div><div class="pos-pin-key" onclick="posPinKey('5')">5</div><div class="pos-pin-key" onclick="posPinKey('6')">6</div>
+<div class="pos-pin-key" onclick="posPinKey('7')">7</div><div class="pos-pin-key" onclick="posPinKey('8')">8</div><div class="pos-pin-key" onclick="posPinKey('9')">9</div>
+<div class="pos-pin-key action" onclick="posPinClear()">Clear</div><div class="pos-pin-key" onclick="posPinKey('0')">0</div><div class="pos-pin-key action" onclick="posPinBack()">&#x232B;</div>
 </div>
+<button class="pos-login-btn" onclick="posPinSubmit()" id="pos-login-btn" disabled>Sign In</button>
+<div class="pos-login-err" id="pos-login-err"></div>
 </div>
-
-<!-- EMPLOYEE SELECT -->
-<div class="emp-select" id="emp-select">
-<div class="emp-select-title">DC <span style="color:#2563eb;">Appliance</span></div>
-<div class="emp-select-sub">Select your name to continue</div>
-<div class="emp-grid" id="emp-grid"></div>
-<div class="emp-pin-prompt" id="emp-pin-prompt">
-<div class="emp-pin-name" id="emp-pin-name"></div>
-<input class="emp-pin-input" id="emp-pin-input" type="password" maxlength="4" inputmode="numeric" placeholder="PIN" onkeydown="if(event.key==='Enter')empPinSubmit()"/>
-<div class="emp-pin-err" id="emp-pin-err">Incorrect PIN</div>
-<button class="emp-pin-back" onclick="empBackToGrid()">&#8592; Back</button>
-</div>
-<div class="emp-tc-section" id="emp-tc-section">
-<div class="emp-tc-title">Time Clock — Tap name to clock in/out</div>
-<div class="emp-tc-status-grid" id="emp-tc-grid"></div>
-</div>
-<button class="emp-pin-back" onclick="empLogoutMaster()" style="position:absolute;bottom:20px;font-size:11px;">Lock POS</button>
 </div>
 
 <!-- Employee Time Clock Punch Modal -->

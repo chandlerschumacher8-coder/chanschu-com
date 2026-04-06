@@ -20,16 +20,11 @@
     .login-box{background:var(--navy-2);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:36px 32px;width:100%;max-width:380px;text-align:center;}
     .login-logo{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin-bottom:4px;}
     .login-logo span{color:var(--gold);}
-    .login-sub{font-size:12px;color:var(--gray-2);margin-bottom:20px;}
+    .login-sub{font-size:12px;color:var(--gray-2);margin-bottom:24px;}
     .login-btn{width:100%;background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:12px;}
     .login-btn:hover{background:var(--gold-light);}
     .login-btn:disabled{opacity:0.5;cursor:not-allowed;}
     .login-err{font-size:12px;color:var(--red);margin-top:10px;display:none;}
-    .emp-list{max-height:180px;overflow-y:auto;margin-bottom:16px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;}
-    .emp-list-item{padding:10px 14px;color:var(--white);font-size:14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center;transition:background 0.1s;}
-    .emp-list-item:hover,.emp-list-item.selected{background:rgba(201,151,58,0.15);}
-    .emp-list-item.selected{border-left:3px solid var(--gold);}
-    .emp-list-role{font-size:10px;color:var(--gray-2);}
     .pin-display{display:flex;justify-content:center;gap:10px;margin-bottom:16px;}
     .pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.3);transition:all 0.15s;}
     .pin-dot.filled{background:var(--gold);border-color:var(--gold);}
@@ -37,6 +32,18 @@
     .pin-key{background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--white);font-size:22px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;padding:16px;cursor:pointer;transition:all 0.1s;min-height:56px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none;}
     .pin-key:active{background:rgba(201,151,58,0.2);border-color:var(--gold);}
     .pin-key.action{font-size:13px;font-weight:600;color:var(--gray-2);}
+    /* CONTRACTOR PASSWORD */
+    .contractor-link{color:var(--gray-2);font-size:11px;margin-top:14px;cursor:pointer;text-decoration:none;display:inline-block;transition:color 0.2s;}
+    .contractor-link:hover{color:var(--gold-light);}
+    .pw-section{display:none;}
+    .pw-wrap{position:relative;}
+    .pw-inp{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:11px 44px 11px 14px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;}
+    .pw-inp:focus{border-color:rgba(201,151,58,0.4);}
+    .pw-inp::placeholder{color:var(--gray-3);}
+    .pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-2);cursor:pointer;font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;padding:4px 6px;}
+    .pw-toggle:hover{color:var(--white);}
+    .contractor-sel{width:100%;background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 14px;color:var(--white);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;margin-bottom:10px;-webkit-appearance:none;}
+    .contractor-sel option{background:var(--navy-3);}
     /* APP */
     .app{display:none;}
     header{background:var(--navy-2);border-bottom:1px solid rgba(255,255,255,0.07);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
@@ -285,6 +292,30 @@
     .u-del{background:rgba(224,112,112,0.08);border:1px solid rgba(224,112,112,0.2);color:var(--red);border-radius:6px;padding:6px;cursor:pointer;font-size:12px;width:100%;}
     .u-del:hover{background:rgba(224,112,112,0.18);}
     .add-row-btn{font-size:12px;font-weight:600;padding:7px 14px;background:rgba(201,151,58,0.08);border:1px solid rgba(201,151,58,0.25);color:var(--gold);border-radius:7px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-top:8px;}
+    /* MODAL TABS */
+    .modal-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.07);padding:0 20px;}
+    .modal-tab{font-size:12px;font-weight:600;padding:10px 16px;border:none;background:transparent;color:var(--gray-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;font-family:'Plus Jakarta Sans',sans-serif;transition:all 0.2s;}
+    .modal-tab.active{color:var(--gold-light);border-bottom-color:var(--gold);}
+    .modal-tab-panel{display:none;}
+    .modal-tab-panel.active{display:block;}
+    /* TECH TABLE */
+    .tech-tbl{width:100%;border-collapse:collapse;}
+    .tech-tbl th{font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);text-align:left;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.07);}
+    .tech-tbl td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+    .tech-tbl tr.inactive-row{opacity:0.45;}
+    .pw-dots{font-family:monospace;font-size:14px;letter-spacing:2px;color:var(--gray-1);}
+    .pw-reveal-btn{font-size:10px;font-weight:600;padding:2px 6px;border:1px solid rgba(255,255,255,0.1);color:var(--gray-2);background:transparent;border-radius:4px;cursor:pointer;margin-left:6px;font-family:'Plus Jakarta Sans',sans-serif;}
+    .pw-reveal-btn:hover{color:var(--white);border-color:rgba(255,255,255,0.25);}
+    .status-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;letter-spacing:0.04em;}
+    .status-badge.active{background:rgba(82,183,136,0.12);border:1px solid rgba(82,183,136,0.25);color:var(--green);}
+    .status-badge.inactive{background:rgba(224,112,112,0.12);border:1px solid rgba(224,112,112,0.25);color:var(--red);}
+    .tech-action-btn{font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;border:1px solid;margin-right:4px;}
+    .tech-action-btn.edit{border-color:rgba(91,159,212,0.3);color:var(--blue);background:rgba(91,159,212,0.06);}
+    .tech-action-btn.edit:hover{background:rgba(91,159,212,0.15);}
+    .tech-action-btn.toggle{border-color:rgba(224,144,80,0.3);color:var(--orange);background:rgba(224,144,80,0.06);}
+    .tech-action-btn.toggle:hover{background:rgba(224,144,80,0.15);}
+    .tech-action-btn.danger{border-color:rgba(224,112,112,0.3);color:var(--red);background:rgba(224,112,112,0.06);}
+    .tech-action-btn.danger:hover{background:rgba(224,112,112,0.15);}
     /* COMPANY CARDS */
     .company-card{background:var(--navy-3);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:16px 18px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
     .co-name{font-size:15px;font-weight:600;color:var(--white);}
@@ -424,10 +455,9 @@
 <div class="login-screen" id="login-screen">
   <div class="login-box">
     <div class="login-logo">DC <span>Appliance</span></div>
-    <div class="login-sub">Service Portal</div>
-    <div class="emp-list" id="login-emp-list"></div>
-    <div id="login-pin-section" style="display:none;">
-      <div style="color:var(--white);font-size:14px;font-weight:600;margin-bottom:12px;" id="login-pin-name"></div>
+    <div class="login-sub">Service Portal &mdash; Enter your PIN</div>
+    <!-- PIN pad (default view) -->
+    <div id="login-pin-section">
       <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
       <div class="pin-pad">
         <div class="pin-key" onclick="pinKey('1')">1</div><div class="pin-key" onclick="pinKey('2')">2</div><div class="pin-key" onclick="pinKey('3')">3</div>
@@ -436,7 +466,18 @@
         <div class="pin-key action" onclick="pinClear()">Clear</div><div class="pin-key" onclick="pinKey('0')">0</div><div class="pin-key action" onclick="pinBack()">&#x232B;</div>
       </div>
       <button class="login-btn" onclick="pinSubmit()" id="login-submit-btn" disabled>Sign In</button>
-      <div style="margin-top:8px;"><a href="#" onclick="event.preventDefault();pinBackToList()" style="color:var(--gray-2);font-size:12px;text-decoration:none;">&#8592; Back to employee list</a></div>
+      <a href="#" class="contractor-link" onclick="event.preventDefault();showContractorLogin()">Contractor? Use Password</a>
+    </div>
+    <!-- Contractor password login -->
+    <div id="login-pw-section" class="pw-section">
+      <div style="color:var(--white);font-size:13px;font-weight:600;margin-bottom:12px;">Contractor Login</div>
+      <select class="contractor-sel" id="contractor-sel"></select>
+      <div class="pw-wrap">
+        <input type="password" class="pw-inp" id="login-pw-inp" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter')pwSubmit();"/>
+        <button class="pw-toggle" id="pw-toggle-btn" onclick="togglePwVis()" type="button">Show</button>
+      </div>
+      <button class="login-btn" onclick="pwSubmit()">Sign In</button>
+      <div style="margin-top:10px;"><a href="#" class="contractor-link" onclick="event.preventDefault();showPinLogin()">&#8592; Use PIN instead</a></div>
     </div>
     <div class="login-err" id="login-err"></div>
   </div>
@@ -678,16 +719,29 @@
 
 <!-- USERS MODAL -->
 <div class="modal-bg" id="users-modal">
-  <div class="modal" style="max-width:640px;">
+  <div class="modal" style="max-width:720px;">
     <div class="modal-hdr"><div class="modal-title" id="users-modal-title">Manage Users</div><button class="modal-close" onclick="closeModal('users-modal')">x</button></div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="mtab-employees" onclick="switchUsersTab('employees')">Employees</button>
+      <button class="modal-tab" id="mtab-techs" onclick="switchUsersTab('techs')">Service Techs (Contractors)</button>
+    </div>
     <div class="modal-body">
-      <div class="user-hdr-row"><span>Name</span><span>Password</span><span>Role</span><span>Tech Name</span><span></span></div>
-      <div id="user-rows"></div>
-      <button class="add-row-btn" onclick="addUserRow()">+ Add User</button>
+      <!-- Employees tab -->
+      <div class="modal-tab-panel active" id="mtpanel-employees">
+        <div class="user-hdr-row"><span>Name</span><span>Password</span><span>Role</span><span>Tech Name</span><span></span></div>
+        <div id="user-rows"></div>
+        <button class="add-row-btn" onclick="addUserRow()">+ Add Employee</button>
+      </div>
+      <!-- Service Techs (Contractors) tab -->
+      <div class="modal-tab-panel" id="mtpanel-techs">
+        <div style="font-size:11px;color:var(--gray-2);margin-bottom:12px;">Independent contractor techs. They appear in the Service Portal login and job assignment dropdowns only — not in POS, Time Clock, or Commission reports.</div>
+        <div id="tech-rows"></div>
+        <button class="add-row-btn" onclick="addContractorTech()">+ Add Contractor Tech</button>
+      </div>
     </div>
     <div class="modal-footer">
       <div class="modal-msg" id="users-msg"></div>
-      <button class="modal-save-btn" onclick="saveUsers()">Save</button>
+      <button class="modal-save-btn" onclick="saveUsersOrTechs()">Save</button>
     </div>
   </div>
 </div>
@@ -747,10 +801,10 @@ async function claudeApiCall(body){
 var _isMobile=window.matchMedia('(max-width:767px)').matches;
 window.matchMedia('(max-width:767px)').addEventListener('change',function(e){_isMobile=e.matches;});
 
-// ── AUTH — SHARED PIN LOGIN ──
-var SESSION_KEY='dc-emp-session';
-var _loginEmployees=[];
-var _selectedEmpIdx=-1;
+// ── AUTH — PIN-ONLY + CONTRACTOR PASSWORD ──
+var SESSION_KEY='dc-svc-session';
+var _allEmployees=[];
+var _contractorTechs=[];
 var _pinValue='';
 
 function getMidnight(){var d=new Date();d.setHours(23,59,59,999);return d.getTime();}
@@ -759,65 +813,99 @@ function checkSession(){
   try{
     var s=JSON.parse(localStorage.getItem(SESSION_KEY));
     if(s&&s.name&&s.expiry&&Date.now()<s.expiry){
-      currentUser={name:s.name,role:s.role==='Owner/Admin'||s.role==='General Manager'?'admin':'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:s.role};
+      var role=s.role;var authType=s.authType||'employee';
+      var isAdmin=role==='Owner/Admin'||role==='General Manager'||role==='admin'||role==='Manager';
+      currentUser={name:s.name,role:isAdmin?'admin':'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:role,authType:authType,techName:s.techName||s.name};
       return true;
     }
   }catch(e){}
   localStorage.removeItem(SESSION_KEY);currentUser=null;return false;
 }
 
-function saveSession(user){
-  var s={name:user.name,id:user.id||'',role:user.posRole||user.role||'Sales',loginAt:new Date().toISOString(),expiry:getMidnight()};
+function saveSession(entry){
+  var s={name:entry.name,id:entry.id||'',role:entry.posRole||entry.role||'Sales',authType:entry._authType||'employee',techName:entry.tech||entry.name,loginAt:new Date().toISOString(),expiry:getMidnight()};
   localStorage.setItem(SESSION_KEY,JSON.stringify(s));
 }
 
-async function loadLoginEmployees(){
+async function loadLoginData(){
+  _allEmployees=[];_contractorTechs=[];
   try{
     var res=await fetch('/api/employees-get?companyId=dc-appliance');
     var data=await res.json();
-    if(data.ok&&data.users)_loginEmployees=data.users.filter(function(u){return u.active!==false;});
+    if(data.ok&&data.users)_allEmployees=data.users.filter(function(u){return u.active!==false;});
   }catch(e){}
+  try{
+    var res2=await fetch('/api/techs-get');var data2=await res2.json();
+    _contractorTechs=(data2.techs||[]).filter(function(t){return t.active!==false;});
+  }catch(e){}
+  // Populate contractor dropdown
+  var sel=document.getElementById('contractor-sel');
+  if(sel){sel.innerHTML=_contractorTechs.map(function(t){return '<option value="'+(t.tech||t.name)+'">'+(t.tech||t.name)+'</option>';}).join('')||'<option value="">No contractors configured</option>';}
 }
 
-function renderEmpList(){
-  var el=document.getElementById('login-emp-list');
-  el.innerHTML=_loginEmployees.map(function(u,i){
-    return '<div class="emp-list-item" onclick="empSelect('+i+')"><span>'+u.name+'</span><span class="emp-list-role">'+(u.posRole||'Sales')+'</span></div>';
-  }).join('')||'<div style="padding:20px;color:var(--gray-2);font-size:12px;">Loading employees...</div>';
-}
-
-function empSelect(i){
-  _selectedEmpIdx=i;var u=_loginEmployees[i];
-  if(!u.pin){document.getElementById('login-err').style.display='block';document.getElementById('login-err').textContent='No PIN on file — see your manager';return;}
-  document.getElementById('login-emp-list').style.display='none';
-  document.getElementById('login-pin-section').style.display='block';
-  document.getElementById('login-pin-name').textContent=u.name;
-  document.getElementById('login-err').style.display='none';
-  _pinValue='';updatePinDots();
-}
-
-function pinBackToList(){
-  _selectedEmpIdx=-1;_pinValue='';updatePinDots();
-  document.getElementById('login-emp-list').style.display='';
-  document.getElementById('login-pin-section').style.display='none';
-  document.getElementById('login-err').style.display='none';
-}
-
+// ── PIN pad ──
 function pinKey(n){if(_pinValue.length>=4)return;_pinValue+=n;updatePinDots();if(_pinValue.length===4)pinSubmit();}
 function pinBack(){_pinValue=_pinValue.slice(0,-1);updatePinDots();}
-function pinClear(){_pinValue='';updatePinDots();}
+function pinClear(){_pinValue='';updatePinDots();document.getElementById('login-err').style.display='none';}
 function updatePinDots(){for(var i=0;i<4;i++){var d=document.getElementById('pd'+i);if(d)d.classList.toggle('filled',i<_pinValue.length);}var btn=document.getElementById('login-submit-btn');if(btn)btn.disabled=_pinValue.length<4;}
 
 function pinSubmit(){
-  if(_selectedEmpIdx<0)return;var u=_loginEmployees[_selectedEmpIdx];
-  if(_pinValue===u.pin){
+  if(_pinValue.length<4)return;
+  var matches=_allEmployees.filter(function(u){return u.pin===_pinValue;});
+  if(matches.length===1){
+    var u=matches[0];
+    u._authType='employee';
     saveSession(u);
-    currentUser={name:u.name,role:u.posRole==='Owner/Admin'||u.posRole==='General Manager'?'admin':'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:u.posRole||'Sales'};
+    var isAdmin=u.posRole==='Owner/Admin'||u.posRole==='General Manager'||u.posRole==='Manager';
+    currentUser={name:u.name,role:isAdmin?'admin':'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:u.posRole||'Sales',authType:'employee',techName:u.tech||u.name};
     enterApp();
   }else{
     document.getElementById('login-err').style.display='block';
     document.getElementById('login-err').textContent='Incorrect PIN — please try again';
     _pinValue='';updatePinDots();
+  }
+}
+
+// ── Contractor password login ──
+function showContractorLogin(){
+  document.getElementById('login-pin-section').style.display='none';
+  document.getElementById('login-pw-section').style.display='block';
+  document.getElementById('login-err').style.display='none';
+  document.getElementById('login-pw-inp').value='';
+  document.getElementById('login-pw-inp').type='password';
+  document.getElementById('pw-toggle-btn').textContent='Show';
+  _pinValue='';updatePinDots();
+  setTimeout(function(){document.getElementById('login-pw-inp').focus();},100);
+}
+
+function showPinLogin(){
+  document.getElementById('login-pw-section').style.display='none';
+  document.getElementById('login-pin-section').style.display='block';
+  document.getElementById('login-err').style.display='none';
+  _pinValue='';updatePinDots();
+}
+
+function togglePwVis(){
+  var inp=document.getElementById('login-pw-inp');var btn=document.getElementById('pw-toggle-btn');
+  if(inp.type==='password'){inp.type='text';btn.textContent='Hide';}
+  else{inp.type='password';btn.textContent='Show';}
+}
+
+function pwSubmit(){
+  var sel=document.getElementById('contractor-sel');
+  var name=sel?sel.value:'';
+  var pw=document.getElementById('login-pw-inp').value;
+  if(!name||!pw){document.getElementById('login-err').style.display='block';document.getElementById('login-err').textContent='Select a name and enter password';return;}
+  var tech=_contractorTechs.find(function(t){return (t.tech||t.name)===name&&t.password===pw;});
+  if(tech){
+    var entry={name:tech.tech||tech.name,tech:tech.tech||tech.name,posRole:'Contractor Tech',role:'tech',_authType:'contractor'};
+    saveSession(entry);
+    currentUser={name:entry.name,role:'tech',companyId:'dc-appliance',companyName:'DC Appliance',posRole:'Contractor Tech',authType:'contractor',techName:entry.tech};
+    enterApp();
+  }else{
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('login-err').textContent='Incorrect password';
+    document.getElementById('login-pw-inp').value='';
   }
 }
 
@@ -829,19 +917,22 @@ async function enterApp(){
   // Role-based access
   var role=currentUser.posRole||currentUser.role;
   var isAdmin=role==='Owner/Admin'||role==='General Manager'||role==='admin'||role==='Manager';
+  var isContractor=currentUser.authType==='contractor';
   if(isAdmin){
     document.getElementById('btn-users').style.display='inline-block';
     try{document.getElementById('chat-fab').style.display='flex';}catch(e){}
   }else{
+    // Techs (employee or contractor) — hide create form, show jobs only
     try{document.getElementById('form-panel').style.display='none';document.getElementById('two-col').style.gridTemplateColumns='1fr';}catch(e){}
     try{document.getElementById('chat-fab').style.display='none';}catch(e){}
   }
   await loadTechs();await loadJobs();startPolling();
   try{document.getElementById('f-date').valueAsDate=new Date();}catch(e){}
-  // Auto-filter to logged-in tech's jobs
-  if(!isAdmin&&currentUser.name){
-    FILTER=currentUser.name;
-    try{var fsel=document.getElementById('f-filter');if(fsel){for(var i=0;i<fsel.options.length;i++){if(fsel.options[i].value===currentUser.name){fsel.selectedIndex=i;break;}}}}catch(e){}
+  // Auto-filter to logged-in tech's jobs (employee techs and contractors)
+  var techName=currentUser.techName||currentUser.name;
+  if(!isAdmin&&techName){
+    FILTER='all';
+    try{var fsel=document.getElementById('tech-filter');if(fsel){for(var i=0;i<fsel.options.length;i++){if(fsel.options[i].value===techName){fsel.selectedIndex=i;break;}}}}catch(e){}
     renderJobs();
   }
 }
@@ -850,8 +941,7 @@ function doLogout(){stopPolling();
   currentUser=null;jobs=[];nextId=1;techList=['Unassigned'];
   localStorage.removeItem(SESSION_KEY);
   document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';
-  document.getElementById('login-emp-list').style.display='';document.getElementById('login-pin-section').style.display='none';
-  document.getElementById('login-err').style.display='none';_pinValue='';updatePinDots();
+  showPinLogin();
   document.getElementById('h-user').textContent='';document.getElementById('h-company').textContent='';
   document.getElementById('btn-companies').style.display='none';document.getElementById('btn-users').style.display='none';
   document.getElementById('form-panel').style.display='';document.getElementById('two-col').style.gridTemplateColumns='';
@@ -900,30 +990,95 @@ async function deleteCompany(id,name){
 }
 
 // ── USERS ──
+var _empTechNames=[];
+var _contractorTechNames=[];
 async function loadTechs(){
-  // Load service techs from dedicated service:techs Redis key
-  var techUsers=[];
+  _empTechNames=[];_contractorTechNames=[];
+  // Load employee techs (employees with tech/service roles)
   try{
-    var res=await fetch('/api/techs-get');var data=await res.json();
-    techUsers=(data.techs||[]).filter(function(t){return t.active!==false;}).map(function(t){return t.tech||t.name;}).filter(function(t){return t;});
+    var res=await fetch('/api/employees-get?companyId=dc-appliance');var data=await res.json();
+    if(data.ok&&data.users){
+      data.users.filter(function(u){return u.active!==false;}).forEach(function(u){
+        var r=(u.posRole||'').toLowerCase();
+        // Include techs, service roles, and also Owner/Admin/GM who might be assigned jobs
+        if(r.indexOf('tech')>=0||r.indexOf('service')>=0||r==='owner/admin'||r==='general manager'||r==='manager'){
+          var tn=u.tech||u.name;if(tn&&_empTechNames.indexOf(tn)<0)_empTechNames.push(tn);
+        }
+      });
+    }
   }catch(e){}
-  // Also gather tech names from existing jobs
-  var jobTechs=jobs.map(function(j){return j.tech;}).filter(function(t){return t&&t!=='Unassigned';});
-  var allTechs={};techUsers.forEach(function(t){allTechs[t]=1;});jobTechs.forEach(function(t){allTechs[t]=1;});
-  techList=['Unassigned'].concat(Object.keys(allTechs).sort());
+  // Load contractor techs from service:techs
+  try{
+    var res2=await fetch('/api/techs-get');var data2=await res2.json();
+    (data2.techs||[]).filter(function(t){return t.active!==false;}).forEach(function(t){
+      var tn=t.tech||t.name;if(tn&&_contractorTechNames.indexOf(tn)<0)_contractorTechNames.push(tn);
+    });
+  }catch(e){}
+  _empTechNames.sort();_contractorTechNames.sort();
+  // Build flat techList for backwards compat
+  techList=['Unassigned'].concat(_empTechNames).concat(_contractorTechNames);
+  // Populate assign dropdown with optgroups
   var sel=document.getElementById('f-tech');
-  sel.innerHTML=techList.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+  sel.innerHTML=_buildTechOptions('');
   // Populate tech filter dropdown
   var tf=document.getElementById('tech-filter');
-  if(tf){tf.innerHTML='<option value="">All Techs</option>'+techList.filter(function(t){return t!=='Unassigned';}).map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');}
+  if(tf){tf.innerHTML='<option value="">All Techs</option>'+_buildTechFilterOptions();}
 }
+function _buildTechOptions(selected){
+  var h='<option value="Unassigned"'+(selected==='Unassigned'?' selected':'')+'>Unassigned</option>';
+  if(_empTechNames.length){
+    h+='<optgroup label="Employees">';
+    _empTechNames.forEach(function(t){h+='<option value="'+t+'"'+(selected===t?' selected':'')+'>'+t+'</option>';});
+    h+='</optgroup>';
+  }
+  if(_contractorTechNames.length){
+    h+='<optgroup label="Independent Contractors">';
+    _contractorTechNames.forEach(function(t){h+='<option value="'+t+'"'+(selected===t?' selected':'')+'>'+t+'</option>';});
+    h+='</optgroup>';
+  }
+  return h;
+}
+function _buildTechFilterOptions(){
+  var h='';
+  if(_empTechNames.length){
+    h+='<optgroup label="Employees">';
+    _empTechNames.forEach(function(t){h+='<option value="'+t+'">'+t+'</option>';});
+    h+='</optgroup>';
+  }
+  if(_contractorTechNames.length){
+    h+='<optgroup label="Independent Contractors">';
+    _contractorTechNames.forEach(function(t){h+='<option value="'+t+'">'+t+'</option>';});
+    h+='</optgroup>';
+  }
+  return h;
+}
+var _activeUsersTab='employees';
+var _editContractorTechs=[];
+
+function switchUsersTab(tab){
+  _activeUsersTab=tab;
+  document.getElementById('mtab-employees').classList.toggle('active',tab==='employees');
+  document.getElementById('mtab-techs').classList.toggle('active',tab==='techs');
+  document.getElementById('mtpanel-employees').classList.toggle('active',tab==='employees');
+  document.getElementById('mtpanel-techs').classList.toggle('active',tab==='techs');
+}
+
 function openUsers(){openUsersForCompany(currentUser.companyId,currentUser.companyName);}
 async function openUsersForCompany(companyId,companyName){
-  editCompanyId=companyId;document.getElementById('users-modal-title').textContent='Users - '+companyName;
+  editCompanyId=companyId;document.getElementById('users-modal-title').textContent='Users — '+companyName;
+  // Load employees
   var res=await fetch('/api/employees-get?companyId='+companyId);var data=await res.json();
   editUsers=(data.users||[]).map(function(u){return Object.assign({},u);});
-  renderUserRows();document.getElementById('users-modal').classList.add('open');
+  // Load contractor techs
+  try{
+    var res2=await fetch('/api/techs-get');var data2=await res2.json();
+    _editContractorTechs=(data2.techs||[]).map(function(t){return Object.assign({},t);});
+  }catch(e){_editContractorTechs=[];}
+  renderUserRows();renderContractorRows();
+  switchUsersTab('employees');
+  document.getElementById('users-modal').classList.add('open');
 }
+
 function renderUserRows(){
   document.getElementById('user-rows').innerHTML=editUsers.map(function(u,i){
     return '<div class="user-row">'+
@@ -943,17 +1098,96 @@ function removeUserRow(i){
   if(editUsers[i].role==='admin'&&editUsers.filter(function(u){return u.role==='admin';}).length<=1){alert('Must keep at least one admin.');return;}
   editUsers.splice(i,1);renderUserRows();
 }
-async function saveUsers(){
-  var msg=document.getElementById('users-msg');
-  for(var i=0;i<editUsers.length;i++){if(!editUsers[i].name||!editUsers[i].password){msg.textContent='All users need a name and password.';msg.className='modal-msg err';return;}if(editUsers[i].role==='tech'&&!editUsers[i].tech)editUsers[i].tech=editUsers[i].name;}
-  if(!editUsers.some(function(u){return u.role==='admin';})){msg.textContent='Must have at least one admin.';msg.className='modal-msg err';return;}
-  var requesterPw=currentUser.role==='superadmin'?prompt('Enter super admin password:'):prompt('Re-enter your password:');
-  try{
-    var res=await fetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:editCompanyId,users:editUsers,requesterPassword:requesterPw})});
-    var data=await res.json();if(!data.ok)throw new Error(data.error);
-    msg.textContent='Saved!';msg.className='modal-msg ok';
-    await loadTechs();setTimeout(function(){closeModal('users-modal');},1000);
-  }catch(e){msg.textContent='Error: '+e.message;msg.className='modal-msg err';}
+
+function renderContractorRows(){
+  var wrap=document.getElementById('tech-rows');
+  if(!_editContractorTechs.length){wrap.innerHTML='<div style="padding:16px;color:var(--gray-2);font-size:12px;text-align:center;">No contractor techs configured.</div>';return;}
+  var h='<table class="tech-tbl"><thead><tr><th>Name</th><th>Display Name</th><th>Password</th><th>Phone</th><th>Status</th><th></th></tr></thead><tbody>';
+  _editContractorTechs.forEach(function(t,i){
+    var inactive=t.active===false;
+    h+='<tr class="'+(inactive?'inactive-row':'')+'">'
+      +'<td style="font-weight:600;font-size:13px;">'+escH(t.name||'')+'</td>'
+      +'<td style="font-size:12px;color:var(--gray-1);">'+escH(t.tech||'—')+'</td>'
+      +'<td><span class="pw-dots" id="cpw-'+i+'">••••••</span><span class="pw-reveal-btn" onclick="toggleContractorPw('+i+')">Show</span></td>'
+      +'<td style="font-size:12px;color:var(--gray-1);">'+escH(t.phone||'—')+'</td>'
+      +'<td><span class="status-badge '+(inactive?'inactive':'active')+'">'+(inactive?'INACTIVE':'ACTIVE')+'</span></td>'
+      +'<td>'
+        +'<button class="tech-action-btn edit" onclick="editContractorTech('+i+')">Edit</button>'
+        +(inactive
+          ?'<button class="tech-action-btn toggle" onclick="toggleContractorActive('+i+',true)">Activate</button>'
+          :'<button class="tech-action-btn toggle" onclick="toggleContractorActive('+i+',false)">Deactivate</button>')
+        +'<button class="tech-action-btn danger" onclick="deleteContractorTech('+i+')">Delete</button>'
+      +'</td></tr>';
+  });
+  h+='</tbody></table>';
+  wrap.innerHTML=h;
+}
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function toggleContractorPw(i){
+  var el=document.getElementById('cpw-'+i);var btn=el.nextElementSibling;
+  if(el.textContent==='••••••'){el.textContent=_editContractorTechs[i].password||'';el.classList.remove('pw-dots');btn.textContent='Hide';}
+  else{el.textContent='••••••';el.classList.add('pw-dots');btn.textContent='Show';}
+}
+
+function addContractorTech(){
+  var name=prompt('Tech name:');if(!name||!name.trim())return;
+  var display=prompt('Display name (shown in service portal):',name.trim())||name.trim();
+  var pw=prompt('Password:');if(!pw||!pw.trim()){alert('Password is required.');return;}
+  var phone=prompt('Phone:','')||'';
+  _editContractorTechs.push({name:name.trim(),tech:display.trim(),password:pw.trim(),phone:phone.trim(),email:'',active:true});
+  renderContractorRows();
+}
+
+function editContractorTech(i){
+  var t=_editContractorTechs[i];
+  var name=prompt('Name:',t.name);if(!name||!name.trim())return;
+  var display=prompt('Display name:',t.tech||t.name)||t.name;
+  var pw=prompt('Password:',t.password);if(!pw||!pw.trim()){alert('Password is required.');return;}
+  var phone=prompt('Phone:',t.phone||'')||'';
+  t.name=name.trim();t.tech=display.trim();t.password=pw.trim();t.phone=phone.trim();
+  renderContractorRows();
+}
+
+function toggleContractorActive(i,active){
+  if(!confirm((active?'Activate':'Deactivate')+' "'+_editContractorTechs[i].name+'"?'))return;
+  _editContractorTechs[i].active=active;
+  renderContractorRows();
+}
+
+function deleteContractorTech(i){
+  if(!confirm('Delete "'+_editContractorTechs[i].name+'"?'))return;
+  _editContractorTechs.splice(i,1);
+  renderContractorRows();
+}
+
+async function saveUsersOrTechs(){
+  var msg=document.getElementById('users-msg');msg.textContent='';msg.className='modal-msg';
+  if(_activeUsersTab==='employees'){
+    // Save employees
+    for(var i=0;i<editUsers.length;i++){if(!editUsers[i].name||!editUsers[i].password){msg.textContent='All employees need a name and password.';msg.className='modal-msg err';return;}if(editUsers[i].role==='tech'&&!editUsers[i].tech)editUsers[i].tech=editUsers[i].name;}
+    if(!editUsers.some(function(u){return u.role==='admin';})){msg.textContent='Must have at least one admin.';msg.className='modal-msg err';return;}
+    var requesterPw=currentUser.role==='superadmin'?prompt('Enter super admin password:'):prompt('Re-enter your password:');
+    try{
+      var res=await fetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:editCompanyId,users:editUsers,requesterPassword:requesterPw})});
+      var data=await res.json();if(!data.ok)throw new Error(data.error);
+      msg.textContent='Employees saved!';msg.className='modal-msg ok';
+      await loadTechs();setTimeout(function(){closeModal('users-modal');},1000);
+    }catch(e){msg.textContent='Error: '+e.message;msg.className='modal-msg err';}
+  }else{
+    // Save contractor techs
+    for(var j=0;j<_editContractorTechs.length;j++){
+      var t=_editContractorTechs[j];
+      if(!t.name||!t.password){msg.textContent='All contractor techs need a name and password.';msg.className='modal-msg err';return;}
+      if(!t.tech)t.tech=t.name;
+    }
+    try{
+      var res2=await fetch('/api/techs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({techs:_editContractorTechs,requesterPassword:'DCA123'})});
+      var data2=await res2.json();if(!data2.ok)throw new Error(data2.error);
+      msg.textContent='Contractor techs saved!';msg.className='modal-msg ok';
+      await loadTechs();setTimeout(function(){closeModal('users-modal');},1000);
+    }catch(e){msg.textContent='Error: '+e.message;msg.className='modal-msg err';}
+  }
 }
 
 // ── JOBS ──
@@ -1004,7 +1238,8 @@ function renderJobs(){
   var search=(document.getElementById('search')&&document.getElementById('search').value||'').toLowerCase();
   var techFilter=(document.getElementById('tech-filter')&&document.getElementById('tech-filter').value)||'';
   var filtered=jobs.filter(function(j){
-    if(currentUser&&currentUser.role==='tech'&&j.tech!==currentUser.tech)return false;
+    // Non-admin techs (employee or contractor) only see their assigned jobs
+    if(currentUser&&currentUser.role==='tech'){var myTech=currentUser.techName||currentUser.name;if(j.tech!==myTech)return false;}
     // Map old statuses for backwards compat
     var displayStatus=j.status==='Open'?'New':j.status==='Completed'?'Complete':j.status;
     var mf=FILTER==='all'||displayStatus===FILTER||j.status===FILTER;
@@ -1031,7 +1266,7 @@ function renderJobs(){
       '<div class="jc-meta"><span>'+fd+'</span><span>'+j.time+'</span><span>'+j.address.split(',')[0]+(j.city?', '+j.city:'')+'</span></div>'+
       '<div class="job-detail" id="detail-'+j.id+'">'+
         '<div class="print-header" id="phdr-'+j.id+'"><h2>Service Work Order</h2><p>'+(j.invoice?'Invoice: '+j.invoice+'  |  ':'')+j.id+'  |  '+fd+'</p></div>'+
-        (isAdmin?'<div class="assign-row" onclick="event.stopPropagation()"><label>Assign:</label><select class="assign-sel" onchange="assignTech(\''+j.id+'\',this.value)">'+techList.map(function(t){return '<option value="'+t+'"'+(j.tech===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div>':'')+
+        (isAdmin?'<div class="assign-row" onclick="event.stopPropagation()"><label>Assign:</label><select class="assign-sel" onchange="assignTech(\''+j.id+'\',this.value)">'+_buildTechOptions(j.tech)+'</select></div>':'')+
         '<div class="dg">'+
           '<div class="df"><label>Phone</label><div class="dv"><a href="tel:'+j.phone+'" onclick="event.stopPropagation()">'+j.phone+'</a></div></div>'+
           (j.email?'<div class="df"><label>Email</label><div class="dv"><a href="mailto:'+j.email+'" onclick="event.stopPropagation()">'+j.email+'</a></div></div>':'<div class="df"><label>Email</label><div class="dv" style="color:var(--gray-2)">--</div></div>')+
@@ -1191,7 +1426,7 @@ async function toggleContacted(id,checked){
 }
 function updateStats(){
   var today=new Date().toISOString().slice(0,10);
-  var mine=currentUser&&currentUser.role==='tech'?jobs.filter(function(j){return j.tech===currentUser.tech;}):jobs;
+  var mine=currentUser&&currentUser.role==='tech'?jobs.filter(function(j){return j.tech===(currentUser.techName||currentUser.name);}):jobs;
   document.getElementById('s-new').textContent=mine.filter(function(j){return j.status==='New';}).length;
   document.getElementById('s-prog').textContent=mine.filter(function(j){return j.status==='In Progress';}).length;
   document.getElementById('s-svcomplete').textContent=mine.filter(function(j){return j.status==='Service Complete';}).length;
@@ -1358,7 +1593,7 @@ function openEditJob(id) {
 
   // Tech dropdown — rebuild from current techList
   var techSel = document.getElementById('e-tech');
-  techSel.innerHTML = techList.map(function(t){return '<option value="'+t+'"'+(j.tech===t?' selected':'')+'>'+t+'</option>';}).join('');
+  techSel.innerHTML = _buildTechOptions(j.tech);
 
   document.getElementById('edit-msg').textContent = '';
   document.getElementById('edit-modal').classList.add('open');
@@ -1515,7 +1750,7 @@ setInterval(function(){
 // On page load — check session or show login
 window.addEventListener('DOMContentLoaded',function(){
   if(checkSession()){enterApp();}
-  else{loadLoginEmployees().then(renderEmpList);}
+  else{loadLoginData();}
 });
 </script>
 </body>

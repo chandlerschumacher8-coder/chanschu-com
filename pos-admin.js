@@ -144,8 +144,34 @@ async function _loadServiceTechs(){
   _updateSvcTechList();
 }
 
+var _posEmpTechNames=[];
+var _posContractorTechNames=[];
 function _updateSvcTechList(){
-  svcTechList=['Unassigned'].concat(adminTechs.filter(function(t){return t.active!==false;}).map(function(t){return t.tech||t.name;}));
+  _posContractorTechNames=adminTechs.filter(function(t){return t.active!==false;}).map(function(t){return t.tech||t.name;});
+  // Employee techs from adminUsers
+  _posEmpTechNames=adminUsers.filter(function(u){
+    if(u.active===false)return false;
+    var r=(u.posRole||'').toLowerCase();
+    return r.indexOf('tech')>=0||r.indexOf('service')>=0||r==='owner/admin'||r==='general manager'||r==='manager';
+  }).map(function(u){return u.tech||u.name;});
+  svcTechList=['Unassigned'].concat(_posEmpTechNames).concat(_posContractorTechNames);
+  // Populate the new-job assign dropdown if it exists
+  var fTech=document.getElementById('svc-f-tech');
+  if(fTech){fTech.innerHTML=_buildSvcTechOptions(fTech.value||'Unassigned');}
+}
+function _buildSvcTechOptions(selected){
+  var h='<option value="Unassigned"'+(selected==='Unassigned'?' selected':'')+'>Unassigned</option>';
+  if(_posEmpTechNames.length){
+    h+='<optgroup label="Employees">';
+    _posEmpTechNames.forEach(function(t){h+='<option value="'+t+'"'+(selected===t?' selected':'')+'>'+t+'</option>';});
+    h+='</optgroup>';
+  }
+  if(_posContractorTechNames.length){
+    h+='<optgroup label="Independent Contractors">';
+    _posContractorTechNames.forEach(function(t){h+='<option value="'+t+'"'+(selected===t?' selected':'')+'>'+t+'</option>';});
+    h+='</optgroup>';
+  }
+  return h;
 }
 
 async function saveAllTechs(){
@@ -445,19 +471,42 @@ var ROLE_PERMS={
   'CSR':['sale','customers','orders','timeclock'],
   'Delivery':['delivery','timeclock']
 };
+function _findDuplicatePins(){
+  var pinMap={};var dupes={};
+  adminUsers.forEach(function(u,i){
+    if(!u.pin||u.active===false)return;
+    if(pinMap[u.pin]!==undefined){dupes[u.pin]=dupes[u.pin]||[adminUsers[pinMap[u.pin]].name];dupes[u.pin].push(u.name);}
+    else{pinMap[u.pin]=i;}
+  });
+  return dupes;
+}
 function renderAdminUsers(){
   var wrap=document.getElementById('admin-users-list');
   if(!adminUsers.length){wrap.innerHTML='<div class="admin-empty">No employees.</div>';return;}
-  var h='<table class="admin-table"><thead><tr><th>Name</th><th>POS Role</th><th>PIN</th><th>Status</th><th style="width:180px;"></th></tr></thead><tbody>';
+  var dupes=_findDuplicatePins();
+  var h='';
+  // Show duplicate PIN warnings at top
+  var dupPins=Object.keys(dupes);
+  if(dupPins.length){
+    h+='<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;padding:12px 16px;margin-bottom:14px;">';
+    dupPins.forEach(function(pin){
+      h+='<div style="font-size:12px;color:#92400e;font-weight:600;margin-bottom:4px;">&#9888;&#65039; Duplicate PIN — '+dupes[pin].join(' and ')+' share PIN '+pin+'. Please update one.</div>';
+    });
+    h+='</div>';
+  }
+  h+='<table class="admin-table"><thead><tr><th>Name</th><th>POS Role</th><th>PIN</th><th>Status</th><th style="width:180px;"></th></tr></thead><tbody>';
   adminUsers.forEach(function(u,i){
     var inactive=u.active===false;
     var statusBadge=inactive
       ?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;background:#fee2e2;color:#dc2626;">INACTIVE</span>'
       :'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:100px;background:#dcfce7;color:#16a34a;">ACTIVE</span>';
     var rowStyle=inactive?'opacity:0.5;':'';
+    var pinDupe=u.pin&&dupes[u.pin];
+    var pinDisplay=u.pin||'—';
+    if(pinDupe)pinDisplay='<span style="color:#dc2626;font-weight:700;">'+u.pin+' &#9888;</span>';
     h+='<tr style="'+rowStyle+'"><td style="font-weight:600;">'+u.name+'</td>'
       +'<td>'+(u.posRole||'—')+'</td>'
-      +'<td><span class="pin-cell" onclick="inlineEditPin(this,'+i+')" style="cursor:pointer;min-width:40px;display:inline-block;" title="Click to edit PIN">'+(u.pin||'—')+'</span></td>'
+      +'<td><span class="pin-cell" onclick="inlineEditPin(this,'+i+')" style="cursor:pointer;min-width:40px;display:inline-block;" title="Click to edit PIN">'+pinDisplay+'</span></td>'
       +'<td>'+statusBadge+'</td>'
       +'<td><div class="admin-card-actions">'
       +'<button class="admin-card-btn edit" onclick="adminEditUser('+i+')">Edit</button>'
@@ -2862,72 +2911,46 @@ function renderPriceHistory(){
 // LOGIN
 // ══════════════════════════════════════════════
 // ══════════════════════════════════════════════
-// AUTH & PERMISSIONS
+// AUTH & PERMISSIONS — PIN-ONLY LOGIN
 // ══════════════════════════════════════════════
 var currentEmployee=null;
 var _inactivityTimer=null;
 var PIN_TIMEOUT_MS=5*60*1000;
+var _posPinValue='';
 
-function posLogin(){
-  var pw=document.getElementById('pos-pw').value;
-  if(pw==='DCA123'){
-    localStorage.setItem('pos-auth','1');
-    document.getElementById('pos-login').style.display='none';
-    showEmpSelect();
-  } else {
-    document.getElementById('pos-login-err').style.display='block';
-    document.getElementById('pos-pw').value='';
+// PIN pad functions
+function posPinKey(n){if(_posPinValue.length>=4)return;_posPinValue+=n;posUpdatePinDots();if(_posPinValue.length===4)posPinSubmit();}
+function posPinBack(){_posPinValue=_posPinValue.slice(0,-1);posUpdatePinDots();}
+function posPinClear(){_posPinValue='';posUpdatePinDots();document.getElementById('pos-login-err').style.display='none';}
+function posUpdatePinDots(){
+  for(var i=0;i<4;i++){var d=document.getElementById('pos-pd'+i);if(d)d.classList.toggle('filled',i<_posPinValue.length);}
+  var btn=document.getElementById('pos-login-btn');if(btn)btn.disabled=_posPinValue.length<4;
+}
+
+function posPinSubmit(){
+  if(_posPinValue.length<4)return;
+  // Must load users first
+  if(!adminUsers.length){
+    adminLoad().then(function(){_doPinLookup();});
+  }else{
+    _doPinLookup();
   }
 }
-function showEmpSelect(){
-  adminLoad().then(function(){
-    var grid=document.getElementById('emp-grid');
-    var active=adminUsers.filter(function(u){return u.active!==false;});
-    var h='';
-    active.forEach(function(u){
-      var i=adminUsers.indexOf(u);
-      h+='<div class="emp-tile" onclick="empSelectUser('+i+')">'+u.name+'<div style="font-size:10px;color:#6b7280;font-weight:400;margin-top:3px;">'+(u.posRole||'Sales')+'</div></div>';
-    });
-    grid.innerHTML=h;
-    document.getElementById('emp-pin-prompt').classList.remove('show');
-    document.getElementById('emp-grid').style.display='';
-    document.getElementById('emp-select').classList.add('show');
-    // Render time clock status on login screen
-    tcLoadPunches().then(function(){empTcRenderGrid();empTcStartRefresh();});
-  });
+
+function _doPinLookup(){
+  var matches=adminUsers.filter(function(u){return u.active!==false&&u.pin===_posPinValue;});
+  if(matches.length===1){
+    empLoginAs(matches[0]);
+  }else{
+    document.getElementById('pos-login-err').style.display='block';
+    document.getElementById('pos-login-err').textContent='Incorrect PIN — please try again';
+    _posPinValue='';posUpdatePinDots();
+  }
 }
-var _empSelectedIdx=-1;
-function empSelectUser(i){
-  _empSelectedIdx=i;
-  var u=adminUsers[i];
-  if(!u.pin){empLoginAs(u);return;}
-  document.getElementById('emp-grid').style.display='none';
-  document.getElementById('emp-pin-name').textContent=u.name;
-  document.getElementById('emp-pin-input').value='';
-  document.getElementById('emp-pin-input').type='password';
-  document.getElementById('emp-pin-input').placeholder='PIN';
-  document.getElementById('emp-pin-input').maxLength=4;
-  document.getElementById('emp-pin-err').style.display='none';
-  document.getElementById('emp-pin-prompt').classList.add('show');
-  setTimeout(function(){document.getElementById('emp-pin-input').focus();},100);
-}
-function empPinSubmit(){
-  var u=adminUsers[_empSelectedIdx];if(!u)return;
-  var val=document.getElementById('emp-pin-input').value;
-  var match=(val===u.pin);
-  if(match){empLoginAs(u);}
-  else{document.getElementById('emp-pin-err').style.display='block';document.getElementById('emp-pin-input').value='';document.getElementById('emp-pin-input').focus();}
-}
-function empBackToGrid(){
-  document.getElementById('emp-pin-prompt').classList.remove('show');
-  document.getElementById('emp-pin-input').type='password';
-  document.getElementById('emp-pin-input').placeholder='PIN';
-  document.getElementById('emp-pin-input').maxLength=4;
-  document.getElementById('emp-grid').style.display='';
-}
+
 function empLoginAs(user){
   currentEmployee=user;
-  document.getElementById('emp-select').classList.remove('show');
+  document.getElementById('pos-login').style.display='none';
   document.getElementById('tb-user-badge').textContent=user.name;
   document.getElementById('tb-user-badge').style.display='';
   applyPermissions();
@@ -2937,29 +2960,25 @@ function empLoginAs(user){
   // Auto-set clerk on cart
   var cl=document.getElementById('cart-clerk');
   if(cl){for(var i=0;i<cl.options.length;i++){if(cl.options[i].value===user.name){cl.selectedIndex=i;break;}}}
+  // Load time clock data
+  tcLoadPunches().then(function(){if(typeof empTcRenderGrid==='function')empTcRenderGrid();});
   resetInactivity();
 }
 function empSwitchUser(){
   currentEmployee=null;
-  showEmpSelect();
-}
-function empLogoutMaster(){
-  currentEmployee=null;
-  localStorage.removeItem('pos-auth');
-  document.getElementById('emp-select').classList.remove('show');
   document.getElementById('pos-login').style.display='flex';
-  document.getElementById('pos-pw').value='';
-  document.getElementById('pos-pw').focus();
+  document.getElementById('tb-user-badge').style.display='none';
+  _posPinValue='';posUpdatePinDots();
+  document.getElementById('pos-login-err').style.display='none';
 }
+function empLogoutMaster(){empSwitchUser();}
 function applyPermissions(){
   var tabs=document.querySelectorAll('.tb-tab');
   if(!currentEmployee){tabs.forEach(function(t){t.style.display='';});return;}
-  // Use granular permissions if set, otherwise fall back to role presets
   var perms=currentEmployee.permissions;
   var allowed;
   if(perms&&Object.keys(perms).length){
     allowed=PERM_TABS.filter(function(t){return perms[t];});
-    // Always include dashboard
     if(allowed.indexOf('dashboard')===-1)allowed.unshift('dashboard');
   } else {
     var role=currentEmployee.posRole||currentEmployee.role;
@@ -2973,21 +2992,15 @@ function applyPermissions(){
     t.style.display=allowed.includes(viewKey)?'':'none';
   });
 }
-// Inactivity timeout
+// Inactivity timeout — returns to PIN login
 function resetInactivity(){
   if(_inactivityTimer)clearTimeout(_inactivityTimer);
   _inactivityTimer=setTimeout(function(){
-    if(currentEmployee){currentEmployee=null;showEmpSelect();}
+    if(currentEmployee){empSwitchUser();}
   },PIN_TIMEOUT_MS);
 }
 document.addEventListener('click',resetInactivity);
 document.addEventListener('keydown',resetInactivity);
 
-// Init auth
-if(localStorage.getItem('pos-auth')==='1'){
-  document.getElementById('pos-login').style.display='none';
-  // Load users then show emp select
-  setTimeout(function(){showEmpSelect();},100);
-} else {
-  document.getElementById('pos-pw').focus();
-}
+// Init — preload users for fast PIN lookup
+adminLoad();
