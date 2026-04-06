@@ -866,11 +866,25 @@ function _truckGetStatus(t){
   return{moving:false,minutes:mins,color:color,label:label};
 }
 
+var _deliveryMarkers=[];
 function truckMapInit(){
   var el=document.getElementById('truck-map');if(!el)return;
-  if(!_truckMap){
-    _truckMap=L.map('truck-map',{zoomControl:true,attributionControl:false}).setView([37.753,-100.017],13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_truckMap);
+  var badge=document.getElementById('truck-map-status');
+  try{
+    if(!_truckMap){
+      if(typeof L==='undefined'){
+        el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:12px;">Map unavailable — Leaflet not loaded</div>';
+        if(badge)badge.textContent='Unavailable';badge.style.color='#6b7280';
+        return;
+      }
+      _truckMap=L.map('truck-map',{zoomControl:true,attributionControl:false}).setView([37.7528,-100.0171],13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(_truckMap);
+    }
+  }catch(e){
+    console.error('[Map] Init failed:',e);
+    el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-size:12px;">Map unavailable</div>';
+    if(badge){badge.textContent='Unavailable';badge.style.color='#6b7280';}
+    return;
   }
   // Ensure map-hidden is removed on init so side panel is visible
   var row=document.getElementById('del-body-row');
@@ -881,6 +895,7 @@ function truckMapInit(){
   // invalidateSize after layout settles
   setTimeout(function(){if(_truckMap)_truckMap.invalidateSize();},100);
   truckMapLoad();
+  truckMapShowDeliveryStops();
   if(_truckTimer)clearInterval(_truckTimer);
   _truckTimer=setInterval(truckMapLoad,60000);
 }
@@ -925,7 +940,8 @@ async function truckMapLoad(){
     var now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     if(badge)badge.textContent=trucks.length+' truck'+(trucks.length!==1?'s':'')+' \u00B7 '+src+' \u00B7 '+now;
   }catch(e){
-    if(badge)badge.textContent='Error';
+    console.error('[Map] Truck data load failed:',e);
+    if(badge){badge.textContent='No GPS data';badge.style.color='#6b7280';}
   }
 }
 
@@ -962,6 +978,49 @@ function truckFlyTo(idx){
   if(_truckMarkers[idx])_truckMarkers[idx].openPopup();
 }
 
+// ── DELIVERY STOP PINS ON MAP ──
+function truckMapShowDeliveryStops(){
+  if(!_truckMap)return;
+  // Clear old delivery markers
+  _deliveryMarkers.forEach(function(m){_truckMap.removeLayer(m);});
+  _deliveryMarkers=[];
+  // Get today's deliveries
+  var today=new Date().toISOString().slice(0,10);
+  var allDels=(typeof delDeliveries!=='undefined'&&delDeliveries.length)?delDeliveries:(typeof deliveries!=='undefined'?deliveries:[]);
+  var todayDels=allDels.filter(function(d){return d.date===today&&d.status!=='Delivered';});
+  if(!todayDels.length)return;
+  // Geocode addresses and place pins — use a simple queue
+  todayDels.forEach(function(d){
+    if(!d.address||!d.city)return;
+    var addr=encodeURIComponent(d.address+', '+d.city+', KS');
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+addr)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(!data||!data.length)return;
+        var lat=parseFloat(data[0].lat),lng=parseFloat(data[0].lon);
+        if(!lat||!lng)return;
+        var apps=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
+        var sc=d.status==='Out for Delivery'?'#f59e0b':'#3b82f6';
+        var icon=L.divIcon({
+          className:'',
+          html:'<div style="background:'+sc+';color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.3);border:2px solid #fff;">'+
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg></div>',
+          iconSize:[24,24],iconAnchor:[12,24]
+        });
+        var popup='<div style="font-family:\'Plus Jakarta Sans\',sans-serif;">'
+          +'<div style="font-weight:700;font-size:13px;color:#1f2937;">'+d.name+'</div>'
+          +'<div style="font-size:11px;color:#6b7280;margin:2px 0;">'+d.address+', '+d.city+'</div>'
+          +'<div style="font-size:11px;color:#6b7280;">'+apps+'</div>'
+          +'<div style="font-size:11px;margin-top:4px;"><span style="display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;background:'+(d.status==='Out for Delivery'?'#fef3c7;color:#92400e':'#dbeafe;color:#1d4ed8')+';">'+d.status+'</span></div>'
+          +'<div style="margin-top:6px;font-size:10px;color:#6b7280;">'+d.id+' · '+(d.time||'')+'</div>'
+          +'</div>';
+        var m=L.marker([lat,lng],{icon:icon}).addTo(_truckMap).bindPopup(popup);
+        _deliveryMarkers.push(m);
+      })
+      .catch(function(){});
+  });
+}
+
 // ══════════════════════════════════════════════
 // DELIVERY TAB - FULL IMPLEMENTATION
 // ══════════════════════════════════════════════
@@ -969,6 +1028,7 @@ function delInit(){delWeekStart=getWeekStart(new Date());delLoadData();}
 async function delLoadData(){
   try{var r=await fetch('/api/deliveries-get');var d=await r.json();delDeliveries=d.deliveries||[];delNextId=d.nextId||1;delNotes=Array.isArray(d.notes)?d.notes:[];delNextNoteId=d.nextNoteId||1;}catch(e){delDeliveries=[];delNotes=[];delNextId=1;delNextNoteId=1;}
   _lastDelHash=JSON.stringify({d:delDeliveries,n:delNotes});delRenderCalendar();delStartPolling();
+  if(_truckMap)truckMapShowDeliveryStops();
 }
 async function delSaveData(){
   try{await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:delDeliveries,nextId:delNextId,notes:delNotes,nextNoteId:delNextNoteId})});}catch(e){console.error('Save failed:',e);}
