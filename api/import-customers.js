@@ -1,6 +1,7 @@
 // api/import-customers.js — Parse XLS/XLSX/CSV and preview or import customers
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
+import { getSupabase, useSupabase } from './_supabase.js';
 import * as XLSX from 'xlsx';
 const redis = Redis.fromEnv();
 
@@ -14,7 +15,6 @@ export default async function handler(req, res) {
   try {
     const { fileBase64, action, customers } = req.body;
 
-    // ACTION: import — parse, merge 2-row pairs, save to Redis
     if (action === 'import') {
       if (!fileBase64) return res.status(400).json({ ok: false, error: 'No file data' });
 
@@ -30,7 +30,6 @@ export default async function handler(req, res) {
         const name = String(r1['Customer Name'] || '').trim();
         if (!name) continue;
 
-        // Parse "City, ST   Zip" from row 2's Address column
         const csz = String(r2['Address'] || '').trim();
         let city = '', state = '', zip = '';
         const m = csz.match(/^(.+?),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
@@ -47,11 +46,30 @@ export default async function handler(req, res) {
         });
       }
 
-      await redis.set('pos:customers', JSON.stringify(merged));
+      if (useSupabase()) {
+        const store_id = session.store_id || 1;
+        const sb = getSupabase();
+        await sb.from('customers').delete().eq('store_id', store_id);
+        if (merged.length) {
+          for (let i = 0; i < merged.length; i += 500) {
+            const batch = merged.slice(i, i + 500).map(c => ({
+              store_id, customer_num: c.customerNum || null, name: c.name,
+              phone: c.phone || null, email: c.email || null, address: c.address || null,
+              city: c.city || null, state: c.state || null, zip: c.zip || null,
+              notes: c.notes || null, email_opt_out: false, appliance_history: [],
+            }));
+            const { error } = await sb.from('customers').insert(batch);
+            if (error) throw new Error(error.message);
+          }
+        }
+      } else {
+        await redis.set('pos:customers', JSON.stringify(merged));
+      }
+
       return res.status(200).json({ ok: true, count: merged.length, preview: merged.slice(0, 10) });
     }
 
-    // ACTION: preview — parse file and return headers + first rows
+    // Preview mode
     if (!fileBase64) return res.status(400).json({ ok: false, error: 'No file data' });
 
     const buf = Buffer.from(fileBase64, 'base64');

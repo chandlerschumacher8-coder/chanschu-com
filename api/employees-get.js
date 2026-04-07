@@ -1,6 +1,7 @@
 // api/employees-get.js — Unified employee/tech GET endpoint
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
+import { getSupabase, useSupabase } from './_supabase.js';
 const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
@@ -9,6 +10,35 @@ export default async function handler(req, res) {
   const session = await validateSession(req);
   if (!session) return unauthorized(res);
   try {
+    if (useSupabase()) {
+      const store_id = session.store_id || 1;
+      const { data, error } = await getSupabase()
+        .from('employees')
+        .select('*')
+        .eq('store_id', store_id)
+        .order('name');
+      if (error) throw new Error(error.message);
+      // Map to frontend format
+      const users = (data || []).map(e => ({
+        id: e.employee_id || String(e.id),
+        name: e.name,
+        posRole: e.pos_role,
+        role: e.role,
+        pin: e.pin,
+        password: e.password,
+        phone: e.phone,
+        email: e.email,
+        tech: e.tech,
+        commissionRate: e.commission_rate,
+        wage: e.wage,
+        active: e.active,
+        permissions: e.permissions || [],
+        _dbId: e.id,
+      }));
+      return res.status(200).json({ ok: true, users });
+    }
+
+    // Redis fallback
     const { companyId } = req.query;
     if (!companyId) return res.status(400).json({ ok: false, error: 'Missing companyId' });
     const raw = await redis.get('users:' + companyId);
