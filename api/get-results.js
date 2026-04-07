@@ -1,13 +1,16 @@
 // api/get-results.js
 // Returns all stored win/loss/push results from Redis
- 
+
+import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
- 
+
 const redis = Redis.fromEnv();
- 
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (handlePreflight(req, res)) return;
   res.setHeader('Cache-Control', 'no-store');
+  const session = await validateSession(req);
+  if (!session) return unauthorized(res);
  
   try {
     const raw = await redis.get('pick-results');

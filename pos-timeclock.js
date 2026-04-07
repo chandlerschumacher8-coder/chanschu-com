@@ -113,10 +113,10 @@ var _tcClockTimer=null;
 var _tcStatusTimer=null;
 
 async function tcLoadPunches(){
-  try{var r=await fetch('/api/admin-get?key=timeclock-punches');var d=await r.json();if(d&&d.data&&Array.isArray(d.data))tcPunches=d.data;}catch(e){tcPunches=[];}
+  try{var r=await apiFetch('/api/admin-get?key=timeclock-punches');var d=await r.json();if(d&&d.data&&Array.isArray(d.data))tcPunches=d.data;}catch(e){tcPunches=[];}
 }
 async function tcSavePunches(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'timeclock-punches',data:tcPunches})});}catch(e){}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'timeclock-punches',data:tcPunches})});}catch(e){}
 }
 function tcInit(){
   tcLoadPunches().then(function(){tcRenderStatus();tcRenderDaily();});

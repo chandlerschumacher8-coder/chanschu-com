@@ -10,10 +10,12 @@
 async function upload(){
   var file=document.getElementById('f').files[0];
   if(!file){alert('Select a file');return;}
+  var token=localStorage.getItem('pos-session-token')||prompt('Enter session token (login to POS first):');
+  if(!token){alert('No token');return;}
   var text=await file.text();
   var data=JSON.parse(text);
   document.getElementById('status').textContent='Uploading '+data.length+' customers...';
-  var res=await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'customers',data:data})});
+  var res=await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({key:'customers',data:data})});
   var json=await res.json();
   document.getElementById('status').textContent=json.ok?'Done! '+data.length+' customers uploaded.':'Error: '+json.error;
 }

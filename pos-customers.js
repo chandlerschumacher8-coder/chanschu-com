@@ -5,11 +5,11 @@
 // ── CUSTOMERS ──
 var customers=[];
 async function loadCustomers(){
-  try{var r=await fetch('/api/admin-get?key=customers');var d=await r.json();if(d&&d.data&&Array.isArray(d.data))customers=d.data;}catch(e){}
+  try{var r=await apiFetch('/api/admin-get?key=customers');var d=await r.json();if(d&&d.data&&Array.isArray(d.data))customers=d.data;}catch(e){}
   custUpdateBadge();
 }
 async function saveCustomers(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'customers',data:customers})});}catch(e){}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'customers',data:customers})});}catch(e){}
 }
 // ── CUSTOMER TAB ──
 var _custSelectedIdx=-1;
@@ -674,7 +674,7 @@ async function custSendDeliveryEmail(idx){
   if(c.emailOptOut){toast('Customer has opted out of emails','error');return;}
   // Get deliveries for this customer
   try{
-    var r=await fetch('/api/deliveries-get');var data=await r.json();
+    var r=await apiFetch('/api/deliveries-get');var data=await r.json();
     if(!data.ok){toast('Could not load deliveries','error');return;}
     var custDels=data.deliveries.filter(function(d){return d.name===c.name&&d.status!=='Delivered';});
     if(!custDels.length){toast('No scheduled deliveries found','error');return;}
@@ -692,7 +692,7 @@ async function custSendDeliveryEmail(idx){
       if(!del.emailLog)del.emailLog=[];
       del.emailLog.push({ts:new Date().toISOString(),to:c.email,type:'delivery_confirmation',by:currentEmployee?currentEmployee.name:'Admin'});
       // Save back the deliveries with the email log
-      await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:data.deliveries,nextId:data.nextId,notes:data.notes||[],nextNoteId:data.nextNoteId||1})});
+      await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:data.deliveries,nextId:data.nextId,notes:data.notes||[],nextNoteId:data.nextNoteId||1})});
       toast('Confirmation emailed to '+c.email,'success');
     }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
   }catch(e){toast('Error loading deliveries','error');}

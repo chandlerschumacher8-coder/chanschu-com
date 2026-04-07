@@ -60,8 +60,8 @@
     .hbtn.danger:hover{color:var(--red);border-color:rgba(224,112,112,0.4);}
     .main{padding:24px 28px;max-width:1400px;margin:0 auto;}
     /* STATS */
-    .stats-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:24px;}
-    .stat-card{background:var(--navy-2);border:2px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:16px 18px;cursor:pointer;transition:all 0.15s;user-select:none;}
+    .stats-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:24px;}
+    .stat-card{background:var(--navy-2);border:2px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:10px 8px;text-align:center;cursor:pointer;transition:all 0.15s;user-select:none;min-width:0;}
     .stat-card:hover{background:var(--navy-3);border-color:rgba(255,255,255,0.15);}
     .stat-card.active{box-shadow:0 2px 12px rgba(0,0,0,0.3);}
     .stat-card.sc-all.active{border-color:var(--white);}
@@ -70,8 +70,8 @@
     .stat-card.sc-svcomplete.active{border-color:#2dd4bf;}
     .stat-card.sc-needsclaimed.active{border-color:var(--gold);}
     .stat-card.sc-done.active{border-color:var(--green);}
-    .stat-val{font-family:'Playfair Display',serif;font-size:26px;line-height:1;}
-    .stat-key{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-top:4px;}
+    .stat-val{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;line-height:1;}
+    .stat-key{font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--gray-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .sc-all .stat-val{color:var(--white);}
     .sc-open .stat-val{color:var(--blue);}
     .sc-prog .stat-val{color:var(--orange);}
@@ -367,8 +367,8 @@
     @keyframes blink{0%,80%,100%{opacity:0;}40%{opacity:1;}}
     .empty-state{padding:32px;text-align:center;color:var(--gray-2);font-size:13px;}
     footer{padding:20px 28px;text-align:center;color:var(--gray-3);font-size:11px;margin-top:32px;}
-    @media(max-width:900px){.two-col{grid-template-columns:1fr;}.stats-bar{grid-template-columns:repeat(3,1fr);}.main{padding:14px 16px;}}
-    @media(max-width:500px){.stats-bar{grid-template-columns:repeat(3,1fr);}.dg{grid-template-columns:1fr;}}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr;}.stats-bar{grid-template-columns:repeat(6,1fr);gap:6px;}.main{padding:14px 16px;}.stat-card{padding:8px 4px;}.stat-val{font-size:20px;}.stat-key{font-size:8px;}}
+    @media(max-width:500px){.dg{grid-template-columns:1fr;}}
 
     /* ═══ MOBILE RESPONSIVE ═══ */
     @media(max-width:767px){
@@ -381,11 +381,11 @@
       .h-user{font-size:11px;}
       .hbtn{font-size:10px;padding:5px 10px;}
       .main{padding:10px 12px;}
-      /* Stats bar — horizontal scroll */
-      .stats-bar{display:flex!important;overflow-x:auto;gap:8px;padding-bottom:6px;-webkit-overflow-scrolling:touch;grid-template-columns:unset!important;}
-      .stat-card{min-width:90px;flex-shrink:0;padding:8px 12px;}
+      /* Stats bar — horizontal scroll on mobile, all 6 in one row */
+      .stats-bar{display:flex!important;overflow-x:auto;gap:6px;padding-bottom:6px;-webkit-overflow-scrolling:touch;grid-template-columns:unset!important;}
+      .stat-card{min-width:80px;flex-shrink:0;padding:6px 8px;}
       .stat-val{font-size:18px;}
-      .stat-key{font-size:9px;}
+      .stat-key{font-size:8px;}
       /* Two-col layout stacked */
       .two-col{grid-template-columns:1fr!important;gap:12px;}
       /* Form panel — hidden by default on mobile, shown as full-screen overlay */
@@ -777,6 +777,32 @@
 <script>
 var currentUser=null,companies=[],jobs=[],nextId=1,techList=['Unassigned'],editUsers=[],editCompanyId=null,FILTER='all',chatHistory=[],pendingInvoiceFile=null;
 
+// ═══ SESSION TOKEN & AUTHENTICATED FETCH ═══
+var SVC_TOKEN_KEY='svc-session-token';
+window._authToken=localStorage.getItem(SVC_TOKEN_KEY)||null;
+
+function apiFetch(url,options){
+  options=options||{};
+  if(!options.headers)options.headers={};
+  if(window._authToken){options.headers['Authorization']='Bearer '+window._authToken;}
+  return fetch(url,options);
+}
+
+// Token rotation — every 4 hours
+var _tokenRotationTimer=null;
+function startTokenRotation(){
+  if(_tokenRotationTimer)clearInterval(_tokenRotationTimer);
+  _tokenRotationTimer=setInterval(async function(){
+    if(!window._authToken)return;
+    try{
+      var res=await apiFetch('/api/session-rotate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+window._authToken}});
+      var data=await res.json();
+      if(data.ok&&data.token){window._authToken=data.token;localStorage.setItem(SVC_TOKEN_KEY,data.token);}
+    }catch(e){}
+  },4*60*60*1000);
+}
+function stopTokenRotation(){if(_tokenRotationTimer){clearInterval(_tokenRotationTimer);_tokenRotationTimer=null;}}
+
 // ─── CLAUDE API HELPER ───
 async function claudeApiCall(body){
   var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
@@ -785,7 +811,7 @@ async function claudeApiCall(body){
     try{
       var ctrl=new AbortController();
       var tid=setTimeout(function(){ctrl.abort();},TIMEOUT);
-      var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+      var res=await apiFetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
       clearTimeout(tid);
       if(!res.ok)throw new Error('HTTP '+res.status);
       var data=await res.json();
@@ -841,14 +867,13 @@ function saveSession(entry){
 
 async function loadLoginData(){
   _allEmployees=[];_contractorTechs=[];
+  // Fetch contractor tech names for dropdown (public endpoint, no auth needed)
   try{
-    var res=await fetch('/api/employees-get?companyId=dc-appliance');
+    var res=await fetch('/api/session-create');
     var data=await res.json();
-    if(data.ok&&data.users)_allEmployees=data.users.filter(function(u){return u.active!==false;});
-  }catch(e){}
-  try{
-    var res2=await fetch('/api/techs-get');var data2=await res2.json();
-    _contractorTechs=(data2.techs||[]).filter(function(t){return t.active!==false;});
+    if(data.ok&&data.contractors){
+      _contractorTechs=data.contractors.map(function(name){return {tech:name,name:name};});
+    }
   }catch(e){}
   // Populate contractor dropdown
   var sel=document.getElementById('contractor-sel');
@@ -861,20 +886,29 @@ function pinBack(){_pinValue=_pinValue.slice(0,-1);updatePinDots();}
 function pinClear(){_pinValue='';updatePinDots();document.getElementById('login-err').style.display='none';}
 function updatePinDots(){for(var i=0;i<4;i++){var d=document.getElementById('pd'+i);if(d)d.classList.toggle('filled',i<_pinValue.length);}var btn=document.getElementById('login-submit-btn');if(btn)btn.disabled=_pinValue.length<4;}
 
-function pinSubmit(){
+async function pinSubmit(){
   if(_pinValue.length<4)return;
-  var matches=_allEmployees.filter(function(u){return u.pin===_pinValue;});
-  if(matches.length===1){
-    var u=matches[0];
-    u._authType='employee';
-    saveSession(u);
-    var svcRole=_resolveRole(u.posRole||'Sales','employee');
-    currentUser={name:u.name,role:svcRole,companyId:'dc-appliance',companyName:'DC Appliance',posRole:u.posRole||'Sales',authType:'employee',techName:u.tech||u.name};
-    console.log('[Service Login] User:',u.name,'posRole:',u.posRole,'svcRole:',svcRole);
-    enterApp();
-  }else{
+  try{
+    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:_pinValue,companyId:'dc-appliance'})});
+    var data=await res.json();
+    if(data.ok&&data.token&&data.employee){
+      window._authToken=data.token;
+      localStorage.setItem(SVC_TOKEN_KEY,data.token);
+      var u=data.employee;
+      u._authType='employee';
+      saveSession(u);
+      var svcRole=_resolveRole(u.posRole||'Sales','employee');
+      currentUser={name:u.name,role:svcRole,companyId:'dc-appliance',companyName:'DC Appliance',posRole:u.posRole||'Sales',authType:'employee',techName:u.tech||u.name};
+      console.log('[Service Login] User:',u.name,'posRole:',u.posRole,'svcRole:',svcRole);
+      enterApp();
+    }else{
+      document.getElementById('login-err').style.display='block';
+      document.getElementById('login-err').textContent=data.error||'Incorrect PIN — please try again';
+      _pinValue='';updatePinDots();
+    }
+  }catch(e){
     document.getElementById('login-err').style.display='block';
-    document.getElementById('login-err').textContent='Incorrect PIN — please try again';
+    document.getElementById('login-err').textContent='Connection error — please try again';
     _pinValue='';updatePinDots();
   }
 }
@@ -904,21 +938,31 @@ function togglePwVis(){
   else{inp.type='password';btn.textContent='Show';}
 }
 
-function pwSubmit(){
+async function pwSubmit(){
   var sel=document.getElementById('contractor-sel');
   var name=sel?sel.value:'';
   var pw=document.getElementById('login-pw-inp').value;
   if(!name||!pw){document.getElementById('login-err').style.display='block';document.getElementById('login-err').textContent='Select a name and enter password';return;}
-  var tech=_contractorTechs.find(function(t){return (t.tech||t.name)===name&&t.password===pw;});
-  if(tech){
-    var entry={name:tech.tech||tech.name,tech:tech.tech||tech.name,posRole:'Contractor Tech',role:'tech',_authType:'contractor'};
-    saveSession(entry);
-    currentUser={name:entry.name,role:_resolveRole('Contractor Tech','contractor'),companyId:'dc-appliance',companyName:'DC Appliance',posRole:'Contractor Tech',authType:'contractor',techName:entry.tech};
-    console.log('[Service Login] Contractor:',entry.name,'role:',currentUser.role);
-    enterApp();
-  }else{
+  try{
+    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,techName:name,companyId:'dc-appliance',authType:'contractor'})});
+    var data=await res.json();
+    if(data.ok&&data.token&&data.employee){
+      window._authToken=data.token;
+      localStorage.setItem(SVC_TOKEN_KEY,data.token);
+      var entry=data.employee;
+      entry._authType='contractor';
+      saveSession(entry);
+      currentUser={name:entry.name,role:_resolveRole('Contractor Tech','contractor'),companyId:'dc-appliance',companyName:'DC Appliance',posRole:'Contractor Tech',authType:'contractor',techName:entry.tech||entry.name};
+      console.log('[Service Login] Contractor:',entry.name,'role:',currentUser.role);
+      enterApp();
+    }else{
+      document.getElementById('login-err').style.display='block';
+      document.getElementById('login-err').textContent=data.error||'Incorrect password';
+      document.getElementById('login-pw-inp').value='';
+    }
+  }catch(e){
     document.getElementById('login-err').style.display='block';
-    document.getElementById('login-err').textContent='Incorrect password';
+    document.getElementById('login-err').textContent='Connection error — please try again';
     document.getElementById('login-pw-inp').value='';
   }
 }
@@ -928,6 +972,7 @@ async function enterApp(){
   document.getElementById('app').style.display='block';
   document.getElementById('h-user').textContent='Welcome, '+currentUser.name;
   document.getElementById('h-company').textContent='DC Appliance';
+  startTokenRotation();
   // Role-based access: admin = full, staff = view all + schedule, tech = own jobs only
   var svcRole=currentUser.role; // 'admin', 'staff', or 'tech'
   var posRole=currentUser.posRole||'';
@@ -971,6 +1016,12 @@ function stopPolling(){if(_svcPollTimer){clearInterval(_svcPollTimer);_svcPollTi
 
 function doLogout(){
   try{stopPolling();}catch(e){}
+  stopTokenRotation();
+  // Delete server session
+  var token=localStorage.getItem(SVC_TOKEN_KEY);
+  if(token){fetch('/api/session-delete',{method:'POST',headers:{'Authorization':'Bearer '+token}}).catch(function(){});}
+  localStorage.removeItem(SVC_TOKEN_KEY);
+  window._authToken=null;
   currentUser=null;jobs=[];nextId=1;techList=['Unassigned'];
   localStorage.removeItem(SESSION_KEY);
   document.getElementById('login-screen').style.display='flex';
@@ -983,7 +1034,7 @@ function doLogout(){
 }
 
 // ── COMPANIES ──
-async function loadCompanies(){var res=await fetch('/api/companies-get');var data=await res.json();companies=data.companies||[];}
+async function loadCompanies(){var res=await apiFetch('/api/companies-get');var data=await res.json();companies=data.companies||[];}
 function renderSuperAdminView(){
   var list=document.getElementById('jobs-list');
   list.innerHTML=companies.length===0?'<div class="empty-state">No companies yet. Add one using the Companies button.</div>':
@@ -1005,7 +1056,7 @@ async function addCompany(){
   if(companies.find(function(c){return c.id===id;})){msg.textContent='ID already exists.';msg.className='modal-msg err';return;}
   var superKey=prompt('Enter super admin password:');
   try{
-    var res=await fetch('/api/companies-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:{id:id,name:name},superKey:superKey})});
+    var res=await apiFetch('/api/companies-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({company:{id:id,name:name},superKey:superKey})});
     var data=await res.json();
     if(!data.ok)throw new Error(data.error);
     companies.push({id:id,name:name});
@@ -1017,7 +1068,7 @@ async function addCompany(){
 async function deleteCompany(id,name){
   if(!confirm('Delete '+name+' and ALL their data?'))return;
   var superKey=prompt('Enter super admin password:');
-  var res=await fetch('/api/companies-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:id,superKey:superKey})});
+  var res=await apiFetch('/api/companies-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:id,superKey:superKey})});
   var data=await res.json();
   if(data.ok){companies=companies.filter(function(c){return c.id!==id;});renderCompaniesModal();renderSuperAdminView();}
   else alert('Error: '+data.error);
@@ -1030,7 +1081,7 @@ async function loadTechs(){
   _empTechNames=[];_contractorTechNames=[];
   // Load employee techs (employees with tech/service roles)
   try{
-    var res=await fetch('/api/employees-get?companyId=dc-appliance');var data=await res.json();
+    var res=await apiFetch('/api/employees-get?companyId=dc-appliance');var data=await res.json();
     if(data.ok&&data.users){
       data.users.filter(function(u){return u.active!==false;}).forEach(function(u){
         var r=(u.posRole||'').toLowerCase();
@@ -1043,7 +1094,7 @@ async function loadTechs(){
   }catch(e){}
   // Load contractor techs from service:techs
   try{
-    var res2=await fetch('/api/techs-get');var data2=await res2.json();
+    var res2=await apiFetch('/api/techs-get');var data2=await res2.json();
     (data2.techs||[]).filter(function(t){return t.active!==false;}).forEach(function(t){
       var tn=t.tech||t.name;if(tn&&_contractorTechNames.indexOf(tn)<0)_contractorTechNames.push(tn);
     });
@@ -1101,11 +1152,11 @@ function openUsers(){openUsersForCompany(currentUser.companyId,currentUser.compa
 async function openUsersForCompany(companyId,companyName){
   editCompanyId=companyId;document.getElementById('users-modal-title').textContent='Users — '+companyName;
   // Load employees
-  var res=await fetch('/api/employees-get?companyId='+companyId);var data=await res.json();
+  var res=await apiFetch('/api/employees-get?companyId='+companyId);var data=await res.json();
   editUsers=(data.users||[]).map(function(u){return Object.assign({},u);});
   // Load contractor techs
   try{
-    var res2=await fetch('/api/techs-get');var data2=await res2.json();
+    var res2=await apiFetch('/api/techs-get');var data2=await res2.json();
     _editContractorTechs=(data2.techs||[]).map(function(t){return Object.assign({},t);});
   }catch(e){_editContractorTechs=[];}
   renderUserRows();renderContractorRows();
@@ -1203,7 +1254,7 @@ async function saveUsersOrTechs(){
     if(!editUsers.some(function(u){return u.role==='admin';})){msg.textContent='Must have at least one admin.';msg.className='modal-msg err';return;}
     var requesterPw=currentUser.role==='superadmin'?prompt('Enter super admin password:'):prompt('Re-enter your password:');
     try{
-      var res=await fetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:editCompanyId,users:editUsers,requesterPassword:requesterPw})});
+      var res=await apiFetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:editCompanyId,users:editUsers,requesterPassword:requesterPw})});
       var data=await res.json();if(!data.ok)throw new Error(data.error);
       msg.textContent='Employees saved!';msg.className='modal-msg ok';
       await loadTechs();setTimeout(function(){closeModal('users-modal');},1000);
@@ -1216,7 +1267,7 @@ async function saveUsersOrTechs(){
       if(!t.tech)t.tech=t.name;
     }
     try{
-      var res2=await fetch('/api/techs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({techs:_editContractorTechs,requesterPassword:'DCA123'})});
+      var res2=await apiFetch('/api/techs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({techs:_editContractorTechs,requesterPassword:'DCA123'})});
       var data2=await res2.json();if(!data2.ok)throw new Error(data2.error);
       msg.textContent='Contractor techs saved!';msg.className='modal-msg ok';
       await loadTechs();setTimeout(function(){closeModal('users-modal');},1000);
@@ -1227,7 +1278,7 @@ async function saveUsersOrTechs(){
 // ── JOBS ──
 async function loadJobs(){
   try{
-    var res=await fetch('/api/jobs-get?companyId='+currentUser.companyId);var data=await res.json();
+    var res=await apiFetch('/api/jobs-get?companyId='+currentUser.companyId);var data=await res.json();
     jobs=data.jobs||[];nextId=data.nextId||1;
     console.log('[Service loadJobs] Loaded',jobs.length,'jobs for',currentUser.name,'('+currentUser.role+')');
   }catch(e){
@@ -1237,7 +1288,7 @@ async function loadJobs(){
   renderJobs();updateStats();
 }
 async function saveJobs(){
-  await fetch('/api/jobs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:currentUser.companyId,jobs:jobs,nextId:nextId})});
+  await apiFetch('/api/jobs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:currentUser.companyId,jobs:jobs,nextId:nextId})});
 }
 async function addJob(){
   var name=document.getElementById('f-name').value.trim(),phone=document.getElementById('f-phone').value.trim(),email=document.getElementById('f-email').value.trim(),
@@ -1257,7 +1308,7 @@ async function addJob(){
   if(pendingInvoiceFile){
     try{
       var b64=await toB64(pendingInvoiceFile);
-      var upRes=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:pendingInvoiceFile.name,contentType:pendingInvoiceFile.type,data:b64,companyId:currentUser.companyId,jobId:job.id})});
+      var upRes=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:pendingInvoiceFile.name,contentType:pendingInvoiceFile.type,data:b64,companyId:currentUser.companyId,jobId:job.id})});
       var upData=await upRes.json();
       if(upData.ok){job.files=job.files||[];job.files.push({url:upData.url,filename:pendingInvoiceFile.name,type:pendingInvoiceFile.type,uploadedAt:new Date().toISOString(),label:'Sales Invoice'});await saveJobs();}
     }catch(e){console.warn('Invoice attach failed:',e);alert('Note: Invoice could not be saved to files ('+e.message+'). Job was created successfully. Set up Vercel Blob storage to enable file uploads.');}
@@ -1527,7 +1578,7 @@ async function handleUpload(jobId,files){
   for(var i=0;i<files.length;i++){
     try{
       var b64=await toB64(files[i]);
-      var res=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,companyId:currentUser.companyId,jobId:jobId})});
+      var res=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,companyId:currentUser.companyId,jobId:jobId})});
       var d=await res.json();
       if(d.ok){j.files.push({url:d.url,filename:files[i].name,type:files[i].type,uploadedAt:new Date().toISOString()});}
       else{errors.push(files[i].name+': '+d.error);}
@@ -1833,8 +1884,14 @@ function _flashPinKey(val){
 
 // On page load — check session or show login
 window.addEventListener('DOMContentLoaded',function(){
-  if(checkSession()){enterApp();}
-  else{loadLoginData();}
+  var savedToken=localStorage.getItem(SVC_TOKEN_KEY);
+  if(savedToken)window._authToken=savedToken;
+  if(savedToken&&checkSession()){enterApp();}
+  else{
+    localStorage.removeItem(SVC_TOKEN_KEY);window._authToken=null;
+    // Load contractor tech names for dropdown (PIN validation now server-side)
+    loadLoginData();
+  }
 });
 </script>
 </body>

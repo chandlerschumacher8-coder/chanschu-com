@@ -1071,7 +1071,7 @@ async function truckMapLoad(){
   try{
     var controller=new AbortController();
     var timeout=setTimeout(function(){controller.abort();},5000);
-    var res=await fetch('/api/trucks?_t='+Date.now(),{cache:'no-store',signal:controller.signal});
+    var res=await apiFetch('/api/trucks?_t='+Date.now(),{cache:'no-store',signal:controller.signal});
     clearTimeout(timeout);
     data=await res.json();
     if(!data||!data.ok)data=null;
@@ -1200,7 +1200,7 @@ function truckMapShowDeliveryStops(){
 // ══════════════════════════════════════════════
 function delInit(){delWeekStart=getWeekStart(new Date());delLoadData();}
 async function delLoadData(){
-  try{var r=await fetch('/api/deliveries-get');var d=await r.json();delDeliveries=d.deliveries||[];delNextId=d.nextId||1;delNotes=Array.isArray(d.notes)?d.notes:[];delNextNoteId=d.nextNoteId||1;
+  try{var r=await apiFetch('/api/deliveries-get');var d=await r.json();delDeliveries=d.deliveries||[];delNextId=d.nextId||1;delNotes=Array.isArray(d.notes)?d.notes:[];delNextNoteId=d.nextNoteId||1;
   // Diagnostic logging
   var allDates={};delDeliveries.forEach(function(x){allDates[x.date]=(allDates[x.date]||0)+1;});
   console.log('[POS Delivery] Loaded '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
@@ -1213,12 +1213,12 @@ async function delLoadData(){
   if(_truckMap)truckMapShowDeliveryStops();
 }
 async function delSaveData(){
-  try{await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:delDeliveries,nextId:delNextId,notes:delNotes,nextNoteId:delNextNoteId})});}catch(e){console.error('Save failed:',e);}
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:delDeliveries,nextId:delNextId,notes:delNotes,nextNoteId:delNextNoteId})});}catch(e){console.error('Save failed:',e);}
 }
 function delStartPolling(){if(_delPollTimer)clearInterval(_delPollTimer);_delPollTimer=setInterval(delPoll,15000);}
 function delStopPolling(){if(_delPollTimer){clearInterval(_delPollTimer);_delPollTimer=null;}}
 async function delPoll(){
-  try{var res=await fetch('/api/deliveries-get?t='+Date.now());var data=await res.json();var hash=JSON.stringify({d:data.deliveries,n:data.notes});if(hash===_lastDelHash)return;_lastDelHash=hash;delDeliveries=data.deliveries||[];delNextId=data.nextId||1;delNotes=Array.isArray(data.notes)?data.notes:[];delNextNoteId=data.nextNoteId||1;
+  try{var res=await apiFetch('/api/deliveries-get?t='+Date.now());var data=await res.json();var hash=JSON.stringify({d:data.deliveries,n:data.notes});if(hash===_lastDelHash)return;_lastDelHash=hash;delDeliveries=data.deliveries||[];delNextId=data.nextId||1;delNotes=Array.isArray(data.notes)?data.notes:[];delNextNoteId=data.nextNoteId||1;
   console.log('[POS Delivery] Poll update: '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
   delRenderEvents();var b=document.getElementById('del-sync-badge');if(b){b.style.opacity='1';setTimeout(function(){b.style.opacity='0';},2000);}}catch(e){}
 }
@@ -1388,7 +1388,7 @@ async function delHandleInvoiceFile(file){
   var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);var cu=parsed.customer||{};
   if(cu.name)document.getElementById('del-f-name').value=cu.name;if(cu.phone)document.getElementById('del-f-phone').value=cu.phone;if(cu.email)document.getElementById('del-f-email').value=cu.email;if(cu.address)document.getElementById('del-f-address').value=cu.address;if(cu.city)document.getElementById('del-f-city').value=cu.city;
   var apps=parsed.appliances||[];if(apps.length>0){if(apps[0].invoice)document.getElementById('del-f-invoice').value=apps[0].invoice;delInitAppRows(apps);}
-  var upR=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});var upD=await upR.json();
+  var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});var upD=await upR.json();
   if(upD.ok){delPendingFiles.push({url:upD.url,filename:file.name});delRenderPendingFiles();}}catch(e){toast('Could not read invoice: '+e.message,'error');}finally{document.getElementById('del-idz-loading').style.display='none';}
 }
 function delRenderPendingFiles(){
@@ -1487,7 +1487,7 @@ async function delDetUploadPhotos(files,deliveryId){
   for(var i=0;i<files.length;i++){
     try{
       var base64=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(r.result.split(',')[1]);};r.onerror=reject;r.readAsDataURL(files[i]);});
-      var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:base64,deliveryId:deliveryId})});
+      var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:base64,deliveryId:deliveryId})});
       var data=await res.json();
       if(data.ok)d.photos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
     }catch(e){console.error(e);}
@@ -1538,7 +1538,7 @@ function delLogAttachPhoto(deliveryId){
     el.innerHTML='<div style="font-size:10px;color:var(--gold-light,#3b82f6);font-weight:600;margin-top:4px;">Uploading...</div>';
     try{
       var b64=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(r.result.split(',')[1]);};r.onerror=reject;r.readAsDataURL(inp.files[0]);});
-      var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
+      var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
       var data=await res.json();
       if(data.ok){_delLogPendingPhoto=data.url;el.innerHTML='<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:4px;">&#x2713; Photo attached</div>';}
       else{el.innerHTML='';_delLogPendingPhoto=null;}
@@ -1621,16 +1621,16 @@ function svcInit(){
   svcRenderStats();svcRenderFilters();svcLoadJobs();
 }
 async function svcLoadJobs(){
-  try{var res=await fetch('/api/jobs-get?companyId='+SVC_COMPANY_ID);var data=await res.json();svcJobs=data.jobs||[];svcNextId=data.nextId||1;}catch(e){svcJobs=[];svcNextId=1;}
+  try{var res=await apiFetch('/api/jobs-get?companyId='+SVC_COMPANY_ID);var data=await res.json();svcJobs=data.jobs||[];svcNextId=data.nextId||1;}catch(e){svcJobs=[];svcNextId=1;}
   _lastSvcHash=JSON.stringify(svcJobs);svcRenderJobs();svcRenderStats();svcStartPolling();
 }
 async function svcSaveJobs(){
-  try{await fetch('/api/jobs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,jobs:svcJobs,nextId:svcNextId})});}catch(e){console.error('Save failed:',e);}
+  try{await apiFetch('/api/jobs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,jobs:svcJobs,nextId:svcNextId})});}catch(e){console.error('Save failed:',e);}
 }
 function svcStartPolling(){if(_svcPollTimer)clearInterval(_svcPollTimer);_svcPollTimer=setInterval(svcPoll,15000);}
 function svcStopPolling(){if(_svcPollTimer){clearInterval(_svcPollTimer);_svcPollTimer=null;}}
 async function svcPoll(){
-  try{var res=await fetch('/api/jobs-get?companyId='+SVC_COMPANY_ID+'&t='+Date.now());var data=await res.json();var hash=JSON.stringify(data.jobs);if(hash===_lastSvcHash)return;_lastSvcHash=hash;svcJobs=data.jobs||[];svcNextId=data.nextId||1;svcRenderJobs();svcRenderStats();}catch(e){}
+  try{var res=await apiFetch('/api/jobs-get?companyId='+SVC_COMPANY_ID+'&t='+Date.now());var data=await res.json();var hash=JSON.stringify(data.jobs);if(hash===_lastSvcHash)return;_lastSvcHash=hash;svcJobs=data.jobs||[];svcNextId=data.nextId||1;svcRenderJobs();svcRenderStats();}catch(e){}
 }
 function svcRenderStats(){
   var stats=[
@@ -1720,7 +1720,7 @@ async function svcAddJob(){
   // Attach pending invoice file
   if(svcPendingInvoiceFile){
     try{var b64=await toB64(svcPendingInvoiceFile);
-    var upRes=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:svcPendingInvoiceFile.name,contentType:svcPendingInvoiceFile.type,data:b64,companyId:SVC_COMPANY_ID,jobId:job.id})});
+    var upRes=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:svcPendingInvoiceFile.name,contentType:svcPendingInvoiceFile.type,data:b64,companyId:SVC_COMPANY_ID,jobId:job.id})});
     var upData=await upRes.json();
     if(upData.ok){job.files=job.files||[];job.files.push({url:upData.url,filename:svcPendingInvoiceFile.name,type:svcPendingInvoiceFile.type,uploadedAt:new Date().toISOString(),label:'Sales Invoice'});await svcSaveJobs();}
     }catch(e){console.warn('Invoice attach failed:',e);}
@@ -1743,7 +1743,7 @@ function svcRenderLog(j){var e=j.activityLog||[];if(!e.length)return '<div style
 async function svcAddLog(id){var j=svcJobs.find(function(x){return x.id===id;});if(!j)return;var type=document.getElementById('svc-ltype-'+id).value,text=document.getElementById('svc-ltxt-'+id).value.trim();if(!text)return;if(!j.activityLog)j.activityLog=[];j.activityLog.push({type:type,text:text,by:'POS User',at:new Date().toISOString()});document.getElementById('svc-ltxt-'+id).value='';await svcSaveJobs();var ll=document.getElementById('svc-log-'+id);if(ll)ll.innerHTML=svcRenderLog(j);}
 // Files
 function svcRenderFiles(j){var f=j.files||[];if(!f.length)return '';return f.map(function(x,i){var isPdf=x.filename&&x.filename.toLowerCase().endsWith('.pdf');var labelHtml=x.label?'<span style="font-size:9px;font-weight:700;background:rgba(91,159,212,0.15);color:var(--blue);padding:2px 6px;text-align:center;display:block;">'+x.label+'</span>':'';return '<div class="svc-attach-item"><a href="'+x.url+'" target="_blank">'+(isPdf?'<div class="svc-attach-pdf"><div class="svc-attach-pdf-icon">PDF</div><div class="svc-attach-pdf-name">'+x.filename+'</div></div>':'<img class="svc-attach-img" src="'+x.url+'" alt="photo"/>')+labelHtml+'</a><button class="svc-attach-del" onclick="event.stopPropagation();svcDeleteFile(\''+j.id+'\','+i+')">x</button></div>';}).join('');}
-async function svcHandleUpload(jobId,files){var j=svcJobs.find(function(x){return x.id===jobId;});if(!j||!files||!files.length)return;if(!j.files)j.files=[];for(var i=0;i<files.length;i++){try{var b64=await toB64(files[i]);var res=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,companyId:SVC_COMPANY_ID,jobId:jobId})});var d=await res.json();if(d.ok)j.files.push({url:d.url,filename:files[i].name,type:files[i].type,uploadedAt:new Date().toISOString()});}catch(e){toast('Upload failed: '+e.message,'error');}}await svcSaveJobs();var g=document.getElementById('svc-agrid-'+jobId);if(g)g.innerHTML=svcRenderFiles(j);}
+async function svcHandleUpload(jobId,files){var j=svcJobs.find(function(x){return x.id===jobId;});if(!j||!files||!files.length)return;if(!j.files)j.files=[];for(var i=0;i<files.length;i++){try{var b64=await toB64(files[i]);var res=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,companyId:SVC_COMPANY_ID,jobId:jobId})});var d=await res.json();if(d.ok)j.files.push({url:d.url,filename:files[i].name,type:files[i].type,uploadedAt:new Date().toISOString()});}catch(e){toast('Upload failed: '+e.message,'error');}}await svcSaveJobs();var g=document.getElementById('svc-agrid-'+jobId);if(g)g.innerHTML=svcRenderFiles(j);}
 async function svcDeleteFile(id,i){if(!confirm('Remove file?'))return;var j=svcJobs.find(function(x){return x.id===id;});if(!j||!j.files)return;j.files.splice(i,1);await svcSaveJobs();var g=document.getElementById('svc-agrid-'+id);if(g)g.innerHTML=svcRenderFiles(j);}
 // Invoice
 function svcHandleInvoiceDrop(e){e.preventDefault();document.getElementById('svc-invoice-dz').classList.remove('drag-over');var file=e.dataTransfer.files[0];if(file)svcHandleInvoiceFile(file);}
@@ -1995,17 +1995,17 @@ function submitPO(){
 }
 async function loadPOs(){
   try{
-    var res=await fetch('/api/admin-get?key=purchase-orders');var json=await res.json();
+    var res=await apiFetch('/api/admin-get?key=purchase-orders');var json=await res.json();
     if(json&&json.data){purchaseOrders=json.data.orders||[];nextPONum=json.data.nextNum||1;}
     else{
       // Migrate from old double-prefixed key
-      var old=await fetch('/api/admin-get?key=pos-purchase-orders');var oj=await old.json();
+      var old=await apiFetch('/api/admin-get?key=pos-purchase-orders');var oj=await old.json();
       if(oj&&oj.data){purchaseOrders=oj.data.orders||[];nextPONum=oj.data.nextNum||1;await savePOs();console.log('Migrated POs from pos-purchase-orders to purchase-orders');}
     }
   }catch(e){console.error('PO load failed:',e);}
 }
 async function savePOs(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'purchase-orders',data:{orders:purchaseOrders,nextNum:nextPONum}})});}catch(e){console.error('PO save failed:',e);}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'purchase-orders',data:{orders:purchaseOrders,nextNum:nextPONum}})});}catch(e){console.error('PO save failed:',e);}
 }
 
 // ══════════════════════════════════════════════
@@ -2776,7 +2776,7 @@ function startOrderPolling(){
 }
 async function pollOrders(){
   try{
-    var r=await fetch('/api/admin-get?key=orders&t='+Date.now());var d=await r.json();
+    var r=await apiFetch('/api/admin-get?key=orders&t='+Date.now());var d=await r.json();
     if(!d||!d.data)return;
     var fresh=d.data.orders||[];
     var hash=JSON.stringify(fresh.map(function(o){return{id:o.id,s:o.status,items:(o.items||[]).map(function(i){return{sn:i.serial||'',d:!!i.delivered};})}}));

@@ -1,4 +1,5 @@
 // api/trucks.js - Fetch live vehicle locations from Verizon Connect
+import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 
 const APP_ID = 'fleetmatics-p-us-sxlNeoNGn9hZhauSStPN1OR9yVXmp4G8iDpsUFj8';
 const TOKEN_URL = 'https://fim.api.us.fleetmatics.com/token';
@@ -32,8 +33,10 @@ async function getToken(username, password) {
 }
 
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (handlePreflight(req, res)) return;
     res.setHeader('Cache-Control', 'no-store');
+    const session = await validateSession(req);
+    if (!session) return unauthorized(res);
 
   const username = process.env.VERIZON_USERNAME;
     const password = process.env.VERIZON_PASSWORD;

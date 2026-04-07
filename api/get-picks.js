@@ -1,14 +1,17 @@
 // api/get-picks.js
 // Serves stored daily picks from Redis to the frontend
 // Also triggers a fresh generation if picks are missing or stale
- 
+
+import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
- 
+
 const redis = Redis.fromEnv();
- 
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (handlePreflight(req, res)) return;
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
+  const session = await validateSession(req);
+  if (!session) return unauthorized(res);
  
   try {
     const raw = await redis.get('daily-picks');

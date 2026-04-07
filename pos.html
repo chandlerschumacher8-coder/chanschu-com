@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DC Appliance - ApexPOS</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -491,12 +491,13 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .svc-wrap{display:flex;flex:1;overflow:hidden;}
 .svc-left{width:360px;display:flex;flex-direction:column;border-right:1px solid var(--border);flex-shrink:0;overflow:hidden;}
 .svc-right{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.svc-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.svc-stat{background:var(--bg2);border:2px solid var(--border);border-radius:8px;padding:10px 12px;text-align:center;cursor:pointer;transition:all 0.15s;user-select:none;}
+.svc-stats{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.svc-stat{background:var(--bg2);border:2px solid var(--border);border-radius:8px;padding:8px 6px;text-align:center;cursor:pointer;transition:all 0.15s;user-select:none;min-width:0;}
 .svc-stat:hover{background:var(--bg3);border-color:#9ca3af;}
 .svc-stat-active{box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-.svc-stat-val{font-family:'Playfair Display',serif;font-size:20px;line-height:1;}
-.svc-stat-key{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);margin-top:3px;}
+.svc-stat-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;line-height:1;}
+.svc-stat-key{font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gray-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:767px){.svc-stats{display:flex;overflow-x:auto;gap:6px;padding-bottom:8px;-webkit-overflow-scrolling:touch;}.svc-stat{min-width:80px;flex-shrink:0;padding:6px 8px;}.svc-stat-val{font-size:18px;}.svc-stat-key{font-size:7px;}}
 .svc-filters{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
 .svc-filter-row{display:flex;gap:4px;flex-wrap:wrap;}
 .svc-ftab{font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;border:1px solid #d1d5db;color:#6b7280;background:#fff;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;}
@@ -1059,10 +1060,10 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .cart-cust-dd-opt .cco-name{font-weight:600;}
 .cart-cust-dd-opt .cco-meta{font-size:9px;color:#6b7280;}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" integrity="sha384-SALc35EccAf6RzGw4iNsyj7kTPr33K7RoGzYu+7heZhT8s0GZouafRiCg1qy44AS" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous"></script>
 <script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}</script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -2355,6 +2356,38 @@ POS Settings
 
 <script>
 // ══════════════════════════════════════════════
+// SESSION TOKEN & AUTHENTICATED FETCH
+// ══════════════════════════════════════════════
+var POS_TOKEN_KEY='pos-session-token';
+var POS_EMP_KEY='pos-session-employee';
+window._authToken=localStorage.getItem(POS_TOKEN_KEY)||null;
+
+function apiFetch(url,options){
+  options=options||{};
+  if(!options.headers)options.headers={};
+  if(window._authToken){options.headers['Authorization']='Bearer '+window._authToken;}
+  return fetch(url,options);
+}
+
+// Token rotation — every 4 hours, rotate the session token
+var _tokenRotationTimer=null;
+function startTokenRotation(){
+  if(_tokenRotationTimer)clearInterval(_tokenRotationTimer);
+  _tokenRotationTimer=setInterval(async function(){
+    if(!window._authToken)return;
+    try{
+      var res=await fetch('/api/session-rotate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+window._authToken}});
+      var data=await res.json();
+      if(data.ok&&data.token){
+        window._authToken=data.token;
+        localStorage.setItem(POS_TOKEN_KEY,data.token);
+      }
+    }catch(e){console.error('Token rotation failed:',e);}
+  },4*60*60*1000);
+}
+function stopTokenRotation(){if(_tokenRotationTimer){clearInterval(_tokenRotationTimer);_tokenRotationTimer=null;}}
+
+// ══════════════════════════════════════════════
 // MULTI-TENANT STORE CONTEXT (Appliance OS)
 // ══════════════════════════════════════════════
 // DC Appliance is store #1. Future stores will namespace their data by store_id.
@@ -2388,7 +2421,7 @@ var currentStore={
 
 async function loadStoreConfig(){
   try{
-    var res=await fetch('/api/admin-get?key=stores');
+    var res=await apiFetch('/api/admin-get?key=stores');
     var data=await res.json();
     if(data&&data.data&&Array.isArray(data.data)){
       var match=data.data.find(function(s){return s.store_id===currentStoreId;});
@@ -2400,11 +2433,11 @@ async function loadStoreConfig(){
 
 async function saveStoreConfig(){
   try{
-    var res=await fetch('/api/admin-get?key=stores');var data=await res.json();
+    var res=await apiFetch('/api/admin-get?key=stores');var data=await res.json();
     var stores=(data&&data.data&&Array.isArray(data.data))?data.data:[];
     var idx=stores.findIndex(function(s){return s.store_id===currentStoreId;});
     if(idx>=0)stores[idx]=currentStore;else stores.push(currentStore);
-    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'stores',data:stores})});
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'stores',data:stores})});
     applyStoreBranding();
     return true;
   }catch(e){console.error('Store save failed:',e);return false;}
@@ -2429,8 +2462,7 @@ function applyStoreBranding(){
   if(currentStore.invoice_message)adminInvoiceMessage=currentStore.invoice_message;
 }
 
-// Load store config on app startup
-if(typeof window!=='undefined'){window.addEventListener('DOMContentLoaded',function(){loadStoreConfig();});}
+// Store config loaded in initAppData() after authentication
 
 // ══════════════════════════════════════════════
 // COMPANY LOGO (used in all prints and emails)
@@ -2446,7 +2478,7 @@ async function claudeApiCall(body){
     try{
       var ctrl=new AbortController();
       var tid=setTimeout(function(){ctrl.abort();},TIMEOUT);
-      var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+      var res=await apiFetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
       clearTimeout(tid);
       if(!res.ok)throw new Error('HTTP '+res.status);
       var data=await res.json();
@@ -2466,6 +2498,8 @@ async function claudeApiCall(body){
 // ══════════════════════════════════════════════
 // EMAILJS SETUP
 // ══════════════════════════════════════════════
+// IMPORTANT: The EmailJS public key 8rsxIaKLiiRqq5Yo0 must be restricted to
+// chanschu.com and dodgecityappliance.com in the EmailJS dashboard at dashboard.emailjs.com
 emailjs.init('8rsxIaKLiiRqq5Yo0');
 var EMAILJS_SERVICE='service_gx9g5vj';
 var EMAILJS_TEMPLATE='template_0eo26t5';
@@ -2557,11 +2591,11 @@ async function sendInvoiceEmail(order,toEmail){
 var PRODUCTS=[];
 var _productsLoaded=false;
 async function loadProducts(){
-  try{var r=await fetch('/api/admin-get?key=products');var d=await r.json();if(d&&d.data&&Array.isArray(d.data)&&d.data.length){PRODUCTS=d.data;}}catch(e){console.error('Failed to load products:',e);}
+  try{var r=await apiFetch('/api/admin-get?key=products');var d=await r.json();if(d&&d.data&&Array.isArray(d.data)&&d.data.length){PRODUCTS=d.data;}}catch(e){console.error('Failed to load products:',e);}
   _productsLoaded=true;
 }
 async function saveProducts(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'products',data:PRODUCTS})});}catch(e){console.error('Failed to save products:',e);}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'products',data:PRODUCTS})});}catch(e){console.error('Failed to save products:',e);}
 }
 var _HARDCODED_PRODUCTS=[
 {id:1,model:'ACE BLACK',name:'SONOS Ace Black',brand:'',cat:'AUDIO',price:449.99,cost:233.48,stock:1,sold:0,upc:'',reorderPt:1,reorderQty:2,sales30:0,serial:'',warranty:'',icon:''},
@@ -4881,7 +4915,7 @@ var KS_TAX=[
 var cart=[],orders=[],nextOrderId=1001,nextQuoteId=1,selectedCat='All',ooFilter='All',selectedOrder=null;
 var heldSales=[];
 async function loadOrders(){
-  try{var r=await fetch('/api/admin-get?key=orders');var d=await r.json();
+  try{var r=await apiFetch('/api/admin-get?key=orders');var d=await r.json();
     if(d&&d.data){
       orders=d.data.orders||[];
       if(d.data.nextOrderId)nextOrderId=d.data.nextOrderId;
@@ -4889,7 +4923,7 @@ async function loadOrders(){
     }
   }catch(e){console.error('Failed to load orders:',e);}
   // Migrate: pull in any quotes saved under old key that aren't already in orders
-  try{var qr=await fetch('/api/admin-get?key=quotes');var qd=await qr.json();
+  try{var qr=await apiFetch('/api/admin-get?key=quotes');var qd=await qr.json();
     if(qd&&qd.data){
       var saved=qd.data.quotes||[];
       var added=0;
@@ -4900,7 +4934,7 @@ async function loadOrders(){
   }catch(e){}
 }
 async function saveOrders(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:orders,nextOrderId:nextOrderId,nextQuoteId:nextQuoteId}})});}catch(e){console.error('Failed to save orders:',e);}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:orders,nextOrderId:nextOrderId,nextQuoteId:nextQuoteId}})});}catch(e){console.error('Failed to save orders:',e);}
 }
 var adminDeliveryPrice=79.99;
 var adminInvoiceMessage='THANK YOU FOR YOUR BUSINESS!';
@@ -4965,7 +4999,7 @@ async function adminPwSubmit(){
   var pw=document.getElementById('admin-pw-input').value;
   if(!pw)return;
   try{
-    var res=await fetch('/api/admin-verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    var res=await apiFetch('/api/admin-verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
     var data=await res.json();
     if(data.ok){
       _adminUnlocked=true;
@@ -5625,7 +5659,7 @@ function populateClerkDropdown(){
 // Periodic refresh of employee list from Redis — keeps clerk dropdown in sync
 async function refreshEmployeeList(){
   try{
-    var res=await fetch('/api/employees-get?companyId=dc-appliance');
+    var res=await apiFetch('/api/employees-get?companyId=dc-appliance');
     var data=await res.json();
     if(data.ok&&data.users){
       // Update the adminUsers array in place, preserving any local-only fields
@@ -6364,9 +6398,10 @@ function delPreFillFromSale(sale){
 <script src="pos-dashboard.js"></script>
 <script>
 // ══════════════════════════════════════════════
-// INIT
+// INIT — loads all app data (called after login or session restore)
 // ══════════════════════════════════════════════
-(async function(){
+async function initAppData(){
+  await loadStoreConfig();
   await seedProductsIfEmpty();
   await loadOrders();
   await adminLoad();
@@ -6379,6 +6414,33 @@ function delPreFillFromSale(sale){
   svcInit();
   loadPOs();
   updateAIChips();
+}
+
+(async function(){
+  // Check for existing session token
+  var savedToken=localStorage.getItem(POS_TOKEN_KEY);
+  var savedEmp=localStorage.getItem(POS_EMP_KEY);
+  if(savedToken&&savedEmp){
+    try{
+      var emp=JSON.parse(savedEmp);
+      window._authToken=savedToken;
+      currentEmployee=emp;
+      document.getElementById('pos-login').style.display='none';
+      document.getElementById('tb-user-badge').textContent=emp.name;
+      document.getElementById('tb-user-badge').style.display='';
+      applyPermissions();
+      await initAppData();
+      startTokenRotation();
+      resetInactivity();
+      var dashTab=document.querySelector('.tb-tab[onclick*="dashboard"]');
+      nav('dashboard',dashTab);
+    }catch(e){
+      localStorage.removeItem(POS_TOKEN_KEY);
+      localStorage.removeItem(POS_EMP_KEY);
+      window._authToken=null;
+    }
+  }
+  // If no valid session, login screen is already visible by default
 })();
 </script>
 </body>

@@ -177,6 +177,9 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f5f5f5;color:#1f2937
 <script>
 var DRIVER_PASSWORD='DCDriver2026';
 var COMPANY_ID='dc-appliance';
+var DRV_TOKEN_KEY='drv-session-token';
+window._authToken=localStorage.getItem(DRV_TOKEN_KEY)||null;
+function apiFetch(url,options){options=options||{};if(!options.headers)options.headers={};if(window._authToken){options.headers['Authorization']='Bearer '+window._authToken;}return fetch(url,options);}
 var currentDriver=null;
 var allDeliveries=[];
 var allNotes=[];
@@ -221,15 +224,22 @@ async function doLogin(){
   // Also accept the master password typed into PIN field
   if(pin===DRIVER_PASSWORD){
     currentDriver={name:'Driver',pin:'',isPasswordLogin:true};
+    // Create session for API access
+    try{
+      var sr=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:'0000',companyId:COMPANY_ID,authType:'timeclock'})});
+      var sd=await sr.json();if(sd.ok&&sd.token){window._authToken=sd.token;localStorage.setItem(DRV_TOKEN_KEY,sd.token);}
+    }catch(e){}
     enterApp();return;
   }
 
   try{
-    var res=await fetch('/api/employees-get?companyId='+COMPANY_ID);
+    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pin,companyId:COMPANY_ID})});
     var data=await res.json();
-    if(data.ok&&data.users){
-      var user=data.users.find(function(u){return u.pin===pin&&u.active!==false;});
-      if(user){currentDriver={name:user.name,pin:user.pin,posRole:user.posRole||'Delivery'};enterApp();return;}
+    if(data.ok&&data.token&&data.employee){
+      window._authToken=data.token;
+      localStorage.setItem(DRV_TOKEN_KEY,data.token);
+      currentDriver={name:data.employee.name,pin:'',posRole:data.employee.posRole||'Delivery'};
+      enterApp();return;
     }
   }catch(e){}
   err.style.display='block';
@@ -245,6 +255,9 @@ function enterApp(){
 }
 
 function doLogout(){
+  var token=localStorage.getItem(DRV_TOKEN_KEY);
+  if(token){fetch('/api/session-delete',{method:'POST',headers:{'Authorization':'Bearer '+token}}).catch(function(){});}
+  localStorage.removeItem(DRV_TOKEN_KEY);window._authToken=null;
   currentDriver=null;currentDeliveryId=null;
   if(_pollTimer)clearInterval(_pollTimer);
   document.getElementById('app-screen').style.display='none';
@@ -258,7 +271,7 @@ function doLogout(){
 var _lastHash='';
 async function loadDeliveries(){
   try{
-    var res=await fetch('/api/deliveries-get');
+    var res=await apiFetch('/api/deliveries-get');
     var data=await res.json();
     if(!data.ok)return;
     allDeliveries=data.deliveries||[];
@@ -273,7 +286,7 @@ async function loadDeliveries(){
 
 async function pollDeliveries(){
   try{
-    var res=await fetch('/api/deliveries-get');
+    var res=await apiFetch('/api/deliveries-get');
     var data=await res.json();
     if(!data.ok)return;
     var h=JSON.stringify(data.deliveries||[]);
@@ -446,7 +459,7 @@ async function handlePhotoFiles(files,deliveryId){
     toast('Uploading photo '+(i+1)+' of '+files.length+'...');
     try{
       var base64=await readFileAsBase64(file);
-      var res=await fetch('/api/delivery-photo-upload',{
+      var res=await apiFetch('/api/delivery-photo-upload',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -553,7 +566,7 @@ function confirmCancel(){
 // ── SAVE ──
 async function saveAllDeliveries(){
   try{
-    await fetch('/api/deliveries-save',{
+    await apiFetch('/api/deliveries-save',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({deliveries:allDeliveries,nextId:nextId,notes:allNotes,nextNoteId:nextNoteId})

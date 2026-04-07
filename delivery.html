@@ -389,7 +389,7 @@
       .modal-body{max-height:70vh;}
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" integrity="sha384-SALc35EccAf6RzGw4iNsyj7kTPr33K7RoGzYu+7heZhT8s0GZouafRiCg1qy44AS" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -675,6 +675,32 @@
 </div>
 
 <script>
+// ═══ SESSION TOKEN & AUTHENTICATED FETCH ═══
+var DEL_TOKEN_KEY='del-session-token';
+window._authToken=localStorage.getItem(DEL_TOKEN_KEY)||null;
+
+function apiFetch(url,options){
+  options=options||{};
+  if(!options.headers)options.headers={};
+  if(window._authToken){options.headers['Authorization']='Bearer '+window._authToken;}
+  return fetch(url,options);
+}
+
+// Token rotation — every 4 hours
+var _tokenRotationTimer=null;
+function startTokenRotation(){
+  if(_tokenRotationTimer)clearInterval(_tokenRotationTimer);
+  _tokenRotationTimer=setInterval(async function(){
+    if(!window._authToken)return;
+    try{
+      var res=await apiFetch('/api/session-rotate',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+window._authToken}});
+      var data=await res.json();
+      if(data.ok&&data.token){window._authToken=data.token;localStorage.setItem(DEL_TOKEN_KEY,data.token);}
+    }catch(e){}
+  },4*60*60*1000);
+}
+function stopTokenRotation(){if(_tokenRotationTimer){clearInterval(_tokenRotationTimer);_tokenRotationTimer=null;}}
+
 // ═══ CLAUDE API HELPER ═══
 async function claudeApiCall(body){
   var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
@@ -683,7 +709,7 @@ async function claudeApiCall(body){
     try{
       var ctrl=new AbortController();
       var tid=setTimeout(function(){ctrl.abort();},TIMEOUT);
-      var res=await fetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+      var res=await apiFetch('/api/ai-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
       clearTimeout(tid);
       if(!res.ok)throw new Error('HTTP '+res.status);
       var data=await res.json();
@@ -703,6 +729,8 @@ async function claudeApiCall(body){
 const DC_APPLIANCE_LOGO = "/images/logos/dc-appliance-logo-transparent.png";
 
 // ═══ EMAILJS ═══
+// IMPORTANT: The EmailJS public key 8rsxIaKLiiRqq5Yo0 must be restricted to
+// chanschu.com and dodgecityappliance.com in the EmailJS dashboard at dashboard.emailjs.com
 emailjs.init('8rsxIaKLiiRqq5Yo0');
 var EMAILJS_SERVICE='service_gx9g5vj';
 var EMAILJS_TEMPLATE='template_0eo26t5';
@@ -838,7 +866,7 @@ function saveSession(user){
 
 async function loadEmployees(){
   try{
-    var res=await fetch('/api/employees-get?companyId=dc-appliance');
+    var res=await apiFetch('/api/employees-get?companyId=dc-appliance');
     var data=await res.json();
     if(data.ok&&data.users)_allEmployees=data.users.filter(function(u){return u.active!==false;});
   }catch(e){}
@@ -852,15 +880,23 @@ function updatePinDots(){
   var btn=document.getElementById('login-submit-btn');if(btn)btn.disabled=_pinValue.length<4;
 }
 
-function pinSubmit(){
+async function pinSubmit(){
   if(_pinValue.length<4)return;
-  // Look up which employee has this PIN
-  var matches=_allEmployees.filter(function(u){return u.pin===_pinValue;});
-  if(matches.length===1){
-    saveSession(matches[0]);enterApp();
-  }else{
+  try{
+    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:_pinValue,companyId:'dc-appliance'})});
+    var data=await res.json();
+    if(data.ok&&data.token&&data.employee){
+      window._authToken=data.token;
+      localStorage.setItem(DEL_TOKEN_KEY,data.token);
+      saveSession(data.employee);enterApp();
+    }else{
+      document.getElementById('login-err').style.display='block';
+      document.getElementById('login-err').textContent=data.error||'Incorrect PIN — please try again';
+      _pinValue='';updatePinDots();
+    }
+  }catch(e){
     document.getElementById('login-err').style.display='block';
-    document.getElementById('login-err').textContent='Incorrect PIN — please try again';
+    document.getElementById('login-err').textContent='Connection error — please try again';
     _pinValue='';updatePinDots();
   }
 }
@@ -871,6 +907,7 @@ function enterApp(){
   var name=_currentUser?_currentUser.name:'';
   document.getElementById('h-welcome').textContent=name?'Welcome, '+name:'Delivery Schedule';
   applyRoleAccess();
+  startTokenRotation();
   loadData().then(function(){startPolling();});
 }
 
@@ -882,7 +919,13 @@ function applyRoleAccess(){
 }
 
 function doLogout(){
-  stopPolling();localStorage.removeItem(SESSION_KEY);_currentUser=null;
+  stopPolling();stopTokenRotation();
+  // Delete server session
+  var token=localStorage.getItem(DEL_TOKEN_KEY);
+  if(token){fetch('/api/session-delete',{method:'POST',headers:{'Authorization':'Bearer '+token}}).catch(function(){});}
+  localStorage.removeItem(DEL_TOKEN_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  window._authToken=null;_currentUser=null;
   document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';
   document.getElementById('login-err').style.display='none';
   _pinValue='';updatePinDots();
@@ -916,14 +959,20 @@ function _flashPinKey(val){
 
 // On page load — check session or show login
 window.addEventListener('DOMContentLoaded',function(){
-  if(checkSession()){enterApp();}
-  else{loadEmployees();}
+  // Restore token from localStorage
+  var savedToken=localStorage.getItem(DEL_TOKEN_KEY);
+  if(savedToken)window._authToken=savedToken;
+  if(savedToken&&checkSession()){enterApp();}
+  else{
+    // No valid session — show login (no need to pre-fetch employees, PIN validated server-side now)
+    localStorage.removeItem(DEL_TOKEN_KEY);window._authToken=null;
+  }
 });
 
 // ═══ DATA ═══
 async function loadData(){
   try{
-    var r=await fetch('/api/deliveries-get');var d=await r.json();
+    var r=await apiFetch('/api/deliveries-get');var d=await r.json();
     deliveries=d.deliveries||[];nextDelId=d.nextId||1;
     notes=Array.isArray(d.notes)?d.notes:[];
     nextNoteId=d.nextNoteId||1;
@@ -934,7 +983,7 @@ async function loadData(){
 async function saveData(){
   try{
     var payload={deliveries:deliveries,nextId:nextDelId,notes:notes,nextNoteId:nextNoteId};
-    var res=await fetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    var res=await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     var data=await res.json();
     if(!data.ok)console.error('Save error:',data.error);
   }catch(e){console.error('Save failed:',e);}
@@ -949,7 +998,7 @@ function startPolling(){
 function stopPolling(){if(_delPollTimer){clearInterval(_delPollTimer);_delPollTimer=null;}}
 async function pollDeliveries(){
   try{
-    var res=await fetch('/api/deliveries-get?t='+Date.now());
+    var res=await apiFetch('/api/deliveries-get?t='+Date.now());
     var data=await res.json();
     if(!data.ok)return;
     var hash=JSON.stringify({d:data.deliveries,n:data.notes});
@@ -1397,7 +1446,7 @@ function logAttachPhoto(mode,deliveryId){
     el.innerHTML='<div class="log-pending-photo"><div class="bs-spinner"></div> Uploading photo...</div>';
     try{
       var b64=await toB64(inp.files[0]);
-      var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
+      var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
       var data=await res.json();
       if(data.ok){
         _logPendingPhoto=data.url;
@@ -1572,7 +1621,7 @@ async function sendDeliveryConfirmEmail(id){
   var d=deliveries.find(function(x){return x.id===id;});if(!d||!d.email)return;
   // Check customer opt-out
   var custOptedOut=false;
-  try{var cr=await fetch('/api/admin-get?key=customers');var cd=await cr.json();if(cd&&cd.data){var cust=cd.data.find(function(c){return c.name===d.name||c.email===d.email;});if(cust&&cust.emailOptOut){custOptedOut=true;}}}catch(e){}
+  try{var cr=await apiFetch('/api/admin-get?key=customers');var cd=await cr.json();if(cd&&cd.data){var cust=cd.data.find(function(c){return c.name===d.name||c.email===d.email;});if(cust&&cust.emailOptOut){custOptedOut=true;}}}catch(e){}
   if(custOptedOut){alert('This customer has opted out of emails.');return;}
   if(!confirm('Send delivery confirmation email to '+d.email+'?'))return;
   var html=buildDeliveryEmailHtml(d);
@@ -1605,7 +1654,7 @@ async function detUploadPhotos(files,deliveryId){
   for(var i=0;i<files.length;i++){
     try{
       var base64=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(r.result.split(',')[1]);};r.onerror=reject;r.readAsDataURL(files[i]);});
-      var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:base64,deliveryId:deliveryId})});
+      var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:base64,deliveryId:deliveryId})});
       var data=await res.json();
       if(data.ok)d.photos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
     }catch(e){console.error(e);}
@@ -1647,7 +1696,7 @@ async function handleInvoiceFile(file){
     if(cu.city)document.getElementById('f-city').value=cu.city;
     var apps=parsed.appliances||[];
     if(apps.length>0){if(apps[0].invoice)document.getElementById('f-invoice').value=apps[0].invoice;initAppRows(apps);}
-    var upR=await fetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
+    var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
     var upD=await upR.json();
     if(upD.ok){pendingFiles.push({url:upD.url,filename:file.name});renderPendingFiles();}
   }catch(e){alert('Could not read invoice: '+e.message);}
@@ -2089,7 +2138,7 @@ async function bsUploadPhotoFiles(files){
     gallery.appendChild(placeholder);
     try{
       var b64=await toB64(files[i]);
-      var res=await fetch('/api/delivery-photo-upload',{
+      var res=await apiFetch('/api/delivery-photo-upload',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,deliveryId:_bsDeliveryId})
@@ -2117,7 +2166,7 @@ async function syncSerialsToOrder(d){
 
   // Load current orders from backend
   try{
-    var r=await fetch('/api/admin-get?key=orders');var data=await r.json();
+    var r=await apiFetch('/api/admin-get?key=orders');var data=await r.json();
     if(!data||!data.data)return;
     var allOrders=data.data.orders||[];
     var changed=false;
@@ -2160,14 +2209,14 @@ async function syncSerialsToOrder(d){
     }
 
     if(changed){
-      await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:allOrders,nextOrderId:data.data.nextOrderId,nextQuoteId:data.data.nextQuoteId}})});
+      await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:allOrders,nextOrderId:data.data.nextOrderId,nextQuoteId:data.data.nextQuoteId}})});
       console.log('[Serial Sync] Orders saved to backend');
     }
   }catch(e){console.error('[Serial Sync] Failed to sync to orders:',e);}
 
   // Sync to customer profile — add appliance history
   try{
-    var cr=await fetch('/api/admin-get?key=customers');var cdata=await cr.json();
+    var cr=await apiFetch('/api/admin-get?key=customers');var cdata=await cr.json();
     if(!cdata||!cdata.data||!Array.isArray(cdata.data))return;
     var allCustomers=cdata.data;
     var cust=allCustomers.find(function(c){return c.name===d.name;});
@@ -2188,7 +2237,7 @@ async function syncSerialsToOrder(d){
           console.log('[Serial Sync] Customer "'+cust.name+'" appliance history: '+a.a+' → '+a.serial);
         }
       });
-      await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'customers',data:allCustomers})});
+      await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'customers',data:allCustomers})});
       console.log('[Serial Sync] Customer profile saved');
     }
   }catch(e){console.error('[Serial Sync] Failed to sync to customer:',e);}

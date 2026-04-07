@@ -2,8 +2,9 @@
 // 1. Grades yesterday's picks automatically using Claude + live scores
 // 2. Generates today's new picks
 // Runs daily at 9AM CT via Vercel cron (see vercel.json)
- 
+
 import { Redis } from '@upstash/redis';
+import { validateSession, unauthorized, handlePreflight } from './_auth.js';
  
 const redis = Redis.fromEnv();
  
@@ -98,9 +99,11 @@ async function gradeYesterdaysPicks() {
 }
  
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (handlePreflight(req, res)) return;
   res.setHeader('Cache-Control', 'no-store');
- 
+  const session = await validateSession(req);
+  if (!session) return unauthorized(res);
+
   const ODDS_KEY      = process.env.ODDS_API_KEY;
   const ANTHROPIC_KEY = process.env.ANTHROPIC_KEY;
   if (!ODDS_KEY || !ANTHROPIC_KEY) {

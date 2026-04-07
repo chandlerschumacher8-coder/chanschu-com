@@ -1,12 +1,14 @@
 // api/markets.js — Vercel Serverless Function
 // Fetches stock/commodity data from Yahoo Finance server-side (no CORS issues)
 // Deployed automatically by Vercel when this file is in your /api folder
- 
+
+import { validateSession, unauthorized, handlePreflight } from './_auth.js';
+
 export default async function handler(req, res) {
-  // Allow requests from your domain
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  if (handlePreflight(req, res)) return;
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+  const session = await validateSession(req);
+  if (!session) return unauthorized(res);
  
   const symbols = [
     { sym: '^GSPC',  id: 'sp'     },

@@ -44,7 +44,7 @@ async function adminLoad(){
   var keys=['admin-categories','admin-brands','admin-commissions','admin-tax-zones','pos-settings','admin-vendors'];
   for(var i=0;i<keys.length;i++){
     try{
-      var res=await fetch('/api/admin-get?key='+encodeURIComponent(keys[i]));
+      var res=await apiFetch('/api/admin-get?key='+encodeURIComponent(keys[i]));
       var json=await res.json();
       if(json&&json.data){
         if(keys[i]==='admin-categories' && json.data.length) adminCategories=json.data;
@@ -69,7 +69,7 @@ async function adminLoad(){
 async function _loadUnifiedUsers(){
   // Load POS employees
   try{
-    var res=await fetch('/api/employees-get?companyId='+SVC_COMPANY_ID);
+    var res=await apiFetch('/api/employees-get?companyId='+SVC_COMPANY_ID);
     var data=await res.json();
     if(data.users&&data.users.length){
       // Filter out any techs that may have been in the old unified DB
@@ -79,7 +79,7 @@ async function _loadUnifiedUsers(){
   // Migrate: if empty, seed from old pos:admin-users (POS employees only)
   if(!adminUsers.length){
     try{
-      var old=await fetch('/api/admin-get?key=admin-users');var oj=await old.json();
+      var old=await apiFetch('/api/admin-get?key=admin-users');var oj=await old.json();
       if(oj&&oj.data&&oj.data.length){
         adminUsers=oj.data.filter(function(u){return !u._svcTech;}).map(function(u){
           return{
@@ -115,14 +115,14 @@ async function _loadUnifiedUsers(){
 
 async function _loadServiceTechs(){
   try{
-    var res=await fetch('/api/techs-get');
+    var res=await apiFetch('/api/techs-get');
     var data=await res.json();
     if(data.techs&&data.techs.length){adminTechs=data.techs;}
   }catch(e){}
   // Migrate: pull techs from old unified DB if service:techs is empty
   if(!adminTechs.length){
     try{
-      var res2=await fetch('/api/employees-get?companyId='+SVC_COMPANY_ID);
+      var res2=await apiFetch('/api/employees-get?companyId='+SVC_COMPANY_ID);
       var data2=await res2.json();
       var oldTechs=(data2.users||[]).filter(function(u){return u.role==='tech';});
       if(oldTechs.length){
@@ -176,7 +176,7 @@ function _buildSvcTechOptions(selected){
 
 async function saveAllTechs(){
   try{
-    var res=await fetch('/api/techs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({techs:adminTechs,requesterPassword:'DCA123'})});
+    var res=await apiFetch('/api/techs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({techs:adminTechs,requesterPassword:'DCA123'})});
     var data=await res.json();
     if(!data.ok)throw new Error(data.error);
     _updateSvcTechList();
@@ -190,7 +190,7 @@ async function saveAllUsers(){
     toast('Must have at least one admin employee','error');return false;
   }
   try{
-    var res=await fetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,users:adminUsers,requesterPassword:'DCA123'})});
+    var res=await apiFetch('/api/employees-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,users:adminUsers,requesterPassword:'DCA123'})});
     var data=await res.json();
     if(!data.ok)throw new Error(data.error);
     return true;
@@ -199,7 +199,7 @@ async function saveAllUsers(){
 
 async function adminSave(key,data){
   try{
-    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:key,data:data})});
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:key,data:data})});
     toast('Saved','success');
   }catch(e){toast('Save failed','error');}
 }
@@ -812,7 +812,7 @@ function exportCommReportPDF(){
 }
 
 // ═══ VENDOR MANAGEMENT ═══
-function saveVendors(){fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-vendors',data:adminVendors})});}
+function saveVendors(){apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-vendors',data:adminVendors})});}
 
 function renderVendors(){
   var wrap=document.getElementById('admin-vendors-list');
@@ -859,10 +859,10 @@ var mergeHistory=[];
 var mtIgnored={}; // category -> array of groupKey strings
 
 async function loadMergeData(){
-  try{var r=await fetch('/api/admin-get?key=merge-history');var d=await r.json();if(d&&d.data)mergeHistory=d.data.history||[];if(d&&d.data&&d.data.ignored)mtIgnored=d.data.ignored||{};}catch(e){}
+  try{var r=await apiFetch('/api/admin-get?key=merge-history');var d=await r.json();if(d&&d.data)mergeHistory=d.data.history||[];if(d&&d.data&&d.data.ignored)mtIgnored=d.data.ignored||{};}catch(e){}
 }
 async function saveMergeData(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'merge-history',data:{history:mergeHistory,ignored:mtIgnored}})});}catch(e){}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'merge-history',data:{history:mergeHistory,ignored:mtIgnored}})});}catch(e){}
 }
 
 function mtNormalize(s){return (s||'').toString().toLowerCase().replace(/[\s\-_.,]+/g,'').trim();}
@@ -983,7 +983,7 @@ async function mtExecuteMerge(cat,master,losers){
     // Update products
     PRODUCTS.forEach(function(p){if(loserKeys.some(function(k){return mtNormalize(p.brand)===mtNormalize(k);}))p.brand=master.name;});
     adminBrands=adminBrands.filter(function(b){return !loserKeys.some(function(k){return mtNormalize(b)===mtNormalize(k);});});
-    await saveProducts();await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-brands',data:adminBrands})});
+    await saveProducts();await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-brands',data:adminBrands})});
   }else if(cat==='contacts'){
     // Update customer records and orders
     var masterCust=customers.find(function(c){return c.name===master.key;});
@@ -1443,7 +1443,7 @@ async function diConfirmInv(){
       adminBrands.push(r.brand);existingBrandMap[r.brand.toLowerCase()]=true;brandsAdded++;
     }
   });
-  if(brandsAdded){try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-brands',data:adminBrands})});}catch(e){}}
+  if(brandsAdded){try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-brands',data:adminBrands})});}catch(e){}}
   // Auto-create vendors
   var existingVendorMap={};(adminVendors||[]).forEach(function(v){if(v.name)existingVendorMap[v.name.toLowerCase()]=true;});
   _diInvRows.forEach(function(r){
@@ -1479,7 +1479,7 @@ async function diConfirmInv(){
       }
     }
   });
-  if(catsAdded){try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-categories',data:adminCategories})});}catch(e){}}
+  if(catsAdded){try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'admin-categories',data:adminCategories})});}catch(e){}}
   // Process products
   _diInvRows.forEach(function(r){
     var p=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===r.model.toLowerCase()||(x.sku||'').toLowerCase()===r.model.toLowerCase();});
@@ -1647,11 +1647,11 @@ async function clearDataExecute(){
 
   // Log the clear action
   try{
-    var logRes=await fetch('/api/admin-get?key=data-clear-log');
+    var logRes=await apiFetch('/api/admin-get?key=data-clear-log');
     var logData=await logRes.json();
     var log=(logData&&Array.isArray(logData.data))?logData.data:[];
     log.unshift({ts:new Date().toISOString(),by:(currentEmployee&&currentEmployee.name)||'Admin',type:_clearType,storeId:(typeof currentStoreId!=='undefined'?currentStoreId:1),deleted:deletedCounts});
-    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'data-clear-log',data:log.slice(0,100)})});
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'data-clear-log',data:log.slice(0,100)})});
   }catch(e){console.error('Clear log save failed:',e);}
 
   var total=deletedCounts.products+deletedCounts.orders+deletedCounts.customers;
@@ -1671,10 +1671,10 @@ var _diSalesParsed=null;
 var _diSalesImportHistory=[];
 
 async function diLoadImportHistory(){
-  try{var r=await fetch('/api/admin-get?key=sales-import-history');var d=await r.json();if(d&&Array.isArray(d.data))_diSalesImportHistory=d.data;}catch(e){}
+  try{var r=await apiFetch('/api/admin-get?key=sales-import-history');var d=await r.json();if(d&&Array.isArray(d.data))_diSalesImportHistory=d.data;}catch(e){}
 }
 async function diSaveImportHistory(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'sales-import-history',data:_diSalesImportHistory})});}catch(e){}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'sales-import-history',data:_diSalesImportHistory})});}catch(e){}
 }
 
 async function diHandleSalesFile(file){
@@ -1884,10 +1884,10 @@ var _diSerialImportHistory=[];
 var CONDITION_KEYWORDS=['dented','used','damaged','scratched','open box','openbox','open-box','return','demo','floor model','floormodel','refurbished','refurb'];
 
 async function diLoadSerialImportHistory(){
-  try{var r=await fetch('/api/admin-get?key=serial-import-history');var d=await r.json();if(d&&Array.isArray(d.data))_diSerialImportHistory=d.data;}catch(e){}
+  try{var r=await apiFetch('/api/admin-get?key=serial-import-history');var d=await r.json();if(d&&Array.isArray(d.data))_diSerialImportHistory=d.data;}catch(e){}
 }
 async function diSaveSerialImportHistory(){
-  try{await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'serial-import-history',data:_diSerialImportHistory})});}catch(e){}
+  try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'serial-import-history',data:_diSerialImportHistory})});}catch(e){}
 }
 
 function cleanSerialAndFlag(rawSerial){
@@ -2642,7 +2642,7 @@ async function uploadStoreLogo(file){
     // Use delivery-photo-upload (Vercel Blob) — stored as logos/{store_id}/logo.{ext}
     var ext=(file.name.split('.').pop()||'png').toLowerCase();
     var safeName='logo-'+Date.now()+'.'+ext;
-    var res=await fetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:safeName,contentType:file.type,data:b64,deliveryId:'store-'+currentStoreId+'-logo'})});
+    var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:safeName,contentType:file.type,data:b64,deliveryId:'store-'+currentStoreId+'-logo'})});
     var data=await res.json();
     if(!data.ok)throw new Error(data.error||'Upload failed');
     document.getElementById('ss-logo').value=data.url;
@@ -2689,7 +2689,7 @@ async function savePosSettings(){
   adminDeliveryPrice=parseFloat(document.getElementById('admin-delivery-price').value)||79.99;
   try{localStorage.setItem('pos-admin-invoice-msg',adminInvoiceMessage);localStorage.setItem('pos-admin-delivery-price',String(adminDeliveryPrice));}catch(e){}
   try{
-    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'pos-settings',data:{invoiceMessage:adminInvoiceMessage,deliveryPrice:adminDeliveryPrice}})});
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'pos-settings',data:{invoiceMessage:adminInvoiceMessage,deliveryPrice:adminDeliveryPrice}})});
     toast('POS settings saved','success');
   }catch(e){toast('Save failed','error');}
 }
@@ -2701,7 +2701,7 @@ var _commLoaded=false;
 
 async function commLoad(){
   if(_commLoaded)return;
-  try{var r=await fetch('/api/admin-get?key=commission-rates');var d=await r.json();
+  try{var r=await apiFetch('/api/admin-get?key=commission-rates');var d=await r.json();
     if(d&&d.data){commCategoryRates=d.data.categories||{};commBrandOverrides=d.data.brands||{};}
   }catch(e){}
   _commLoaded=true;
@@ -2709,7 +2709,7 @@ async function commLoad(){
 async function commSaveRates(){
   commReadEditor();
   try{
-    await fetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'commission-rates',data:{categories:commCategoryRates,brands:commBrandOverrides}})});
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'commission-rates',data:{categories:commCategoryRates,brands:commBrandOverrides}})});
     toast('Commission rates saved','success');
     var btn=document.getElementById('comm-save-btn');
     if(btn){btn.textContent='Saved!';btn.style.background='#16a34a';setTimeout(function(){btn.textContent='Save Commission Rates';btn.style.background='';},2000);}
@@ -2794,7 +2794,7 @@ function commGetRate(cat,brand){
 // ── Hot Buttons Editor ──
 async function hbLoad(){
   if(_hotButtonsLoaded)return;
-  try{var r=await fetch('/api/admin-get?key=hot-buttons');var d=await r.json();if(d&&d.data&&Array.isArray(d.data)&&d.data.length)hotButtons=d.data;}catch(e){}
+  try{var r=await apiFetch('/api/admin-get?key=hot-buttons');var d=await r.json();if(d&&d.data&&Array.isArray(d.data)&&d.data.length)hotButtons=d.data;}catch(e){}
   // Ensure always 13 slots
   while(hotButtons.length<13)hotButtons.push({label:'',type:'charge',chargeName:'',amount:0,itemModel:'',active:false});
   _hotButtonsLoaded=true;
@@ -2999,27 +2999,32 @@ function posUpdatePinDots(){
 
 function posPinSubmit(){
   if(_posPinValue.length<4)return;
-  // Must load users first
-  if(!adminUsers.length){
-    adminLoad().then(function(){_doPinLookup();});
-  }else{
-    _doPinLookup();
-  }
+  _doPinLookup();
 }
 
-function _doPinLookup(){
-  var matches=adminUsers.filter(function(u){return u.active!==false&&u.pin===_posPinValue;});
-  if(matches.length===1){
-    empLoginAs(matches[0]);
-  }else{
+async function _doPinLookup(){
+  try{
+    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:_posPinValue,companyId:'dc-appliance'})});
+    var data=await res.json();
+    if(data.ok&&data.token&&data.employee){
+      window._authToken=data.token;
+      localStorage.setItem(POS_TOKEN_KEY,data.token);
+      empLoginAs(data.employee);
+    }else{
+      document.getElementById('pos-login-err').style.display='block';
+      document.getElementById('pos-login-err').textContent=data.error||'Incorrect PIN — please try again';
+      _posPinValue='';posUpdatePinDots();
+    }
+  }catch(e){
     document.getElementById('pos-login-err').style.display='block';
-    document.getElementById('pos-login-err').textContent='Incorrect PIN — please try again';
+    document.getElementById('pos-login-err').textContent='Connection error — please try again';
     _posPinValue='';posUpdatePinDots();
   }
 }
 
-function empLoginAs(user){
+async function empLoginAs(user){
   currentEmployee=user;
+  localStorage.setItem(POS_EMP_KEY,JSON.stringify(user));
   document.getElementById('pos-login').style.display='none';
   document.getElementById('tb-user-badge').textContent=user.name;
   document.getElementById('tb-user-badge').style.display='';
@@ -3030,11 +3035,21 @@ function empLoginAs(user){
   // Auto-set clerk on cart
   var cl=document.getElementById('cart-clerk');
   if(cl){for(var i=0;i<cl.options.length;i++){if(cl.options[i].value===user.name){cl.selectedIndex=i;break;}}}
+  // Load all app data after login
+  await initAppData();
   // Load time clock data
   tcLoadPunches().then(function(){if(typeof empTcRenderGrid==='function')empTcRenderGrid();});
+  startTokenRotation();
   resetInactivity();
 }
 function empSwitchUser(){
+  // Delete server session
+  var token=localStorage.getItem(POS_TOKEN_KEY);
+  if(token){fetch('/api/session-delete',{method:'POST',headers:{'Authorization':'Bearer '+token}}).catch(function(){});}
+  localStorage.removeItem(POS_TOKEN_KEY);
+  localStorage.removeItem(POS_EMP_KEY);
+  window._authToken=null;
+  stopTokenRotation();
   currentEmployee=null;
   document.getElementById('pos-login').style.display='flex';
   document.getElementById('tb-user-badge').style.display='none';
@@ -3098,25 +3113,33 @@ function posExitTcMode(){
 }
 function posTcPinSubmit(){
   if(_posPinValue.length<4)return;
-  if(!adminUsers.length){
-    adminLoad().then(function(){_doTcPinLookup();});
-  }else{
-    _doTcPinLookup();
-  }
+  _doTcPinLookup();
 }
-function _doTcPinLookup(){
-  var matches=adminUsers.filter(function(u){return u.active!==false&&u.pin===_posPinValue;});
-  if(matches.length===1){
-    _posTcUser=matches[0];
-    _showTcResult();
-  }else{
+async function _doTcPinLookup(){
+  try{
+    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:_posPinValue,companyId:'dc-appliance',authType:'timeclock'})});
+    var data=await res.json();
+    if(data.ok&&data.employee){
+      // Store temp token for time clock API calls
+      window._tcToken=data.token;
+      _posTcUser=data.employee;
+      _showTcResult();
+    }else{
+      document.getElementById('pos-login-err').style.display='block';
+      document.getElementById('pos-login-err').textContent=data.error||'Incorrect PIN — please try again';
+      _posPinValue='';posUpdatePinDots();
+    }
+  }catch(e){
     document.getElementById('pos-login-err').style.display='block';
-    document.getElementById('pos-login-err').textContent='Incorrect PIN — please try again';
+    document.getElementById('pos-login-err').textContent='Connection error — please try again';
     _posPinValue='';posUpdatePinDots();
   }
 }
 function _showTcResult(){
   if(!_posTcUser)return;
+  // Temporarily set auth token for time clock API calls
+  var prevToken=window._authToken;
+  window._authToken=window._tcToken||prevToken;
   // Load punches then show status
   tcLoadPunches().then(function(){
     var active=(typeof tcPunches!=='undefined')?tcPunches.find(function(p){return p.employee===_posTcUser.name&&!p.clockOut;}):null;
@@ -3166,6 +3189,13 @@ function posDoTcPunch(action){
   setTimeout(function(){posCloseTcResult();},3000);
 }
 function posCloseTcResult(){
+  // Clean up temp time clock token
+  if(window._tcToken){
+    fetch('/api/session-delete',{method:'POST',headers:{'Authorization':'Bearer '+window._tcToken}}).catch(function(){});
+    window._tcToken=null;
+  }
+  // Restore previous auth token (null if not logged in)
+  window._authToken=localStorage.getItem(POS_TOKEN_KEY)||null;
   _posTcUser=null;
   posExitTcMode();
 }

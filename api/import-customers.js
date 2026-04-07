@@ -1,4 +1,5 @@
 // api/import-customers.js — Parse XLS/XLSX/CSV and preview or import customers
+import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
 import * as XLSX from 'xlsx';
 const redis = Redis.fromEnv();
@@ -6,10 +7,9 @@ const redis = Redis.fromEnv();
 export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (handlePreflight(req, res)) return;
+  const session = await validateSession(req);
+  if (!session) return unauthorized(res);
 
   try {
     const { fileBase64, action, customers } = req.body;
