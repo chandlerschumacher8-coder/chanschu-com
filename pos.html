@@ -2121,7 +2121,7 @@ POS Settings
 <!-- PRE-SUBMIT CHECKLIST MODAL -->
 <div class="modal-bg" id="checklist-modal">
 <div class="modal" style="max-width:440px;">
-<div class="modal-hdr"><div class="modal-title">Before You Finish...</div><button class="modal-close" onclick="closeChecklist()">&#x2715;</button></div>
+<div class="modal-hdr"><div class="modal-title">Before You Checkout...</div><button class="modal-close" onclick="closeChecklist()">&#x2715;</button></div>
 <div class="modal-body" style="padding:24px;">
 <div style="font-size:13px;color:#4b5563;margin-bottom:20px;line-height:1.5;">Please confirm you've completed the following:</div>
 <label style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:#f9fafb;border:2px solid #e5e7eb;border-radius:10px;cursor:pointer;margin-bottom:10px;transition:all 0.15s;" id="chk1-wrap">
@@ -2135,7 +2135,7 @@ POS Settings
 </div>
 <div class="modal-footer" style="justify-content:space-between;gap:10px;">
 <button class="ghost-btn" onclick="closeChecklist()">Go Back</button>
-<button class="primary-btn" id="chk-complete-btn" onclick="checklistComplete()" disabled style="opacity:0.5;cursor:not-allowed;">Complete Sale</button>
+<button class="primary-btn" id="chk-complete-btn" onclick="checklistComplete()" disabled style="opacity:0.5;cursor:not-allowed;background:#16a34a;">Continue to Checkout</button>
 </div>
 </div>
 </div>
@@ -5706,8 +5706,13 @@ function clearSaleForm(){
 var _coPayments=[];
 function openCheckoutScreen(){
   if(cart.length===0){toast('Add items to the cart before checking out','error');return;}
-  _coPayments=[];
   var f=getSaleFields();var cust=f.soldTo.name.trim()||'Walk-In Customer';
+  // Customer sales: show pre-checkout checklist first
+  if(cust!=='Walk-In Customer'&&!_checklistConfirmed){
+    openPreSubmitChecklist();return;
+  }
+  _checklistConfirmed=false;
+  _coPayments=[];
   var sub=cart.reduce(function(s,c){var d=c.discountPct||0;return s+c.price*c.qty*(1-d/100);},0);
   var tax=sub*cartTaxRate;var total=sub+tax;
   var apptVal=f.appt||'';var delDateStr='';
@@ -5744,13 +5749,7 @@ function openCheckoutScreen(){
   right+='<div class="co-pay-extra"><label>Delivery Type</label><select id="co-del-type"><option>Full Install</option><option>Drop Off Inside</option><option>Drop Off Outside</option><option>Furniture Delivery</option></select></div>';
   right+='<div class="co-pay-extra"><label>Team</label><select id="co-del-team"><option>Main Delivery Team</option><option>Other Delivery Team</option></select></div>';
   right+='</div>';
-  // Checklist
-  if(!isWalkIn){
-    right+='<div class="co-section"><div class="co-section-title">Confirm</div>';
-    right+='<label class="co-chk"><input type="checkbox" id="co-chk-warranty" onchange="coUpdateBtn()"/><div><strong>Warranties offered and discussed</strong></div></label>';
-    right+='<label class="co-chk"><input type="checkbox" id="co-chk-notes" onchange="coUpdateBtn()"/><div><strong>Delivery instructions filled in</strong></div></label>';
-    right+='</div>';
-  }
+  // Checklist already confirmed via pre-checkout popup for customer sales
   // Actions
   right+='<div class="co-actions">';
   right+='<button class="co-btn-complete" id="co-complete-btn" onclick="coCompleteSale()" disabled>Complete Sale</button>';
@@ -5804,7 +5803,7 @@ function coUpdateBtn(){
   var btn=document.getElementById('co-complete-btn');if(!btn)return;
   var hasPay=_coPayments.length>0;
   var f=getSaleFields();var isWalkIn=(f.soldTo.name.trim()||'Walk-In Customer')==='Walk-In Customer';
-  var chkOk=isWalkIn||((document.getElementById('co-chk-warranty')||{}).checked&&(document.getElementById('co-chk-notes')||{}).checked);
+  var chkOk=true; // checklist confirmed before checkout screen opens
   btn.disabled=!(hasPay&&chkOk);
 }
 function coCompleteSale(){
@@ -5840,7 +5839,9 @@ function printShipperById(id){var o=orders.find(function(x){return x.id===id;});
 var _pendingCheckoutMethod=null;
 var _checklistConfirmed=false;
 function openPreSubmitChecklist(){
-  document.getElementById('chk-notes').checked=false;
+  // Auto-check notes if delivery instructions already filled in
+  var hasNotes=((document.getElementById('cart-invoice-notes')||{}).value||'').trim().length>0;
+  document.getElementById('chk-notes').checked=hasNotes;
   document.getElementById('chk-warranty').checked=false;
   updateChecklistBtn();
   openModal('checklist-modal');
@@ -5849,8 +5850,8 @@ function updateChecklistBtn(){
   var n=document.getElementById('chk-notes').checked;
   var w=document.getElementById('chk-warranty').checked;
   var btn=document.getElementById('chk-complete-btn');
-  if(n&&w){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
-  else{btn.disabled=true;btn.style.opacity='0.5';btn.style.cursor='not-allowed';}
+  if(n&&w){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';btn.style.background='#16a34a';}
+  else{btn.disabled=true;btn.style.opacity='0.5';btn.style.cursor='not-allowed';btn.style.background='#9ca3af';}
   // Visual feedback on checked items
   document.getElementById('chk1-wrap').style.borderColor=n?'#16a34a':'#e5e7eb';
   document.getElementById('chk1-wrap').style.background=n?'#f0fdf4':'#f9fafb';
@@ -5864,8 +5865,10 @@ function checklistComplete(){
   if(!n||!w)return;
   _checklistConfirmed=true;
   closeModal('checklist-modal');
-  var m=_pendingCheckoutMethod;_pendingCheckoutMethod=null;
-  checkout(m);
+  // If coming from a direct checkout(method) call, proceed with that method
+  if(_pendingCheckoutMethod){var m=_pendingCheckoutMethod;_pendingCheckoutMethod=null;checkout(m);return;}
+  // Otherwise open the checkout screen
+  openCheckoutScreen();
 }
 
 function checkout(method){
