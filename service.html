@@ -30,7 +30,7 @@
     .pin-dot.filled{background:var(--gold);border-color:var(--gold);}
     .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:0 auto;}
     .pin-key{background:var(--navy-3);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:var(--white);font-size:22px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;padding:16px;cursor:pointer;transition:all 0.1s;min-height:56px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;user-select:none;}
-    .pin-key:active{background:rgba(201,151,58,0.2);border-color:var(--gold);}
+    .pin-key:active,.pin-key.flash{background:rgba(201,151,58,0.2);border-color:var(--gold);}
     .pin-key.action{font-size:13px;font-weight:600;color:var(--gray-2);}
     /* CONTRACTOR PASSWORD */
     .contractor-link{color:var(--gray-2);font-size:11px;margin-top:14px;cursor:pointer;text-decoration:none;display:inline-block;transition:color 0.2s;}
@@ -1791,6 +1791,33 @@ async function svcBsAddNote(id){
 setInterval(function(){
   try{var s=JSON.parse(localStorage.getItem(SESSION_KEY));if(s&&Date.now()>=s.expiry){doLogout();}}catch(e){}
 },60000);
+
+// Keyboard support for PIN pad
+document.addEventListener('keydown',function(e){
+  var login=document.getElementById('login-screen');
+  if(!login||login.style.display==='none')return;
+  // Don't capture keys when password field or other inputs are focused
+  var tag=document.activeElement?document.activeElement.tagName:'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+  // Only when PIN section is visible
+  var pinSec=document.getElementById('login-pin-section');
+  if(!pinSec||pinSec.style.display==='none')return;
+  var key=e.key;
+  if(key>='0'&&key<='9'){e.preventDefault();pinKey(key);_flashPinKey(key);}
+  else if(key==='Backspace'){e.preventDefault();pinBack();_flashPinKey('back');}
+  else if(key==='Escape'){e.preventDefault();pinClear();_flashPinKey('clear');}
+  else if(key==='Enter'){e.preventDefault();pinSubmit();}
+});
+function _flashPinKey(val){
+  var btns=document.querySelectorAll('.pin-key');
+  btns.forEach(function(b){
+    var txt=b.textContent.trim();
+    if(val==='back'&&b.innerHTML.indexOf('232B')>=0){b.classList.add('flash');}
+    else if(val==='clear'&&txt==='Clear'){b.classList.add('flash');}
+    else if(txt===val){b.classList.add('flash');}
+  });
+  setTimeout(function(){btns.forEach(function(b){b.classList.remove('flash');});},120);
+}
 
 // On page load — check session or show login
 window.addEventListener('DOMContentLoaded',function(){

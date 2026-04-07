@@ -3170,5 +3170,32 @@ function posCloseTcResult(){
   posExitTcMode();
 }
 
+// Keyboard support for POS PIN pad + time clock
+document.addEventListener('keydown',function(e){
+  var login=document.getElementById('pos-login');
+  if(!login||login.style.display==='none')return;
+  // Don't capture when typing in other inputs
+  var tag=document.activeElement?document.activeElement.tagName:'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+  // Don't capture when TC result is showing (waiting for auto-close)
+  var tcResult=document.getElementById('pos-tc-result');
+  if(tcResult&&tcResult.style.display==='block')return;
+  var key=e.key;
+  if(key>='0'&&key<='9'){e.preventDefault();posPinKey(key);_flashPosPinKey(key);}
+  else if(key==='Backspace'){e.preventDefault();posPinBack();_flashPosPinKey('back');}
+  else if(key==='Escape'){e.preventDefault();posPinClear();_flashPosPinKey('clear');}
+  else if(key==='Enter'){e.preventDefault();if(_posTcMode)posTcPinSubmit();else posPinSubmit();}
+});
+function _flashPosPinKey(val){
+  var btns=document.querySelectorAll('.pos-pin-key');
+  btns.forEach(function(b){
+    var txt=b.textContent.trim();
+    if(val==='back'&&b.innerHTML.indexOf('232B')>=0){b.classList.add('flash');}
+    else if(val==='clear'&&txt==='Clear'){b.classList.add('flash');}
+    else if(txt===val){b.classList.add('flash');}
+  });
+  setTimeout(function(){btns.forEach(function(b){b.classList.remove('flash');});},120);
+}
+
 // Init — preload users for fast PIN lookup
 adminLoad();
