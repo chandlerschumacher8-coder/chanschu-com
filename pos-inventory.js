@@ -1633,22 +1633,26 @@ async function svcPoll(){
   try{var res=await fetch('/api/jobs-get?companyId='+SVC_COMPANY_ID+'&t='+Date.now());var data=await res.json();var hash=JSON.stringify(data.jobs);if(hash===_lastSvcHash)return;_lastSvcHash=hash;svcJobs=data.jobs||[];svcNextId=data.nextId||1;svcRenderJobs();svcRenderStats();}catch(e){}
 }
 function svcRenderStats(){
-  var today=ds(new Date());
   var stats=[
-    {key:'New',color:'#a78bfa',count:svcJobs.filter(function(j){return j.status==='New';}).length},
-    {key:'In Progress',color:'var(--orange)',count:svcJobs.filter(function(j){return j.status==='In Progress';}).length},
-    {key:'Svc Complete',color:'#2dd4bf',count:svcJobs.filter(function(j){return j.status==='Service Complete';}).length},
-    {key:'Needs Claimed',color:'#fbbf24',count:svcJobs.filter(function(j){return j.status==='Needs Claimed';}).length},
-    {key:'Complete',color:'var(--green)',count:svcJobs.filter(function(j){return j.status==='Complete';}).length}
+    {key:'all',label:'All',color:'var(--blue)',count:svcJobs.length},
+    {key:'New',label:'New',color:'#a78bfa',count:svcJobs.filter(function(j){return j.status==='New';}).length},
+    {key:'In Progress',label:'In Progress',color:'var(--orange)',count:svcJobs.filter(function(j){return j.status==='In Progress';}).length},
+    {key:'Service Complete',label:'Svc Complete',color:'#2dd4bf',count:svcJobs.filter(function(j){return j.status==='Service Complete';}).length},
+    {key:'Needs Claimed',label:'Needs Claimed',color:'#fbbf24',count:svcJobs.filter(function(j){return j.status==='Needs Claimed';}).length},
+    {key:'Complete',label:'Complete',color:'var(--green)',count:svcJobs.filter(function(j){return j.status==='Complete';}).length}
   ];
-  document.getElementById('svc-stats').innerHTML=stats.map(function(s){return '<div class="svc-stat"><div class="svc-stat-val" style="color:'+s.color+';">'+s.count+'</div><div class="svc-stat-key">'+s.key+'</div></div>';}).join('');
+  document.getElementById('svc-stats').innerHTML=stats.map(function(s){
+    var isActive=svcFilter===s.key;
+    return '<div class="svc-stat'+(isActive?' svc-stat-active':'')+'" style="cursor:pointer;border:2px solid '+(isActive?s.color:'transparent')+';'+(isActive?'box-shadow:0 2px 8px rgba(0,0,0,0.1);':'')+'" onclick="svcStatFilter(\''+s.key+'\')"><div class="svc-stat-val" style="color:'+s.color+';">'+s.count+'</div><div class="svc-stat-key">'+s.label+'</div></div>';
+  }).join('');
 }
 function svcRenderFilters(){
-  var filters=['all','New','In Progress','Service Complete','Needs Claimed','Complete'];
-  document.getElementById('svc-filter-row').innerHTML=filters.map(function(f){
-    var label=f==='all'?'All':f;
-    return '<button class="svc-ftab'+(f===svcFilter?' active':'')+'" onclick="svcFilter=\''+f+'\';document.querySelectorAll(\'.svc-ftab\').forEach(function(b){b.classList.remove(\'active\');});this.classList.add(\'active\');svcRenderJobs();">'+label+'</button>';
-  }).join('');
+  // Filter pills removed — stats cards are now the filters
+  var el=document.getElementById('svc-filter-row');if(el)el.innerHTML='';
+}
+function svcStatFilter(f){
+  svcFilter=(svcFilter===f)?'all':f;
+  svcRenderStats();svcRenderJobs();
 }
 function svcRenderJobs(){
   var search=(document.getElementById('svc-search')||{}).value||'';search=search.toLowerCase();

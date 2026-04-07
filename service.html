@@ -60,14 +60,24 @@
     .hbtn.danger:hover{color:var(--red);border-color:rgba(224,112,112,0.4);}
     .main{padding:24px 28px;max-width:1400px;margin:0 auto;}
     /* STATS */
-    .stats-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:24px;}
-    .stat-card{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:16px 18px;}
+    .stats-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:24px;}
+    .stat-card{background:var(--navy-2);border:2px solid rgba(255,255,255,0.07);border-radius:var(--radius);padding:16px 18px;cursor:pointer;transition:all 0.15s;user-select:none;}
+    .stat-card:hover{background:var(--navy-3);border-color:rgba(255,255,255,0.15);}
+    .stat-card.active{box-shadow:0 2px 12px rgba(0,0,0,0.3);}
+    .stat-card.sc-all.active{border-color:var(--white);}
+    .stat-card.sc-open.active{border-color:var(--blue);}
+    .stat-card.sc-prog.active{border-color:var(--orange);}
+    .stat-card.sc-svcomplete.active{border-color:#2dd4bf;}
+    .stat-card.sc-needsclaimed.active{border-color:var(--gold);}
+    .stat-card.sc-done.active{border-color:var(--green);}
     .stat-val{font-family:'Playfair Display',serif;font-size:26px;line-height:1;}
     .stat-key{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-2);margin-top:4px;}
+    .sc-all .stat-val{color:var(--white);}
     .sc-open .stat-val{color:var(--blue);}
     .sc-prog .stat-val{color:var(--orange);}
+    .sc-svcomplete .stat-val{color:#2dd4bf;}
+    .sc-needsclaimed .stat-val{color:var(--gold);}
     .sc-done .stat-val{color:var(--green);}
-    .sc-today .stat-val{color:var(--gold);}
     /* LAYOUT */
     .two-col{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start;}
     .panel{background:var(--navy-2);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius);overflow:hidden;}
@@ -358,7 +368,7 @@
     .empty-state{padding:32px;text-align:center;color:var(--gray-2);font-size:13px;}
     footer{padding:20px 28px;text-align:center;color:var(--gray-3);font-size:11px;margin-top:32px;}
     @media(max-width:900px){.two-col{grid-template-columns:1fr;}.stats-bar{grid-template-columns:repeat(3,1fr);}.main{padding:14px 16px;}}
-    @media(max-width:500px){.stats-bar{grid-template-columns:1fr 1fr;}.dg{grid-template-columns:1fr;}}
+    @media(max-width:500px){.stats-bar{grid-template-columns:repeat(3,1fr);}.dg{grid-template-columns:1fr;}}
 
     /* ═══ MOBILE RESPONSIVE ═══ */
     @media(max-width:767px){
@@ -499,14 +509,13 @@
   </header>
 
   <div class="main">
-    <div class="stats-bar">
-      <div class="stat-card sc-open"><div class="stat-val" id="s-new">0</div><div class="stat-key">New</div></div>
-      <div class="stat-card sc-prog"><div class="stat-val" id="s-prog">0</div><div class="stat-key">In Progress</div></div>
-      <div class="stat-card sc-done"><div class="stat-val" id="s-svcomplete">0</div><div class="stat-key">Svc Complete</div></div>
-      <div class="stat-card"><div class="stat-val" id="s-needsclaimed" style="color:var(--gold);">0</div><div class="stat-key">Needs Claimed</div></div>
-      <div class="stat-card"><div class="stat-val" id="s-done" style="color:var(--green);">0</div><div class="stat-key">Complete</div></div>
-      <div class="stat-card sc-today"><div class="stat-val" id="s-today">0</div><div class="stat-key">Today</div></div>
-      <div class="stat-card"><div class="stat-val" id="s-total">0</div><div class="stat-key">Total</div></div>
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-card sc-all active" onclick="statFilter('all')" id="sf-all"><div class="stat-val" id="s-total">0</div><div class="stat-key">All</div></div>
+      <div class="stat-card sc-open" onclick="statFilter('New')" id="sf-new"><div class="stat-val" id="s-new">0</div><div class="stat-key">New</div></div>
+      <div class="stat-card sc-prog" onclick="statFilter('In Progress')" id="sf-prog"><div class="stat-val" id="s-prog">0</div><div class="stat-key">In Progress</div></div>
+      <div class="stat-card sc-svcomplete" onclick="statFilter('Service Complete')" id="sf-svcomplete"><div class="stat-val" id="s-svcomplete">0</div><div class="stat-key">Svc Complete</div></div>
+      <div class="stat-card sc-needsclaimed" onclick="statFilter('Needs Claimed')" id="sf-needsclaimed"><div class="stat-val" id="s-needsclaimed">0</div><div class="stat-key">Needs Claimed</div></div>
+      <div class="stat-card sc-done" onclick="statFilter('Complete')" id="sf-done"><div class="stat-val" id="s-done">0</div><div class="stat-key">Complete</div></div>
     </div>
 
     <button class="mobile-schedule-btn" onclick="mobileOpenSchedule()">+ Schedule Job</button>
@@ -592,14 +601,7 @@
         <div class="panel-hdr" style="flex-direction:column;align-items:stretch;gap:8px;">
           <div class="panel-title">Jobs</div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <div class="filters-row" style="margin-bottom:0;flex:1;">
-              <button class="ftab active" onclick="setFilter('all',this)">All</button>
-              <button class="ftab" onclick="setFilter('New',this)">New</button>
-              <button class="ftab" onclick="setFilter('In Progress',this)">In Progress</button>
-              <button class="ftab" onclick="setFilter('Service Complete',this)">Svc Complete</button>
-              <button class="ftab" onclick="setFilter('Needs Claimed',this)">Needs Claimed</button>
-              <button class="ftab" onclick="setFilter('Complete',this)">Complete</button>
-            </div>
+            <div style="flex:1;"></div>
             <select id="tech-filter" class="sel" style="width:auto;min-width:130px;padding:5px 10px;font-size:11px;" onchange="renderJobs()">
               <option value="">All Techs</option>
             </select>
@@ -1271,7 +1273,17 @@ async function addJob(){
   alert('Job '+job.id+' scheduled for '+name+'!'+(job.files&&job.files.length?' Invoice attached.':''));
 }
 
-function setFilter(f,btn){FILTER=f;document.querySelectorAll('.ftab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderJobs();}
+function setFilter(f){FILTER=f;_updateStatCardActive();renderJobs();}
+function statFilter(f){
+  // Clicking already-active card resets to all
+  if(FILTER===f){FILTER='all';}else{FILTER=f;}
+  _updateStatCardActive();renderJobs();
+}
+function _updateStatCardActive(){
+  document.querySelectorAll('.stats-bar .stat-card').forEach(function(c){c.classList.remove('active');});
+  var map={'all':'sf-all','New':'sf-new','In Progress':'sf-prog','Service Complete':'sf-svcomplete','Needs Claimed':'sf-needsclaimed','Complete':'sf-done'};
+  var id=map[FILTER];if(id){var el=document.getElementById(id);if(el)el.classList.add('active');}
+}
 
 function renderJobs(){
   var search=(document.getElementById('search')&&document.getElementById('search').value||'').toLowerCase();
@@ -1467,15 +1479,15 @@ async function toggleContacted(id,checked){
   renderJobs();updateStats();setTimeout(function(){toggleJob(id);},50);
 }
 function updateStats(){
-  var today=new Date().toISOString().slice(0,10);
   var mine=currentUser&&currentUser.role==='tech'?jobs.filter(function(j){return j.tech===(currentUser.techName||currentUser.name);}):jobs;
-  document.getElementById('s-new').textContent=mine.filter(function(j){return j.status==='New';}).length;
-  document.getElementById('s-prog').textContent=mine.filter(function(j){return j.status==='In Progress';}).length;
-  document.getElementById('s-svcomplete').textContent=mine.filter(function(j){return j.status==='Service Complete';}).length;
-  document.getElementById('s-needsclaimed').textContent=mine.filter(function(j){return j.status==='Needs Claimed';}).length;
-  document.getElementById('s-done').textContent=mine.filter(function(j){return j.status==='Complete';}).length;
-  document.getElementById('s-today').textContent=mine.filter(function(j){return j.date===today;}).length;
-  document.getElementById('s-total').textContent=mine.length;
+  var el;
+  el=document.getElementById('s-new');if(el)el.textContent=mine.filter(function(j){return j.status==='New';}).length;
+  el=document.getElementById('s-prog');if(el)el.textContent=mine.filter(function(j){return j.status==='In Progress';}).length;
+  el=document.getElementById('s-svcomplete');if(el)el.textContent=mine.filter(function(j){return j.status==='Service Complete';}).length;
+  el=document.getElementById('s-needsclaimed');if(el)el.textContent=mine.filter(function(j){return j.status==='Needs Claimed';}).length;
+  el=document.getElementById('s-done');if(el)el.textContent=mine.filter(function(j){return j.status==='Complete';}).length;
+  el=document.getElementById('s-total');if(el)el.textContent=mine.length;
+  _updateStatCardActive();
 }
 
 // ── LOG ──
