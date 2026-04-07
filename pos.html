@@ -1115,7 +1115,8 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <input id="cart-sold-zip" placeholder="Zip" style="max-width:60px;"/>
 </div>
 <input id="cart-sold-phone" placeholder="Phone"/>
-<input id="cart-appt" type="datetime-local" placeholder="Appointment" title="Appointment" style="font-size:10px;color:#6b7280;"/>
+<input id="cart-appt" type="datetime-local" placeholder="Appointment" title="Delivery / Appointment Date" style="font-size:10px;color:#6b7280;" onchange="onCartApptChange()"/>
+<div id="cart-appt-confirm" style="display:none;font-size:10px;color:#16a34a;font-weight:600;margin-top:2px;cursor:pointer;" onclick="navToDeliveryDate()"></div>
 </div>
 <!-- Ship To -->
 <details class="cart-shipto-toggle">
@@ -5635,11 +5636,13 @@ function getSaleFields(){
     po:(document.getElementById('cart-po')||{}).value||'',
     job:(document.getElementById('cart-job')||{}).value||'',
     invoiceNotes:((document.getElementById('cart-invoice-notes')||{}).value||'').trim(),
-    shipperNotes:((document.getElementById('cart-shipper-notes')||{}).value||'').trim()
+    shipperNotes:((document.getElementById('cart-shipper-notes')||{}).value||'').trim(),
+    appt:((document.getElementById('cart-appt')||{}).value||'')
   };
 }
 function clearSaleForm(){
-  ['cart-sold-name','cart-sold-addr','cart-sold-city','cart-sold-state','cart-sold-zip','cart-sold-phone','cart-ship-name','cart-ship-addr','cart-ship-city','cart-ship-state','cart-ship-zip','cart-po','cart-job','cart-invoice-notes','cart-shipper-notes'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  ['cart-sold-name','cart-sold-addr','cart-sold-city','cart-sold-state','cart-sold-zip','cart-sold-phone','cart-ship-name','cart-ship-addr','cart-ship-city','cart-ship-state','cart-ship-zip','cart-po','cart-job','cart-invoice-notes','cart-shipper-notes','cart-appt'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var ac=document.getElementById('cart-appt-confirm');if(ac){ac.style.display='none';ac.textContent='';}
   // Reset clerk to logged-in employee if they're Sales/GM/Owner-Admin, otherwise blank
   var cl=document.getElementById('cart-clerk');
   if(cl){
@@ -5720,17 +5723,108 @@ function checkout(method){
     }
     return item;
   });
-  var order={id:'ORD-'+nextOrderId,customer:cust,items:orderItems,subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:isQuickSale?'Delivered':'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:''};
+  var apptVal=f.appt||'';
+  var delDate='',delTime='';
+  if(apptVal){var ap=new Date(apptVal);delDate=ds(ap);var h=ap.getHours(),m=ap.getMinutes();delTime=(h>12?h-12:(h||12))+':'+(m<10?'0':'')+m+(h>=12?' PM':' AM');}
+  var order={id:'ORD-'+nextOrderId,customer:cust,items:orderItems,subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:isQuickSale?'Delivered':'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:delDate,deliveryTime:delTime};
   nextOrderId++;orders.unshift(order);
   cart.forEach(function(c){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p&&!c.isService){if(!p.sold)p.sold=0;p.sold+=c.qty;}});
   saveProducts();saveOrders();
   lastCompletedSale={orderId:order.id,customer:cust,items:order.items,date:new Date()};
   setTimeout(function(){custCheckAndSave(order);},300);
+  // Auto-create delivery stop if appointment date was set and not a quick sale
+  if(delDate&&!isQuickSale){
+    setTimeout(function(){syncDeliveryFromOrder(order);},500);
+  }
   cart=[];clearSaleForm();
   renderCart();refreshSaleView();
   toast('Order '+order.id+' placed via '+method+(isQuickSale?' (Quick Sale — Delivered)':''),'success');
   showCheckoutBar(order.id);
 }
+
+// ── DELIVERY ↔ SALE SYNC ──
+function syncDeliveryFromOrder(order){
+  if(!order||!order.deliveryDate)return;
+  // Ensure delivery data is loaded
+  if(!delDeliveries||!delDeliveries.length){
+    delLoadData().then(function(){_doSyncDelivery(order);});
+  }else{_doSyncDelivery(order);}
+}
+function _doSyncDelivery(order){
+  // Check for existing delivery linked to this invoice
+  var existing=delDeliveries.find(function(d){return d.invoice===order.id;});
+  // Build appliance list from major appliances only
+  var apps=[];
+  (order.items||[]).forEach(function(item){
+    var p=PRODUCTS.find(function(x){return x.id===item.id;});
+    if(p&&isSerialTracked(p)){apps.push({a:p.cat||p.name,m:item.model||p.model||''});}
+  });
+  if(!apps.length){
+    // Fallback: include all non-service items
+    (order.items||[]).forEach(function(item){
+      if(!item.isService)apps.push({a:item.name,m:item.model||''});
+    });
+  }
+  var appStr=apps.map(function(x){return x.a;}).join(', ');
+  var st=order.soldTo||{};
+  if(existing){
+    // Update existing delivery stop
+    existing.name=order.customer||st.name||existing.name;
+    existing.phone=st.phone||existing.phone;
+    existing.address=st.addr||existing.address;
+    existing.city=st.city||existing.city;
+    existing.date=order.deliveryDate;
+    existing.time=order.deliveryTime||existing.time;
+    existing.appliances=apps;existing.appliance=appStr;
+    existing.notes=order.invoiceNotes||existing.notes;
+  }else{
+    // Create new delivery stop
+    var newDel={
+      id:'DEL-'+String(delNextId).padStart(4,'0'),
+      name:order.customer||st.name||'',phone:st.phone||'',email:'',
+      address:st.addr||'',city:st.city||'',
+      invoice:order.id,notes:order.invoiceNotes||'',
+      date:order.deliveryDate,time:order.deliveryTime||'9:00 AM',
+      duration:'60',team:'Main Delivery Team',stopOrder:null,
+      deliveryType:'Full Install',appliances:apps,appliance:appStr,
+      invoiceFile:null,invoiceFiles:[],
+      status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null,
+      linkedOrderId:order.id
+    };
+    delDeliveries.unshift(newDel);delNextId++;
+  }
+  delSaveData();
+  console.log('[Delivery Sync] '+(existing?'Updated':'Created')+' delivery for '+order.id+' on '+order.deliveryDate);
+}
+function onCartApptChange(){
+  var appt=document.getElementById('cart-appt').value;
+  var confirm=document.getElementById('cart-appt-confirm');
+  if(!appt){if(confirm){confirm.style.display='none';}return;}
+  var dt=new Date(appt);
+  var dateStr=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  var timeStr=dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  if(confirm){confirm.textContent='\u2713 Delivery will be scheduled for '+dateStr+' at '+timeStr;confirm.style.display='block';confirm._delDate=ds(dt);}
+}
+function navToDeliveryDate(){
+  var confirm=document.getElementById('cart-appt-confirm');
+  if(confirm&&confirm._delDate){
+    var d=new Date(confirm._delDate+'T12:00:00');
+    delWeekStart=getWeekStart(d);
+    var delTab=document.querySelector('.tb-tab[onclick*="delivery"]');
+    nav('delivery',delTab);
+  }
+}
+function removeDeliveryForOrder(orderId){
+  if(!orderId)return;
+  var idx=delDeliveries.findIndex(function(d){return d.invoice===orderId;});
+  if(idx>=0){
+    if(!confirm('Remove the delivery stop linked to '+orderId+'?'))return false;
+    delDeliveries.splice(idx,1);delSaveData();
+    console.log('[Delivery Sync] Removed delivery for voided order '+orderId);
+  }
+  return true;
+}
+
 function saveQuote(){
   if(cart.length===0){toast('Cart is empty','error');return;}
   var f=getSaleFields();

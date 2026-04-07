@@ -1279,6 +1279,18 @@ async function delSaveNote(){
   await delSaveData();closeModal('del-note-modal');delRenderEvents();toast('Note saved','success');
 }
 // Detail modals
+function delOpenLinkedOrder(orderId){
+  if(!orderId)return;
+  // Close delivery detail modal
+  try{closeModal('del-detail-modal');}catch(e){}
+  // Navigate to Open Orders and highlight the order
+  var ordTab=document.querySelector('.tb-tab[onclick*="orders"]');
+  if(typeof nav==='function')nav('orders',ordTab);
+  setTimeout(function(){
+    var searchEl=document.getElementById('order-search');
+    if(searchEl){searchEl.value=orderId;searchEl.dispatchEvent(new Event('input'));}
+  },200);
+}
 function delOpenDetail(id){
   var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;
   document.getElementById('del-det-name').textContent=d.name;var sm=delTimeToMins(d.time),dur=parseInt(d.duration)||60;
@@ -1287,7 +1299,7 @@ function delOpenDetail(id){
   var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
   var scBadge=d.status==='Delivered'?'del-sb-delivered':d.status==='Out for Delivery'?'del-sb-out':d.status==='Rescheduled'?'del-sb-rescheduled':'del-sb-scheduled';
   var body='<div style="margin-bottom:10px;"><span class="del-status-badge '+scBadge+'">'+d.status+'</span></div>'+
-  '<div class="del-detail-grid"><div><div class="del-dl">Phone</div><div class="del-dv"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div>'+(d.email?'<div><div class="del-dl">Email</div><div class="del-dv"><a href="mailto:'+d.email+'">'+d.email+'</a></div></div>':'<div></div>')+'<div style="grid-column:1/-1"><div class="del-dl">Address</div><div class="del-dv">'+d.address+', '+d.city+'</div></div><div><div class="del-dl">Delivery Type</div><div class="del-dv">'+(d.deliveryType||'Full Install')+'</div></div>'+(d.invoice?'<div><div class="del-dl">Invoice #</div><div class="del-dv">'+d.invoice+'</div></div>':'<div></div>')+'</div>'+
+  '<div class="del-detail-grid"><div><div class="del-dl">Phone</div><div class="del-dv"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div>'+(d.email?'<div><div class="del-dl">Email</div><div class="del-dv"><a href="mailto:'+d.email+'">'+d.email+'</a></div></div>':'<div></div>')+'<div style="grid-column:1/-1"><div class="del-dl">Address</div><div class="del-dv">'+d.address+', '+d.city+'</div></div><div><div class="del-dl">Delivery Type</div><div class="del-dv">'+(d.deliveryType||'Full Install')+'</div></div>'+(d.invoice?'<div><div class="del-dl">Invoice #</div><div class="del-dv"><a href="#" onclick="event.preventDefault();delOpenLinkedOrder(\''+d.invoice+'\')" style="color:#2563eb;font-weight:600;text-decoration:none;">'+d.invoice+'</a></div></div>':'<div></div>')+'</div>'+
   '<div style="margin-bottom:10px;"><div class="del-dl" style="margin-bottom:4px;">Appliances</div>'+apps.map(function(a){return '<div style="font-size:12px;margin-bottom:3px;">'+a.a+(a.m?' <span style="color:var(--gray-2);font-size:11px;">'+a.m+'</span>':'')+(a.serial?' <span style="color:var(--green);font-size:11px;font-weight:600;">SN: '+a.serial+'</span>':'')+'</div>';}).join('')+'</div>'+
   (d.notes?'<div class="del-dl" style="margin-bottom:4px;">Notes</div><div class="del-notes-blk">'+d.notes+'</div>':'')+
   (d.deliveredAt?'<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered: '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>':'')+
