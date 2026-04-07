@@ -1308,7 +1308,7 @@ function renderMobileDay(){
     h+='<div class="mobile-stop-addr">'+d.address+', '+d.city+'</div>';
     h+='<div class="mobile-stop-apps">'+appStr+'</div>';
     var instrPreview=d.delivInstructions||d.notes||'';
-    if(instrPreview){var ATTN_M=/call ahead|gate code|second floor|stairs|basement|narrow|tight|back door|side door|garage|elevator/i;h+='<div style="font-size:11px;color:var(--text2);margin-top:3px;'+(ATTN_M.test(instrPreview)?'background:#fffbeb;padding:3px 6px;border-radius:4px;border-left:3px solid #fcd34d;':'')+'">'+instrPreview.substring(0,80)+(instrPreview.length>80?'...':'')+'</div>';}
+    if(instrPreview){var ATTN_M=/call ahead|gate code|second floor|stairs|basement|narrow|tight|back door|side door|garage|elevator/i;h+='<div style="font-size:11px;color:var(--text2);margin-top:3px;'+(ATTN_M.test(instrPreview)?'background:#fffbeb;padding:3px 6px;border-radius:4px;border-left:3px solid #fcd34d;':'')+'">'+linkifyPhones(instrPreview.substring(0,80))+(instrPreview.length>80?'...':'')+'</div>';}
     h+='<div class="mobile-stop-time">'+(isPickup?'Customer Pick Up':d.team||'Main Delivery Team')+' &middot; '+timeStr+'</div>';
     // Serial status indicator
     var msSnStatus=getSerialStatus(d);
@@ -1483,6 +1483,15 @@ async function saveNote(){
 }
 
 // ═══ DELIVERY LOG ═══
+// Phone number linkifier — makes phone numbers tappable in rendered text
+function linkifyPhones(text){
+  if(!text)return text;
+  return text.replace(/(\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g,function(match){
+    var digits=match.replace(/\D/g,'');
+    var e164=digits.length===10?'+1'+digits:'+'+digits;
+    return '<a href="tel:'+e164+'" style="color:#1a73e8;text-decoration:underline;">'+match+'</a>';
+  });
+}
 var FLAG_WORDS=/damaged|broken|missing|wrong|refused|dent|scratch|crack|leak|cancel/i;
 var _logPendingPhoto=null;
 var _logCurrentId=null;
@@ -1517,7 +1526,7 @@ function renderLogHtml(d,isMobile){
       var flagged=FLAG_WORDS.test(e.text);
       h+='<div class="log-entry'+(flagged?' flagged':'')+'">';
       h+='<div class="log-entry-hdr"><span class="log-author">'+(flagged?'<span class="log-flag-icon">&#x26A0;</span> ':'')+e.author+'</span><span class="log-time">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div>';
-      h+='<div class="log-text">'+e.text+'</div>';
+      h+='<div class="log-text">'+linkifyPhones(e.text)+'</div>';
       if(e.photo)h+='<img class="log-photo-thumb" src="'+e.photo+'" onclick="detViewPhoto(\''+e.photo+'\')"/>';
       h+='</div>';
     });
@@ -1666,13 +1675,13 @@ function openDeliveryDetail(id){
       var instrHtml='';
       if(instrText){
         var isAttn=ATTN_WORDS.test(instrText);
-        instrHtml+='<div style="margin-bottom:8px;'+(isAttn?'background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:8px 10px;':'')+'"><div class="dl" style="margin-bottom:4px;">Delivery Instructions'+(isAttn?' <span style="color:#d97706;">&#x26A0;</span>':'')+'</div><div class="notes-blk" style="'+(isAttn?'background:transparent;border:none;padding:0;':'')+'">'+instrText+'</div></div>';
+        instrHtml+='<div style="margin-bottom:8px;'+(isAttn?'background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:8px 10px;':'')+'"><div class="dl" style="margin-bottom:4px;">Delivery Instructions'+(isAttn?' <span style="color:#d97706;">&#x26A0;</span>':'')+'</div><div class="notes-blk" style="'+(isAttn?'background:transparent;border:none;padding:0;':'')+'">'+linkifyPhones(instrText)+'</div></div>';
       }
       if(shipText){
-        instrHtml+='<div style="margin-bottom:8px;"><div class="dl" style="margin-bottom:4px;">Shipper Notes</div><div class="notes-blk">'+shipText+'</div></div>';
+        instrHtml+='<div style="margin-bottom:8px;"><div class="dl" style="margin-bottom:4px;">Shipper Notes</div><div class="notes-blk">'+linkifyPhones(shipText)+'</div></div>';
       }
       if(!instrText&&!shipText&&d.notes){
-        instrHtml+='<div class="dl" style="margin-bottom:4px;">Notes</div><div class="notes-blk">'+d.notes+'</div>';
+        instrHtml+='<div class="dl" style="margin-bottom:4px;">Notes</div><div class="notes-blk">'+linkifyPhones(d.notes)+'</div>';
       }
       return instrHtml;
     })()+
@@ -1714,7 +1723,7 @@ function openNoteDetail(id){
   document.getElementById('det-meta').textContent=new Date(n.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+(n.allDay?' · All Day':n.time?' · '+n.time:'');
   document.getElementById('det-body').innerHTML=
     '<div style="width:24px;height:24px;border-radius:4px;background:'+color.bg+';border:2px solid '+color.bd+';margin-bottom:12px;"></div>'+
-    (n.details?'<div class="notes-blk">'+n.details+'</div>':'<p style="color:var(--text3);font-size:12px;">No additional details.</p>');
+    (n.details?'<div class="notes-blk">'+linkifyPhones(n.details)+'</div>':'<p style="color:var(--text3);font-size:12px;">No additional details.</p>');
   document.getElementById('det-actions').innerHTML=
     '<button class="abtn gray" onclick="openEditNote(\''+id+'\')">Edit</button>'+
     '<button class="abtn red" onclick="deleteNote(\''+id+'\')">Delete</button>';

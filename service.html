@@ -778,6 +778,15 @@
 var currentUser=null,companies=[],jobs=[],nextId=1,techList=['Unassigned'],editUsers=[],editCompanyId=null,FILTER='all',chatHistory=[],pendingInvoiceFile=null;
 
 // ═══ SESSION TOKEN & AUTHENTICATED FETCH ═══
+// Phone number linkifier
+function linkifyPhones(text){
+  if(!text)return text;
+  return text.replace(/(\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g,function(match){
+    var digits=match.replace(/\D/g,'');
+    var e164=digits.length===10?'+1'+digits:'+'+digits;
+    return '<a href="tel:'+e164+'" style="color:#1a73e8;text-decoration:underline;">'+match+'</a>';
+  });
+}
 var SVC_TOKEN_KEY='svc-session-token';
 window._authToken=localStorage.getItem(SVC_TOKEN_KEY)||null;
 
@@ -1383,8 +1392,8 @@ function renderJobs(){
           (j.invoice?'<div class="df"><label>Invoice #</label><div class="dv">'+j.invoice+'</div></div>':'')+(j.claim?'<div class="df"><label>Claim #</label><div class="dv">'+j.claim+'</div></div>':'')+
           (j.delivery?'<div class="df"><label>Delivery</label><div class="dv">'+new Date(j.delivery+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>':'')+
         '</div>'+
-        '<div class="df" style="margin-bottom:10px;"><label>Issue</label><div class="notes-blk">'+j.issue+'</div></div>'+
-        (j.notes?'<div class="df" style="margin-bottom:10px;"><label>Notes</label><div class="notes-blk">'+j.notes+'</div></div>':'')+
+        '<div class="df" style="margin-bottom:10px;"><label>Issue</label><div class="notes-blk">'+linkifyPhones(j.issue)+'</div></div>'+
+        (j.notes?'<div class="df" style="margin-bottom:10px;"><label>Notes</label><div class="notes-blk">'+linkifyPhones(j.notes)+'</div></div>':'')+
         '<div class="act-row" onclick="event.stopPropagation()">'+
           (svcRole!=='staff'&&j.status!=='In Progress'?'<button class="abtn orange" onclick="setStatus(\''+j.id+'\',\'In Progress\')" style="font-size:10px;padding:4px 10px;">In Progress</button>':'')+
           (svcRole!=='staff'&&j.status!=='Service Complete'?'<button class="abtn" style="font-size:10px;padding:4px 10px;border-color:rgba(20,184,166,0.35);color:#2dd4bf;background:rgba(20,184,166,0.06);" onclick="setStatus(\''+j.id+'\',\'Service Complete\')">Svc Complete</button>':'')+
@@ -1546,7 +1555,7 @@ function renderLogEntries(j){
   var e=j.activityLog||[];if(e.length===0)return '<div style="font-size:12px;color:var(--gray-3);padding:6px 0;">No activity yet.</div>';
   var icons={call:'Call',text:'Text',note:'Note',email:'Email'};
   return e.slice().reverse().map(function(x){
-    return '<div class="log-entry '+x.type+'"><div class="log-meta"><span class="lbadge lb-'+x.type+'">'+(icons[x.type]||x.type)+'</span><span class="log-time">'+new Date(x.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span><span class="log-by">-- '+x.by+'</span></div><div class="log-content">'+x.text+'</div></div>';
+    return '<div class="log-entry '+x.type+'"><div class="log-meta"><span class="lbadge lb-'+x.type+'">'+(icons[x.type]||x.type)+'</span><span class="log-time">'+new Date(x.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span><span class="log-by">-- '+x.by+'</span></div><div class="log-content">'+linkifyPhones(x.text)+'</div></div>';
   }).join('');
 }
 async function addLog(id){
@@ -1800,8 +1809,8 @@ function openSvcBSheet(id){
   if(j.delivery)h+='<div class="svc-bs-row"><span class="svc-bs-label">Delivery Date</span><span class="svc-bs-val">'+new Date(j.delivery+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</span></div>';
   h+='<div class="svc-bs-row"><span class="svc-bs-label">Scheduled</span><span class="svc-bs-val">'+fd+' — '+j.time+'</span></div>';
   h+='<div class="svc-bs-row"><span class="svc-bs-label">Tech</span><span class="svc-bs-val">'+j.tech+'</span></div>';
-  h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Issue</div><div class="svc-bs-issue">'+j.issue+'</div></div>';
-  if(j.notes)h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Notes</div><div class="svc-bs-issue">'+j.notes+'</div></div>';
+  h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Issue</div><div class="svc-bs-issue">'+linkifyPhones(j.issue)+'</div></div>';
+  if(j.notes)h+='<div style="margin-top:8px;"><div class="svc-bs-label" style="margin-bottom:4px;">Notes</div><div class="svc-bs-issue">'+linkifyPhones(j.notes)+'</div></div>';
   h+='</div>';
   // Actions (role-based)
   var bsRole=currentUser?currentUser.role:'';

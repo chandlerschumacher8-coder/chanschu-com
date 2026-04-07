@@ -2,6 +2,16 @@
 // POS INVENTORY MODULE
 // ══════════════════════════════════════════════
 
+// Phone number linkifier
+function linkifyPhones(text){
+  if(!text)return text;
+  return text.replace(/(\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g,function(match){
+    var digits=match.replace(/\D/g,'');
+    var e164=digits.length===10?'+1'+digits:'+'+digits;
+    return '<a href="tel:'+e164+'" style="color:#1a73e8;text-decoration:underline;">'+match+'</a>';
+  });
+}
+
 // ── Email Builders (shared by POS) ──
 function buildDeliveryEmailHtml(d){
   var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:''}];
@@ -627,8 +637,8 @@ function renderOrderDetail(){
   }).join('');
   var isQuote=o.status==='Quote';
   var notesHtml='';
-  if(o.invoiceNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Invoice Notes</div><div class="ood-notes">'+o.invoiceNotes+'</div></div>';
-  if(o.shipperNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Shipper Notes <span style="font-size:9px;color:var(--gray-3);font-weight:400;">(internal)</span></div><div class="ood-notes" style="border-left:3px solid var(--orange);">'+o.shipperNotes+'</div></div>';
+  if(o.invoiceNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Invoice Notes</div><div class="ood-notes">'+linkifyPhones(o.invoiceNotes)+'</div></div>';
+  if(o.shipperNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Shipper Notes <span style="font-size:9px;color:var(--gray-3);font-weight:400;">(internal)</span></div><div class="ood-notes" style="border-left:3px solid var(--orange);">'+linkifyPhones(o.shipperNotes)+'</div></div>';
   var actionsHtml='';
   if(isQuote){
     actionsHtml='<div class="ood-actions"><button class="ood-btn green" onclick="convertQuoteToSale(\''+o.id+'\')">Convert to Sale</button><button class="ood-btn blue" onclick="printInvoice(\''+o.id+'\')">Print Quote</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
@@ -641,7 +651,7 @@ function renderOrderDetail(){
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
   '<div class="ood-section"><div class="ood-section-title">'+( isQuote?'Quote':'Order')+' Details</div><div class="ood-grid"><div class="ood-field"><div class="ood-label">Payment</div><div class="ood-val">'+o.payment+'</div></div><div class="ood-field"><div class="ood-label">Tax Zone</div><div class="ood-val">'+(o.taxZone||'')+'</div></div><div class="ood-field"><div class="ood-label">Subtotal</div><div class="ood-val">'+fmt(o.subtotal)+'</div></div><div class="ood-field"><div class="ood-label">Tax</div><div class="ood-val">'+fmt(o.tax)+'</div></div><div class="ood-field"><div class="ood-label">Total</div><div class="ood-val" style="color:var(--gold);font-weight:700;">'+fmt(o.total)+'</div></div><div class="ood-field"><div class="ood-label">Status</div><div class="ood-val">'+o.status+'</div></div></div></div>'+
   notesHtml+
-  (o.notes?'<div class="ood-notes">'+o.notes+'</div>':'')+
+  (o.notes?'<div class="ood-notes">'+linkifyPhones(o.notes)+'</div>':'')+
   (o.emailLog&&o.emailLog.length?'<div class="ood-section"><div class="ood-section-title">Emails Sent</div>'+o.emailLog.map(function(e){var tl=e.type==='invoice_receipt'?'Receipt':e.type==='delivery_confirmation'?'Delivery Confirm':e.type||'Email';return '<div style="font-size:11px;color:var(--gray-2);margin-bottom:4px;display:flex;align-items:center;gap:6px;"><span style="color:var(--green);">&#x2709;</span><span>'+tl+' to <strong>'+e.to+'</strong></span><span style="color:var(--gray-3);margin-left:auto;">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div>';}).join('')+'</div>':'')+
   actionsHtml;
 }
@@ -1460,7 +1470,7 @@ function delOpenDetail(id){
   var body='<div style="margin-bottom:10px;"><span class="del-status-badge '+scBadge+'">'+d.status+'</span></div>'+
   '<div class="del-detail-grid"><div><div class="del-dl">Phone</div><div class="del-dv"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div>'+(d.email?'<div><div class="del-dl">Email</div><div class="del-dv"><a href="mailto:'+d.email+'">'+d.email+'</a></div></div>':'<div></div>')+'<div style="grid-column:1/-1"><div class="del-dl">Address</div><div class="del-dv">'+d.address+', '+d.city+'</div></div><div><div class="del-dl">Delivery Type</div><div class="del-dv">'+(d.deliveryType||'Full Install')+'</div></div>'+(d.invoice?'<div><div class="del-dl">Invoice #</div><div class="del-dv"><a href="#" onclick="event.preventDefault();delOpenLinkedOrder(\''+d.invoice+'\')" style="color:#2563eb;font-weight:600;text-decoration:none;">'+d.invoice+'</a></div></div>':'<div></div>')+'</div>'+
   '<div style="margin-bottom:10px;"><div class="del-dl" style="margin-bottom:4px;">Appliances</div>'+apps.map(function(a){return '<div style="font-size:12px;margin-bottom:3px;">'+a.a+(a.m?' <span style="color:var(--gray-2);font-size:11px;">'+a.m+'</span>':'')+(a.serial?' <span style="color:var(--green);font-size:11px;font-weight:600;">SN: '+a.serial+'</span>':'')+'</div>';}).join('')+'</div>'+
-  (d.notes?'<div class="del-dl" style="margin-bottom:4px;">Notes</div><div class="del-notes-blk">'+d.notes+'</div>':'')+
+  (d.notes?'<div class="del-dl" style="margin-bottom:4px;">Notes</div><div class="del-notes-blk">'+linkifyPhones(d.notes)+'</div>':'')+
   (d.deliveredAt?'<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered: '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>':'')+
   ((d.invoiceFiles&&d.invoiceFiles.length?d.invoiceFiles:(d.invoiceFile&&d.invoiceFile.url?[d.invoiceFile]:[])).map(function(f){return '<div class="del-file-attach" style="margin-top:8px;"><span style="font-size:16px;">&#x1F4C4;</span><div class="del-file-attach-name">'+f.filename+'</div><a class="del-file-attach-open" href="'+f.url+'" target="_blank">Open</a></div>';}).join(''))+
   '<div style="margin-top:12px;"><div class="del-dl" style="margin-bottom:6px;">Photos</div>'+
@@ -1485,7 +1495,7 @@ function delOpenNoteDetail(id){
   var color=DEL_NOTE_COLORS.find(function(c){return c.key===n.color;})||DEL_NOTE_COLORS[0];
   document.getElementById('del-det-name').textContent=n.title;
   document.getElementById('del-det-meta').textContent=new Date(n.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+(n.allDay?' | All Day':n.time?' | '+n.time:'');
-  document.getElementById('del-det-body').innerHTML='<div style="width:24px;height:24px;border-radius:4px;background:'+color.bg+';border:2px solid '+color.bd+';margin-bottom:12px;"></div>'+(n.details?'<div class="del-notes-blk">'+n.details+'</div>':'<p style="color:var(--gray-3);font-size:12px;">No details.</p>');
+  document.getElementById('del-det-body').innerHTML='<div style="width:24px;height:24px;border-radius:4px;background:'+color.bg+';border:2px solid '+color.bd+';margin-bottom:12px;"></div>'+(n.details?'<div class="del-notes-blk">'+linkifyPhones(n.details)+'</div>':'<p style="color:var(--gray-3);font-size:12px;">No details.</p>');
   document.getElementById('del-det-actions').innerHTML='<button class="del-abtn gray" onclick="delOpenEditNote(\''+id+'\')">Edit</button><button class="del-abtn red" onclick="delDeleteNote(\''+id+'\')">Delete</button>';
   openModal('del-detail-modal');
 }
@@ -1693,8 +1703,8 @@ function svcRenderJobs(){
     '<div class="svc-job-detail" id="svc-detail-'+j.id+'">'+
     '<div class="svc-assign-row" onclick="event.stopPropagation()"><label>Assign:</label><select class="svc-assign-sel" onchange="svcAssignTech(\''+j.id+'\',this.value)">'+(typeof _buildSvcTechOptions==='function'?_buildSvcTechOptions(j.tech):svcTechList.map(function(t){return '<option value="'+t+'"'+(j.tech===t?' selected':'')+'>'+t+'</option>';}).join(''))+'</select></div>'+
     '<div class="svc-dg"><div class="svc-df"><label>Phone</label><div class="svc-dv"><a href="tel:'+j.phone+'" onclick="event.stopPropagation()">'+j.phone+'</a></div></div>'+(j.email?'<div class="svc-df"><label>Email</label><div class="svc-dv"><a href="mailto:'+j.email+'" onclick="event.stopPropagation()">'+j.email+'</a></div></div>':'<div></div>')+'<div class="svc-df"><label>Address</label><div class="svc-dv">'+j.address+(j.city?', '+j.city:'')+'</div></div><div class="svc-df"><label>Priority</label><div class="svc-dv svc-p-'+j.priority.toLowerCase()+'">'+j.priority+'</div></div>'+(j.warranty?'<div class="svc-df"><label>Warranty</label><div class="svc-dv"><span class="svc-w-pill '+wc+'">'+j.warranty+'</span></div></div>':'')+(j.model?'<div class="svc-df"><label>Model</label><div class="svc-dv">'+j.model+'</div></div>':'')+(j.serial?'<div class="svc-df"><label>Serial</label><div class="svc-dv">'+j.serial+'</div></div>':'')+(j.invoice?'<div class="svc-df"><label>Invoice</label><div class="svc-dv">'+j.invoice+'</div></div>':'')+(j.claim?'<div class="svc-df"><label>Claim</label><div class="svc-dv">'+j.claim+'</div></div>':'')+(j.delivery?'<div class="svc-df"><label>Delivery</label><div class="svc-dv">'+new Date(j.delivery+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div></div>':'')+'</div>'+
-    '<div class="svc-df" style="margin-bottom:8px;"><label>Issue</label><div class="svc-notes-blk">'+j.issue+'</div></div>'+
-    (j.notes?'<div class="svc-df" style="margin-bottom:8px;"><label>Notes</label><div class="svc-notes-blk">'+j.notes+'</div></div>':'')+
+    '<div class="svc-df" style="margin-bottom:8px;"><label>Issue</label><div class="svc-notes-blk">'+linkifyPhones(j.issue)+'</div></div>'+
+    (j.notes?'<div class="svc-df" style="margin-bottom:8px;"><label>Notes</label><div class="svc-notes-blk">'+linkifyPhones(j.notes)+'</div></div>':'')+
     '<div class="svc-act-row" onclick="event.stopPropagation()">'+
     (j.status!=='In Progress'?'<button class="svc-abtn orange" onclick="svcSetStatus(\''+j.id+'\',\'In Progress\')">In Progress</button>':'')+
     (j.status!=='Service Complete'?'<button class="svc-abtn teal" onclick="svcSetStatus(\''+j.id+'\',\'Service Complete\')">Svc Complete</button>':'')+
