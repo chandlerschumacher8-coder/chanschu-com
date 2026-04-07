@@ -1874,6 +1874,7 @@ POS Settings
 <div style="max-width:500px;">
 <div class="field"><label>Default Invoice Message</label><textarea class="txta" id="admin-invoice-msg" rows="2" style="min-height:50px;"></textarea><div style="font-size:10px;color:var(--gray-3);margin-top:2px;">Prints at the bottom of every customer invoice</div></div>
 <div class="field"><label>Default Delivery Charge ($)</label><input class="inp" id="admin-delivery-price" type="number" step="0.01" min="0"/></div>
+<div class="field"><label>Auto Logout After Inactivity</label><select class="sel" id="admin-inactivity-timeout"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option><option value="0">Never</option></select><div style="font-size:10px;color:var(--gray-3);margin-top:2px;">POS only — Delivery and Service pages always stay logged in until midnight</div></div>
 <button class="primary-btn" onclick="savePosSettings()">Save Settings</button>
 </div>
 <div class="hb-editor">

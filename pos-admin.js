@@ -55,6 +55,7 @@ async function adminLoad(){
         if(keys[i]==='pos-settings' && json.data){
           if(json.data.invoiceMessage!==undefined) adminInvoiceMessage=json.data.invoiceMessage;
           if(json.data.deliveryPrice!==undefined) adminDeliveryPrice=json.data.deliveryPrice;
+          if(json.data.inactivityMinutes!==undefined){adminInactivityMinutes=json.data.inactivityMinutes;PIN_TIMEOUT_MS=adminInactivityMinutes*60*1000;resetInactivity();}
         }
       }
     }catch(e){/* use defaults */}
@@ -2681,15 +2682,21 @@ async function saveStoreSettings(){
 function renderPosSettings(){
   document.getElementById('admin-invoice-msg').value=adminInvoiceMessage;
   document.getElementById('admin-delivery-price').value=adminDeliveryPrice;
+  var sel=document.getElementById('admin-inactivity-timeout');
+  if(sel)sel.value=String(adminInactivityMinutes);
   hbRenderEditor();
   commRenderEditor();
 }
 async function savePosSettings(){
   adminInvoiceMessage=document.getElementById('admin-invoice-msg').value.trim();
   adminDeliveryPrice=parseFloat(document.getElementById('admin-delivery-price').value)||79.99;
+  var sel=document.getElementById('admin-inactivity-timeout');
+  if(sel)adminInactivityMinutes=parseInt(sel.value)||0;
+  PIN_TIMEOUT_MS=adminInactivityMinutes*60*1000;
+  resetInactivity();
   try{localStorage.setItem('pos-admin-invoice-msg',adminInvoiceMessage);localStorage.setItem('pos-admin-delivery-price',String(adminDeliveryPrice));}catch(e){}
   try{
-    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'pos-settings',data:{invoiceMessage:adminInvoiceMessage,deliveryPrice:adminDeliveryPrice}})});
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'pos-settings',data:{invoiceMessage:adminInvoiceMessage,deliveryPrice:adminDeliveryPrice,inactivityMinutes:adminInactivityMinutes}})});
     toast('POS settings saved','success');
   }catch(e){toast('Save failed','error');}
 }
@@ -2985,6 +2992,7 @@ function renderPriceHistory(){
 var currentEmployee=null;
 var _inactivityTimer=null;
 var PIN_TIMEOUT_MS=5*60*1000;
+var adminInactivityMinutes=5;
 var _posPinValue='';
 
 // PIN pad functions
@@ -3079,12 +3087,15 @@ function applyPermissions(){
 // Inactivity timeout — returns to PIN login
 function resetInactivity(){
   if(_inactivityTimer)clearTimeout(_inactivityTimer);
+  if(adminInactivityMinutes<=0)return; // "Never" = no timeout
+  PIN_TIMEOUT_MS=adminInactivityMinutes*60*1000;
   _inactivityTimer=setTimeout(function(){
     if(currentEmployee){empSwitchUser();}
   },PIN_TIMEOUT_MS);
 }
 document.addEventListener('click',resetInactivity);
 document.addEventListener('keydown',resetInactivity);
+document.addEventListener('mousemove',resetInactivity);
 
 // ── TIME CLOCK ON LOGIN SCREEN ──
 var _posTcMode=false;
