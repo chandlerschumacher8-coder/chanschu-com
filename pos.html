@@ -694,6 +694,54 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .recv-loading{font-size:11px;color:var(--gold);margin-top:4px;display:none;}
 
 /* ═══ CHECKOUT DELIVERY BAR ═══ */
+/* CHECKOUT SCREEN */
+.co-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:600;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+.co-overlay.open{display:flex;}
+.co-box{background:#fff;border-radius:14px;width:100%;max-width:960px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.2);}
+.co-hdr{padding:14px 20px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;}
+.co-hdr-title{font-family:'Playfair Display',serif;font-size:18px;color:#1f2937;}
+.co-cols{display:grid;grid-template-columns:1fr 1fr;min-height:400px;}
+.co-left{padding:20px;border-right:1px solid #e5e7eb;overflow-y:auto;max-height:70vh;}
+.co-right{padding:20px;overflow-y:auto;max-height:70vh;}
+.co-section{margin-bottom:16px;}
+.co-section-title{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9ca3af;margin-bottom:8px;}
+.co-line{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12px;border-bottom:1px solid #f3f4f6;}
+.co-line-model{font-size:10px;color:#6b7280;font-family:monospace;}
+.co-line-name{flex:1;margin:0 8px;}
+.co-total-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;}
+.co-total-row.grand{font-size:16px;font-weight:800;border-top:2px solid #1f2937;margin-top:4px;padding-top:8px;}
+.co-pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.co-pay-btn{padding:14px;border:2px solid #e5e7eb;border-radius:10px;background:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;color:#1f2937;}
+.co-pay-btn:hover{border-color:#2563eb;background:#eff6ff;}
+.co-pay-btn.selected{border-color:#2563eb;background:#dbeafe;color:#1d4ed8;}
+.co-pay-extra{margin-bottom:12px;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;}
+.co-pay-extra label{font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;}
+.co-pay-extra input,.co-pay-extra select{width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;outline:none;}
+.co-pay-extra input:focus,.co-pay-extra select:focus{border-color:#2563eb;}
+.co-balance{padding:10px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;margin-bottom:12px;display:flex;justify-content:space-between;font-weight:700;}
+.co-balance.due{background:#fef2f2;border-color:#fca5a5;color:#991b1b;}
+.co-chk{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:12px;}
+.co-chk input{width:18px;height:18px;accent-color:#16a34a;flex-shrink:0;margin-top:1px;}
+.co-actions{display:flex;flex-wrap:wrap;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb;}
+.co-actions button{padding:10px 18px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:none;}
+.co-btn-complete{background:#16a34a;color:#fff;flex:1;}
+.co-btn-complete:hover{background:#15803d;}
+.co-btn-complete:disabled{opacity:0.4;cursor:not-allowed;}
+.co-btn-order{background:#2563eb;color:#fff;}
+.co-btn-order:hover{background:#3b82f6;}
+.co-btn-quote{background:#7c3aed;color:#fff;}
+.co-btn-quote:hover{background:#6d28d9;}
+.co-btn-back{background:transparent;border:1px solid #d1d5db!important;color:#6b7280;}
+.co-btn-back:hover{color:#1f2937;}
+/* SALE COMPLETE */
+.co-done{text-align:center;padding:40px 30px;}
+.co-done-icon{font-size:48px;margin-bottom:12px;}
+.co-done-title{font-size:22px;font-weight:800;color:#1f2937;margin-bottom:4px;}
+.co-done-sub{font-size:13px;color:#6b7280;margin-bottom:24px;}
+.co-done-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.co-done-btns button{padding:10px 20px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:1px solid #d1d5db;background:#fff;color:#1f2937;}
+.co-done-btns button:hover{background:#f3f4f6;}
+.co-done-btns .co-btn-new{background:#2563eb;color:#fff;border-color:#2563eb;}
 .checkout-bar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid #86efac;border-radius:10px;padding:10px 18px;display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 4px 20px rgba(0,0,0,0.12);animation:slideUp .3s ease;}
 @keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}
 .checkout-bar-msg{font-size:12px;font-weight:600;color:var(--green);}
@@ -1142,11 +1190,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="cf-row"><span>Tax <span id="cart-tax-rate-lbl" style="font-size:10px;color:#9ca3af;font-weight:400;"></span></span><span id="cart-tax">$0.00</span></div>
 <div class="cf-row total"><span>Total</span><span id="cart-total">$0.00</span></div>
 <div class="pay-btns">
-<button class="pay-btn" onclick="checkout('Card')">Card</button>
-<button class="pay-btn" onclick="checkout('Cash')">Cash</button>
-<button class="pay-btn" onclick="checkout('Check')">Check</button>
-<button class="pay-btn" onclick="checkout('Finance')">Finance</button>
-<button class="pay-btn primary" onclick="checkout('Charge Customer')">Charge Customer</button>
+<button class="pay-btn primary" onclick="openCheckoutScreen()" style="flex:2;">Checkout</button>
 <button class="pay-btn quote" onclick="saveQuote()">Save as Quote</button>
 </div>
 <div class="pay-btns" style="margin-top:6px;border-top:1px solid #e5e7eb;padding-top:6px;">
@@ -2093,6 +2137,14 @@ POS Settings
 <button class="ghost-btn" onclick="closeChecklist()">Go Back</button>
 <button class="primary-btn" id="chk-complete-btn" onclick="checklistComplete()" disabled style="opacity:0.5;cursor:not-allowed;">Complete Sale</button>
 </div>
+</div>
+</div>
+
+<!-- CHECKOUT SCREEN -->
+<div class="co-overlay" id="co-overlay">
+<div class="co-box">
+<div class="co-hdr"><div class="co-hdr-title" id="co-title">Checkout</div><button class="modal-close" onclick="closeCheckoutScreen()">&times;</button></div>
+<div id="co-content"></div>
 </div>
 </div>
 
@@ -5650,6 +5702,141 @@ function clearSaleForm(){
     else{cl.selectedIndex=0;}
   }
 }
+// ── CHECKOUT SCREEN ──
+var _coPayments=[];
+function openCheckoutScreen(){
+  if(cart.length===0){toast('Add items to the cart before checking out','error');return;}
+  _coPayments=[];
+  var f=getSaleFields();var cust=f.soldTo.name.trim()||'Walk-In Customer';
+  var sub=cart.reduce(function(s,c){var d=c.discountPct||0;return s+c.price*c.qty*(1-d/100);},0);
+  var tax=sub*cartTaxRate;var total=sub+tax;
+  var apptVal=f.appt||'';var delDateStr='';
+  if(apptVal){var ap=new Date(apptVal);delDateStr=ap.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' at '+ap.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+  var isWalkIn=cust==='Walk-In Customer';
+  // Left column: order summary
+  var left='<div class="co-section"><div class="co-section-title">Order Summary</div>';
+  left+='<div style="font-size:12px;margin-bottom:8px;"><strong>Invoice:</strong> ORD-'+nextOrderId+' &nbsp; <strong>Clerk:</strong> '+(f.clerk||'—')+'</div>';
+  if(!isWalkIn)left+='<div style="font-size:12px;margin-bottom:8px;"><strong>Customer:</strong> '+cust+(f.soldTo.phone?' &middot; '+f.soldTo.phone:'')+'</div>';
+  if(f.soldTo.addr)left+='<div style="font-size:11px;color:#6b7280;margin-bottom:10px;">'+f.soldTo.addr+(f.soldTo.city?', '+f.soldTo.city:'')+(f.soldTo.state?' '+f.soldTo.state:'')+(f.soldTo.zip?' '+f.soldTo.zip:'')+'</div>';
+  left+='</div><div class="co-section"><div class="co-section-title">Line Items</div>';
+  cart.forEach(function(c){var d=c.discountPct||0;var ext=c.price*c.qty*(1-d/100);
+    left+='<div class="co-line"><span class="co-line-model">'+(c.model||'')+'</span><span class="co-line-name">'+c.name+(c.qty>1?' x'+c.qty:'')+'</span><span style="font-weight:600;">'+fmt(ext)+'</span></div>';
+  });
+  left+='</div><div class="co-section">';
+  left+='<div class="co-total-row"><span>Subtotal</span><span>'+fmt(sub)+'</span></div>';
+  left+='<div class="co-total-row"><span>Tax ('+cartTaxName+' '+(cartTaxRate*100).toFixed(2)+'%)</span><span>'+fmt(tax)+'</span></div>';
+  left+='<div class="co-total-row grand"><span>Total</span><span>'+fmt(total)+'</span></div>';
+  left+='</div>';
+  if(delDateStr)left+='<div style="font-size:12px;color:#16a34a;font-weight:600;margin-top:6px;">Delivery: '+delDateStr+'</div>';
+  // Right column: payment + delivery + checklist
+  var right='<div class="co-section"><div class="co-section-title">Payment Method</div>';
+  right+='<div class="co-pay-grid">';
+  right+='<div class="co-pay-btn" id="co-pay-card" onclick="coTogglePay(\'Card\')">&#x1F4B3; Card</div>';
+  right+='<div class="co-pay-btn" id="co-pay-cash" onclick="coTogglePay(\'Cash\')">&#x1F4B5; Cash</div>';
+  right+='<div class="co-pay-btn" id="co-pay-check" onclick="coTogglePay(\'Check\')">&#x2611; Check</div>';
+  right+='<div class="co-pay-btn" id="co-pay-finance" onclick="coTogglePay(\'Finance\')">&#x1F4C4; Finance</div>';
+  right+='</div>';
+  right+='<div id="co-pay-extras"></div>';
+  right+='<div class="co-balance" id="co-balance"><span>Remaining</span><span id="co-remaining">'+fmt(total)+'</span></div>';
+  right+='</div>';
+  // Delivery
+  right+='<div class="co-section"><div class="co-section-title">Delivery</div>';
+  right+='<div class="co-pay-extra"><label>Delivery Type</label><select id="co-del-type"><option>Full Install</option><option>Drop Off Inside</option><option>Drop Off Outside</option><option>Furniture Delivery</option></select></div>';
+  right+='<div class="co-pay-extra"><label>Team</label><select id="co-del-team"><option>Main Delivery Team</option><option>Other Delivery Team</option></select></div>';
+  right+='</div>';
+  // Checklist
+  if(!isWalkIn){
+    right+='<div class="co-section"><div class="co-section-title">Confirm</div>';
+    right+='<label class="co-chk"><input type="checkbox" id="co-chk-warranty" onchange="coUpdateBtn()"/><div><strong>Warranties offered and discussed</strong></div></label>';
+    right+='<label class="co-chk"><input type="checkbox" id="co-chk-notes" onchange="coUpdateBtn()"/><div><strong>Delivery instructions filled in</strong></div></label>';
+    right+='</div>';
+  }
+  // Actions
+  right+='<div class="co-actions">';
+  right+='<button class="co-btn-complete" id="co-complete-btn" onclick="coCompleteSale()" disabled>Complete Sale</button>';
+  right+='<button class="co-btn-order co-actions" onclick="coSaveAsOrder()">Open Order</button>';
+  right+='<button class="co-btn-quote co-actions" onclick="closeCheckoutScreen();saveQuote();">Quote</button>';
+  right+='<button class="co-btn-back" onclick="closeCheckoutScreen()">Back to Cart</button>';
+  right+='</div>';
+  document.getElementById('co-content').innerHTML='<div class="co-cols"><div class="co-left">'+left+'</div><div class="co-right">'+right+'</div></div>';
+  document.getElementById('co-title').textContent='Checkout — '+fmt(total);
+  document.getElementById('co-overlay').classList.add('open');
+  coUpdateBtn();
+}
+function closeCheckoutScreen(){document.getElementById('co-overlay').classList.remove('open');}
+function coTogglePay(method){
+  var idx=_coPayments.findIndex(function(p){return p.method===method;});
+  if(idx>=0){_coPayments.splice(idx,1);}else{_coPayments.push({method:method,amount:0});}
+  ['Card','Cash','Check','Finance'].forEach(function(m){
+    var el=document.getElementById('co-pay-'+m.toLowerCase());
+    if(el)el.classList.toggle('selected',_coPayments.some(function(p){return p.method===m;}));
+  });
+  coRenderPayExtras();coUpdateBtn();
+}
+function coRenderPayExtras(){
+  var h='';
+  _coPayments.forEach(function(p,i){
+    if(p.method==='Cash'){
+      h+='<div class="co-pay-extra"><label>Amount Tendered</label><input type="number" step="0.01" id="co-cash-amt" placeholder="0.00" oninput="coCalcChange()"/><div id="co-cash-change" style="font-size:12px;font-weight:700;color:#16a34a;margin-top:4px;"></div></div>';
+    }else if(p.method==='Card'){
+      h+='<div class="co-pay-extra"><label>Last 4 Digits (optional)</label><input type="text" maxlength="4" id="co-card-last4" placeholder="1234"/></div>';
+    }else if(p.method==='Check'){
+      h+='<div class="co-pay-extra"><label>Check #</label><input type="text" id="co-check-num" placeholder="Check number"/></div>';
+    }else if(p.method==='Finance'){
+      h+='<div class="co-pay-extra"><label>Finance Company</label><input type="text" id="co-fin-company" placeholder="Company name"/><label style="margin-top:6px;">Account #</label><input type="text" id="co-fin-account" placeholder="Account number"/></div>';
+    }
+  });
+  document.getElementById('co-pay-extras').innerHTML=h;
+}
+function coCalcChange(){
+  var f=getSaleFields();var sub=cart.reduce(function(s,c){var d=c.discountPct||0;return s+c.price*c.qty*(1-d/100);},0);
+  var total=sub+sub*cartTaxRate;
+  var tendered=parseFloat((document.getElementById('co-cash-amt')||{}).value)||0;
+  var changeEl=document.getElementById('co-cash-change');
+  if(changeEl){
+    var change=tendered-total;
+    changeEl.textContent=change>=0?'Change: '+fmt(change):'Still owed: '+fmt(Math.abs(change));
+    changeEl.style.color=change>=0?'#16a34a':'#dc2626';
+  }
+  coUpdateBtn();
+}
+function coUpdateBtn(){
+  var btn=document.getElementById('co-complete-btn');if(!btn)return;
+  var hasPay=_coPayments.length>0;
+  var f=getSaleFields();var isWalkIn=(f.soldTo.name.trim()||'Walk-In Customer')==='Walk-In Customer';
+  var chkOk=isWalkIn||((document.getElementById('co-chk-warranty')||{}).checked&&(document.getElementById('co-chk-notes')||{}).checked);
+  btn.disabled=!(hasPay&&chkOk);
+}
+function coCompleteSale(){
+  var methods=_coPayments.map(function(p){return p.method;}).join(' + ');
+  closeCheckoutScreen();
+  _checklistConfirmed=true;
+  checkout(methods);
+}
+function coSaveAsOrder(){
+  // Save as open order (checkout with no payment = awaiting delivery)
+  closeCheckoutScreen();
+  _checklistConfirmed=true;
+  checkout('Charge Customer');
+}
+function coShowDone(orderId,total,method){
+  var h='<div class="co-done">';
+  h+='<div class="co-done-icon">&#x2705;</div>';
+  h+='<div class="co-done-title">Sale Complete</div>';
+  h+='<div class="co-done-sub">Invoice '+orderId+' &mdash; '+fmt(total)+' via '+method+'</div>';
+  h+='<div class="co-done-btns">';
+  h+='<button onclick="printInvoiceById(\''+orderId+'\')">&#x1F5A8; Print Invoice</button>';
+  h+='<button onclick="printShipperById(\''+orderId+'\')">&#x1F5A8; Print Shipper</button>';
+  h+='<button onclick="promptEmailReceipt(\''+orderId+'\');closeCheckoutScreen();">&#x2709; Email Receipt</button>';
+  h+='<button class="co-btn-new" onclick="closeCheckoutScreen()">New Sale</button>';
+  h+='</div></div>';
+  document.getElementById('co-content').innerHTML=h;
+  document.getElementById('co-title').textContent='Sale Complete';
+  document.getElementById('co-overlay').classList.add('open');
+}
+function printInvoiceById(id){var o=orders.find(function(x){return x.id===id;});if(o&&typeof buildCustomerInvoiceDoc==='function'){openPrintWindow('Invoice '+id,buildCustomerInvoiceDoc(o),o);}}
+function printShipperById(id){var o=orders.find(function(x){return x.id===id;});if(o&&typeof buildShipperCopyDoc==='function'){openPrintWindow('Shipper '+id,buildShipperCopyDoc(o),o);}}
+
 var _pendingCheckoutMethod=null;
 var _checklistConfirmed=false;
 function openPreSubmitChecklist(){
@@ -5736,10 +5923,16 @@ function checkout(method){
   if(delDate&&!isQuickSale){
     setTimeout(function(){syncDeliveryFromOrder(order);},500);
   }
+  var _orderTotal=order.total;var _orderMethod=method;var _orderId=order.id;
   cart=[];clearSaleForm();
   renderCart();refreshSaleView();
-  toast('Order '+order.id+' placed via '+method+(isQuickSale?' (Quick Sale — Delivered)':''),'success');
-  showCheckoutBar(order.id);
+  toast('Order '+_orderId+' placed via '+_orderMethod+(isQuickSale?' (Quick Sale — Delivered)':''),'success');
+  // Show "Sale Complete" screen if checkout overlay was used, otherwise show bar
+  if(document.getElementById('co-overlay').classList.contains('open')||_checklistConfirmed){
+    coShowDone(_orderId,_orderTotal,_orderMethod);
+  }else{
+    showCheckoutBar(_orderId);
+  }
 }
 
 // ── DELIVERY ↔ SALE SYNC ──
