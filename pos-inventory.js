@@ -1342,11 +1342,25 @@ function delCtxAddDelivery(){delCloseCtx();delOpenAddDelivery(delCtxDate,delCtxT
 function delCtxAddNote(){delCloseCtx();delOpenAddNote(delCtxDate,delCtxTime);}
 
 // Add/Edit Delivery
+function delOnDtypeChange(){
+  var val=document.querySelector('input[name="del-dtype"]:checked').value;
+  var teamSel=document.getElementById('del-f-team');
+  if(val==='Customer Pick Up'){
+    teamSel.disabled=true;teamSel.value='';teamSel.style.opacity='0.5';
+    if(!document.getElementById('del-pickup-team-label'))teamSel.insertAdjacentHTML('afterend','<div id="del-pickup-team-label" style="font-size:11px;color:#999;margin-top:2px;">N/A — Customer Pick Up</div>');
+  }else{
+    teamSel.disabled=false;teamSel.style.opacity='1';
+    if(!teamSel.value)teamSel.value='Main Delivery Team';
+    var lbl=document.getElementById('del-pickup-team-label');if(lbl)lbl.remove();
+  }
+}
 function delOpenAddDelivery(date,time){
   document.getElementById('del-edit-id').value='';document.getElementById('del-modal-title').textContent='Add Delivery Stop';
   ['del-f-name','del-f-phone','del-f-email','del-f-address','del-f-city','del-f-invoice','del-f-notes'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('del-f-date').value=date||ds(new Date());document.getElementById('del-f-duration').value='60';document.getElementById('del-f-team').value='Main Delivery Team';
   document.querySelector('input[name="del-dtype"][value="Full Install"]').checked=true;
+  var ptl=document.getElementById('del-pickup-team-label');if(ptl)ptl.remove();
+  document.getElementById('del-f-team').disabled=false;document.getElementById('del-f-team').style.opacity='1';
   if(time){var s=document.getElementById('del-f-time');for(var i=0;i<s.options.length;i++){if(s.options[i].value===time){s.selectedIndex=i;break;}}}else{document.getElementById('del-f-time').selectedIndex=2;}
   delPendingFiles=[];document.getElementById('del-file-attach-list').innerHTML='';document.getElementById('del-file-attach-wrap').style.display='none';
   delInitAppRows([{a:'',m:''}]);openModal('del-delivery-modal');

@@ -2011,10 +2011,12 @@ POS Settings
 <div class="del-dtype-wrap">
 <div class="del-dtype-title">Delivery Type</div>
 <div class="del-dtype-opts">
-<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Full Install" checked/> Full Install</label>
-<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Drop Off w/ Connections"/> Drop Off w/ Connections</label>
-<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Drop Off Inside"/> Drop Off Inside</label>
-<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Drop Off Outside"/> Drop Off Outside</label>
+<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Full Install" checked onchange="delOnDtypeChange()"/> Full Install</label>
+<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Drop Off w/ Connections" onchange="delOnDtypeChange()"/> Drop Off w/ Connections</label>
+<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Drop Off Inside" onchange="delOnDtypeChange()"/> Drop Off Inside</label>
+<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Drop Off Outside" onchange="delOnDtypeChange()"/> Drop Off Outside</label>
+<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Furniture Delivery" onchange="delOnDtypeChange()"/> Furniture Delivery</label>
+<label class="del-dtype-opt"><input type="radio" name="del-dtype" value="Customer Pick Up" onchange="delOnDtypeChange()"/> Customer Pick Up</label>
 </div>
 </div>
 <div style="font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;">Appliances <span class="req">*</span></div>

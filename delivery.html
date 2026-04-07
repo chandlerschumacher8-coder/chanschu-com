@@ -119,6 +119,9 @@
     .dc-other-rescheduled{background:#6b7280;border-left:3px solid #374151;color:#f9fafb;}
     /* Main team delivered = orange too */
     .dc-delivered{background:#ffedd5;border-left:3px solid #ea580c;color:#7c2d12;}
+    /* Customer Pick Up */
+    .dc-pickup{background:#fee2e2;border-left:3px solid #dc2626;color:#7f1d1d;}
+    .dc-pickup-done{background:#ffedd5;border-left:3px solid #ea580c;color:#7c2d12;opacity:0.65;}
 
     /* NOTE COLORS */
     .nc-red{background:#fee2e2;border-left:3px solid #dc2626;color:#7f1d1d;}
@@ -265,6 +268,7 @@
     .mobile-stop.ms-rescheduled{border-left-color:#4338ca;opacity:0.6;}
     .mobile-stop.ms-other{border-left-color:#1f2937;}
     .mobile-stop.ms-other.ms-delivered{border-left-color:#ea580c;}
+    .mobile-stop.ms-pickup{border-left-color:#dc2626;}
     .mobile-stop-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
     .mobile-stop-num{font-size:12px;font-weight:700;color:#fff;background:var(--blue);border-radius:6px;padding:2px 8px;}
     .mobile-stop.ms-other .mobile-stop-num{background:#1f2937;}
@@ -466,6 +470,7 @@
         <button class="tpill" id="tf-main" onclick="setTeam('Main Delivery Team',this)">Main Team</button>
         <button class="tpill" id="tf-other" onclick="setTeam('Other Delivery Team',this)">Other Team</button>
         <button class="tpill attention" id="tf-attention" onclick="setTeam('attention',this)">&#x26A0; Needs Attention</button>
+        <button class="tpill" id="tf-pickup" style="border-color:#fca5a5;color:#dc2626;" onclick="setTeam('pickup',this)">Pick Ups</button>
       </div>
       <div class="sep"></div>
       <span id="del-sync-badge" style="font-size:10px;color:#16a34a;font-weight:600;padding:3px 8px;background:rgba(22,163,74,0.1);border-radius:100px;transition:opacity 1s;opacity:0;">↻ Updated</span><button class="hbtn gold" onclick="openAddDelivery(null,null)">+ Delivery</button>
@@ -515,6 +520,8 @@
       <div class="legend-item"><div class="legend-dot" style="background:#ffedd5;border:1px solid #ea580c;"></div>Delivered</div>
       <div class="legend-item"><div class="legend-dot" style="background:#6b7280;border:1px solid #374151;"></div>Rescheduled</div>
       <div class="legend-item" style="margin-left:8px;color:#ccc;">|</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fee2e2;border:1px solid #dc2626;"></div>Customer Pick Up</div>
+      <div class="legend-item" style="margin-left:8px;color:#ccc;">|</div>
       <div class="legend-item"><div class="legend-dot" style="background:#fef9c3;border:1px solid #ca8a04;"></div>Note / Event</div>
     </div>
   </div>
@@ -554,11 +561,12 @@
       <div class="dtype-wrap">
         <div class="dtype-title">Delivery Type</div>
         <div class="dtype-opts">
-          <label class="dtype-opt"><input type="radio" name="dtype" value="Full Install" checked/> Full Install</label>
-          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off w/ Connections"/> Drop Off w/ Connections</label>
-          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Inside"/> Drop Off Inside</label>
-          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Outside"/> Drop Off Outside</label>
-          <label class="dtype-opt"><input type="radio" name="dtype" value="Furniture Delivery"/> Furniture Delivery</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Full Install" checked onchange="onDtypeChange()"/> Full Install</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off w/ Connections" onchange="onDtypeChange()"/> Drop Off w/ Connections</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Inside" onchange="onDtypeChange()"/> Drop Off Inside</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Drop Off Outside" onchange="onDtypeChange()"/> Drop Off Outside</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Furniture Delivery" onchange="onDtypeChange()"/> Furniture Delivery</label>
+          <label class="dtype-opt"><input type="radio" name="dtype" value="Customer Pick Up" onchange="onDtypeChange()"/> Customer Pick Up</label>
         </div>
       </div>
       <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gold-d);margin-bottom:6px;">Appliances <span class="req">*</span></div>
@@ -1120,6 +1128,7 @@ function renderEvents(){
     var col=document.getElementById('col-'+dayStr); if(!col)return;
     var dayDeliveries=deliveries.filter(function(d){
       if(TEAM_FILTER==='attention')return d.date===dayStr&&hasFlag(d);
+      if(TEAM_FILTER==='pickup')return d.date===dayStr&&d.deliveryType==='Customer Pick Up';
       return d.date===dayStr&&(TEAM_FILTER==='all'||d.team===TEAM_FILTER);
     });
     if(dayDeliveries.length===0)return;
@@ -1155,8 +1164,11 @@ function renderEvents(){
         var top=item.top,height=Math.max(dur,24);
         if(top+height>maxH)height=maxH-top;
 
+        var isPickup=d.deliveryType==='Customer Pick Up';
         var isOther=d.team==='Other Delivery Team';
-        var sc=isOther?
+        var sc=isPickup?
+          (d.status==='Delivered'?'dc-pickup-done':'dc-pickup'):
+          isOther?
           (d.status==='Delivered'?'dc-other-delivered':d.status==='Out for Delivery'?'dc-other-out':d.status==='Rescheduled'?'dc-other-rescheduled':'dc-other-scheduled'):
           (d.status==='Delivered'?'dc-delivered':d.status==='Out for Delivery'?'dc-out':d.status==='Rescheduled'?'dc-rescheduled':'dc-scheduled');
         var apps=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
@@ -1179,7 +1191,7 @@ function renderEvents(){
           snDotHtml='<div class="ev-serial-dot '+snDotCls+'" title="'+snTitle+'" style="right:'+(warn?'18':'4')+'px;"></div>';
         }
         ev.innerHTML=(warn?'<div class="ev-warn">&#x26A0;</div>':'')+snDotHtml+
-          '<div class="ev-name">'+d.name+'</div>'+
+          '<div class="ev-name">'+(isPickup?'&#x1F4E6; ':'')+d.name+'</div>'+
           (height>28?'<div class="ev-sub">'+apps+(d.city?' · '+d.city:'')+'</div>':'')+
           (height>46?'<div class="ev-time-lbl">'+d.time+(dur?' – '+endTime:'')+'</div>':'')+
           '<div class="resize-handle" data-resize="true"></div>';
@@ -1251,8 +1263,9 @@ function renderMobileDay(){
   if(dayStr===todayStr)title='Today — '+mobileDay.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   document.getElementById('mobile-day-title').textContent=title;
 
-  var stops=deliveries.filter(function(d){return d.date===dayStr&&(TEAM_FILTER==='all'||TEAM_FILTER==='attention'?true:d.team===TEAM_FILTER);});
+  var stops=deliveries.filter(function(d){return d.date===dayStr&&(TEAM_FILTER==='all'||TEAM_FILTER==='attention'||TEAM_FILTER==='pickup'?true:d.team===TEAM_FILTER);});
   if(TEAM_FILTER==='attention')stops=stops.filter(function(d){return hasFlag(d);});
+  if(TEAM_FILTER==='pickup')stops=stops.filter(function(d){return d.deliveryType==='Customer Pick Up';});
   stops.sort(function(a,b){return (a.stopOrder||99)-(b.stopOrder||99)||(timeToMins(a.time)-timeToMins(b.time));});
   var dayNotes=notes.filter(function(n){return n.date===dayStr;});
 
@@ -1273,9 +1286,11 @@ function renderMobileDay(){
   });
   // Delivery cards
   stops.forEach(function(d,i){
+    var isPickup=d.deliveryType==='Customer Pick Up';
     var isOther=d.team==='Other Delivery Team';
     var cls='mobile-stop';
-    if(isOther)cls+=' ms-other';
+    if(isPickup)cls+=' ms-pickup';
+    else if(isOther)cls+=' ms-other';
     if(d.status==='Out for Delivery')cls+=' ms-out';
     else if(d.status==='Delivered')cls+=' ms-delivered';
     else if(d.status==='Rescheduled')cls+=' ms-rescheduled';
@@ -1288,13 +1303,13 @@ function renderMobileDay(){
     var dur=parseInt(d.duration)||60;
     var timeStr=d.time==='Call Ahead'?'Call Ahead':(d.time+' — '+minsToTime(timeToMins(d.time)+dur));
     h+='<div class="'+cls+'" onclick="openDeliveryDetail(\''+d.id+'\')">';
-    h+='<div class="mobile-stop-top"><div class="mobile-stop-num">'+(d.stopOrder||i+1)+'</div><span class="mobile-stop-badge status-badge '+badge+'">'+d.status+'</span></div>';
-    h+='<div class="mobile-stop-name">'+d.name+(hasFlag(d)?'<span class="ms-warn">&#x26A0;</span>':'')+'</div>';
+    h+='<div class="mobile-stop-top"><div class="mobile-stop-num">'+(d.stopOrder||i+1)+'</div><span class="mobile-stop-badge status-badge '+badge+'">'+(isPickup?'Pick Up':d.status)+'</span></div>';
+    h+='<div class="mobile-stop-name">'+(isPickup?'&#x1F4E6; ':'')+d.name+(hasFlag(d)?'<span class="ms-warn">&#x26A0;</span>':'')+'</div>';
     h+='<div class="mobile-stop-addr">'+d.address+', '+d.city+'</div>';
     h+='<div class="mobile-stop-apps">'+appStr+'</div>';
     var instrPreview=d.delivInstructions||d.notes||'';
     if(instrPreview){var ATTN_M=/call ahead|gate code|second floor|stairs|basement|narrow|tight|back door|side door|garage|elevator/i;h+='<div style="font-size:11px;color:var(--text2);margin-top:3px;'+(ATTN_M.test(instrPreview)?'background:#fffbeb;padding:3px 6px;border-radius:4px;border-left:3px solid #fcd34d;':'')+'">'+instrPreview.substring(0,80)+(instrPreview.length>80?'...':'')+'</div>';}
-    h+='<div class="mobile-stop-time">'+(d.team||'Main Delivery Team')+' &middot; '+timeStr+'</div>';
+    h+='<div class="mobile-stop-time">'+(isPickup?'Customer Pick Up':d.team||'Main Delivery Team')+' &middot; '+timeStr+'</div>';
     // Serial status indicator
     var msSnStatus=getSerialStatus(d);
     if(msSnStatus!=='none-tracked'){
@@ -1304,13 +1319,13 @@ function renderMobileDay(){
     }
     // Action buttons
     if(d.status==='Delivered'){
-      h+='<div class="ms-delivered-badge">&#x2713; Delivered'+(d.deliveredAt?' at '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'</div>';
+      h+='<div class="ms-delivered-badge">&#x2713; '+(isPickup?'Picked Up':'Delivered')+(d.deliveredAt?' at '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'</div>';
     }else{
       var msHasTracked=(d.appliances||[]).some(function(a){return isApplianceSerialTracked(a);});
       h+='<div class="ms-actions">';
-      if(d.status!=='Out for Delivery')h+='<button class="ms-btn-out" onclick="mobileSetOut(\''+d.id+'\',event)">Delivering</button>';
+      if(!isPickup&&d.status!=='Out for Delivery')h+='<button class="ms-btn-out" onclick="mobileSetOut(\''+d.id+'\',event)">Delivering</button>';
       if(msHasTracked)h+='<button class="ms-btn-serial" onclick="openMobileSerialSheet(\''+d.id+'\',event)">Add Serial #</button>';
-      h+='<button class="ms-btn-delivered" onclick="mobileMarkDelivered(\''+d.id+'\',event)">Mark Delivered</button>';
+      h+='<button class="ms-btn-delivered" onclick="mobileMarkDelivered(\''+d.id+'\',event)">'+(isPickup?'Mark Picked Up':'Mark Delivered')+'</button>';
       h+='</div>';
       if(d.invoice)h+='<div style="margin-top:6px;"><button style="width:100%;min-height:40px;background:#fff7ed;border:1px solid #fdba74;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;color:#c2410c;cursor:pointer;" onclick="event.stopPropagation();printShipperCopy(\''+d.id+'\')">&#x1F5A8; View Shipper</button></div>';
     }
@@ -1368,6 +1383,18 @@ function openEditDelivery(id){
   pendingFiles=d.invoiceFiles||( d.invoiceFile?[d.invoiceFile]:[]);
   renderPendingFiles();
   document.getElementById('delivery-modal').classList.add('open');
+}
+function onDtypeChange(){
+  var val=document.querySelector('input[name="dtype"]:checked').value;
+  var teamSel=document.getElementById('f-team');
+  if(val==='Customer Pick Up'){
+    teamSel.disabled=true;teamSel.value='';teamSel.style.opacity='0.5';
+    teamSel.insertAdjacentHTML('afterend','<div id="pickup-team-label" style="font-size:11px;color:var(--text3);margin-top:2px;">N/A — Customer Pick Up</div>');
+  }else{
+    teamSel.disabled=false;teamSel.style.opacity='1';
+    if(!teamSel.value)teamSel.value='Main Delivery Team';
+    var lbl=document.getElementById('pickup-team-label');if(lbl)lbl.remove();
+  }
 }
 async function saveDelivery(){
   var editId=document.getElementById('edit-del-id').value;
