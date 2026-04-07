@@ -6033,30 +6033,44 @@ function _doSyncDelivery(order){
   }
   var appStr=apps.map(function(x){return x.a;}).join(', ');
   var st=order.soldTo||{};
+  var shp=order.shipTo||{};
+  // Shared fields for both create and update
+  var syncFields={
+    name:order.customer||st.name||'',
+    phone:st.phone||'',
+    address:st.addr||'',
+    city:st.city||'',
+    appliances:apps,appliance:appStr,
+    notes:order.invoiceNotes||'',
+    delivInstructions:order.invoiceNotes||'',
+    shipperNotes:order.shipperNotes||'',
+    soldTo:order.soldTo||null,
+    shipTo:(shp.name?order.shipTo:order.soldTo)||null,
+    clerk:order.clerk||'',
+    saleDate:order.date||new Date().toISOString(),
+    orderItems:order.items||[],
+    orderSubtotal:order.subtotal||0,
+    orderTax:order.tax||0,
+    orderTotal:order.total||0,
+    orderPayment:order.payment||'',
+    linkedOrderId:order.id
+  };
   if(existing){
     // Update existing delivery stop
-    existing.name=order.customer||st.name||existing.name;
-    existing.phone=st.phone||existing.phone;
-    existing.address=st.addr||existing.address;
-    existing.city=st.city||existing.city;
-    existing.date=order.deliveryDate;
+    Object.assign(existing,syncFields);
+    existing.date=order.deliveryDate||existing.date;
     existing.time=order.deliveryTime||existing.time;
-    existing.appliances=apps;existing.appliance=appStr;
-    existing.notes=order.invoiceNotes||existing.notes;
   }else{
     // Create new delivery stop
-    var newDel={
+    var newDel=Object.assign({
       id:'DEL-'+String(delNextId).padStart(4,'0'),
-      name:order.customer||st.name||'',phone:st.phone||'',email:'',
-      address:st.addr||'',city:st.city||'',
-      invoice:order.id,notes:order.invoiceNotes||'',
+      email:'',invoice:order.id,
       date:order.deliveryDate,time:order.deliveryTime||'9:00 AM',
       duration:'60',team:'Main Delivery Team',stopOrder:null,
-      deliveryType:'Full Install',appliances:apps,appliance:appStr,
+      deliveryType:'Full Install',
       invoiceFile:null,invoiceFiles:[],
-      status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null,
-      linkedOrderId:order.id
-    };
+      status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null
+    },syncFields);
     delDeliveries.unshift(newDel);delNextId++;
   }
   delSaveData();
@@ -6414,6 +6428,20 @@ async function initAppData(){
   svcInit();
   loadPOs();
   updateAIChips();
+  // Handle ?openInvoice=ORD-xxx from delivery page link
+  var urlParams=new URLSearchParams(window.location.search);
+  var openInv=urlParams.get('openInvoice');
+  if(openInv){
+    // Switch to Open Orders tab and open the invoice
+    var ordTab=document.querySelector('.tb-tab[onclick*="orders"]');
+    if(ordTab)nav('orders',ordTab);
+    setTimeout(function(){
+      if(typeof openOrderDetail==='function')openOrderDetail(openInv);
+      else if(typeof viewOrder==='function')viewOrder(openInv);
+    },300);
+    // Clean URL
+    window.history.replaceState({},'',window.location.pathname);
+  }
 }
 
 (async function(){
