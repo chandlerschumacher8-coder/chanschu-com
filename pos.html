@@ -5990,7 +5990,7 @@ function checkout(method){
   nextOrderId++;orders.unshift(order);
   cart.forEach(function(c){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p&&!c.isService){if(!p.sold)p.sold=0;p.sold+=c.qty;}});
   saveProducts();saveOrders();
-  lastCompletedSale={orderId:order.id,customer:cust,items:order.items,date:new Date()};
+  lastCompletedSale={orderId:order.id,customer:cust,items:order.items,date:new Date(),soldTo:f.soldTo,shipTo:f.shipTo,invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,clerk:f.clerk,deliveryDate:delDate,deliveryTime:delTime};
   setTimeout(function(){custCheckAndSave(order);},300);
   // Auto-create delivery stop if appointment date was set and not a quick sale
   if(delDate&&!isQuickSale){
@@ -6392,14 +6392,56 @@ function scheduleDeliveryFromSale(){
   setTimeout(function(){delPreFillFromSale(lastCompletedSale);},300);
 }
 function delPreFillFromSale(sale){
-  delOpenAddDelivery(ds(new Date()),null);
+  var st=sale.soldTo||{};
+  var delDate=sale.deliveryDate||ds(new Date());
+  delOpenAddDelivery(delDate,sale.deliveryTime||null);
   setTimeout(function(){
-    document.getElementById('del-f-name').value=sale.customer||'';
-    document.getElementById('del-f-date').value=ds(new Date());
-    // Map sale items to appliances
-    var appMap={'Refrigerator':'Refrigerator','French Door Refrigerator':'Refrigerator','Side-by-Side Refrigerator':'Refrigerator','Top Freezer Refrigerator':'Refrigerator','Bottom Freezer Refrigerator':'Refrigerator','Front Load Washer':'Washer','Top Load Washer':'Washer','High-Efficiency Washer':'Washer','Electric Dryer':'Dryer','Gas Dryer':'Dryer','Built-In Dishwasher':'Dishwasher','Portable Dishwasher':'Dishwasher','Top Control Dishwasher':'Dishwasher','Gas Range':'Oven / Range','Electric Range':'Oven / Range','Slide-In Gas Range':'Oven / Range','Over-the-Range Microwave':'Microwave','Countertop Microwave':'Microwave','Built-In Microwave':'Microwave','Single Wall Oven':'Wall Oven','Double Wall Oven':'Wall Oven'};
-    var apps=sale.items.map(function(it){return{a:appMap[it.name]||'Other',m:it.model||''};});
+    console.log('[Delivery Pre-fill] Sale data:', JSON.stringify({orderId:sale.orderId,customer:sale.customer,phone:st.phone,address:st.addr,city:st.city,invoice:sale.orderId,items:sale.items?.length,notes:sale.invoiceNotes,shipperNotes:sale.shipperNotes}));
+    // Customer info
+    document.getElementById('del-f-name').value=sale.customer||st.name||'';
+    document.getElementById('del-f-phone').value=st.phone||'';
+    document.getElementById('del-f-email').value='';
+    document.getElementById('del-f-address').value=st.addr||'';
+    document.getElementById('del-f-city').value=st.city||'';
+    // Invoice info
+    document.getElementById('del-f-invoice').value=sale.orderId||'';
+    // Date
+    document.getElementById('del-f-date').value=delDate;
+    // Notes — delivery instructions
+    document.getElementById('del-f-notes').value=sale.invoiceNotes||'';
+    // Map sale items to appliances using product category
+    var catMap={'REFRIGERATORS':'Refrigerator','BOTTOM MOUNT FRIDGE':'Refrigerator','SIDE BY SIDE FRIDGE':'Refrigerator','FRENCH DOOR FRIDGE':'Refrigerator','TOP MOUNT FRIDGE':'Refrigerator','FREEZERS':'Freezer','WASHERS':'Washer','WASHERS & DRYERS':'Washer','DRYERS':'Dryer','DISHWASHERS':'Dishwasher','RANGES':'Oven / Range','COOKTOPS':'Oven / Range','WALL OVENS':'Wall Oven','MICROWAVES':'Microwave','OVER THE RANGE MICROWAVE':'Microwave','ICE MAKERS':'Ice Maker','BEVERAGE CENTER':'Refrigerator','BUILT IN':'Refrigerator','MATTRESSES':'Mattress','AUDIO':'TV','TV':'TV'};
+    var apps=[];
+    (sale.items||[]).forEach(function(it){
+      if(it.isService)return;
+      // Try matching by product category
+      var p=PRODUCTS.find(function(x){return x.id===it.id;});
+      var cat=(p&&p.cat)?p.cat.toUpperCase():'';
+      var appType=catMap[cat]||null;
+      // Fallback: check name keywords
+      if(!appType){
+        var nm=(it.name||'').toLowerCase();
+        if(nm.indexOf('refrigerator')>=0||nm.indexOf('fridge')>=0)appType='Refrigerator';
+        else if(nm.indexOf('washer')>=0)appType='Washer';
+        else if(nm.indexOf('dryer')>=0)appType='Dryer';
+        else if(nm.indexOf('dishwasher')>=0)appType='Dishwasher';
+        else if(nm.indexOf('range')>=0||nm.indexOf('stove')>=0||nm.indexOf('oven')>=0)appType='Oven / Range';
+        else if(nm.indexOf('microwave')>=0)appType='Microwave';
+        else if(nm.indexOf('freezer')>=0)appType='Freezer';
+        else if(nm.indexOf('mattress')>=0)appType='Mattress';
+        else if(nm.indexOf('grill')>=0)appType='Grill';
+        else if(nm.indexOf('tv')>=0||nm.indexOf('television')>=0)appType='TV';
+      }
+      // Skip non-major items (delivery charges, warranties, labor, accessories)
+      if(!appType){
+        var skipWords=/delivery|install|warranty|protection|haul|labor|accessory|cord|hose|bracket|kit|vent/i;
+        if(skipWords.test(it.name||''))return;
+        appType='Other';
+      }
+      apps.push({a:appType,m:it.model||''});
+    });
     if(apps.length)delInitAppRows(apps);
+    console.log('[Delivery Pre-fill] Appliances mapped:', apps.length, apps.map(function(a){return a.a+' ('+a.m+')';}).join(', '));
   },100);
 }
 
