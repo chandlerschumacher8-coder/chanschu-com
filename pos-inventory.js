@@ -83,10 +83,13 @@ function getProductDept(p){
   }
   return p.dept||'';
 }
-var _invSort={col:'name',dir:'asc'};
+var _invSort={col:'model',dir:'asc'};
+var _invSortDefault={col:'model',dir:'asc'};
 function invSortBy(col){
-  if(_invSort.col===col)_invSort.dir=_invSort.dir==='asc'?'desc':'asc';
-  else{_invSort.col=col;_invSort.dir='asc';}
+  if(_invSort.col===col){
+    if(_invSort.dir==='asc')_invSort.dir='desc';
+    else{_invSort.col=_invSortDefault.col;_invSort.dir=_invSortDefault.dir;} // third click resets
+  }else{_invSort.col=col;_invSort.dir='asc';}
   renderInventory();
 }
 function invFilterByVendor(vendor){
@@ -118,16 +121,27 @@ function renderInventory(){
   });
   // Sort
   var col=_invSort.col,dir=_invSort.dir==='asc'?1:-1;
+  var _statusOrder={'In Stock':0,'Low Stock':1,'Out of Stock':2,'Oversold':3};
   filtered.sort(function(a,b){
     var va,vb;
-    if(col==='stock'){va=(a.stock||0)-(a.sold||0);vb=(b.stock||0)-(b.sold||0);}
+    if(col==='avail'){va=(a.stock||0)-(a.sold||0);vb=(b.stock||0)-(b.sold||0);}
+    else if(col==='stock'){va=a.stock||0;vb=b.stock||0;}
+    else if(col==='sold'){va=a.sold||0;vb=b.sold||0;}
     else if(col==='price'){va=a.price||0;vb=b.price||0;}
+    else if(col==='cost'){va=a.cost||0;vb=b.cost||0;}
+    else if(col==='status'){
+      var as=a.sold||0,bs=b.sold||0,aA=a.stock-as,bA=b.stock-bs;
+      va=_statusOrder[as>a.stock?'Oversold':aA<=0?'Out of Stock':aA<=a.reorderPt?'Low Stock':'In Stock']||0;
+      vb=_statusOrder[bs>b.stock?'Oversold':bA<=0?'Out of Stock':bA<=b.reorderPt?'Low Stock':'In Stock']||0;
+    }
+    else if(col==='serial'){va=isSerialTracked(a)?0:1;vb=isSerialTracked(b)?0:1;}
+    else if(col==='dept'){va=(typeof getProductDept==='function'?getProductDept(a):'').toLowerCase();vb=(typeof getProductDept==='function'?getProductDept(b):'').toLowerCase();}
     else{va=(a[col]||'').toString().toLowerCase();vb=(b[col]||'').toString().toLowerCase();}
     if(va<vb)return -1*dir;if(va>vb)return 1*dir;return 0;
   });
   // Sort indicators
-  ['model','name','brand','vendor','stock','price'].forEach(function(c){
-    var el=document.getElementById('inv-sort-'+c);if(el)el.textContent=(c===col)?(dir===1?'↑':'↓'):'';
+  ['model','name','brand','vendor','dept','cat','upc','stock','sold','avail','status','price','cost','serial'].forEach(function(c){
+    var el=document.getElementById('inv-sort-'+c);if(el)el.textContent=(c===col)?(dir===1?' \u2191':' \u2193'):'';
   });
   var tb=document.getElementById('inv-tbody');
   tb.innerHTML=filtered.map(function(p){
