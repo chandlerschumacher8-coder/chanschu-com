@@ -96,6 +96,149 @@ function invFilterByVendor(vendor){
   var sel=document.getElementById('inv-vendor-filter');if(sel)sel.value=vendor||'';
   renderInventory();
 }
+
+// ── BULK EDIT ──
+var _beActive=false;
+var _beSelected={};  // {productId: true}
+function beToggle(){
+  _beActive=!_beActive;_beSelected={};
+  var bar=document.getElementById('be-bar');var panel=document.getElementById('be-panel');
+  var thChk=document.getElementById('be-th-chk');var btn=document.getElementById('be-toggle-btn');
+  if(_beActive){bar.style.display='flex';if(thChk)thChk.style.display='';btn.style.display='none';panel.classList.remove('open');panel.innerHTML='';}
+  else{bar.style.display='none';if(thChk)thChk.style.display='none';btn.style.display='';panel.classList.remove('open');panel.innerHTML='';}
+  renderInventory();
+}
+function beToggleRow(id){
+  if(_beSelected[id])delete _beSelected[id];else _beSelected[id]=true;
+  beUpdateCount();
+}
+function beSelectAll(checked){
+  // Select all visible/filtered products
+  var rows=document.querySelectorAll('input.be-row-chk');
+  rows.forEach(function(r){r.checked=checked;var id=parseInt(r.dataset.pid);if(checked)_beSelected[id]=true;else delete _beSelected[id];});
+  beUpdateCount();
+}
+function beUpdateCount(){
+  var n=Object.keys(_beSelected).length;
+  var el=document.getElementById('be-count');if(el)el.textContent=n+' product'+(n===1?'':'s')+' selected';
+}
+function beOpenPanel(){
+  var n=Object.keys(_beSelected).length;
+  if(!n){toast('Select products first','error');return;}
+  // Build edit panel
+  var brands=(typeof adminBrands!=='undefined'?adminBrands:[]).slice().sort();
+  var cats=(typeof adminCategories!=='undefined'?adminCategories:[]).map(function(c){return c.name||c;});
+  var vendors={};PRODUCTS.forEach(function(p){if(p.vendor)vendors[p.vendor]=1;});var vendorList=Object.keys(vendors).sort();
+  var depts={};if(typeof DEPARTMENTS!=='undefined')DEPARTMENTS.forEach(function(d){depts[d.name]=1;});var deptList=Object.keys(depts).sort();
+  var h='<div class="be-grid">';
+  h+='<div class="be-field"><label>Brand</label><input id="be-brand" list="be-brand-dl" placeholder="(no change)"/><datalist id="be-brand-dl">'+brands.map(function(b){return '<option value="'+b+'">';}).join('')+'</datalist></div>';
+  h+='<div class="be-field"><label>Category</label><input id="be-cat" list="be-cat-dl" placeholder="(no change)"/><datalist id="be-cat-dl">'+cats.map(function(c){return '<option value="'+c+'">';}).join('')+'</datalist></div>';
+  h+='<div class="be-field"><label>Vendor</label><input id="be-vendor" list="be-vendor-dl" placeholder="(no change)"/><datalist id="be-vendor-dl">'+vendorList.map(function(v){return '<option value="'+v+'">';}).join('')+'</datalist></div>';
+  h+='<div class="be-field"><label>Department</label><input id="be-dept" list="be-dept-dl" placeholder="(no change)"/><datalist id="be-dept-dl">'+deptList.map(function(d){return '<option value="'+d+'">';}).join('')+'</datalist></div>';
+  // Price
+  h+='<div class="be-field"><label>Retail Price</label><div class="be-price-mode"><button class="active" onclick="bePriceMode(\'price\',\'exact\',this)">Exact $</button><button onclick="bePriceMode(\'price\',\'pct\',this)">Adjust %</button></div><input id="be-price" type="number" step="0.01" placeholder="(no change)" data-mode="exact"/></div>';
+  // Cost
+  h+='<div class="be-field"><label>Cost</label><div class="be-price-mode"><button class="active" onclick="bePriceMode(\'cost\',\'exact\',this)">Exact $</button><button onclick="bePriceMode(\'cost\',\'pct\',this)">Adjust %</button></div><input id="be-cost" type="number" step="0.01" placeholder="(no change)" data-mode="exact"/></div>';
+  h+='<div class="be-field"><label>Serial Tracked</label><select id="be-serial"><option value="">(no change)</option><option value="true">Yes</option><option value="false">No</option></select></div>';
+  h+='<div class="be-field"><label>Min Qty (Reorder Pt)</label><input id="be-reorderpt" type="number" min="0" placeholder="(no change)"/></div>';
+  h+='</div>';
+  h+='<div class="be-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">';
+  h+='<div class="be-field"><label>Reorder Qty</label><input id="be-reorderqty" type="number" min="0" placeholder="(no change)"/></div>';
+  h+='<div></div><div></div>';
+  h+='<div class="be-actions" style="justify-content:flex-end;"><button class="be-bar-btn" onclick="bePreview()" style="background:#2563eb;color:#fff;">Preview Changes</button><button class="be-bar-btn cancel" onclick="beCancelPanel()">Cancel</button></div>';
+  h+='</div>';
+  h+='<div id="be-preview-area"></div>';
+  var panel=document.getElementById('be-panel');panel.innerHTML=h;panel.classList.add('open');
+}
+function bePriceMode(field,mode,btn){
+  btn.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');
+  var inp=document.getElementById('be-'+field);if(inp){inp.dataset.mode=mode;inp.value='';inp.placeholder=mode==='exact'?'$ amount':'+/- % (e.g. 10 or -5)';}
+}
+function beCancelPanel(){document.getElementById('be-panel').classList.remove('open');document.getElementById('be-panel').innerHTML='';}
+function bePreview(){
+  var ids=Object.keys(_beSelected).map(Number);var products=ids.map(function(id){return PRODUCTS.find(function(p){return p.id===id;});}).filter(Boolean);
+  if(!products.length){toast('No products selected','error');return;}
+  // Gather changes
+  var changes=[];
+  var brand=(document.getElementById('be-brand')||{}).value||'';
+  var cat=(document.getElementById('be-cat')||{}).value||'';
+  var vendor=(document.getElementById('be-vendor')||{}).value||'';
+  var dept=(document.getElementById('be-dept')||{}).value||'';
+  var priceVal=parseFloat((document.getElementById('be-price')||{}).value);var priceMode=(document.getElementById('be-price')||{}).dataset&&(document.getElementById('be-price')||{}).dataset.mode||'exact';
+  var costVal=parseFloat((document.getElementById('be-cost')||{}).value);var costMode=(document.getElementById('be-cost')||{}).dataset&&(document.getElementById('be-cost')||{}).dataset.mode||'exact';
+  var serialVal=(document.getElementById('be-serial')||{}).value||'';
+  var reorderPt=(document.getElementById('be-reorderpt')||{}).value;
+  var reorderQty=(document.getElementById('be-reorderqty')||{}).value;
+  if(brand)changes.push({field:'brand',label:'Brand',value:brand});
+  if(cat)changes.push({field:'cat',label:'Category',value:cat});
+  if(vendor)changes.push({field:'vendor',label:'Vendor',value:vendor});
+  if(dept)changes.push({field:'_dept',label:'Department',value:dept});
+  if(!isNaN(priceVal))changes.push({field:'price',label:'Retail Price',value:priceVal,mode:priceMode});
+  if(!isNaN(costVal))changes.push({field:'cost',label:'Cost',value:costVal,mode:costMode});
+  if(serialVal)changes.push({field:'serialTracked',label:'Serial Tracked',value:serialVal==='true'});
+  if(reorderPt!=='')changes.push({field:'reorderPt',label:'Min Qty',value:parseInt(reorderPt)});
+  if(reorderQty!=='')changes.push({field:'reorderQty',label:'Reorder Qty',value:parseInt(reorderQty)});
+  if(!changes.length){toast('No changes entered — fill at least one field','error');return;}
+  // Build preview
+  var h='<div class="be-preview"><div style="padding:12px 14px;background:#f9fafb;border-bottom:1px solid #e5e7eb;"><strong>'+products.length+' product'+(products.length===1?'':'s')+'</strong> will be updated:</div>';
+  h+='<div style="padding:8px 14px;font-size:11px;border-bottom:1px solid #e5e7eb;">';
+  changes.forEach(function(c){
+    var display=c.value;
+    if(c.field==='price'||c.field==='cost'){display=c.mode==='pct'?(c.value>0?'+':'')+c.value+'%':'$'+Number(c.value).toFixed(2);}
+    h+='<div style="padding:2px 0;"><strong>'+c.label+':</strong> '+display+'</div>';
+  });
+  h+='</div>';
+  h+='<table class="inv-table" style="font-size:10px;margin:0;"><thead><tr><th>Model</th><th>Product</th>';
+  changes.forEach(function(c){h+='<th>'+c.label+'</th>';});
+  h+='</tr></thead><tbody>';
+  products.slice(0,50).forEach(function(p){
+    h+='<tr><td>'+(p.model||'—')+'</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">'+p.name+'</td>';
+    changes.forEach(function(c){
+      var oldVal='',newVal='';
+      if(c.field==='price'){oldVal=fmt(p.price);newVal=c.mode==='pct'?fmt(p.price*(1+c.value/100)):fmt(c.value);}
+      else if(c.field==='cost'){oldVal=fmt(p.cost||0);newVal=c.mode==='pct'?fmt((p.cost||0)*(1+c.value/100)):fmt(c.value);}
+      else if(c.field==='serialTracked'){oldVal=isSerialTracked(p)?'Yes':'No';newVal=c.value?'Yes':'No';}
+      else if(c.field==='_dept'){oldVal=getProductDept(p);newVal=c.value;}
+      else{oldVal=p[c.field]||'—';newVal=c.value;}
+      var changed=String(oldVal)!==String(newVal);
+      h+='<td style="'+(changed?'color:#2563eb;font-weight:700;':'color:#9ca3af;')+'">'+newVal+'</td>';
+    });
+    h+='</tr>';
+  });
+  if(products.length>50)h+='<tr><td colspan="99" style="text-align:center;color:#6b7280;">+'+(products.length-50)+' more...</td></tr>';
+  h+='</tbody></table></div>';
+  h+='<div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end;"><button class="be-bar-btn" onclick="beApply()" style="background:#16a34a;color:#fff;border-color:#16a34a;">Apply Changes</button><button class="be-bar-btn cancel" onclick="document.getElementById(\'be-preview-area\').innerHTML=\'\';">Cancel</button></div>';
+  document.getElementById('be-preview-area').innerHTML=h;
+}
+function beApply(){
+  var ids=Object.keys(_beSelected).map(Number);
+  var brand=(document.getElementById('be-brand')||{}).value||'';
+  var cat=(document.getElementById('be-cat')||{}).value||'';
+  var vendor=(document.getElementById('be-vendor')||{}).value||'';
+  var dept=(document.getElementById('be-dept')||{}).value||'';
+  var priceVal=parseFloat((document.getElementById('be-price')||{}).value);var priceMode=(document.getElementById('be-price')||{}).dataset.mode||'exact';
+  var costVal=parseFloat((document.getElementById('be-cost')||{}).value);var costMode=(document.getElementById('be-cost')||{}).dataset.mode||'exact';
+  var serialVal=(document.getElementById('be-serial')||{}).value||'';
+  var reorderPt=(document.getElementById('be-reorderpt')||{}).value;
+  var reorderQty=(document.getElementById('be-reorderqty')||{}).value;
+  var count=0;
+  ids.forEach(function(id){
+    var p=PRODUCTS.find(function(x){return x.id===id;});if(!p)return;
+    if(brand)p.brand=brand;
+    if(cat)p.cat=cat;
+    if(vendor)p.vendor=vendor;
+    if(!isNaN(priceVal)){p.price=priceMode==='pct'?Math.round(p.price*(1+priceVal/100)*100)/100:priceVal;}
+    if(!isNaN(costVal)){p.cost=costMode==='pct'?Math.round((p.cost||0)*(1+costVal/100)*100)/100:costVal;}
+    if(serialVal)p.serialTracked=serialVal==='true';
+    if(reorderPt!=='')p.reorderPt=parseInt(reorderPt);
+    if(reorderQty!=='')p.reorderQty=parseInt(reorderQty);
+    count++;
+  });
+  saveProducts();
+  toast(count+' product'+(count===1?'':'s')+' updated','success');
+  beToggle(); // exit bulk edit mode
+  renderInventory();
+}
 function invPopulateVendorFilter(){
   var sel=document.getElementById('inv-vendor-filter');if(!sel)return;
   var expected=Object.keys(PRODUCTS.reduce(function(a,p){if(p.vendor)a[p.vendor]=true;return a;},{})).length;
@@ -159,8 +302,10 @@ function renderInventory(){
     var snBadge=isSerialTracked(p)?'<span style="font-size:8px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;margin-left:4px;">SN</span>':'';
     var lockBadge=p.priceLocked?' <span title="Price locked" style="cursor:pointer;" onclick="togglePriceLock('+p.id+')">&#x1F512;</span>':' <span title="Click to lock price" style="cursor:pointer;color:#d1d5db;" onclick="togglePriceLock('+p.id+')">&#x1F513;</span>';
     var vendorCell=p.vendor?'<a href="#" onclick="event.preventDefault();invFilterByVendor(\''+(p.vendor||'').replace(/'/g,"\\'")+'\')" style="color:#2563eb;font-weight:600;text-decoration:none;">'+p.vendor+'</a>':'<span style="color:#9ca3af;">—</span>';
-    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'><td><a class="pc-link" onclick="openProductCard('+p.id+')">'+(p.model||'—')+'</a></td><td><a class="pc-link" style="color:#1f2937;" onclick="openProductCard('+p.id+')">'+p.name+'</a>'+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+vendorCell+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+lockBadge+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
+    var chkTd=_beActive?'<td><input type="checkbox" class="be-chk be-row-chk" data-pid="'+p.id+'"'+(_beSelected[p.id]?' checked':'')+' onchange="beToggleRow('+p.id+')"/></td>':'';
+    return '<tr'+(isActive?'':' style="opacity:0.6;"')+'>'+chkTd+'<td><a class="pc-link" onclick="openProductCard('+p.id+')">'+(p.model||'—')+'</a></td><td><a class="pc-link" style="color:#1f2937;" onclick="openProductCard('+p.id+')">'+p.name+'</a>'+snBadge+badge+'</td><td>'+p.brand+'</td><td style="font-size:10px;">'+vendorCell+'</td><td style="font-size:10px;">'+dept+'</td><td style="font-size:10px;">'+(p.cat||'')+'</td><td style="font-size:10px;color:#6b7280;">'+(p.upc||'')+'</td><td>'+p.stock+'</td><td>'+sold+'</td><td style="font-weight:700;">'+availMinusSold+'</td><td><span class="status-pill '+sc+'">'+sl+'</span></td><td>'+fmt(p.price)+lockBadge+'</td><td>'+fmt(p.cost)+'</td><td>'+actBtn+'</td></tr>';
   }).join('');
+  if(_beActive)beUpdateCount();
   // Low stock alerts — active items only, based on Avail-Sold
   var alerts=PRODUCTS.filter(function(p){var ams=p.stock-(p.sold||0);return p.active!==false&&ams<=p.reorderPt;});
   document.getElementById('inv-alerts-list').innerHTML=alerts.length?alerts.map(function(p){

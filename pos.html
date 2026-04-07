@@ -234,6 +234,25 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .inv-wrap{display:flex;flex:1;overflow:hidden;}
 .inv-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .inv-toolbar{padding:10px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #e5e7eb;flex-shrink:0;background:#fff;}
+/* BULK EDIT */
+.be-bar{padding:8px 16px;background:#eff6ff;border-bottom:1px solid #bfdbfe;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.be-bar-count{font-size:12px;font-weight:700;color:#1d4ed8;}
+.be-bar-btn{font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;border:1px solid #bfdbfe;background:#fff;color:#2563eb;}
+.be-bar-btn:hover{background:#dbeafe;}
+.be-bar-btn.cancel{border-color:#d1d5db;color:#6b7280;background:#fff;}
+.be-bar-btn.cancel:hover{background:#f3f4f6;}
+.be-panel{padding:16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:none;}
+.be-panel.open{display:block;}
+.be-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.be-field label{font-size:10px;font-weight:700;color:#6b7280;display:block;margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase;}
+.be-field select,.be-field input{width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-family:inherit;outline:none;background:#fff;}
+.be-field select:focus,.be-field input:focus{border-color:#2563eb;}
+.be-price-mode{display:flex;gap:4px;margin-bottom:4px;}
+.be-price-mode button{font-size:9px;font-weight:700;padding:2px 8px;border:1px solid #d1d5db;border-radius:4px;background:#fff;color:#6b7280;cursor:pointer;font-family:inherit;}
+.be-price-mode button.active{background:#2563eb;color:#fff;border-color:#2563eb;}
+.be-actions{display:flex;gap:8px;align-items:center;}
+.be-preview{margin-top:12px;max-height:300px;overflow:auto;border:1px solid #e5e7eb;border-radius:8px;background:#fff;}
+.be-chk{width:16px;height:16px;accent-color:#2563eb;cursor:pointer;}
 .inv-toolbar input{flex:1;background:#fff;border:1px solid #d1d5db;border-radius:7px;padding:7px 12px;color:#1f2937;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;outline:none;}
 .inv-toolbar input:focus{border-color:#2563eb;}
 .inv-btn{font-size:11px;font-weight:600;padding:7px 14px;border:1px solid #bfdbfe;color:#2563eb;background:#eff6ff;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
@@ -1235,10 +1254,14 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <button class="inv-btn" onclick="exportCSV()">Export CSV</button>
 <button class="inv-btn" onclick="openModal('csv-upload-modal')">Upload CSV</button>
 <button class="inv-btn" onclick="populateVendorDropdown('ap-vendor');openModal('add-product-modal')">+ Add Product</button>
+<button class="inv-btn" id="be-toggle-btn" onclick="beToggle()" style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;">Bulk Edit</button>
 </div>
+<div class="be-bar" id="be-bar" style="display:none;"><span class="be-bar-count" id="be-count">0 selected</span><button class="be-bar-btn" onclick="beOpenPanel()">Edit Selected</button><button class="be-bar-btn cancel" onclick="beToggle()">Cancel</button></div>
+<div class="be-panel" id="be-panel"></div>
 <div class="inv-table-wrap">
 <table class="inv-table">
 <thead><tr>
+<th id="be-th-chk" style="width:30px;display:none;"><input type="checkbox" class="be-chk" onchange="beSelectAll(this.checked)"/></th>
 <th onclick="invSortBy('model')" style="cursor:pointer;">Model#<span id="inv-sort-model"></span></th>
 <th onclick="invSortBy('name')" style="cursor:pointer;">Product<span id="inv-sort-name"></span></th>
 <th onclick="invSortBy('brand')" style="cursor:pointer;">Brand<span id="inv-sort-brand"></span></th>
