@@ -548,14 +548,33 @@
           <div id="file-attach-list"></div>
         </div>
       </div>
-      <div class="field"><label>Customer Name <span class="req">*</span></label><input class="inp" id="f-name" placeholder="John Smith"/></div>
-      <div class="frow">
-        <div class="field"><label>Phone <span class="req">*</span></label><input class="inp" id="f-phone" type="tel"/></div>
-        <div class="field"><label>Email</label><input class="inp" id="f-email" type="email"/></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:11px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--blue);margin-bottom:6px;">Sold To (Billing)</div>
+        <div class="field"><label>Customer Name <span class="req">*</span></label><input class="inp" id="f-name" placeholder="John Smith"/></div>
+        <div class="frow">
+          <div class="field"><label>Phone <span class="req">*</span></label><input class="inp" id="f-phone" type="tel"/></div>
+          <div class="field"><label>Email</label><input class="inp" id="f-email" type="email"/></div>
+        </div>
+        <div class="frow">
+          <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="f-address"/></div>
+          <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="f-city"/></div>
+        </div>
       </div>
-      <div class="frow">
-        <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="f-address"/></div>
-        <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="f-city"/></div>
+      <div style="margin-bottom:11px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;margin-bottom:6px;"><input type="checkbox" id="f-same-addr" checked onchange="toggleShipTo()"/> Ship To same as billing address</label>
+        <div id="f-shipto-wrap" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--green);margin-bottom:6px;">Ship To (Delivery Address)</div>
+          <div class="field"><label>Deliver To Name</label><input class="inp" id="f-ship-name" placeholder="Recipient name"/></div>
+          <div class="field"><label>Phone</label><input class="inp" id="f-ship-phone" type="tel" placeholder="Contact at delivery location"/></div>
+          <div class="frow">
+            <div class="field"><label>Address <span class="req">*</span></label><input class="inp" id="f-ship-address"/></div>
+            <div class="field"><label>City <span class="req">*</span></label><input class="inp" id="f-ship-city"/></div>
+          </div>
+          <div class="frow">
+            <div class="field"><label>State</label><input class="inp" id="f-ship-state" placeholder="KS" maxlength="2" style="text-transform:uppercase;"/></div>
+            <div class="field"><label>Zip</label><input class="inp" id="f-ship-zip" placeholder="67801"/></div>
+          </div>
+        </div>
       </div>
       <div class="field"><label>Invoice #</label><input class="inp" id="f-invoice"/></div>
       <div class="dtype-wrap">
@@ -1192,7 +1211,7 @@ function renderEvents(){
         }
         ev.innerHTML=(warn?'<div class="ev-warn">&#x26A0;</div>':'')+snDotHtml+
           '<div class="ev-name">'+(isPickup?'&#x1F4E6; ':'')+d.name+'</div>'+
-          (height>28?'<div class="ev-sub">'+apps+(d.city?' · '+d.city:'')+'</div>':'')+
+          (height>28?'<div class="ev-sub">'+apps+((d.shipTo&&d.shipTo.city?d.shipTo.city:d.city)?' · '+(d.shipTo&&d.shipTo.city?d.shipTo.city:d.city):'')+'</div>':'')+
           (height>46?'<div class="ev-time-lbl">'+d.time+(dur?' – '+endTime:'')+'</div>':'')+
           '<div class="resize-handle" data-resize="true"></div>';
         ev.onclick=(function(id){return function(e){e.stopPropagation();openDeliveryDetail(id);};})(d.id);
@@ -1305,7 +1324,9 @@ function renderMobileDay(){
     h+='<div class="'+cls+'" onclick="openDeliveryDetail(\''+d.id+'\')">';
     h+='<div class="mobile-stop-top"><div class="mobile-stop-num">'+(d.stopOrder||i+1)+'</div><span class="mobile-stop-badge status-badge '+badge+'">'+(isPickup?'Pick Up':d.status)+'</span></div>';
     h+='<div class="mobile-stop-name">'+(isPickup?'&#x1F4E6; ':'')+d.name+(hasFlag(d)?'<span class="ms-warn">&#x26A0;</span>':'')+'</div>';
-    h+='<div class="mobile-stop-addr">'+d.address+', '+d.city+'</div>';
+    var _da=getDelivAddr(d);var _hasDiff=d.shipTo&&d.shipTo.addr&&d.shipTo.addr!==d.address;
+    if(_hasDiff&&_da.name&&_da.name!==d.name)h+='<div style="font-size:11px;color:var(--text3);">Customer: '+d.name+'</div>';
+    h+='<div class="mobile-stop-addr">'+(_hasDiff?'Deliver to: ':'')+((_hasDiff&&_da.name&&_da.name!==d.name)?_da.name+' — ':'')+_da.addr+', '+_da.city+'</div>';
     h+='<div class="mobile-stop-apps">'+appStr+'</div>';
     var instrPreview=d.delivInstructions||d.notes||'';
     if(instrPreview){var ATTN_M=/call ahead|gate code|second floor|stairs|basement|narrow|tight|back door|side door|garage|elevator/i;h+='<div style="font-size:11px;color:var(--text2);margin-top:3px;'+(ATTN_M.test(instrPreview)?'background:#fffbeb;padding:3px 6px;border-radius:4px;border-left:3px solid #fcd34d;':'')+'">'+linkifyPhones(instrPreview.substring(0,80))+(instrPreview.length>80?'...':'')+'</div>';}
@@ -1362,6 +1383,7 @@ function openAddDelivery(date,time){
   if(time){var s=document.getElementById('f-time');for(var i=0;i<s.options.length;i++){if(s.options[i].value===time){s.selectedIndex=i;break;}}}
   else{document.getElementById('f-time').selectedIndex=2;}
   pendingFiles=[];document.getElementById('file-attach-list').innerHTML='';document.getElementById('file-attach-wrap').style.display='none';
+  clearShipToForm();
   initAppRows([{a:'',m:''}]);
   document.getElementById('delivery-modal').classList.add('open');
 }
@@ -1380,9 +1402,55 @@ function openEditDelivery(id){
   var dt=d.deliveryType||'Full Install';document.querySelectorAll('input[name="dtype"]').forEach(function(r){r.checked=r.value===dt;});
   var apps=d.appliances&&d.appliances.length?d.appliances:[{a:d.appliance||'',m:d.model||''}];
   initAppRows(apps);
+  // Load Ship To if different from Sold To
+  var sh=d.shipTo;
+  if(sh&&sh.addr&&sh.addr!==d.address){setShipToForm(sh);}else{clearShipToForm();}
+  onDtypeChange();
   pendingFiles=d.invoiceFiles||( d.invoiceFile?[d.invoiceFile]:[]);
   renderPendingFiles();
   document.getElementById('delivery-modal').classList.add('open');
+}
+function toggleShipTo(){
+  var checked=document.getElementById('f-same-addr').checked;
+  document.getElementById('f-shipto-wrap').style.display=checked?'none':'block';
+}
+function getShipToFromForm(){
+  var same=document.getElementById('f-same-addr').checked;
+  if(same)return null;
+  return {
+    name:document.getElementById('f-ship-name').value.trim(),
+    phone:document.getElementById('f-ship-phone').value.trim(),
+    addr:document.getElementById('f-ship-address').value.trim(),
+    city:document.getElementById('f-ship-city').value.trim(),
+    state:document.getElementById('f-ship-state').value.trim().toUpperCase(),
+    zip:document.getElementById('f-ship-zip').value.trim()
+  };
+}
+function setShipToForm(shipTo){
+  if(!shipTo||!shipTo.addr){
+    document.getElementById('f-same-addr').checked=true;
+    document.getElementById('f-shipto-wrap').style.display='none';
+    return;
+  }
+  document.getElementById('f-same-addr').checked=false;
+  document.getElementById('f-shipto-wrap').style.display='block';
+  document.getElementById('f-ship-name').value=shipTo.name||'';
+  document.getElementById('f-ship-phone').value=shipTo.phone||'';
+  document.getElementById('f-ship-address').value=shipTo.addr||'';
+  document.getElementById('f-ship-city').value=shipTo.city||'';
+  document.getElementById('f-ship-state').value=shipTo.state||'';
+  document.getElementById('f-ship-zip').value=shipTo.zip||'';
+}
+function clearShipToForm(){
+  document.getElementById('f-same-addr').checked=true;
+  document.getElementById('f-shipto-wrap').style.display='none';
+  ['f-ship-name','f-ship-phone','f-ship-address','f-ship-city','f-ship-state','f-ship-zip'].forEach(function(id){document.getElementById(id).value='';});
+}
+// Helper: get the delivery address (Ship To if set, else Sold To)
+function getDelivAddr(d){
+  var sh=d.shipTo;
+  if(sh&&sh.addr)return{name:sh.name||d.name,addr:sh.addr,city:sh.city||d.city,state:sh.state||'',zip:sh.zip||'',phone:sh.phone||d.phone};
+  return{name:d.name,addr:d.address,city:d.city,state:'',zip:'',phone:d.phone};
 }
 function onDtypeChange(){
   var val=document.querySelector('input[name="dtype"]:checked').value;
@@ -1408,14 +1476,17 @@ async function saveDelivery(){
   var apps=[];
   document.querySelectorAll('.app-row').forEach(function(row){var a=row.querySelector('.app-sel').value,m=row.querySelector('.app-model').value.trim();if(a)apps.push({a:a,m:m});});
   if(!name||!phone||!address||!city||!date||apps.length===0){alert('Fill in all required fields and at least one appliance.');return;}
+  var shipTo=getShipToFromForm();
+  // Build soldTo from billing fields
+  var soldTo={name:name,phone:phone,addr:address,city:city};
   var invoiceFiles=pendingFiles.filter(function(f){return f&&f.url;});
   var invoiceFile=invoiceFiles.length?invoiceFiles[0]:null;
   var appStr=apps.map(function(x){return x.a;}).join(', ');
   if(editId){
     var d=deliveries.find(function(x){return x.id===editId;}); if(!d)return;
-    Object.assign(d,{name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles});
+    Object.assign(d,{name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo});
   } else {
-    deliveries.unshift({id:'DEL-'+String(nextDelId).padStart(4,'0'),name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
+    deliveries.unshift({id:'DEL-'+String(nextDelId).padStart(4,'0'),name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
     nextDelId++;
   }
   await saveData();closeModal('delivery-modal');renderEvents();
@@ -1647,7 +1718,16 @@ function openDeliveryDetail(id){
     '<div class="detail-grid">'+
       '<div><div class="dl">Phone</div><div class="dv"><a href="tel:'+d.phone+'">'+d.phone+'</a></div></div>'+
       (d.email?'<div><div class="dl">Email</div><div class="dv"><a href="mailto:'+d.email+'">'+d.email+'</a></div></div>':'<div></div>')+
-      '<div style="grid-column:1/-1"><div class="dl">Address</div><div class="dv">'+d.address+', '+d.city+'</div></div>'+
+      (function(){
+        var da=getDelivAddr(d);
+        var hasDiffShip=d.shipTo&&d.shipTo.addr&&d.shipTo.addr!==d.address;
+        var mapQ=encodeURIComponent((da.addr||'')+', '+(da.city||'')+' '+(da.state||'')+' '+(da.zip||''));
+        var h='<div style="grid-column:1/-1"><div class="dl">Deliver To '+(hasDiffShip?'<span style="color:var(--green);font-weight:600;">(Different Address)</span>':'')+'</div><div class="dv">'+da.addr+', '+da.city+(da.state?' '+da.state:'')+(da.zip?' '+da.zip:'')+' <a href="https://www.google.com/maps/dir/?api=1&destination='+mapQ+'" target="_blank" style="color:var(--blue);font-size:10px;font-weight:600;text-decoration:none;margin-left:6px;">Directions &#x2197;</a></div>';
+        if(hasDiffShip&&da.name&&da.name!==d.name)h+='<div style="font-size:11px;color:var(--text2);margin-top:2px;">Recipient: '+da.name+(da.phone?' &middot; <a href="tel:'+da.phone+'" style="color:var(--blue);">'+da.phone+'</a>':'')+'</div>';
+        if(hasDiffShip)h+='<div style="font-size:10px;color:var(--text3);margin-top:4px;">Billing: '+d.address+', '+d.city+'</div>';
+        h+='</div>';
+        return h;
+      })()+
       '<div><div class="dl">Delivery Type</div><div class="dv">'+(d.deliveryType||'Full Install')+'</div></div>'+
       (d.invoice?'<div><div class="dl">Invoice #</div><div class="dv"><a href="#" onclick="openInvoiceFromDelivery(\''+d.invoice+'\');return false;" style="color:var(--blue);text-decoration:none;font-weight:600;">'+d.invoice+' &#x2197;</a></div></div>':'<div></div>')+
       (d.clerk?'<div><div class="dl">Salesperson</div><div class="dv">'+d.clerk+'</div></div>':'')+
