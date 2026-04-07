@@ -300,8 +300,31 @@
     .log-pending-photo{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--blue);font-weight:600;margin-top:4px;}
     /* Warning badge on calendar events */
     .ev-warn{position:absolute;top:2px;right:4px;font-size:11px;line-height:1;z-index:5;}
+    /* Serial status indicator on calendar events */
+    .ev-serial-dot{position:absolute;top:3px;right:4px;width:8px;height:8px;border-radius:50%;z-index:5;border:1px solid rgba(0,0,0,0.15);}
+    .ev-serial-dot.sn-all{background:#3b82f6;}
+    .ev-serial-dot.sn-some{background:#eab308;}
+    .ev-serial-dot.sn-none{background:#e5e7eb;}
     /* Warning badge on mobile cards */
     .ms-warn{font-size:13px;margin-left:6px;}
+    /* Serial status indicator on mobile cards */
+    .ms-serial-indicator{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:4px;}
+    .ms-serial-indicator .sn-dot{width:8px;height:8px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,0.15);}
+
+    /* ── DESKTOP SERIAL ENTRY SECTION ── */
+    .serial-entry-section{background:var(--bg3);border:2px solid var(--blue);border-radius:8px;padding:14px;margin-top:12px;animation:fadeIn 0.2s ease-out;}
+    .serial-entry-title{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .serial-app-row{background:#fff;border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:8px;}
+    .serial-app-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px;}
+    .serial-app-model{font-size:11px;color:var(--text2);margin-bottom:6px;}
+    .serial-input-row{display:flex;gap:6px;align-items:center;}
+    .serial-input-row input{flex:1;font-size:12px;padding:7px 10px;border:1px solid var(--border2);border-radius:5px;font-family:inherit;outline:none;}
+    .serial-input-row input:focus{border-color:var(--blue);}
+    .serial-input-row input.has-serial{border-color:var(--green);background:#f0fdf4;}
+    .serial-saved-display{color:var(--green);font-size:11px;font-weight:600;padding:4px 0;}
+    .serial-save-btn{margin-top:10px;width:100%;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:9px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;}
+    .serial-save-btn:hover{background:#1d4ed8;}
+    .serial-save-btn:disabled{background:#d1d5db;cursor:not-allowed;}
     /* Needs Attention pill */
     .tpill.attention{border-color:#fca5a5;color:#dc2626;background:#fef2f2;}
     .tpill.attention.active{background:#dc2626;border-color:#dc2626;color:#fff;}
@@ -312,6 +335,7 @@
     .ms-actions button:active{opacity:0.85;}
     .ms-btn-out{background:#f59e0b;}
     .ms-btn-delivered{background:#16a34a;}
+    .ms-btn-serial{background:#2563b0;}
     .ms-delivered-badge{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;background:#dcfce7;border-radius:10px;font-size:14px;font-weight:700;color:#16a34a;margin-top:10px;}
 
     /* ── BOTTOM SHEET ── */
@@ -1125,8 +1149,14 @@ function renderEvents(){
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;';
         ev.setAttribute('data-id',d.id);
         var warn=hasFlag(d);
-        var snPending=hasPendingSerials(d);
-        ev.innerHTML=(warn?'<div class="ev-warn">&#x26A0;</div>':'')+(snPending?'<div class="ev-warn" style="right:'+(warn?'18':'2')+'px;color:#d97706;" title="Serial numbers pending">&#x26A0;</div>':'')+
+        var snStatus=getSerialStatus(d);
+        var snDotHtml='';
+        if(snStatus!=='none-tracked'){
+          var snDotCls=snStatus==='all'?'sn-all':snStatus==='some'?'sn-some':'sn-none';
+          var snTitle=snStatus==='all'?'All serials entered':snStatus==='some'?'Some serials missing':'No serials entered';
+          snDotHtml='<div class="ev-serial-dot '+snDotCls+'" title="'+snTitle+'" style="right:'+(warn?'18':'4')+'px;"></div>';
+        }
+        ev.innerHTML=(warn?'<div class="ev-warn">&#x26A0;</div>':'')+snDotHtml+
           '<div class="ev-name">'+d.name+'</div>'+
           (height>28?'<div class="ev-sub">'+apps+(d.city?' · '+d.city:'')+'</div>':'')+
           (height>46?'<div class="ev-time-lbl">'+d.time+(dur?' – '+endTime:'')+'</div>':'')+
@@ -1241,12 +1271,21 @@ function renderMobileDay(){
     h+='<div class="mobile-stop-addr">'+d.address+', '+d.city+'</div>';
     h+='<div class="mobile-stop-apps">'+appStr+'</div>';
     h+='<div class="mobile-stop-time">'+(d.team||'Main Delivery Team')+' &middot; '+timeStr+'</div>';
+    // Serial status indicator
+    var msSnStatus=getSerialStatus(d);
+    if(msSnStatus!=='none-tracked'){
+      var snDotColor=msSnStatus==='all'?'#3b82f6':msSnStatus==='some'?'#eab308':'#e5e7eb';
+      var snLabel=msSnStatus==='all'?'All serials entered':msSnStatus==='some'?'Some serials missing':'No serials entered';
+      h+='<div class="ms-serial-indicator"><span class="sn-dot" style="background:'+snDotColor+';"></span> '+snLabel+'</div>';
+    }
     // Action buttons
     if(d.status==='Delivered'){
       h+='<div class="ms-delivered-badge">&#x2713; Delivered'+(d.deliveredAt?' at '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'')+'</div>';
     }else{
+      var msHasTracked=(d.appliances||[]).some(function(a){return isApplianceSerialTracked(a);});
       h+='<div class="ms-actions">';
       if(d.status!=='Out for Delivery')h+='<button class="ms-btn-out" onclick="mobileSetOut(\''+d.id+'\',event)">Delivering</button>';
+      if(msHasTracked)h+='<button class="ms-btn-serial" onclick="openMobileSerialSheet(\''+d.id+'\',event)">Add Serial #</button>';
       h+='<button class="ms-btn-delivered" onclick="mobileMarkDelivered(\''+d.id+'\',event)">Mark Delivered</button>';
       h+='</div>';
     }
@@ -1406,6 +1445,16 @@ function hasPendingSerials(d){
   return apps.some(function(a){return isApplianceSerialTracked(a)&&!a.serial;});
 }
 
+function getSerialStatus(d){
+  var apps=d.appliances||[];if(!apps.length)return 'none-tracked';
+  var tracked=apps.filter(function(a){return isApplianceSerialTracked(a);});
+  if(!tracked.length)return 'none-tracked';
+  var withSerial=tracked.filter(function(a){return !!a.serial;});
+  if(withSerial.length===tracked.length)return 'all';
+  if(withSerial.length>0)return 'some';
+  return 'none';
+}
+
 function renderLogHtml(d,isMobile){
   var entries=d.log||[];
   var h='<div class="'+(isMobile?'bs-section':'log-section')+'">';
@@ -1539,6 +1588,9 @@ function openDeliveryDetail(id){
   var acts='';
   if(d.status!=='Out for Delivery'&&d.status!=='Delivered')acts+='<button class="abtn orange" onclick="setStatus(\''+id+'\',\'Out for Delivery\')">Delivering</button>';
   if(d.status!=='Delivered')acts+='<button class="abtn green" onclick="setStatus(\''+id+'\',\'Delivered\')">Mark Delivered</button>';
+  // Add Serial # button — show if any tracked appliances exist
+  var hasTracked=(d.appliances||[]).some(function(a){return isApplianceSerialTracked(a);});
+  if(hasTracked)acts+='<button class="abtn gray" style="border-color:#93c5fd;color:#1d4ed8;background:#eff6ff;" onclick="openDesktopSerialEntry(\''+id+'\')">&#x1F50D; Add Serial #</button>';
   if(d.status!=='Scheduled')acts+='<button class="abtn blue" onclick="setStatus(\''+id+'\',\'Scheduled\')">Reschedule</button>';
   if(d.email)acts+='<button class="abtn purple" onclick="sendDeliveryConfirmEmail(\''+id+'\')">&#x2709; Email Confirmation</button>';
   acts+='<button class="abtn gray" onclick="openEditDelivery(\''+id+'\')">Edit</button>';
@@ -1617,6 +1669,61 @@ async function markDeliveredAnyway(id){
 }
 
 function cancelSerialPrompt(id){openDeliveryDetail(id);}
+
+function openDesktopSerialEntry(id){
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  var apps=d.appliances&&d.appliances.length?d.appliances:[];
+  var tracked=apps.filter(function(a){return isApplianceSerialTracked(a);});
+  if(!tracked.length)return;
+  // Remove existing serial section if present
+  var existing=document.getElementById('desktop-serial-section');
+  if(existing)existing.remove();
+  var html='<div id="desktop-serial-section" class="serial-entry-section">';
+  html+='<div class="serial-entry-title">&#x1F50D; Enter Serial Numbers</div>';
+  tracked.forEach(function(a,i){
+    html+='<div class="serial-app-row">';
+    html+='<div class="serial-app-name">'+a.a+'</div>';
+    if(a.m)html+='<div class="serial-app-model">Model: '+a.m+'</div>';
+    if(a.serial){
+      html+='<div class="serial-saved-display">&#x2713; '+a.serial+'</div>';
+      html+='<div class="serial-input-row"><input class="inp has-serial desk-serial-input" data-app-idx="'+apps.indexOf(a)+'" value="'+a.serial+'" placeholder="Serial number"/></div>';
+    }else{
+      html+='<div class="serial-input-row"><input class="inp desk-serial-input" data-app-idx="'+apps.indexOf(a)+'" value="" placeholder="Enter serial number"/></div>';
+    }
+    html+='</div>';
+  });
+  html+='<button class="serial-save-btn" onclick="saveDesktopSerials(\''+id+'\')">Save Serials</button>';
+  html+='</div>';
+  document.getElementById('det-body').insertAdjacentHTML('beforeend',html);
+  // Scroll to serial section
+  var section=document.getElementById('desktop-serial-section');
+  if(section)section.scrollIntoView({behavior:'smooth',block:'nearest'});
+  // Focus first empty input
+  var firstEmpty=document.querySelector('.desk-serial-input:not(.has-serial)');
+  if(firstEmpty)setTimeout(function(){firstEmpty.focus();},300);
+}
+
+async function saveDesktopSerials(id){
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  var apps=d.appliances||[];
+  var inputs=document.querySelectorAll('.desk-serial-input');
+  var anyChanged=false;
+  inputs.forEach(function(inp){
+    var idx=parseInt(inp.dataset.appIdx);
+    var val=inp.value.trim();
+    if(!isNaN(idx)&&apps[idx]&&val){
+      if(apps[idx].serial!==val)anyChanged=true;
+      apps[idx].serial=val;
+    }
+  });
+  if(!anyChanged){openDeliveryDetail(id);return;}
+  var btn=document.querySelector('.serial-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  await saveData();
+  await syncSerialsToOrder(d);
+  openDeliveryDetail(id);
+}
+
 async function sendDeliveryConfirmEmail(id){
   var d=deliveries.find(function(x){return x.id===id;});if(!d||!d.email)return;
   // Check customer opt-out
@@ -2054,7 +2161,132 @@ function openBSheet(deliveryId){
 
 function closeBSheet(){
   document.getElementById('bsheet-overlay').classList.remove('open');
-  _bsDeliveryId=null;_bsPhotos=[];_bsSerialTarget=-1;
+  _bsDeliveryId=null;_bsPhotos=[];_bsSerialTarget=-1;_serialSheetId=null;
+  // Restore confirm button for normal delivery flow
+  var confirmBtn=document.getElementById('bsheet-confirm-btn');
+  if(confirmBtn){confirmBtn.textContent='Confirm Delivery';confirmBtn.onclick=bsheetConfirmDelivery;confirmBtn.disabled=false;}
+}
+
+// ── MOBILE SERIAL-ONLY BOTTOM SHEET ──
+var _serialSheetId=null;
+
+function openMobileSerialSheet(deliveryId,evt){
+  if(evt)evt.stopPropagation();
+  _serialSheetId=deliveryId;
+  var d=deliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
+  var apps=d.appliances&&d.appliances.length?d.appliances:[];
+  var tracked=apps.filter(function(a){return isApplianceSerialTracked(a);});
+  if(!tracked.length)return;
+
+  document.getElementById('bsheet-title').textContent='Serial Numbers — '+d.name;
+  var h='<div class="bs-section"><div class="bs-section-title">Enter Serial Numbers</div>';
+  tracked.forEach(function(a,i){
+    var appIdx=apps.indexOf(a);
+    var serial=a.serial||'';
+    h+='<div class="bs-app-card">';
+    h+='<div class="bs-app-name">'+a.a+'</div>';
+    if(a.m)h+='<div class="bs-app-model">'+a.m+'</div>';
+    if(serial){
+      h+='<div style="color:var(--green);font-size:13px;font-weight:600;margin-bottom:6px;">&#x2713; '+serial+'</div>';
+    }
+    h+='<div class="bs-serial-row">';
+    h+='<input class="bs-serial-input'+(serial?' filled':'')+'" id="ms-serial-'+appIdx+'" data-app-idx="'+appIdx+'" value="'+serial+'" placeholder="Serial number" inputmode="text" autocomplete="off"/>';
+    h+='<button class="bs-scan-btn" onclick="msScanSerial('+appIdx+',\'camera\')" title="Camera">&#x1F4F7;</button>';
+    h+='<button class="bs-scan-btn" onclick="msScanSerial('+appIdx+',\'gallery\')" title="Gallery">&#x1F5BC;</button>';
+    h+='</div>';
+    h+='<div style="font-size:10px;color:#94a3b8;margin-top:4px;">Enter serial from product tag</div>';
+    h+='<div class="bs-ai-status" id="ms-ai-status-'+appIdx+'"></div>';
+    h+='</div>';
+  });
+  h+='</div>';
+
+  document.getElementById('bsheet-body').innerHTML=h;
+  // Change confirm button to Save Serials
+  var confirmBtn=document.getElementById('bsheet-confirm-btn');
+  confirmBtn.textContent='Save Serials';
+  confirmBtn.onclick=saveMobileSerials;
+  confirmBtn.disabled=false;
+  document.getElementById('bsheet-overlay').classList.add('open');
+}
+
+function msScanSerial(appIdx,mode){
+  _bsSerialTarget=appIdx;
+  var inp=mode==='camera'?document.getElementById('bs-serial-camera'):document.getElementById('bs-serial-gallery');
+  inp.onchange=function(){
+    if(!inp.files||!inp.files[0])return;
+    msProcessSerialPhoto(inp.files[0],appIdx);
+    inp.value='';
+  };
+  inp.click();
+}
+
+async function msProcessSerialPhoto(file,appIdx){
+  var statusEl=document.getElementById('ms-ai-status-'+appIdx);
+  if(!statusEl)return;
+  statusEl.innerHTML='<div class="bs-ai-reading"><div class="bs-spinner"></div> Reading serial number...</div>';
+  try{
+    var b64=await toB64(file);
+    var data=await claudeApiCall({
+      messages:[{
+        role:'user',
+        content:[
+          {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
+          {type:'text',text:'This is a photo of an appliance tag/label. Extract the model number and serial number. Return JSON only: {"model":"MODEL_HERE","serial":"SERIAL_HERE"}. If you cannot read either, use empty string. JSON only, no explanation.'}
+        ]
+      }],
+      max_tokens:200
+    });
+    var txt=data.content[0].text;
+    var match=txt.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('No JSON');
+    var parsed=JSON.parse(match[0]);
+    var serial=parsed.serial||'';
+    var inp=document.getElementById('ms-serial-'+appIdx);
+    if(serial&&inp){
+      inp.value=serial;
+      inp.classList.add('filled');
+      var msg='<div class="bs-ai-success">&#x2713; Serial: '+serial;
+      if(parsed.model)msg+=' &middot; Model: '+parsed.model;
+      msg+='</div>';
+      statusEl.innerHTML=msg;
+    }else{
+      statusEl.innerHTML='<div class="bs-ai-fail">Could not read serial — please enter manually</div>';
+      if(inp)inp.focus();
+    }
+  }catch(e){
+    console.error(e);
+    statusEl.innerHTML='<div class="bs-ai-fail">Could not read tag — please enter manually</div>';
+    var inp2=document.getElementById('ms-serial-'+appIdx);
+    if(inp2)inp2.focus();
+  }
+}
+
+async function saveMobileSerials(){
+  var id=_serialSheetId;
+  if(!id)return;
+  var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
+  var apps=d.appliances||[];
+  var inputs=document.querySelectorAll('[id^="ms-serial-"]');
+  var anyChanged=false;
+  inputs.forEach(function(inp){
+    var idx=parseInt(inp.dataset.appIdx);
+    var val=inp.value.trim();
+    if(!isNaN(idx)&&apps[idx]&&val){
+      if(apps[idx].serial!==val)anyChanged=true;
+      apps[idx].serial=val;
+    }
+  });
+  if(!anyChanged){closeBSheet();_serialSheetId=null;renderEvents();return;}
+  var btn=document.getElementById('bsheet-confirm-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  await saveData();
+  await syncSerialsToOrder(d);
+  closeBSheet();
+  _serialSheetId=null;
+  // Restore confirm button for normal delivery flow
+  var confirmBtn=document.getElementById('bsheet-confirm-btn');
+  if(confirmBtn){confirmBtn.textContent='Confirm Delivery';confirmBtn.onclick=bsheetConfirmDelivery;confirmBtn.disabled=false;}
+  renderEvents();
 }
 
 // ── SERIAL NUMBER AI SCAN ──
