@@ -380,7 +380,29 @@
     .bs-photo-btn{flex:1;min-height:52px;background:var(--bg3);border:2px dashed var(--border2);border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
     .bs-photo-btn:active{background:var(--border);}
     .bs-photo-gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+    .bs-photo-thumb-wrap{position:relative;}
     .bs-photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+    .bs-photo-remove{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#dc2626;color:#fff;border:2px solid #fff;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.2);}
+    .bs-photo-remove:hover{background:#991b1b;}
+    .photo-upload-status{font-size:11px;font-weight:600;padding:6px 10px;border-radius:6px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+    .photo-status-uploading{background:var(--blue-bg);color:var(--blue);}
+    .photo-status-success{background:var(--green-bg);color:var(--green);}
+    .photo-status-error{background:var(--red-bg);color:var(--red);}
+    .photo-retry-btn{font-size:10px;font-weight:700;padding:3px 10px;border:1px solid var(--red);color:var(--red);background:transparent;border-radius:4px;cursor:pointer;font-family:inherit;margin-left:auto;}
+    .photo-retry-btn:hover{background:#fef2f2;}
+    /* Desktop photo buttons */
+    .det-photo-btns{display:flex;gap:6px;margin-bottom:8px;}
+    .det-photo-btn{flex:1;min-height:36px;background:var(--bg3);border:1px dashed var(--border2);border-radius:6px;font-family:inherit;font-size:11px;font-weight:600;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;}
+    .det-photo-btn:hover{border-color:var(--gold);color:var(--gold-d);background:#fdf8ef;}
+    .det-photo-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;}
+    .det-photo-thumb-wrap{position:relative;}
+    .det-photo-thumb{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid #ddd;}
+    .det-photo-remove{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:#dc2626;color:#fff;border:2px solid #fff;font-size:10px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+    .det-photo-remove:hover{background:#991b1b;}
+    /* Log photo buttons */
+    .log-photo-btns{display:flex;gap:4px;}
+    .log-photo-btn{min-height:36px;min-width:36px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;padding:0 6px;}
+    .log-photo-btn:hover{background:var(--border);}
 
     /* Spinner */
     .bs-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.6s linear infinite;}
@@ -1473,38 +1495,69 @@ function renderLogHtml(d,isMobile){
   }
   // Add note input
   var inputId=isMobile?'bs-log-input':'det-log-input';
-  var photoId=isMobile?'bs-log-photo-btn':'det-log-photo-btn';
+  var prefix=isMobile?'bs':'det';
   h+='<div class="log-input-row">';
   h+='<textarea class="log-input" id="'+inputId+'" placeholder="Add a log note..." rows="1"></textarea>';
-  h+='<button class="log-photo-btn" id="'+photoId+'" onclick="logAttachPhoto(\''+(isMobile?'mobile':'desktop')+'\',\''+d.id+'\')" title="Attach photo">&#x1F4F7;</button>';
+  h+='<div class="log-photo-btns">';
+  h+='<button class="log-photo-btn" onclick="logTakePhoto(\''+(isMobile?'mobile':'desktop')+'\',\''+d.id+'\')" title="Take photo">&#x1F4F7;</button>';
+  h+='<button class="log-photo-btn" onclick="logUploadPhoto(\''+(isMobile?'mobile':'desktop')+'\',\''+d.id+'\')" title="Upload photo">&#x1F5BC;</button>';
+  h+='</div>';
   h+='<button class="log-add-btn" onclick="addLogEntry(\''+d.id+'\',\''+(isMobile?'mobile':'desktop')+'\')">Add Note</button>';
   h+='</div>';
-  h+='<div id="'+(isMobile?'bs':'det')+'-log-photo-preview"></div>';
+  h+='<div id="'+prefix+'-log-photo-preview"></div>';
   h+='</div>';
   return h;
 }
 
-function logAttachPhoto(mode,deliveryId){
+function logTakePhoto(mode,deliveryId){
+  _logCurrentId=deliveryId;
+  var inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.capture='environment';inp.style.display='none';
+  inp.onchange=function(){if(inp.files&&inp.files[0])logProcessPhoto(inp,mode,deliveryId);};
+  document.body.appendChild(inp);inp.click();
+}
+function logUploadPhoto(mode,deliveryId){
   _logCurrentId=deliveryId;
   var inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';inp.style.display='none';
-  inp.onchange=async function(){
-    if(!inp.files||!inp.files[0])return;
-    var previewId=(mode==='mobile'?'bs':'det')+'-log-photo-preview';
-    var el=document.getElementById(previewId);
-    el.innerHTML='<div class="log-pending-photo"><div class="bs-spinner"></div> Uploading photo...</div>';
-    try{
-      var b64=await toB64(inp.files[0]);
-      var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
-      var data=await res.json();
-      if(data.ok){
-        _logPendingPhoto=data.url;
-        el.innerHTML='<div class="log-pending-photo">&#x2713; Photo attached <img src="'+data.url+'" style="width:32px;height:32px;object-fit:cover;border-radius:3px;vertical-align:middle;"/></div>';
-      }else{el.innerHTML='';_logPendingPhoto=null;}
-    }catch(e){el.innerHTML='';_logPendingPhoto=null;}
-    document.body.removeChild(inp);
-  };
+  inp.onchange=function(){if(inp.files&&inp.files[0])logProcessPhoto(inp,mode,deliveryId);};
   document.body.appendChild(inp);inp.click();
+}
+async function logProcessPhoto(inp,mode,deliveryId){
+  var previewId=(mode==='mobile'?'bs':'det')+'-log-photo-preview';
+  var el=document.getElementById(previewId);
+  // Show immediate thumbnail preview + uploading status
+  var objUrl=URL.createObjectURL(inp.files[0]);
+  el.innerHTML='<div class="log-pending-photo"><div class="bs-spinner"></div> Uploading photo... <img src="'+objUrl+'" style="width:32px;height:32px;object-fit:cover;border-radius:3px;vertical-align:middle;opacity:0.6;"/></div>';
+  window._logRetryInp=inp;window._logRetryMode=mode;window._logRetryId=deliveryId;
+  try{
+    var b64=await toB64(inp.files[0]);
+    var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:inp.files[0].name,contentType:inp.files[0].type,data:b64,deliveryId:deliveryId})});
+    var data=await res.json();
+    if(data.ok){
+      _logPendingPhoto={url:data.url,path:data.path};
+      el.innerHTML='<div class="log-pending-photo">&#x2713; Photo attached <img src="'+data.url+'" style="width:32px;height:32px;object-fit:cover;border-radius:3px;vertical-align:middle;"/> <button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;margin-left:4px;" onclick="logClearPendingPhoto(\''+mode+'\')" title="Remove">&#x2715;</button></div>';
+    }else{
+      el.innerHTML='<div class="log-pending-photo photo-status-error" style="display:flex;align-items:center;gap:4px;">Upload failed <button class="photo-retry-btn" onclick="logRetryPhoto()">Retry</button></div>';
+      _logPendingPhoto=null;
+    }
+  }catch(e){
+    el.innerHTML='<div class="log-pending-photo photo-status-error" style="display:flex;align-items:center;gap:4px;">Upload failed <button class="photo-retry-btn" onclick="logRetryPhoto()">Retry</button></div>';
+    _logPendingPhoto=null;
+  }
+  URL.revokeObjectURL(objUrl);
+  try{document.body.removeChild(inp);}catch(e){}
+}
+function logClearPendingPhoto(mode){
+  _logPendingPhoto=null;
+  var previewId=(mode==='mobile'?'bs':'det')+'-log-photo-preview';
+  var el=document.getElementById(previewId);
+  if(el)el.innerHTML='';
+}
+function logRetryPhoto(){
+  if(window._logRetryInp&&window._logRetryMode&&window._logRetryId){
+    logProcessPhoto(window._logRetryInp,window._logRetryMode,window._logRetryId);
+  }
 }
 
 async function addLogEntry(deliveryId,mode){
@@ -1515,7 +1568,7 @@ async function addLogEntry(deliveryId,mode){
   var d=deliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
   if(!d.log)d.log=[];
   var entry={ts:new Date().toISOString(),author:'Dispatcher',text:text};
-  if(_logPendingPhoto){entry.photo=_logPendingPhoto;_logPendingPhoto=null;}
+  if(_logPendingPhoto){entry.photo=_logPendingPhoto.url||_logPendingPhoto;entry.photoPath=_logPendingPhoto.path||null;_logPendingPhoto=null;}
   d.log.push(entry);
   await saveData();
   // Re-render the appropriate view
@@ -1578,9 +1631,16 @@ function openDeliveryDetail(id){
     (d.deliveredAt?'<div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">Delivered: '+new Date(d.deliveredAt).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+'</div>':'')+
     ((d.invoiceFiles&&d.invoiceFiles.length?d.invoiceFiles:(d.invoiceFile&&d.invoiceFile.url?[d.invoiceFile]:[])).map(function(f){return '<div class="file-attach" style="margin-top:8px;"><span style="font-size:16px;">📄</span><div class="file-attach-name">'+f.filename+'</div><a class="file-attach-open" href="'+f.url+'" target="_blank">Open Invoice</a></div>';}).join(''))+
     '<div style="margin-top:12px;"><div class="dl" style="margin-bottom:6px;">Photos</div>'+
-    '<button class="abtn gray" style="margin-bottom:8px;" onclick="document.getElementById(\'det-photo-input\').click()">+ Add Photos</button>'+
-    '<input type="file" id="det-photo-input" accept="image/*" multiple style="display:none" onchange="detUploadPhotos(this.files,\''+id+'\')"/>'+
-    ((d.photos&&d.photos.length)?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;">'+d.photos.map(function(p){return '<img src="'+p.url+'" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid #ddd;" onclick="detViewPhoto(\''+p.url+'\')"/>';}).join('')+'</div>':'<div style="font-size:11px;color:var(--text3);">No photos yet</div>')+
+    '<div class="det-photo-btns">'+
+    '<button class="det-photo-btn" onclick="detTakePhoto(\''+id+'\')">&#x1F4F7; Take Photo</button>'+
+    '<button class="det-photo-btn" onclick="detUploadPhotosPick(\''+id+'\')">&#x1F5BC; Upload Photo</button>'+
+    '</div>'+
+    '<input type="file" id="det-photo-camera" accept="image/*" capture="environment" style="display:none"/>'+
+    '<input type="file" id="det-photo-upload" accept="image/*" multiple style="display:none"/>'+
+    '<div id="det-photo-status"></div>'+
+    '<div class="det-photo-gallery" id="det-photo-gallery">'+
+    ((d.photos&&d.photos.length)?d.photos.map(function(p,idx){return '<div class="det-photo-thumb-wrap"><img class="det-photo-thumb" src="'+p.url+'" onclick="detViewPhoto(\''+p.url+'\')"/><button class="det-photo-remove" onclick="detRemovePhoto(\''+id+'\','+idx+')" title="Remove photo">&#x2715;</button></div>';}).join(''):'<div style="font-size:11px;color:var(--text3);grid-column:1/-1;">No photos yet</div>')+
+    '</div>'+
     '</div>'+
     renderLogHtml(d,false)+
     renderEmailLogHtml(d.emailLog);
@@ -1754,18 +1814,82 @@ async function deleteNote(id){
 }
 
 // ═══ DELIVERY PHOTOS ═══
+function detTakePhoto(deliveryId){
+  var inp=document.getElementById('det-photo-camera');
+  inp.onchange=function(){
+    if(inp.files&&inp.files.length)detUploadPhotos(inp.files,deliveryId);
+    inp.value='';
+  };
+  inp.click();
+}
+function detUploadPhotosPick(deliveryId){
+  var inp=document.getElementById('det-photo-upload');
+  inp.onchange=function(){
+    if(inp.files&&inp.files.length)detUploadPhotos(inp.files,deliveryId);
+    inp.value='';
+  };
+  inp.click();
+}
 async function detUploadPhotos(files,deliveryId){
   if(!files||!files.length)return;
   var d=deliveries.find(function(x){return x.id===deliveryId;});if(!d)return;
   if(!d.photos)d.photos=[];
+  var statusEl=document.getElementById('det-photo-status');
+  var gallery=document.getElementById('det-photo-gallery');
+  // Remove "No photos yet" placeholder
+  var placeholder=gallery.querySelector('div[style*="grid-column"]');
+  if(placeholder)placeholder.remove();
+  var failedFiles=[];
   for(var i=0;i<files.length;i++){
+    var file=files[i];
+    if(statusEl)statusEl.innerHTML='<div class="photo-upload-status photo-status-uploading"><div class="bs-spinner"></div> Uploading photo '+(i+1)+' of '+files.length+'...</div>';
+    // Show thumbnail preview immediately
+    var wrap=document.createElement('div');wrap.className='det-photo-thumb-wrap';
+    var thumb=document.createElement('img');thumb.className='det-photo-thumb';thumb.style.opacity='0.5';
+    var objUrl=URL.createObjectURL(file);thumb.src=objUrl;
+    wrap.appendChild(thumb);gallery.appendChild(wrap);
     try{
-      var base64=await new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(r.result.split(',')[1]);};r.onerror=reject;r.readAsDataURL(files[i]);});
-      var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:base64,deliveryId:deliveryId})});
+      var base64=await toB64(file);
+      var res=await apiFetch('/api/delivery-photo-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:base64,deliveryId:deliveryId})});
       var data=await res.json();
-      if(data.ok)d.photos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
-    }catch(e){console.error(e);}
+      if(data.ok){
+        var photoObj={url:data.url,path:data.path,filename:data.filename,uploadedAt:new Date().toISOString()};
+        d.photos.push(photoObj);
+        var idx=d.photos.length-1;
+        thumb.src=data.url;thumb.style.opacity='1';
+        thumb.onclick=(function(u){return function(){detViewPhoto(u);};})(data.url);
+        var rmBtn=document.createElement('button');rmBtn.className='det-photo-remove';rmBtn.innerHTML='&#x2715;';rmBtn.title='Remove photo';
+        rmBtn.onclick=(function(did,pidx){return function(){detRemovePhoto(did,pidx);};})(deliveryId,idx);
+        wrap.appendChild(rmBtn);
+      }else{
+        gallery.removeChild(wrap);failedFiles.push(file);
+      }
+    }catch(e){console.error(e);gallery.removeChild(wrap);failedFiles.push(file);}
+    URL.revokeObjectURL(objUrl);
   }
+  if(failedFiles.length){
+    window._detRetryFiles=failedFiles;window._detRetryId=deliveryId;
+    if(statusEl)statusEl.innerHTML='<div class="photo-upload-status photo-status-error">Upload failed for '+failedFiles.length+' photo(s) <button class="photo-retry-btn" onclick="detRetryUpload()">Retry</button></div>';
+  }else{
+    if(statusEl)statusEl.innerHTML='<div class="photo-upload-status photo-status-success">&#x2713; '+(files.length===1?'Photo':'All '+files.length+' photos')+' saved</div>';
+    setTimeout(function(){if(statusEl)statusEl.innerHTML='';},3000);
+  }
+  await saveData();
+}
+function detRetryUpload(){
+  if(window._detRetryFiles&&window._detRetryId){
+    detUploadPhotos(window._detRetryFiles,window._detRetryId);
+    window._detRetryFiles=null;window._detRetryId=null;
+  }
+}
+async function detRemovePhoto(deliveryId,photoIdx){
+  var d=deliveries.find(function(x){return x.id===deliveryId;});if(!d||!d.photos)return;
+  var photo=d.photos[photoIdx];if(!photo)return;
+  // Delete from Supabase Storage if we have the path
+  if(photo.path){
+    try{await apiFetch('/api/delivery-photo-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:photo.path})});}catch(e){console.error(e);}
+  }
+  d.photos.splice(photoIdx,1);
   await saveData();openDeliveryDetail(deliveryId);
 }
 function detViewPhoto(url){
@@ -2140,9 +2264,10 @@ function openBSheet(deliveryId){
   h+='<button class="bs-photo-btn" onclick="bsTakePhoto()">&#x1F4F7; Take Photo</button>';
   h+='<button class="bs-photo-btn" onclick="bsUploadPhotos()">&#x1F5BC; Upload Photos</button>';
   h+='</div>';
+  h+='<div id="bs-photo-status"></div>';
   h+='<div class="bs-photo-gallery" id="bs-photo-gallery">';
-  _bsPhotos.forEach(function(p){
-    h+='<img class="bs-photo-thumb" src="'+p.url+'" alt=""/>';
+  _bsPhotos.forEach(function(p,idx){
+    h+='<div class="bs-photo-thumb-wrap" id="bs-photo-wrap-'+idx+'"><img class="bs-photo-thumb" src="'+p.url+'" onclick="detViewPhoto(\''+p.url+'\')"/><button class="bs-photo-remove" onclick="bsRemovePhoto('+idx+')" title="Remove">&#x2715;</button></div>';
   });
   h+='</div>';
   h+='</div>';
@@ -2362,27 +2487,71 @@ function bsUploadPhotos(){
 
 async function bsUploadPhotoFiles(files){
   var gallery=document.getElementById('bs-photo-gallery');
+  var statusEl=document.getElementById('bs-photo-status');
+  var failedFiles=[];
   for(var i=0;i<files.length;i++){
-    // Show placeholder
-    var placeholder=document.createElement('div');
-    placeholder.style.cssText='aspect-ratio:1;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;';
-    placeholder.innerHTML='<div class="bs-spinner"></div>';
-    gallery.appendChild(placeholder);
+    var file=files[i];
+    if(statusEl)statusEl.innerHTML='<div class="photo-upload-status photo-status-uploading"><div class="bs-spinner"></div> Uploading photo '+(i+1)+' of '+files.length+'...</div>';
+    // Show immediate thumbnail preview
+    var wrap=document.createElement('div');wrap.className='bs-photo-thumb-wrap';
+    var thumb=document.createElement('img');thumb.className='bs-photo-thumb';thumb.style.opacity='0.5';
+    var objUrl=URL.createObjectURL(file);thumb.src=objUrl;
+    wrap.appendChild(thumb);gallery.appendChild(wrap);
     try{
-      var b64=await toB64(files[i]);
+      var b64=await toB64(file);
       var res=await apiFetch('/api/delivery-photo-upload',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({filename:files[i].name,contentType:files[i].type,data:b64,deliveryId:_bsDeliveryId})
+        body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,deliveryId:_bsDeliveryId})
       });
       var data=await res.json();
       if(data.ok){
-        _bsPhotos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
-        var img=document.createElement('img');
-        img.className='bs-photo-thumb';img.src=data.url;
-        gallery.replaceChild(img,placeholder);
-      }else{gallery.removeChild(placeholder);}
-    }catch(e){console.error(e);gallery.removeChild(placeholder);}
+        var photoObj={url:data.url,path:data.path,filename:data.filename,uploadedAt:new Date().toISOString()};
+        _bsPhotos.push(photoObj);
+        var idx=_bsPhotos.length-1;
+        thumb.src=data.url;thumb.style.opacity='1';
+        thumb.onclick=(function(u){return function(){detViewPhoto(u);};})(data.url);
+        var rmBtn=document.createElement('button');rmBtn.className='bs-photo-remove';rmBtn.innerHTML='&#x2715;';rmBtn.title='Remove';
+        rmBtn.onclick=(function(pidx){return function(){bsRemovePhoto(pidx);};})(idx);
+        wrap.appendChild(rmBtn);
+      }else{gallery.removeChild(wrap);failedFiles.push(file);}
+    }catch(e){console.error(e);gallery.removeChild(wrap);failedFiles.push(file);}
+    URL.revokeObjectURL(objUrl);
+  }
+  if(failedFiles.length){
+    window._bsRetryFiles=failedFiles;
+    if(statusEl)statusEl.innerHTML='<div class="photo-upload-status photo-status-error">Upload failed for '+failedFiles.length+' photo(s) <button class="photo-retry-btn" onclick="bsRetryUpload()">Retry</button></div>';
+  }else{
+    if(statusEl)statusEl.innerHTML='<div class="photo-upload-status photo-status-success">&#x2713; '+(files.length===1?'Photo':'All '+files.length+' photos')+' saved</div>';
+    setTimeout(function(){if(statusEl)statusEl.innerHTML='';},3000);
+  }
+}
+function bsRemovePhoto(idx){
+  if(idx<0||idx>=_bsPhotos.length)return;
+  var photo=_bsPhotos[idx];
+  // Delete from storage
+  if(photo.path){
+    apiFetch('/api/delivery-photo-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:photo.path})}).catch(function(e){console.error(e);});
+  }
+  _bsPhotos.splice(idx,1);
+  // Re-render the gallery
+  var gallery=document.getElementById('bs-photo-gallery');
+  if(gallery){
+    gallery.innerHTML='';
+    _bsPhotos.forEach(function(p,i){
+      var w=document.createElement('div');w.className='bs-photo-thumb-wrap';
+      var img=document.createElement('img');img.className='bs-photo-thumb';img.src=p.url;
+      img.onclick=(function(u){return function(){detViewPhoto(u);};})(p.url);
+      var rm=document.createElement('button');rm.className='bs-photo-remove';rm.innerHTML='&#x2715;';rm.title='Remove';
+      rm.onclick=(function(pidx){return function(){bsRemovePhoto(pidx);};})(i);
+      w.appendChild(img);w.appendChild(rm);gallery.appendChild(w);
+    });
+  }
+}
+function bsRetryUpload(){
+  if(window._bsRetryFiles){
+    bsUploadPhotoFiles(window._bsRetryFiles);
+    window._bsRetryFiles=null;
   }
 }
 
