@@ -335,13 +335,11 @@ function renderDashboard(){
   var h='<div class="dash-hdr"><div><div class="dash-title">Dashboard</div><div class="dash-date">'+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'</div></div><div class="dash-refresh">Auto-refreshes every 60s</div></div>';
 
   // ═══ TWO-COLUMN FIXED LAYOUT ═══
+  // ═══ ROW 1: Today's Invoices (left) + TC/Deliveries/Alerts (right) ═══
   h+='<div class="dash-layout">';
 
-  // ── LEFT COLUMN (60%) ──
-  h+='<div>';
-
-  // Today's Invoices
-  h+='<div class="dash-card h-invoices" style="margin-bottom:14px;"><div class="dash-card-title">Today\'s Invoices ('+todayOrders.length+')</div>';
+  // ── LEFT: Today's Invoices (fills full height) ──
+  h+='<div class="dash-card h-invoices"><div class="dash-card-title">Today\'s Invoices ('+todayOrders.length+')</div>';
   h+='<div class="dash-card-scroll">';
   if(todayOrders.length){
     todayOrders.forEach(function(o){
@@ -349,39 +347,14 @@ function renderDashboard(){
     });
   } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No invoices yet today</div>';
   h+='</div>';
-  if(todayOrders.length)h+='<div style="margin-top:8px;padding:8px 0;border-top:2px solid #e5e7eb;display:flex;justify-content:space-between;font-weight:700;font-size:13px;color:#1f2937;"><span>'+todayOrders.length+' invoices</span><span>'+fmt(totalSales)+'</span></div>';
+  if(todayOrders.length)h+='<div style="margin-top:auto;padding:8px 0;border-top:2px solid #e5e7eb;display:flex;justify-content:space-between;font-weight:700;font-size:13px;color:#1f2937;"><span>'+todayOrders.length+' invoices</span><span>'+fmt(totalSales)+'</span></div>';
   h+='</div>';
 
-  // Sales by Department + Sales by Salesperson side by side
-  h+='<div class="dash-sub-row">';
-  // Sales by Department
-  h+='<div class="dash-card h-dept"><div class="dash-card-title">Sales by Department</div><div class="dash-card-scroll">';
-  DEPARTMENTS.forEach(function(d){
-    var ds=deptSales[d.name]||{dollars:0,units:0};
-    var pct=maxDept?Math.round(ds.dollars/maxDept*100):0;
-    h+='<div style="margin-bottom:6px;"><div class="dash-card-row" style="border:none;padding:0;font-size:11px;"><span>'+d.name+'</span><span class="dash-card-val" style="font-size:11px;">'+fmt(ds.dollars)+'</span></div><div class="dash-dept-bar"><div class="dash-dept-fill" style="width:'+pct+'%;"></div></div></div>';
-  });
-  h+='</div></div>';
-  // Sales by Salesperson
-  h+='<div class="dash-card h-clerk"><div class="dash-card-title">Sales by Salesperson</div><div class="dash-card-scroll">';
-  var clerks=Object.keys(clerkSales);
-  if(clerks.length){
-    clerks.sort(function(a,b){return clerkSales[b].dollars-clerkSales[a].dollars;});
-    h+='<table style="width:100%;font-size:11px;border-collapse:collapse;">';
-    h+='<thead><tr style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;"><td>Name</td><td style="text-align:right;">Sales</td><td style="text-align:right;">Inv</td><td style="text-align:right;">Comm</td></tr></thead><tbody>';
-    clerks.forEach(function(c){var cs=clerkSales[c];h+='<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:3px 0;font-weight:600;">'+c+'</td><td style="padding:3px 0;text-align:right;">'+fmt(cs.dollars)+'</td><td style="padding:3px 0;text-align:right;">'+cs.count+'</td><td style="padding:3px 0;text-align:right;color:#16a34a;">'+fmt(cs.commission)+'</td></tr>';});
-    h+='</tbody></table>';
-  } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No sales yet today</div>';
-  h+='</div></div>';
-  h+='</div>'; // end sub-row
+  // ── RIGHT: Time Clock + Deliveries + Alerts stacked ──
+  h+='<div style="display:flex;flex-direction:column;gap:14px;">';
 
-  h+='</div>'; // end left column
-
-  // ── RIGHT COLUMN (40%) ──
-  h+='<div>';
-
-  // Time Clock (fixed height)
-  h+='<div class="dash-card h-timeclock" style="margin-bottom:14px;"><div class="dash-card-title">Time Clock</div><div class="dash-card-scroll">';
+  // Time Clock
+  h+='<div class="dash-card h-timeclock"><div class="dash-card-title">Time Clock</div><div class="dash-card-scroll">';
   if(clockedIn.length){
     h+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Clocked In</div>';
     clockedIn.forEach(function(p){var mins=Math.floor((Date.now()-new Date(p.clockIn).getTime())/60000);var hr=Math.floor(mins/60),mn=mins%60;
@@ -399,7 +372,7 @@ function renderDashboard(){
   h+='</div></div>';
 
   // Today's Deliveries
-  h+='<div class="dash-card h-deliveries" style="margin-bottom:14px;"><div class="dash-card-title">Today\'s Deliveries ('+todayDel.length+')</div><div class="dash-card-scroll">';
+  h+='<div class="dash-card h-deliveries"><div class="dash-card-title">Today\'s Deliveries ('+todayDel.length+')</div><div class="dash-card-scroll">';
   if(todayDel.length){
     todayDel.forEach(function(d){
       var sc=d.status==='Delivered'?'dash-sb-del':d.status==='Out for Delivery'?'dash-sb-out':'dash-sb-sched';
@@ -410,7 +383,7 @@ function renderDashboard(){
   h+='</div></div>';
 
   // Service Alerts
-  h+='<div class="dash-card h-alerts" style="margin-bottom:14px;"><div class="dash-card-title">Service Alerts ('+svcAlerts.length+')</div><div class="dash-card-scroll">';
+  h+='<div class="dash-card h-alerts"><div class="dash-card-title">Service Alerts ('+svcAlerts.length+')</div><div class="dash-card-scroll">';
   if(svcAlerts.length){
     svcAlerts.forEach(function(j){
       var dotColor=j.status==='Needs Claimed'?'#eab308':j.status==='Service Complete'?'#16a34a':'#ea580c';
@@ -420,8 +393,29 @@ function renderDashboard(){
   if(partsWaiting.length)h+='<div style="margin-top:6px;padding:5px 8px;background:#fef2f2;border-radius:6px;font-size:10px;color:#dc2626;font-weight:600;">&#9888; '+partsWaiting.length+' part(s) waiting 7+ days</div>';
   h+='</div></div>';
 
-  h+='</div>'; // end right column
+  h+='</div>'; // end right stack
   h+='</div>'; // end dash-layout
+
+  // ═══ ROW 2: Sales by Dept + Salesperson (side by side) ═══
+  h+='<div class="dash-sub-row" style="margin-bottom:14px;">';
+  h+='<div class="dash-card h-dept"><div class="dash-card-title">Sales by Department</div><div class="dash-card-scroll">';
+  DEPARTMENTS.forEach(function(d){
+    var ds2=deptSales[d.name]||{dollars:0,units:0};
+    var pct=maxDept?Math.round(ds2.dollars/maxDept*100):0;
+    h+='<div style="margin-bottom:6px;"><div class="dash-card-row" style="border:none;padding:0;font-size:11px;"><span>'+d.name+'</span><span class="dash-card-val" style="font-size:11px;">'+fmt(ds2.dollars)+'</span></div><div class="dash-dept-bar"><div class="dash-dept-fill" style="width:'+pct+'%;"></div></div></div>';
+  });
+  h+='</div></div>';
+  h+='<div class="dash-card h-clerk"><div class="dash-card-title">Sales by Salesperson</div><div class="dash-card-scroll">';
+  var clerks=Object.keys(clerkSales);
+  if(clerks.length){
+    clerks.sort(function(a,b){return clerkSales[b].dollars-clerkSales[a].dollars;});
+    h+='<table style="width:100%;font-size:11px;border-collapse:collapse;">';
+    h+='<thead><tr style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;"><td>Name</td><td style="text-align:right;">Sales</td><td style="text-align:right;">Inv</td><td style="text-align:right;">Comm</td></tr></thead><tbody>';
+    clerks.forEach(function(c){var cs=clerkSales[c];h+='<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:3px 0;font-weight:600;">'+c+'</td><td style="padding:3px 0;text-align:right;">'+fmt(cs.dollars)+'</td><td style="padding:3px 0;text-align:right;">'+cs.count+'</td><td style="padding:3px 0;text-align:right;color:#16a34a;">'+fmt(cs.commission)+'</td></tr>';});
+    h+='</tbody></table>';
+  } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No sales yet today</div>';
+  h+='</div></div>';
+  h+='</div>'; // end sub-row
 
   // ═══ Monthly Sales Summary (full width below grid) ═══
   h+='<div class="dash-card" style="margin-bottom:12px;"><div class="dash-card-title">Monthly Sales — '+monthName+' '+curYear+'</div>';

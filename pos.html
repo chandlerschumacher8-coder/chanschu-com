@@ -993,11 +993,12 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .dash-kpi-cmp.down{color:#dc2626;}
 .dash-kpi-cmp.flat{color:#9ca3af;}
 .dash-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-.dash-layout{display:grid;grid-template-columns:60fr 40fr;gap:14px;margin-bottom:14px;align-items:start;}
+.dash-layout{display:grid;grid-template-columns:60fr 40fr;gap:14px;margin-bottom:14px;align-items:stretch;}
 @media(max-width:1200px){.dash-layout{grid-template-columns:1fr;}}
-.dash-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;}
-.dash-card-scroll{overflow-y:auto;}
-.dash-card.h-invoices .dash-card-scroll{max-height:300px;}
+.dash-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;}
+.dash-card-scroll{overflow-y:auto;flex:1;}
+.dash-card.h-invoices{display:flex;flex-direction:column;}
+.dash-card.h-invoices .dash-card-scroll{flex:1;overflow-y:auto;}
 .dash-card.h-timeclock .dash-card-scroll{max-height:220px;}
 .dash-card.h-deliveries .dash-card-scroll{max-height:300px;}
 .dash-card.h-alerts .dash-card-scroll{max-height:300px;}
