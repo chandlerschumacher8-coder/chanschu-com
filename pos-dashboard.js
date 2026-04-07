@@ -334,113 +334,112 @@ function renderDashboard(){
 
   var h='<div class="dash-hdr"><div><div class="dash-title">Dashboard</div><div class="dash-date">'+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'</div></div><div class="dash-refresh">Auto-refreshes every 60s</div></div>';
 
-  // ═══ ROW 1: Today's Invoices + Time Clock ═══
-  h+='<div class="dash-row">';
+  // ═══ TWO-COLUMN FIXED LAYOUT ═══
+  h+='<div class="dash-layout">';
 
-  // Left: Today's Invoices
-  h+='<div class="dash-card"><div class="dash-card-title">Today\'s Invoices ('+todayOrders.length+')</div>';
+  // ── LEFT COLUMN (60%) ──
+  h+='<div>';
+
+  // Today's Invoices
+  h+='<div class="dash-card h-invoices" style="margin-bottom:14px;"><div class="dash-card-title">Today\'s Invoices ('+todayOrders.length+')</div>';
+  h+='<div class="dash-card-scroll">';
   if(todayOrders.length){
-    h+='<div style="max-height:300px;overflow-y:auto;">';
     todayOrders.forEach(function(o){
       h+='<div class="dash-card-row"><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:11px;">'+o.id+'</div><div style="font-size:10px;color:#6b7280;">'+o.customer+' &middot; '+(o.clerk||'—')+' &middot; '+(o.payment||'')+'</div></div><span class="dash-card-val">'+fmt(o.total)+'</span></div>';
     });
-    h+='</div>';
-    h+='<div style="margin-top:8px;padding:8px 0;border-top:2px solid #e5e7eb;display:flex;justify-content:space-between;font-weight:700;font-size:13px;color:#1f2937;"><span>'+todayOrders.length+' invoices</span><span>'+fmt(totalSales)+'</span></div>';
   } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No invoices yet today</div>';
   h+='</div>';
+  if(todayOrders.length)h+='<div style="margin-top:8px;padding:8px 0;border-top:2px solid #e5e7eb;display:flex;justify-content:space-between;font-weight:700;font-size:13px;color:#1f2937;"><span>'+todayOrders.length+' invoices</span><span>'+fmt(totalSales)+'</span></div>';
+  h+='</div>';
 
-  // Right: Time Clock
-  h+='<div class="dash-card"><div class="dash-card-title">Time Clock</div>';
+  // Sales by Department + Sales by Salesperson side by side
+  h+='<div class="dash-sub-row">';
+  // Sales by Department
+  h+='<div class="dash-card h-dept"><div class="dash-card-title">Sales by Department</div><div class="dash-card-scroll">';
+  DEPARTMENTS.forEach(function(d){
+    var ds=deptSales[d.name]||{dollars:0,units:0};
+    var pct=maxDept?Math.round(ds.dollars/maxDept*100):0;
+    h+='<div style="margin-bottom:6px;"><div class="dash-card-row" style="border:none;padding:0;font-size:11px;"><span>'+d.name+'</span><span class="dash-card-val" style="font-size:11px;">'+fmt(ds.dollars)+'</span></div><div class="dash-dept-bar"><div class="dash-dept-fill" style="width:'+pct+'%;"></div></div></div>';
+  });
+  h+='</div></div>';
+  // Sales by Salesperson
+  h+='<div class="dash-card h-clerk"><div class="dash-card-title">Sales by Salesperson</div><div class="dash-card-scroll">';
+  var clerks=Object.keys(clerkSales);
+  if(clerks.length){
+    clerks.sort(function(a,b){return clerkSales[b].dollars-clerkSales[a].dollars;});
+    h+='<table style="width:100%;font-size:11px;border-collapse:collapse;">';
+    h+='<thead><tr style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;"><td>Name</td><td style="text-align:right;">Sales</td><td style="text-align:right;">Inv</td><td style="text-align:right;">Comm</td></tr></thead><tbody>';
+    clerks.forEach(function(c){var cs=clerkSales[c];h+='<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:3px 0;font-weight:600;">'+c+'</td><td style="padding:3px 0;text-align:right;">'+fmt(cs.dollars)+'</td><td style="padding:3px 0;text-align:right;">'+cs.count+'</td><td style="padding:3px 0;text-align:right;color:#16a34a;">'+fmt(cs.commission)+'</td></tr>';});
+    h+='</tbody></table>';
+  } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No sales yet today</div>';
+  h+='</div></div>';
+  h+='</div>'; // end sub-row
+
+  h+='</div>'; // end left column
+
+  // ── RIGHT COLUMN (40%) ──
+  h+='<div>';
+
+  // Time Clock (fixed height)
+  h+='<div class="dash-card h-timeclock" style="margin-bottom:14px;"><div class="dash-card-title">Time Clock</div><div class="dash-card-scroll">';
   if(clockedIn.length){
-    h+='<div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Currently Clocked In</div>';
-    clockedIn.forEach(function(p){var mins=Math.floor((Date.now()-new Date(p.clockIn).getTime())/60000);var hr=Math.floor(mins/60),mn=mins%60;h+='<div class="dash-card-row"><span>'+p.employee+(p.type==='break'?' <span style="color:#ea580c;font-size:9px;">(BREAK)</span>':'')+'</span><span class="dash-card-val'+(hr>=8?' style="color:#dc2626;"':'')+'>'+hr+'h '+mn+'m</span></div>';});
-  } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No one clocked in</div>';
+    h+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Clocked In</div>';
+    clockedIn.forEach(function(p){var mins=Math.floor((Date.now()-new Date(p.clockIn).getTime())/60000);var hr=Math.floor(mins/60),mn=mins%60;
+      h+='<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;border-bottom:1px solid #f3f4f6;"><span>'+p.employee+(p.type==='break'?' <span style="color:#ea580c;font-size:9px;">(BRK)</span>':'')+'</span><span style="font-weight:700;'+(hr>=8?'color:#dc2626;':'')+'">'+hr+'h '+mn+'m</span></div>';});
+  } else h+='<div style="color:#9ca3af;font-size:12px;padding:6px 0;">No one clocked in</div>';
   if(todayPunches.length){
-    h+='<div style="margin-top:10px;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Today\'s Punches</div>';
-    h+='<div style="max-height:180px;overflow-y:auto;">';
+    h+='<div style="margin-top:8px;font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Today</div>';
     todayPunches.forEach(function(p){
       var inT=new Date(p.clockIn).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
       var outT=p.clockOut?new Date(p.clockOut).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}):'—';
-      var hrs=p.clockOut?p.hours.toFixed(2)+'h':'active';
-      var typ=p.type==='break'?' (break)':'';
-      h+='<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6;font-size:11px;color:#374151;"><span>'+p.employee+typ+'</span><span style="color:#6b7280;">'+inT+' — '+outT+'</span><span style="font-weight:600;">'+hrs+'</span></div>';
+      var hrs=p.clockOut?p.hours.toFixed(1)+'h':'active';
+      h+='<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #f3f4f6;font-size:10px;color:#374151;"><span>'+p.employee+'</span><span style="color:#6b7280;">'+inT+'–'+outT+'</span><span style="font-weight:600;">'+hrs+'</span></div>';
     });
-    h+='</div>';
   }
-  var hrKeys=Object.keys(todayHours);
-  if(hrKeys.length){h+='<div style="margin-top:8px;padding-top:6px;border-top:1px solid #e5e7eb;font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Hours Today</div>';hrKeys.forEach(function(e){var hr=Math.round(todayHours[e]*100)/100;h+='<div class="dash-card-row"><span>'+e+'</span><span class="dash-card-val'+(hr>8?' style="color:#dc2626;"':'')+'>'+hr.toFixed(1)+'h</span></div>';});}
   h+='</div></div>';
 
-  // ═══ ROW 2: Today's Deliveries + Service Alerts ═══
-  h+='<div class="dash-row">';
-
-  // Left: Today's Deliveries
-  h+='<div class="dash-card"><div class="dash-card-title">Today\'s Deliveries ('+todayDel.length+')</div>';
+  // Today's Deliveries
+  h+='<div class="dash-card h-deliveries" style="margin-bottom:14px;"><div class="dash-card-title">Today\'s Deliveries ('+todayDel.length+')</div><div class="dash-card-scroll">';
   if(todayDel.length){
-    h+='<div style="max-height:300px;overflow-y:auto;">';
     todayDel.forEach(function(d){
       var sc=d.status==='Delivered'?'dash-sb-del':d.status==='Out for Delivery'?'dash-sb-out':'dash-sb-sched';
       var apps=(d.appliances&&d.appliances.length)?d.appliances.map(function(a){return a.a;}).join(', '):(d.appliance||'');
-      h+='<div class="dash-card-row"><div style="flex:1;min-width:0;"><div style="font-weight:600;">'+d.name+'</div><div style="font-size:10px;color:#6b7280;">'+(d.address||'')+', '+(d.city||'')+'</div><div style="font-size:10px;color:#6b7280;">'+d.time+' &middot; '+apps+' &middot; '+(d.team||'')+'</div></div><span class="dash-card-badge '+sc+'">'+d.status+'</span></div>';
+      h+='<div class="dash-card-row"><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:11px;">'+d.name+'</div><div style="font-size:10px;color:#6b7280;">'+d.time+' &middot; '+apps+'</div></div><span class="dash-card-badge '+sc+'">'+d.status+'</span></div>';
     });
-    h+='</div>';
   } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No deliveries scheduled</div>';
-  h+='</div>';
+  h+='</div></div>';
 
-  // Right: Service Alerts
-  h+='<div class="dash-card"><div class="dash-card-title">Service Alerts ('+svcAlerts.length+')</div>';
+  // Service Alerts
+  h+='<div class="dash-card h-alerts" style="margin-bottom:14px;"><div class="dash-card-title">Service Alerts ('+svcAlerts.length+')</div><div class="dash-card-scroll">';
   if(svcAlerts.length){
-    h+='<div style="max-height:260px;overflow-y:auto;">';
     svcAlerts.forEach(function(j){
       var dotColor=j.status==='Needs Claimed'?'#eab308':j.status==='Service Complete'?'#16a34a':'#ea580c';
       h+='<div class="dash-alert-item"><div class="dash-alert-dot" style="background:'+dotColor+';"></div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:11px;">'+j.name+'</div><div style="font-size:10px;color:#6b7280;">'+j.status+' &middot; '+(j.appliance||'')+'</div></div></div>';
     });
-    h+='</div>';
   } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No alerts</div>';
-  if(partsWaiting.length)h+='<div style="margin-top:8px;padding:6px 8px;background:#fef2f2;border-radius:6px;font-size:11px;color:#dc2626;font-weight:600;">&#9888; '+partsWaiting.length+' part(s) on order waiting 7+ days</div>';
+  if(partsWaiting.length)h+='<div style="margin-top:6px;padding:5px 8px;background:#fef2f2;border-radius:6px;font-size:10px;color:#dc2626;font-weight:600;">&#9888; '+partsWaiting.length+' part(s) waiting 7+ days</div>';
   h+='</div></div>';
 
-  // ═══ ROW 3: Sales by Department + Sales by Salesperson ═══
-  h+='<div class="dash-row">';
+  h+='</div>'; // end right column
+  h+='</div>'; // end dash-layout
 
-  // Left: Sales by Department
-  h+='<div class="dash-card"><div class="dash-card-title">Sales by Department</div>';
-  DEPARTMENTS.forEach(function(d){
-    var ds=deptSales[d.name]||{dollars:0,units:0};
-    var pct=maxDept?Math.round(ds.dollars/maxDept*100):0;
-    h+='<div style="margin-bottom:8px;"><div class="dash-card-row" style="border:none;padding:0;"><span>'+d.name+'</span><span class="dash-card-val">'+fmt(ds.dollars)+' <span style="font-weight:400;color:#6b7280;font-size:10px;">'+ds.units+' units</span></span></div><div class="dash-dept-bar"><div class="dash-dept-fill" style="width:'+pct+'%;"></div></div></div>';
-  });
+  // ═══ Monthly Sales Summary (full width below grid) ═══
+  h+='<div class="dash-card" style="margin-bottom:12px;"><div class="dash-card-title">Monthly Sales — '+monthName+' '+curYear+'</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;">';
+  h+='<div style="text-align:center;padding:12px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">';
+  h+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:3px;">This Month</div>';
+  h+='<div style="font-family:\'Playfair Display\',serif;font-size:22px;color:#1f2937;">'+fmt(monthSales)+'</div>';
+  h+='<div style="font-size:10px;color:#6b7280;">'+monthOrders.length+' inv</div>';
   h+='</div>';
-
-  // Right: Sales by Salesperson
-  h+='<div class="dash-card"><div class="dash-card-title">Sales by Salesperson</div>';
-  var clerks=Object.keys(clerkSales);
-  if(clerks.length){
-    clerks.sort(function(a,b){return clerkSales[b].dollars-clerkSales[a].dollars;});
-    h+='<table style="width:100%;font-size:12px;border-collapse:collapse;">';
-    h+='<thead><tr style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;"><td>Name</td><td style="text-align:right;">Sales</td><td style="text-align:right;">Inv</td><td style="text-align:right;">Commission</td></tr></thead><tbody>';
-    clerks.forEach(function(c){var cs=clerkSales[c];h+='<tr style="border-bottom:1px solid #f3f4f6;"><td style="padding:4px 0;font-weight:600;">'+c+'</td><td style="padding:4px 0;text-align:right;">'+fmt(cs.dollars)+'</td><td style="padding:4px 0;text-align:right;">'+cs.count+'</td><td style="padding:4px 0;text-align:right;color:#16a34a;">'+fmt(cs.commission)+'</td></tr>';});
-    h+='</tbody></table>';
-  } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No sales yet today</div>';
-  h+='</div></div>';
-
-  // ═══ ROW 4: Monthly Sales Summary (full width) ═══
-  h+='<div class="dash-card" style="margin-bottom:12px;"><div class="dash-card-title">Monthly Sales Summary — '+monthName+' '+curYear+'</div>';
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">';
-  h+='<div style="text-align:center;padding:14px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">';
-  h+='<div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">This Month To Date</div>';
-  h+='<div style="font-family:\'Playfair Display\',serif;font-size:26px;color:#1f2937;">'+fmt(monthSales)+'</div>';
-  h+='<div style="font-size:11px;color:#6b7280;margin-top:2px;">'+monthOrders.length+' invoices</div>';
+  h+='<div style="text-align:center;padding:12px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">';
+  h+='<div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase;margin-bottom:3px;">'+monthName+' '+(curYear-1)+'</div>';
+  h+='<div style="font-family:\'Playfair Display\',serif;font-size:22px;color:#1f2937;">'+fmt(lastYearSales)+'</div>';
+  h+='<div style="font-size:10px;color:#6b7280;">'+lastYearOrders.length+' inv</div>';
   h+='</div>';
-  h+='<div style="text-align:center;padding:14px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">';
-  h+='<div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">'+monthName+' '+(curYear-1)+'</div>';
-  h+='<div style="font-family:\'Playfair Display\',serif;font-size:26px;color:#1f2937;">'+fmt(lastYearSales)+'</div>';
-  h+='<div style="font-size:11px;color:#6b7280;margin-top:2px;">'+lastYearOrders.length+' invoices</div>';
-  h+='</div></div>';
-  h+='<div style="margin-top:12px;text-align:center;padding:10px;background:'+(monthDiff>=0?'#f0fdf4':'#fef2f2')+';border-radius:8px;border:1px solid '+(monthDiff>=0?'#bbf7d0':'#fecaca')+';">';
-  h+='<span style="font-size:14px;font-weight:700;color:'+(monthDiff>=0?'#16a34a':'#dc2626')+';">'+(monthDiff>=0?'&#9650; +':'&#9660; ')+fmt(Math.abs(monthDiff))+'</span>';
-  h+=' <span style="font-size:12px;color:'+(monthDiff>=0?'#16a34a':'#dc2626')+';">('+( monthDiff>=0?'+':'')+monthPctChange+'% vs last year)</span>';
-  h+='</div></div>';
+  h+='<div style="text-align:center;padding:12px;background:'+(monthDiff>=0?'#f0fdf4':'#fef2f2')+';border-radius:8px;border:1px solid '+(monthDiff>=0?'#bbf7d0':'#fecaca')+';display:flex;flex-direction:column;justify-content:center;">';
+  h+='<div style="font-size:16px;font-weight:700;color:'+(monthDiff>=0?'#16a34a':'#dc2626')+';">'+(monthDiff>=0?'&#9650; +':'&#9660; ')+fmt(Math.abs(monthDiff))+'</div>';
+  h+='<div style="font-size:10px;color:'+(monthDiff>=0?'#16a34a':'#dc2626')+';">'+( monthDiff>=0?'+':'')+monthPctChange+'% vs last year</div>';
+  h+='</div></div></div>';
 
   document.getElementById('dash-wrap').innerHTML=h;
 }
