@@ -745,14 +745,19 @@ async function orderRecordPayment(id){
   if(!amt)return;amt=parseFloat(amt);if(isNaN(amt)||amt<=0){toast('Invalid amount','error');return;}
   var method=prompt('Payment method (Cash, Check, Card, Financing):','Check')||'Check';
   if(!o.payments)o.payments=[];
-  o.payments.push({date:new Date().toISOString(),amount:amt,method:method.trim(),recordedBy:currentEmployee?currentEmployee.name:'Admin'});
+  var paymentEntry={date:new Date().toISOString(),amount:amt,method:method.trim(),recordedBy:currentEmployee?currentEmployee.name:'Admin'};
+  o.payments.push(paymentEntry);
+  console.log('[Payment] Recording:', {invoiceId:o.id,amount:amt,method:method.trim(),totalPayments:o.payments.length});
   // Also add to customer record for ledger
   var c=customers.find(function(x){return x.name===o.customer;});
   if(c){if(!c.payments)c.payments=[];c.payments.push({date:new Date().toISOString(),amount:amt,method:method.trim(),invoice:o.id,recordedBy:currentEmployee?currentEmployee.name:'Admin'});saveCustomers();}
   // Check if paid in full
   var newPaid=paid+amt;
   if(newPaid>=o.total-0.01)o.status='Paid in Full';
-  await saveOrders();renderOrderDetail();renderOrders();
+  console.log('[Payment] Order status:',o.status,'paid:',newPaid,'of',o.total);
+  await saveOrders();
+  console.log('[Payment] Save complete — order has',o.payments.length,'payment(s)');
+  renderOrderDetail();renderOrders();
   toast('Payment of '+fmt(amt)+' recorded','success');
 }
 

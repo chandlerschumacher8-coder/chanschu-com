@@ -30,6 +30,8 @@ export default async function handler(req, res) {
               city: c.city || null, state: c.state || null, zip: c.zip || null,
               notes: c.notes || null, email_opt_out: c.emailOptOut || false,
               appliance_history: c.applianceHistory || [],
+              payments: c.payments || [], adjustments: c.adjustments || [],
+              refunds: c.refunds || [], ledger_notes: c.ledgerNotes || [],
             }));
             const { error } = await sb.from('customers').insert(batch);
             if (error) throw new Error(error.message);
@@ -90,6 +92,7 @@ export default async function handler(req, res) {
             clerk: o.clerk || null, po: o.po || null, job: o.job || null,
             notes: o.notes || null, address: o.address || null,
             delivery_date: o.deliveryDate || null, delivery_time: o.deliveryTime || null,
+            payments: o.payments || [],
           }).select('id').single();
           if (error) { console.error('Order insert error:', error.message); continue; }
           if (o.items && o.items.length) {

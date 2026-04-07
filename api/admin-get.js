@@ -26,6 +26,8 @@ export default async function handler(req, res) {
           name: c.name, phone: c.phone, email: c.email, address: c.address,
           city: c.city, state: c.state, zip: c.zip, customerNum: c.customer_num,
           notes: c.notes, emailOptOut: c.email_opt_out, applianceHistory: c.appliance_history || [],
+          payments: c.payments || [], adjustments: c.adjustments || [],
+          refunds: c.refunds || [], ledgerNotes: c.ledger_notes || [],
           _dbId: c.id,
         })) });
       }
@@ -83,6 +85,7 @@ export default async function handler(req, res) {
           soldTo: o.sold_to, shipTo: o.ship_to, clerk: o.clerk, po: o.po,
           job: o.job, notes: o.notes, address: o.address,
           deliveryDate: o.delivery_date, deliveryTime: o.delivery_time,
+          payments: o.payments || [],
           items: itemMap[o.id] || [],
           _dbId: o.id,
         }));

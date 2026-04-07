@@ -1,0 +1,17 @@
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payments JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS payments JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS adjustments JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS refunds JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS ledger_notes JSONB DEFAULT '[]'::jsonb;
+CREATE TABLE IF NOT EXISTS order_payments (
+  id BIGSERIAL PRIMARY KEY,
+  store_id INTEGER NOT NULL DEFAULT 1,
+  order_id TEXT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  method TEXT NOT NULL,
+  reference TEXT,
+  date DATE NOT NULL,
+  recorded_by TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE order_payments DISABLE ROW LEVEL SECURITY;
