@@ -17,6 +17,8 @@ export default async function handler(req, res) {
       const store_id = session.store_id || 1;
       const sb = getSupabase();
 
+      // ── Structured tables ──
+
       if (key === 'customers') {
         const customers = Array.isArray(data) ? data : [];
         await sb.from('customers').delete().eq('store_id', store_id);
@@ -36,9 +38,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      if (key === 'inventory') {
+      if (key === 'products') {
         const products = Array.isArray(data) ? data : [];
-        // Delete serial pools first (foreign key), then products
         await sb.from('serial_pool').delete().eq('store_id', store_id);
         await sb.from('products').delete().eq('store_id', store_id);
         if (products.length) {
@@ -56,7 +57,6 @@ export default async function handler(req, res) {
             }));
             const { data: inserted, error } = await sb.from('products').insert(rows).select('id');
             if (error) throw new Error(error.message);
-            // Insert serial pools
             for (let j = 0; j < batch.length; j++) {
               const p = batch[j];
               const dbId = inserted[j]?.id;
@@ -76,7 +76,6 @@ export default async function handler(req, res) {
       if (key === 'orders') {
         const orderData = data || {};
         const orders = orderData.orders || [];
-        // Delete items first (foreign key), then orders
         await sb.from('order_items').delete().eq('store_id', store_id);
         await sb.from('orders').delete().eq('store_id', store_id);
         for (const o of orders) {
@@ -108,13 +107,12 @@ export default async function handler(req, res) {
             await sb.from('order_items').insert(itemRows);
           }
         }
-        // Update counters
         await sb.from('counters').upsert({ store_id, key: 'next_order_id', value: orderData.nextOrderId || orders.length + 1 }, { onConflict: 'store_id,key' });
         await sb.from('counters').upsert({ store_id, key: 'next_quote_id', value: orderData.nextQuoteId || 1 }, { onConflict: 'store_id,key' });
         return res.status(200).json({ ok: true });
       }
 
-      if (key === 'brands') {
+      if (key === 'admin-brands') {
         const brands = Array.isArray(data) ? data : [];
         await sb.from('brands').delete().eq('store_id', store_id);
         if (brands.length) {
@@ -125,7 +123,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      if (key === 'vendors') {
+      if (key === 'admin-vendors') {
         const vendors = Array.isArray(data) ? data : [];
         await sb.from('vendors').delete().eq('store_id', store_id);
         if (vendors.length) {
@@ -140,19 +138,26 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      if (key === 'departments') {
-        const depts = Array.isArray(data) ? data : [];
+      if (key === 'admin-categories') {
+        // Incoming: flat array of {name, dept}
+        const cats = Array.isArray(data) ? data : [];
         await sb.from('categories').delete().eq('store_id', store_id);
         await sb.from('departments').delete().eq('store_id', store_id);
-        for (const dept of depts) {
-          const { data: inserted, error } = await sb.from('departments').insert({ store_id, name: dept.name || 'Unknown' }).select('id').single();
-          if (error) continue;
-          if (dept.cats && Array.isArray(dept.cats) && dept.cats.length) {
-            const catRows = dept.cats.map(c => ({
-              store_id, department_id: inserted.id,
-              name: typeof c === 'string' ? c : c.name || 'Unknown',
-            }));
-            await sb.from('categories').insert(catRows);
+        // Group by dept
+        const deptMap = {};
+        cats.forEach(c => {
+          const d = c.dept || 'Uncategorized';
+          if (!deptMap[d]) deptMap[d] = [];
+          deptMap[d].push(c.name || 'Unknown');
+        });
+        for (const [deptName, catNames] of Object.entries(deptMap)) {
+          const { data: deptRow, error: dErr } = await sb.from('departments')
+            .insert({ store_id, name: deptName }).select('id').single();
+          if (dErr) { console.error('Dept insert:', dErr.message); continue; }
+          if (catNames.length) {
+            const catRows = catNames.map(n => ({ store_id, department_id: deptRow.id, name: n }));
+            const { error: cErr } = await sb.from('categories').insert(catRows);
+            if (cErr) console.error('Cat insert:', cErr.message);
           }
         }
         return res.status(200).json({ ok: true });
@@ -176,7 +181,39 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true });
       }
 
-      // Unknown key — store as-is in a generic way (fall through to Redis for now)
+      if (key === 'stores') {
+        // Update the stores table row
+        const storeArr = Array.isArray(data) ? data : [data];
+        const s = storeArr[0];
+        if (s) {
+          const { error } = await sb.from('stores').update({
+            name: s.store_name || s.name || undefined,
+            subdomain: s.subdomain || undefined,
+            address: s.address || null, city: s.city || null,
+            state: s.state || null, zip: s.zip || null,
+            phone: s.phone || null, email: s.email || null,
+            logo_url: s.logo_url || null, primary_color: s.primary_color || null,
+            tagline: s.tagline || null, tax_county: s.tax_county || null,
+            tax_rate: s.tax_rate || null, store_hours: s.store_hours || null,
+            invoice_message: s.invoice_message || null, delivery_terms: s.delivery_terms || null,
+            rent_amount: s.rent_amount || null, landlord_name: s.landlord_name || null,
+            credit_card_names: s.credit_card_names || null, bank_names: s.bank_names || null,
+          }).eq('id', store_id);
+          if (error) throw new Error(error.message);
+        }
+        return res.status(200).json({ ok: true });
+      }
+
+      // ── Generic config keys → store_config table ──
+      // Handles: admin-commissions, admin-tax-zones, pos-settings,
+      // hot-buttons, commission-rates, quotes, merge-history,
+      // data-clear-log, sales-import-history, serial-import-history, etc.
+      const { error: upsertErr } = await sb.from('store_config').upsert(
+        { store_id, key, data },
+        { onConflict: 'store_id,key' }
+      );
+      if (upsertErr) throw new Error(upsertErr.message);
+      return res.status(200).json({ ok: true });
     }
 
     // Redis fallback

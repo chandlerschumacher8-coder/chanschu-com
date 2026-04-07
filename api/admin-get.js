@@ -4,17 +4,6 @@ import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { getSupabase, useSupabase } from './_supabase.js';
 const redis = Redis.fromEnv();
 
-// Map POS keys to Supabase tables
-const KEY_TABLE_MAP = {
-  customers: 'customers',
-  inventory: 'products',
-  orders: 'orders',
-  brands: 'brands',
-  vendors: 'vendors',
-  departments: 'departments',
-  'timeclock-punches': 'time_clock',
-};
-
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
   res.setHeader('Cache-Control', 'no-store');
@@ -27,7 +16,8 @@ export default async function handler(req, res) {
     if (useSupabase()) {
       const store_id = session.store_id || 1;
       const sb = getSupabase();
-      const table = KEY_TABLE_MAP[key];
+
+      // ── Structured tables ──
 
       if (key === 'customers') {
         const { data, error } = await sb.from('customers').select('*').eq('store_id', store_id).order('name');
@@ -40,10 +30,9 @@ export default async function handler(req, res) {
         })) });
       }
 
-      if (key === 'inventory') {
+      if (key === 'products') {
         const { data, error } = await sb.from('products').select('*').eq('store_id', store_id).order('name');
         if (error) throw new Error(error.message);
-        // Also fetch serial pools
         const productIds = (data || []).map(p => p.id);
         let serialMap = {};
         if (productIds.length) {
@@ -67,7 +56,6 @@ export default async function handler(req, res) {
       if (key === 'orders') {
         const { data: orderRows, error } = await sb.from('orders').select('*').eq('store_id', store_id).order('date', { ascending: false });
         if (error) throw new Error(error.message);
-        // Fetch all items for these orders
         const orderDbIds = (orderRows || []).map(o => o.id);
         let itemMap = {};
         if (orderDbIds.length) {
@@ -85,11 +73,9 @@ export default async function handler(req, res) {
             });
           });
         }
-        // Get counters
         const { data: counters } = await sb.from('counters').select('key, value').eq('store_id', store_id).in('key', ['next_order_id', 'next_quote_id']);
         const counterMap = {};
         (counters || []).forEach(c => { counterMap[c.key] = c.value; });
-
         const orders = (orderRows || []).map(o => ({
           id: o.order_id, customer: o.customer, subtotal: o.subtotal, tax: o.tax,
           total: o.total, taxZone: o.tax_zone, payment: o.payment, status: o.status,
@@ -107,13 +93,13 @@ export default async function handler(req, res) {
         }});
       }
 
-      if (key === 'brands') {
+      if (key === 'admin-brands') {
         const { data, error } = await sb.from('brands').select('*').eq('store_id', store_id).order('name');
         if (error) throw new Error(error.message);
         return res.status(200).json({ ok: true, data: (data || []).map(b => b.name) });
       }
 
-      if (key === 'vendors') {
+      if (key === 'admin-vendors') {
         const { data, error } = await sb.from('vendors').select('*').eq('store_id', store_id).order('name');
         if (error) throw new Error(error.message);
         return res.status(200).json({ ok: true, data: (data || []).map(v => ({
@@ -122,18 +108,13 @@ export default async function handler(req, res) {
         })) });
       }
 
-      if (key === 'departments') {
-        const { data: depts, error } = await sb.from('departments').select('*').eq('store_id', store_id).order('name');
+      if (key === 'admin-categories') {
+        // Return flat array of {name, dept} for frontend
+        const { data: cats, error } = await sb.from('categories').select('*, departments(name)').eq('store_id', store_id);
         if (error) throw new Error(error.message);
-        // Fetch categories grouped by department
-        const { data: cats } = await sb.from('categories').select('*').eq('store_id', store_id);
-        const catMap = {};
-        (cats || []).forEach(c => {
-          if (!catMap[c.department_id]) catMap[c.department_id] = [];
-          catMap[c.department_id].push(c.name);
-        });
-        return res.status(200).json({ ok: true, data: (depts || []).map(d => ({
-          name: d.name, cats: catMap[d.id] || [], _dbId: d.id,
+        return res.status(200).json({ ok: true, data: (cats || []).map(c => ({
+          name: c.name,
+          dept: c.departments ? c.departments.name : 'Uncategorized',
         })) });
       }
 
@@ -147,8 +128,36 @@ export default async function handler(req, res) {
         })) });
       }
 
-      // Unknown key — return null
-      return res.status(200).json({ ok: true, data: null });
+      if (key === 'stores') {
+        const { data, error } = await sb.from('stores').select('*').eq('id', store_id).single();
+        if (error && error.code !== 'PGRST116') throw new Error(error.message);
+        if (!data) return res.status(200).json({ ok: true, data: null });
+        return res.status(200).json({ ok: true, data: [{
+          store_id: data.id, store_name: data.name, subdomain: data.subdomain,
+          address: data.address, city: data.city, state: data.state, zip: data.zip,
+          phone: data.phone, email: data.email, logo_url: data.logo_url,
+          primary_color: data.primary_color, tagline: data.tagline,
+          tax_county: data.tax_county, tax_rate: data.tax_rate,
+          store_hours: data.store_hours, invoice_message: data.invoice_message,
+          delivery_terms: data.delivery_terms, rent_amount: data.rent_amount,
+          landlord_name: data.landlord_name, credit_card_names: data.credit_card_names,
+          bank_names: data.bank_names, subscription_tier: data.subscription_tier,
+          subscription_status: data.subscription_status,
+        }] });
+      }
+
+      // ── Generic config keys (store_config table) ──
+      // Handles: admin-commissions, admin-tax-zones, pos-settings,
+      // hot-buttons, commission-rates, quotes, merge-history,
+      // data-clear-log, sales-import-history, serial-import-history, etc.
+      const { data: cfg, error: cfgErr } = await sb
+        .from('store_config')
+        .select('data')
+        .eq('store_id', store_id)
+        .eq('key', key)
+        .single();
+      if (cfgErr && cfgErr.code !== 'PGRST116') throw new Error(cfgErr.message);
+      return res.status(200).json({ ok: true, data: cfg ? cfg.data : null });
     }
 
     // Redis fallback
