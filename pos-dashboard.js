@@ -382,17 +382,6 @@ function renderDashboard(){
   } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No deliveries scheduled</div>';
   h+='</div></div>';
 
-  // Service Alerts
-  h+='<div class="dash-card h-alerts"><div class="dash-card-title">Service Alerts ('+svcAlerts.length+')</div><div class="dash-card-scroll">';
-  if(svcAlerts.length){
-    svcAlerts.forEach(function(j){
-      var dotColor=j.status==='Needs Claimed'?'#eab308':j.status==='Service Complete'?'#16a34a':'#ea580c';
-      h+='<div class="dash-alert-item"><div class="dash-alert-dot" style="background:'+dotColor+';"></div><div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:11px;">'+j.name+'</div><div style="font-size:10px;color:#6b7280;">'+j.status+' &middot; '+(j.appliance||'')+'</div></div></div>';
-    });
-  } else h+='<div style="color:#9ca3af;font-size:12px;padding:8px 0;">No alerts</div>';
-  if(partsWaiting.length)h+='<div style="margin-top:6px;padding:5px 8px;background:#fef2f2;border-radius:6px;font-size:10px;color:#dc2626;font-weight:600;">&#9888; '+partsWaiting.length+' part(s) waiting 7+ days</div>';
-  h+='</div></div>';
-
   h+='</div>'; // end right stack
   h+='</div>'; // end dash-layout
 
