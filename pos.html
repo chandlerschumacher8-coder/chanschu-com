@@ -1595,6 +1595,10 @@ Store Settings
 <svg viewBox="0 0 24 24"><path d="M17 20.41L18.41 19 15 15.59 13.59 17 17 20.41zM7.5 8H11v5.59L5.59 19 7 20.41l6-6V8h3.5L12 3.5 7.5 8z"/></svg>
 Merge Tool
 </div>
+<div class="admin-menu-item" onclick="selectAdminSection('warranties')">
+<svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+Extended Warranty
+</div>
 <div class="admin-menu-item" onclick="selectAdminSection('possettings')">
 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.44.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
 POS Settings
@@ -1887,6 +1891,11 @@ POS Settings
 <button class="ghost-btn" id="mt-export-history" onclick="mtExportHistoryCSV()" style="display:none;">Export CSV</button>
 </div>
 <div id="mt-content"></div>
+</div>
+<div class="admin-panel" id="admin-panel-warranties">
+<div class="admin-content-title">Extended Warranty Tiers</div>
+<div class="admin-toolbar"><button class="admin-add-btn" onclick="wtyAddTier()">+ Add Tier</button></div>
+<div id="wty-tiers-list"></div>
 </div>
 <div class="admin-panel" id="admin-panel-possettings">
 <div class="admin-content-title">POS Settings</div>
@@ -5269,10 +5278,14 @@ function hbCatShortcut(catName){
 // hbAmtWithTax and hbTotalPlusTax removed — totals are always displayed in cart footer
 function cartQty(pid,delta){
   var ci=cart.find(function(x){return x.id===pid;});if(!ci)return;
-  ci.qty+=delta;if(ci.qty<=0)cart=cart.filter(function(x){return x.id!==pid;});
+  ci.qty+=delta;if(ci.qty<=0)cart=cart.filter(function(x){return x.id!==pid&&x._warrantyParentId!==pid;});
   renderCart();
 }
-function cartRemove(pid){cart=cart.filter(function(x){return x.id!==pid;});renderCart();}
+function cartRemove(pid){
+  // Also remove any linked warranty line item
+  cart=cart.filter(function(x){return x.id!==pid&&x._warrantyParentId!==pid;});
+  renderCart();
+}
 
 // ─── PRINT FROM CART (before checkout) ───
 function buildOrderFromCart(idOverride){
@@ -5627,7 +5640,8 @@ function renderCart(){
     var origStrike=adjusted?'<span style="text-decoration:line-through;color:#9ca3af;font-size:9px;margin-right:2px;">'+fmt(origPrice)+'</span>':'';
     var priceInp='<input type="number" step="0.01" min="0" value="'+c.price.toFixed(2)+'" data-cart-price="'+idx+'" onchange="cartCommitPrice('+idx+',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="width:68px;font-size:11px;font-weight:700;padding:2px 4px;border:1px solid '+(adjusted?'#93c5fd':'#d1d5db')+';border-radius:4px;text-align:right;background:'+(locked?'#f3f4f6':'#fff')+';color:'+(adjusted?'#1d4ed8':'#1f2937')+';outline:none;cursor:'+(locked?'not-allowed':'text')+';"'+(locked?' readonly onclick="toast(\'Price is locked — see manager\',\'error\')"':'')+'/>';
     var discInp='<input type="number" step="0.5" min="0" max="100" value="'+(disc||0)+'" data-cart-disc="'+idx+'" onchange="cartCommitDisc('+idx+',this)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="width:42px;font-size:11px;font-weight:700;padding:2px 4px;border:1px solid '+(disc>0?'#fca5a5':'#d1d5db')+';border-radius:4px;text-align:right;background:#fff;color:'+(disc>0?'#dc2626':'#1f2937')+';outline:none;"'+(locked?' readonly onclick="toast(\'Price is locked — see manager\',\'error\')"':'')+'/>%';
-    return '<div class="cart-item" style="flex-wrap:wrap;" id="ci-row-'+idx+'">'
+    var wtyIndent=c.isWarranty?'margin-left:24px;background:#f0fdf4;border-left:3px solid #86efac;':'';
+    return '<div class="cart-item" style="flex-wrap:wrap;'+wtyIndent+'" id="ci-row-'+idx+'">'
       +'<div class="ci-info"><div class="ci-name">'+c.name+pmBadge+adjBadge+lockIcon+'</div>'
       +'<div class="ci-price" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">Price: '+origStrike+priceInp+' <span style="color:#d1d5db;">&middot;</span> Disc: '+discInp+' <span style="color:#d1d5db;">&middot;</span> Qty: '+c.qty+(c.model?' <span style="color:#d1d5db;">&middot;</span> <a class="pc-link" style="font-size:10px;" onclick="event.stopPropagation();openProductCard('+c.id+',{readOnly:true,cartIdx:'+idx+'})">'+c.model+'</a>':'')+'</div>'
       +costWarn
@@ -5647,6 +5661,19 @@ function renderCart(){
         return '<button class="ci-serial" onclick="openSerialPool('+idx+')" style="cursor:pointer;background:#eff6ff;color:#2563eb;border-color:#bfdbfe;font-weight:600;text-align:left;">Select Serial #'+(poolCount?' ('+poolCount+' avail)':' — no pool')+'</button>';
       })())
       +'<button onclick="openPriceMatch('+idx+')" style="font-size:9px;font-weight:700;padding:2px 7px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;margin-left:4px;" title="Price Match">PM</button>'
+      +(function(){
+        // Warranty prompt for eligible items
+        if(!wtyNeedsPrompt(c))return '';
+        var tier=wtyFindTier(c.price);if(!tier)return '';
+        if(c.warrantyStatus==='accepted')return '<div style="font-size:10px;color:#16a34a;font-weight:700;margin-top:3px;padding:3px 8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;">&#x1F6E1;&#xFE0F; Warranty Added — '+tier.name+'</div>';
+        if(c.warrantyStatus==='declined')return '<div style="font-size:10px;color:#9ca3af;font-weight:600;margin-top:3px;">&#x2717; Warranty Declined</div>';
+        return '<div style="margin-top:4px;display:flex;gap:6px;align-items:center;">'
+          +'<span style="font-size:10px;color:#d97706;font-weight:700;">&#x26A0; Warranty Decision Required</span>'
+          +'<button onclick="wtyAccept('+idx+')" style="font-size:10px;font-weight:700;padding:3px 10px;background:#dcfce7;color:#16a34a;border:1px solid #86efac;border-radius:4px;cursor:pointer;">&#x2705; Add '+tier.name.split(' $')[0]+' ($'+tier.cost.toFixed(2)+')</button>'
+          +'<button onclick="wtyDecline('+idx+')" style="font-size:10px;font-weight:700;padding:3px 10px;background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;">&#x274C; Decline</button>'
+          +'</div>';
+      })()
+      +(c.isWarranty?'':'')
       +'</div>';
   }).join('');
   var sub=cart.reduce(function(s,c){var d=c.discountPct||0;return s+c.price*c.qty*(1-d/100);},0);
@@ -5796,6 +5823,9 @@ function clearSaleForm(){
 var _coPayments=[];
 function openCheckoutScreen(){
   if(cart.length===0){toast('Add items to the cart before checking out','error');return;}
+  // Check all warranty decisions are made
+  var wtyMissing=wtyAllDecided();
+  if(wtyMissing.length>0){toast('Please accept or decline warranty for: '+wtyMissing.join(', '),'error');return;}
   var f=getSaleFields();var cust=f.soldTo.name.trim()||'Walk-In Customer';
   // Customer sales: show pre-checkout checklist first
   if(cust!=='Walk-In Customer'&&!_checklistConfirmed){
@@ -5932,7 +5962,9 @@ function openPreSubmitChecklist(){
   // Auto-check notes if delivery instructions already filled in
   var hasNotes=((document.getElementById('cart-invoice-notes')||{}).value||'').trim().length>0;
   document.getElementById('chk-notes').checked=hasNotes;
-  document.getElementById('chk-warranty').checked=false;
+  // Auto-check warranty if all warranty-eligible items have been decided
+  var wtyMissing=wtyAllDecided();
+  document.getElementById('chk-warranty').checked=wtyMissing.length===0;
   updateChecklistBtn();
   openModal('checklist-modal');
 }
@@ -5963,6 +5995,9 @@ function checklistComplete(){
 
 function checkout(method){
   if(cart.length===0){toast('Cart is empty','error');return;}
+  // Check all warranty decisions are made
+  var wtyMissing=wtyAllDecided();
+  if(wtyMissing.length>0){toast('Please accept or decline warranty for: '+wtyMissing.join(', '),'error');return;}
   var f=getSaleFields();
   var cust=f.soldTo.name.trim()||'Walk-In Customer';
   // Pre-submit checklist — customer sales only (skip for walk-ins)
@@ -5983,6 +6018,10 @@ function checkout(method){
     var discPct=c.discountPct||0;
     var discAmt=c.price*c.qty*(discPct/100);
     var item={id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||'',serialTracked:tracked,discount:discAmt,discountPct:discPct,origPrice:c.origPrice||c.price};
+    // Warranty tracking
+    if(c.isWarranty){item.isWarranty=true;}
+    if(c.warrantyStatus==='declined'){item.warrantyDeclined=true;item.warrantyStatus='declined';}
+    if(c.warrantyStatus==='accepted'){item.warrantyStatus='accepted';}
     if(isQuickSale){
       // Auto-mark delivered for quick sales
       item.delivered=true;item.deliveredAt=new Date().toISOString();item.deliveredBy=f.clerk||'Admin';

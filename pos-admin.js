@@ -39,9 +39,18 @@ var adminTaxZones=[
 ];
 var adminUsers=[];
 var adminTechs=[];
+// Extended warranty tiers
+var warrantyTiers=[
+  {id:1,name:'5 Year Appliance Warranty $699 Max',priceFrom:1,priceTo:699,cost:99,active:true},
+  {id:2,name:'5 Year Appliance Warranty $999 Max',priceFrom:700,priceTo:999,cost:149,active:true},
+  {id:3,name:'5 Year Appliance Warranty $1999 Max',priceFrom:1000,priceTo:1999,cost:199,active:true},
+  {id:4,name:'5 Year Appliance Warranty $2999 Max',priceFrom:2000,priceTo:2999,cost:249,active:true},
+  {id:5,name:'5 Year Appliance Warranty $4999 Max',priceFrom:3000,priceTo:4999,cost:299,active:true}
+];
+var wtyNextId=6;
 
 async function adminLoad(){
-  var keys=['admin-categories','admin-brands','admin-commissions','admin-tax-zones','pos-settings','admin-vendors'];
+  var keys=['admin-categories','admin-brands','admin-commissions','admin-tax-zones','pos-settings','admin-vendors','warranty-tiers'];
   for(var i=0;i<keys.length;i++){
     try{
       var res=await apiFetch('/api/admin-get?key='+encodeURIComponent(keys[i]));
@@ -52,6 +61,9 @@ async function adminLoad(){
         if(keys[i]==='admin-commissions' && json.data.defaults) adminCommissions=json.data;
         if(keys[i]==='admin-tax-zones' && json.data.length) adminTaxZones=json.data;
         if(keys[i]==='admin-vendors' && Array.isArray(json.data)) adminVendors=json.data;
+        if(keys[i]==='warranty-tiers' && json.data){
+          if(Array.isArray(json.data.tiers)&&json.data.tiers.length){warrantyTiers=json.data.tiers;wtyNextId=json.data.nextId||warrantyTiers.length+1;}
+        }
         if(keys[i]==='pos-settings' && json.data){
           if(json.data.invoiceMessage!==undefined) adminInvoiceMessage=json.data.invoiceMessage;
           if(json.data.deliveryPrice!==undefined) adminDeliveryPrice=json.data.deliveryPrice;
@@ -240,6 +252,7 @@ function renderAdminSection(){
   else if(adminSection==='dataimport') renderDataImport();
   else if(adminSection==='arreport') renderARReport();
   else if(adminSection==='eomreports') renderEomReports();
+  else if(adminSection==='warranties') renderWarrantyTiers();
   else if(adminSection==='possettings') renderPosSettings();
 }
 
@@ -2441,6 +2454,13 @@ function renderEomReports(){
   h+='<div style="font-size:11px;color:var(--gray-2);margin-bottom:8px;">Employees over 40 hrs/week — awaiting calculation formula</div>';
   h+='<div style="font-size:12px;color:var(--orange);font-weight:600;">Formula pending upload</div></div>';
 
+  // 7. Warranty Report card
+  h+='<div style="border:1px solid var(--border);border-radius:8px;padding:14px;">';
+  h+='<div style="font-size:14px;font-weight:700;margin-bottom:4px;">Warranty Report</div>';
+  h+='<div style="font-size:11px;color:var(--gray-2);margin-bottom:8px;">Extended warranty sales, declines, and acceptance rates</div>';
+  h+=eomWarrantyHtml(ym);
+  h+='<div style="margin-top:6px;"><button class="ghost-btn" style="font-size:10px;padding:3px 10px;" onclick="exportWarrantyCSV(\''+ym+'\')">CSV</button> <button class="ghost-btn" style="font-size:10px;padding:3px 10px;" onclick="exportWarrantyPDF(\''+ym+'\')">PDF</button></div></div>';
+
   h+='</div>';
   wrap.innerHTML=h;
 }
@@ -3291,6 +3311,196 @@ function _flashPosPinKey(val){
     else if(txt===val){b.classList.add('flash');}
   });
   setTimeout(function(){btns.forEach(function(b){b.classList.remove('flash');});},120);
+}
+
+// ══════════════════════════════════════════════
+// EXTENDED WARRANTY SYSTEM
+// ══════════════════════════════════════════════
+
+function renderWarrantyTiers(){
+  var wrap=document.getElementById('wty-tiers-list');if(!wrap)return;
+  if(!warrantyTiers.length){wrap.innerHTML='<div style="color:var(--gray-2);font-size:12px;padding:20px;">No warranty tiers configured. Click "+ Add Tier" to create one.</div>';return;}
+  var h='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">';
+  h+='<thead><tr style="background:var(--bg);border-bottom:2px solid var(--border);"><th style="text-align:left;padding:8px;">Tier Name</th><th style="text-align:right;padding:8px;">From $</th><th style="text-align:right;padding:8px;">To $</th><th style="text-align:right;padding:8px;">Cost</th><th style="text-align:center;padding:8px;">Active</th><th style="text-align:center;padding:8px;">Actions</th></tr></thead><tbody>';
+  warrantyTiers.forEach(function(t){
+    h+='<tr style="border-bottom:1px solid var(--border);">';
+    h+='<td style="padding:8px;font-weight:600;">'+t.name+'</td>';
+    h+='<td style="padding:8px;text-align:right;">$'+t.priceFrom.toLocaleString()+'</td>';
+    h+='<td style="padding:8px;text-align:right;">$'+t.priceTo.toLocaleString()+'</td>';
+    h+='<td style="padding:8px;text-align:right;font-weight:700;">$'+t.cost.toFixed(2)+'</td>';
+    h+='<td style="padding:8px;text-align:center;"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;'+(t.active?'background:#dcfce7;color:#16a34a;':'background:#f3f4f6;color:#9ca3af;')+'">'+(t.active?'Active':'Inactive')+'</span></td>';
+    h+='<td style="padding:8px;text-align:center;"><button class="ghost-btn" style="font-size:10px;padding:2px 8px;" onclick="wtyEditTier('+t.id+')">Edit</button> <button class="ghost-btn" style="font-size:10px;padding:2px 8px;color:#dc2626;border-color:#fca5a5;" onclick="wtyDeleteTier('+t.id+')">Delete</button></td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  wrap.innerHTML=h;
+}
+
+function wtyAddTier(){
+  var name=prompt('Tier name (e.g. "5 Year Appliance Warranty $699 Max"):');
+  if(!name||!name.trim())return;
+  var from=parseFloat(prompt('Price range FROM ($):','1'));if(isNaN(from))return;
+  var to=parseFloat(prompt('Price range TO ($):','699'));if(isNaN(to))return;
+  var cost=parseFloat(prompt('Warranty cost ($):','99'));if(isNaN(cost))return;
+  warrantyTiers.push({id:wtyNextId++,name:name.trim(),priceFrom:from,priceTo:to,cost:cost,active:true});
+  wtySaveTiers();renderWarrantyTiers();
+}
+
+function wtyEditTier(id){
+  var t=warrantyTiers.find(function(x){return x.id===id;});if(!t)return;
+  var name=prompt('Tier name:',t.name);if(!name||!name.trim())return;
+  var from=parseFloat(prompt('Price range FROM ($):',t.priceFrom));if(isNaN(from))return;
+  var to=parseFloat(prompt('Price range TO ($):',t.priceTo));if(isNaN(to))return;
+  var cost=parseFloat(prompt('Warranty cost ($):',t.cost));if(isNaN(cost))return;
+  var active=confirm('Active? OK=Active, Cancel=Inactive');
+  t.name=name.trim();t.priceFrom=from;t.priceTo=to;t.cost=cost;t.active=active;
+  wtySaveTiers();renderWarrantyTiers();
+}
+
+function wtyDeleteTier(id){
+  if(!confirm('Delete this warranty tier?'))return;
+  warrantyTiers=warrantyTiers.filter(function(x){return x.id!==id;});
+  wtySaveTiers();renderWarrantyTiers();
+}
+
+async function wtySaveTiers(){
+  try{
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'warranty-tiers',data:{tiers:warrantyTiers,nextId:wtyNextId}})});
+    toast('Warranty tiers saved','success');
+  }catch(e){toast('Save failed','error');}
+}
+
+// Find matching warranty tier for a given price
+function wtyFindTier(price){
+  if(price<100)return null;
+  var match=null;
+  warrantyTiers.forEach(function(t){
+    if(t.active&&price>=t.priceFrom&&price<=t.priceTo)match=t;
+  });
+  return match;
+}
+
+// Check if a cart item needs a warranty prompt
+function wtyNeedsPrompt(cartItem){
+  if(cartItem.isService)return false;
+  if(cartItem.isWarranty)return false;
+  if(cartItem.price<100)return false;
+  var p=PRODUCTS.find(function(x){return x.id===cartItem.id;});
+  if(!p)return false;
+  // Skip non-serial-tracked items
+  if(!isSerialTracked(p))return false;
+  // Skip items already in warranty categories
+  var cat=(p.cat||'').toUpperCase();
+  if(cat==='WARRANTIES')return false;
+  return !!wtyFindTier(cartItem.price);
+}
+
+// Get warranty tier code from tier name
+function wtyTierCode(tier){
+  var maxMatch=tier.name.match(/\$(\d+)\s*Max/i);
+  return '5YEAR'+(maxMatch?maxMatch[1]:'');
+}
+
+// Accept warranty for a cart item
+function wtyAccept(cartIdx){
+  var c=cart[cartIdx];if(!c)return;
+  var parentId=c.id;
+  var tier=wtyFindTier(c.price);if(!tier)return;
+  c.warrantyStatus='accepted';c.warrantyTierId=tier.id;
+  // Remove any existing linked warranty for this item
+  cart=cart.filter(function(x){return x._warrantyParentId!==parentId;});
+  // Re-find parent index after filter
+  var newIdx=cart.findIndex(function(x){return x.id===parentId&&!x.isWarranty;});
+  if(newIdx<0){renderCart();return;}
+  // Add warranty line item right after this item
+  var wtyItem={
+    id:80000+Date.now()+(Math.random()*1000|0),
+    name:tier.name,
+    model:wtyTierCode(tier),
+    price:tier.cost,
+    qty:1,
+    serial:'',
+    isService:true,
+    isWarranty:true,
+    _warrantyParentId:parentId
+  };
+  cart.splice(newIdx+1,0,wtyItem);
+  renderCart();
+}
+
+// Decline warranty for a cart item
+function wtyDecline(cartIdx){
+  var c=cart[cartIdx];if(!c)return;
+  var parentId=c.id;
+  c.warrantyStatus='declined';c.warrantyTierId=null;
+  // Remove any linked warranty line item
+  cart=cart.filter(function(x){return x._warrantyParentId!==parentId;});
+  renderCart();
+}
+
+// Check if all warranty-eligible items have been accepted/declined
+function wtyAllDecided(){
+  var missing=[];
+  cart.forEach(function(c,idx){
+    if(wtyNeedsPrompt(c)&&!c.warrantyStatus)missing.push(c.name);
+  });
+  return missing;
+}
+
+// ── Warranty EOM Report ──
+function eomWarrantyHtml(ym){
+  var monthOrders=orders.filter(function(o){return o.date&&o.date.substring(0,7)===ym;});
+  var accepted=0,declined=0,revenue=0;
+  var byClerk={};
+  monthOrders.forEach(function(o){
+    var clerk=o.clerk||'Unknown';
+    if(!byClerk[clerk])byClerk[clerk]={accepted:0,declined:0,revenue:0};
+    (o.items||[]).forEach(function(it){
+      if(it.isWarranty){accepted++;revenue+=it.price*it.qty;byClerk[clerk].accepted++;byClerk[clerk].revenue+=it.price*it.qty;}
+      if(it.warrantyDeclined){declined++;byClerk[clerk].declined++;}
+    });
+  });
+  var total=accepted+declined;
+  var rate=total>0?((accepted/total)*100).toFixed(1):'0.0';
+  var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
+  h+='<div><div style="font-size:20px;font-weight:700;color:#16a34a;">'+accepted+'</div><div style="font-size:10px;color:var(--gray-2);">Warranties Sold</div></div>';
+  h+='<div><div style="font-size:20px;font-weight:700;color:#2563eb;">'+fmt(revenue)+'</div><div style="font-size:10px;color:var(--gray-2);">Revenue</div></div>';
+  h+='<div><div style="font-size:20px;font-weight:700;color:#ea580c;">'+rate+'%</div><div style="font-size:10px;color:var(--gray-2);">Acceptance Rate</div></div>';
+  h+='<div><div style="font-size:20px;font-weight:700;color:#dc2626;">'+declined+'</div><div style="font-size:10px;color:var(--gray-2);">Declined</div></div>';
+  h+='</div>';
+  // Per-clerk breakdown
+  var clerks=Object.keys(byClerk);
+  if(clerks.length){
+    h+='<table style="width:100%;font-size:10px;border-collapse:collapse;margin-top:4px;"><thead><tr style="border-bottom:1px solid var(--border);"><th style="text-align:left;padding:3px;">Salesperson</th><th style="text-align:right;padding:3px;">Sold</th><th style="text-align:right;padding:3px;">Declined</th><th style="text-align:right;padding:3px;">Rate</th><th style="text-align:right;padding:3px;">Revenue</th></tr></thead><tbody>';
+    clerks.forEach(function(ck){
+      var d=byClerk[ck];var t2=d.accepted+d.declined;var r2=t2>0?((d.accepted/t2)*100).toFixed(1):'—';
+      h+='<tr style="border-bottom:1px solid var(--border);"><td style="padding:3px;">'+ck+'</td><td style="padding:3px;text-align:right;">'+d.accepted+'</td><td style="padding:3px;text-align:right;">'+d.declined+'</td><td style="padding:3px;text-align:right;">'+r2+'%</td><td style="padding:3px;text-align:right;">'+fmt(d.revenue)+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  }
+  return h;
+}
+
+function exportWarrantyCSV(ym){
+  var monthOrders=orders.filter(function(o){return o.date&&o.date.substring(0,7)===ym;});
+  var rows=[['Date','Order','Clerk','Item','Model','Price','Warranty','Status','Warranty Cost']];
+  monthOrders.forEach(function(o){
+    (o.items||[]).forEach(function(it){
+      if(it.isWarranty||it.warrantyDeclined||it.warrantyStatus){
+        var status=it.isWarranty?'Warranty Item':(it.warrantyDeclined?'Declined':(it.warrantyStatus||''));
+        rows.push([new Date(o.date).toLocaleDateString(),o.id,o.clerk||'',it.name,it.model||'',it.price.toFixed(2),it.isWarranty?it.name:'',status,it.isWarranty?it.price.toFixed(2):'0.00']);
+      }
+    });
+  });
+  var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='warranty-report-'+ym+'.csv';a.click();
+}
+
+function exportWarrantyPDF(ym){
+  var html=eomWarrantyHtml(ym);
+  var win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><title>Warranty Report '+ym+'</title><style>body{font-family:sans-serif;padding:20px;}</style></head><body><h2>Warranty Report — '+ym+'</h2>'+html+'<script>setTimeout(function(){window.print();},300);<\/script></body></html>');
+  win.document.close();
 }
 
 // Init — preload users for fast PIN lookup

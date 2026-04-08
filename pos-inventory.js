@@ -882,10 +882,18 @@ function buildCustomerInvoiceDoc(o){
   var itemRows=o.items.map(function(i){
     var disc=i.discount||0;
     var ext=i.price*i.qty-disc;
-    return '<tr><td>'+(i.model||'')+'</td><td>'+i.name+'</td><td class="col-c">'+i.qty+'</td><td class="col-r">'+fmt(i.price)+'</td><td class="col-r">'+(disc?fmt(disc):'—')+'</td><td class="col-r">'+fmt(ext)+'</td><td>'+(i.serial||'')+'</td><td class="col-c">'+(i.warrantyOffered?'Y':'')+'</td></tr>';
+    var wtyCol=i.isWarranty?'W':(i.warrantyStatus==='accepted'?'Y':(i.warrantyDeclined?'D':(i.warrantyOffered?'Y':'')));
+    return '<tr><td>'+(i.model||'')+'</td><td>'+i.name+(i.isWarranty?' <span style="font-size:8px;color:#16a34a;">&#x1F6E1;</span>':'')+'</td><td class="col-c">'+i.qty+'</td><td class="col-r">'+fmt(i.price)+'</td><td class="col-r">'+(disc?fmt(disc):'—')+'</td><td class="col-r">'+fmt(ext)+'</td><td>'+(i.serial||'')+'</td><td class="col-c">'+wtyCol+'</td></tr>';
   }).join('');
+  // Add warranty declined lines
+  var declinedItems=o.items.filter(function(i){return i.warrantyDeclined;});
+  if(declinedItems.length){
+    declinedItems.forEach(function(i){
+      itemRows+='<tr><td></td><td colspan="5" style="font-size:9px;color:#999;font-style:italic;">Extended Warranty Declined — '+i.name+' &nbsp; Initials: ________</td><td></td><td></td></tr>';
+    });
+  }
   // Add padding rows so watermark/layout looks consistent
-  var blank=Math.max(0,8-o.items.length);
+  var blank=Math.max(0,8-o.items.length-declinedItems.length);
   for(var i=0;i<blank;i++)itemRows+='<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
 
   var bal=getOrderBalance(o);
@@ -940,7 +948,8 @@ function buildShipperCopyDoc(o){
   // Shipper columns: MODEL# | DESCRIPTION | QTY | SERIAL# | S | SHIP DATE | checkbox
   var itemRows=o.items.map(function(i){
     var shipDate=i.deliveredAt?new Date(i.deliveredAt).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'}):'';
-    return '<tr><td>'+(i.model||'')+'</td><td>'+i.name+'</td><td class="col-c">'+i.qty+'</td><td>'+(i.serial||'')+'</td><td class="col-c">'+(i.warrantyOffered?'Y':'')+'</td><td>'+shipDate+'</td><td class="col-c"><span class="doc-checkbox"></span></td></tr>';
+    var wtyCol=i.isWarranty?'W':(i.warrantyStatus==='accepted'?'Y':(i.warrantyDeclined?'D':(i.warrantyOffered?'Y':'')));
+    return '<tr><td>'+(i.model||'')+'</td><td>'+i.name+'</td><td class="col-c">'+i.qty+'</td><td>'+(i.serial||'')+'</td><td class="col-c">'+wtyCol+'</td><td>'+shipDate+'</td><td class="col-c"><span class="doc-checkbox"></span></td></tr>';
   }).join('');
   var blank=Math.max(0,8-o.items.length);
   for(var i=0;i<blank;i++)itemRows+='<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td class="col-c"><span class="doc-checkbox"></span></td></tr>';
