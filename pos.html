@@ -6082,8 +6082,10 @@ function checkout(method){
 // ── DELIVERY ↔ SALE SYNC ──
 function syncDeliveryFromOrder(order){
   if(!order||!order.deliveryDate)return;
-  // Ensure delivery data is loaded
-  if(!delDeliveries||!delDeliveries.length){
+  console.log('[Delivery Sync] Starting sync for order',order.id,'deliveryDate:',order.deliveryDate);
+  // Ensure delivery data is loaded (check _delDataLoaded flag, not array length)
+  if(!_delDataLoaded){
+    console.log('[Delivery Sync] Data not loaded yet, loading first...');
     delLoadData().then(function(){_doSyncDelivery(order);});
   }else{_doSyncDelivery(order);}
 }
@@ -6126,15 +6128,19 @@ function _doSyncDelivery(order){
     orderPayment:order.payment||'',
     linkedOrderId:order.id
   };
+  console.log('[Delivery Sync] Data being passed:', JSON.stringify({orderId:order.id,customer:syncFields.name,phone:syncFields.phone,address:syncFields.address,city:syncFields.city,invoice:order.id,appliances:apps.length,notes:syncFields.notes,shipperNotes:syncFields.shipperNotes,date:order.deliveryDate,time:order.deliveryTime}));
+  var deliveryId;
   if(existing){
     // Update existing delivery stop
     Object.assign(existing,syncFields);
     existing.date=order.deliveryDate||existing.date;
     existing.time=order.deliveryTime||existing.time;
+    deliveryId=existing.id;
   }else{
     // Create new delivery stop
+    deliveryId='DEL-'+String(delNextId).padStart(4,'0');
     var newDel=Object.assign({
-      id:'DEL-'+String(delNextId).padStart(4,'0'),
+      id:deliveryId,
       email:'',invoice:order.id,
       date:order.deliveryDate,time:order.deliveryTime||'9:00 AM',
       duration:'60',team:'Main Delivery Team',stopOrder:null,
@@ -6144,8 +6150,15 @@ function _doSyncDelivery(order){
     },syncFields);
     delDeliveries.unshift(newDel);delNextId++;
   }
+  // Two-way link: store delivery ID on order
+  order.deliveryId=deliveryId;
+  order.deliveryStatus='Scheduled';
+  saveOrders();
   delSaveData();
-  console.log('[Delivery Sync] '+(existing?'Updated':'Created')+' delivery for '+order.id+' on '+order.deliveryDate);
+  // Show confirmation
+  var dateStr=order.deliveryDate?new Date(order.deliveryDate+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
+  toast('\u2713 Delivery scheduled for '+dateStr+(order.deliveryTime?' at '+order.deliveryTime:''),'success');
+  console.log('[Delivery Sync] '+(existing?'Updated':'Created')+' delivery '+deliveryId+' for '+order.id+' on '+order.deliveryDate);
 }
 function onCartApptChange(){
   var appt=document.getElementById('cart-appt').value;

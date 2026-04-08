@@ -647,7 +647,15 @@ function renderOrderDetail(){
     if(!allDelivered)actionsHtml+='<button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;font-weight:700;" onclick="confirmItemDelivery(\''+o.id+'\')">&#x2713; Confirm Delivery</button>';
     actionsHtml+='<button class="ood-btn green" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Delivery\')">Awaiting Delivery</button><button class="ood-btn orange" onclick="setOrderStatus(\''+o.id+'\',\'Awaiting Product\')">Awaiting Product</button><button class="ood-btn blue" onclick="setOrderStatus(\''+o.id+'\',\'Partial\')">Partial</button><button class="ood-btn" style="border-color:#93c5fd;color:#2563eb;" onclick="editOrder(\''+o.id+'\')">Edit</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;background:#f0fdf4;" onclick="orderRecordPayment(\''+o.id+'\')">Record Payment</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailOrderReceipt(\''+o.id+'\')">&#x2709; Email Invoice</button><button class="ood-btn" style="border-color:#c4b5fd;color:#6d28d9;" onclick="emailInvoicePdf(\''+o.id+'\')">&#x1F4CE; Email Full Invoice (PDF)</button><button class="ood-btn" style="border-color:rgba(201,151,58,0.3);color:var(--gold);" onclick="printInvoice(\''+o.id+'\')">Print Invoice</button><button class="ood-btn" style="border-color:rgba(224,144,80,0.3);color:var(--orange);" onclick="printShipperTicket(\''+o.id+'\')">Print Shipper Copy</button><button class="ood-btn" style="border-color:#86efac;color:#16a34a;" onclick="printBothDocuments(\''+o.id+'\')">Print Both</button><button class="ood-btn red" onclick="deleteOrder(\''+o.id+'\')">Delete</button></div>';
   }
-  el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+'</div><div class="ood-meta"><a href="#" style="color:var(--blue);text-decoration:none;font-weight:600;" onclick="event.preventDefault();openCustomerProfile(\''+o.customer.replace(/'/g,"\\'")+'\')">'+o.customer+'</a> &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
+  // Delivery status badge
+  var delBadgeHtml='';
+  if(o.deliveryId||o.deliveryDate){
+    var delSt=o.deliveryStatus||'Scheduled';
+    var delBadgeColor=delSt==='Delivered'?'background:#dcfce7;color:#16a34a;border:1px solid #86efac;':delSt==='Out for Delivery'?'background:#fff7ed;color:#ea580c;border:1px solid #fdba74;':'background:#dbeafe;color:#2563b0;border:1px solid #93c5fd;';
+    delBadgeHtml='<span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px;'+delBadgeColor+'">'+delSt+'</span>';
+    if(o.deliveryId)delBadgeHtml+='<a href="#" onclick="event.preventDefault();navToDeliveryStop(\''+o.deliveryId+'\')" style="font-size:10px;color:#2563b0;margin-left:6px;text-decoration:none;font-weight:600;">View Delivery</a>';
+  }
+  el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+delBadgeHtml+'</div><div class="ood-meta"><a href="#" style="color:var(--blue);text-decoration:none;font-weight:600;" onclick="event.preventDefault();openCustomerProfile(\''+o.customer.replace(/'/g,"\\'")+'\')">'+o.customer+'</a> &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
   '<div class="ood-section"><div class="ood-section-title">'+( isQuote?'Quote':'Order')+' Details</div><div class="ood-grid"><div class="ood-field"><div class="ood-label">Payment</div><div class="ood-val">'+o.payment+'</div></div><div class="ood-field"><div class="ood-label">Tax Zone</div><div class="ood-val">'+(o.taxZone||'')+'</div></div><div class="ood-field"><div class="ood-label">Subtotal</div><div class="ood-val">'+fmt(o.subtotal)+'</div></div><div class="ood-field"><div class="ood-label">Tax</div><div class="ood-val">'+fmt(o.tax)+'</div></div><div class="ood-field"><div class="ood-label">Total</div><div class="ood-val" style="color:var(--gold);font-weight:700;">'+fmt(o.total)+'</div></div><div class="ood-field"><div class="ood-label">Status</div><div class="ood-val">'+o.status+'</div></div></div></div>'+
   notesHtml+
@@ -1451,6 +1459,7 @@ function delOpenAddDelivery(date,time){
   document.getElementById('del-f-team').disabled=false;document.getElementById('del-f-team').style.opacity='1';
   if(time){var s=document.getElementById('del-f-time');for(var i=0;i<s.options.length;i++){if(s.options[i].value===time){s.selectedIndex=i;break;}}}else{document.getElementById('del-f-time').selectedIndex=2;}
   delPendingFiles=[];document.getElementById('del-file-attach-list').innerHTML='';document.getElementById('del-file-attach-wrap').style.display='none';
+  var preview=document.getElementById('del-invoice-preview');if(preview)preview.style.display='none';
   delInitAppRows([{a:'',m:''}]);openModal('del-delivery-modal');
 }
 function delOpenEditDelivery(id){
@@ -1469,8 +1478,14 @@ async function delSaveDelivery(){
   var apps=[];document.querySelectorAll('.del-app-row').forEach(function(row){var a=row.querySelector('.del-app-sel').value,m=row.querySelector('.del-app-model').value.trim();if(a)apps.push({a:a,m:m});});
   if(!name||!phone||!address||!city||!date||apps.length===0){toast('Fill required fields and at least one appliance','error');return;}
   var invoiceFiles=delPendingFiles.filter(function(f){return f&&f.url;});var invoiceFile=invoiceFiles.length?invoiceFiles[0]:null;var appStr=apps.map(function(x){return x.a;}).join(', ');
-  if(editId){var d=delDeliveries.find(function(x){return x.id===editId;});if(!d)return;Object.assign(d,{name:name,phone:phone,email:email,address:address,city:city,invoice:invoice,notes:notes,date:date,time:time,duration:duration,team:team,deliveryType:deliveryType,appliances:apps,appliance:appStr,invoiceFile:invoiceFile,invoiceFiles:invoiceFiles});}
-  else{delDeliveries.unshift({id:'DEL-'+String(delNextId).padStart(4,'0'),name:name,phone:phone,email:email,address:address,city:city,invoice:invoice,notes:notes,date:date,time:time,duration:duration,team:team,stopOrder:null,deliveryType:deliveryType,appliances:apps,appliance:appStr,invoiceFile:invoiceFile,invoiceFiles:invoiceFiles,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});delNextId++;}
+  var deliveryId;
+  if(editId){var d=delDeliveries.find(function(x){return x.id===editId;});if(!d)return;Object.assign(d,{name:name,phone:phone,email:email,address:address,city:city,invoice:invoice,notes:notes,date:date,time:time,duration:duration,team:team,deliveryType:deliveryType,appliances:apps,appliance:appStr,invoiceFile:invoiceFile,invoiceFiles:invoiceFiles});deliveryId=editId;}
+  else{deliveryId='DEL-'+String(delNextId).padStart(4,'0');delDeliveries.unshift({id:deliveryId,name:name,phone:phone,email:email,address:address,city:city,invoice:invoice,notes:notes,date:date,time:time,duration:duration,team:team,stopOrder:null,deliveryType:deliveryType,appliances:apps,appliance:appStr,invoiceFile:invoiceFile,invoiceFiles:invoiceFiles,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});delNextId++;}
+  // Two-way link: if invoice matches an order, link them
+  if(invoice&&typeof orders!=='undefined'){
+    var order=orders.find(function(o){return o.id===invoice;});
+    if(order){order.deliveryId=deliveryId;order.deliveryStatus='Scheduled';saveOrders();console.log('[Delivery] Linked delivery '+deliveryId+' to order '+invoice);}
+  }
   await delSaveData();closeModal('del-delivery-modal');delRenderEvents();toast('Delivery saved','success');
 }
 // Appliance rows
@@ -1482,16 +1497,41 @@ function delAddAppRow(av,mv){
   c.appendChild(div);
 }
 // Invoice
-function delHandleInvoiceDrop(e){e.preventDefault();document.getElementById('del-invoice-dz').classList.remove('drag-over');var files=e.dataTransfer.files;for(var i=0;i<files.length;i++)delHandleInvoiceFile(files[i]);}
+function delHandleInvoiceDrop(e){e.preventDefault();document.getElementById('del-invoice-dz').classList.remove('drag-over');var files=e.dataTransfer.files;console.log('[POS Invoice Drop] Files dropped:',files.length);for(var i=0;i<files.length;i++){console.log('[POS Invoice Drop] File dropped:',files[i].name,files[i].type,files[i].size+'bytes');delHandleInvoiceFile(files[i]);}}
 async function delHandleInvoiceFile(file){
-  if(!file)return;document.getElementById('del-idz-loading').style.display='block';
-  try{var b64=await toB64(file);var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"a":"Refrigerator","m":"Model123","invoice":"INV-001"}]}'}]}];
+  if(!file)return;
+  console.log('[POS Invoice] Processing file:',file.name,file.type);
+  document.getElementById('del-idz-loading').style.display='block';
+  try{var b64=await toB64(file);
+  console.log('[POS Invoice] Base64 encoded, size:',b64.length,'chars');
+  var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"invoiceNumber":"","deliveryDate":"","appliances":[{"a":"Refrigerator","m":"Model123"}]}'}]}];
+  console.log('[POS Invoice] Calling Claude API...');
   var data=await claudeApiCall({messages:msgs,max_tokens:800});
-  var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);var cu=parsed.customer||{};
+  console.log('[POS Invoice] Claude API response received');
+  var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
+  console.log('[POS Invoice] Extracted data:',JSON.stringify(parsed));
+  var cu=parsed.customer||{};
   if(cu.name)document.getElementById('del-f-name').value=cu.name;if(cu.phone)document.getElementById('del-f-phone').value=cu.phone;if(cu.email)document.getElementById('del-f-email').value=cu.email;if(cu.address)document.getElementById('del-f-address').value=cu.address;if(cu.city)document.getElementById('del-f-city').value=cu.city;
-  var apps=parsed.appliances||[];if(apps.length>0){if(apps[0].invoice)document.getElementById('del-f-invoice').value=apps[0].invoice;delInitAppRows(apps);}
+  if(parsed.invoiceNumber)document.getElementById('del-f-invoice').value=parsed.invoiceNumber;
+  if(parsed.deliveryDate)document.getElementById('del-f-date').value=parsed.deliveryDate;
+  var apps=parsed.appliances||[];if(apps.length>0){if(!parsed.invoiceNumber&&apps[0].invoice)document.getElementById('del-f-invoice').value=apps[0].invoice;delInitAppRows(apps);}
+  // Show extracted data preview
+  delShowInvoicePreview(cu,apps,parsed.invoiceNumber||((apps.length&&apps[0].invoice)?apps[0].invoice:''),parsed.deliveryDate);
   var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});var upD=await upR.json();
-  if(upD.ok){delPendingFiles.push({url:upD.url,filename:file.name});delRenderPendingFiles();}}catch(e){toast('Could not read invoice: '+e.message,'error');}finally{document.getElementById('del-idz-loading').style.display='none';}
+  if(upD.ok){delPendingFiles.push({url:upD.url,filename:file.name});delRenderPendingFiles();}}catch(e){console.error('[POS Invoice] Error:',e);toast('Could not read invoice: '+e.message,'error');}finally{document.getElementById('del-idz-loading').style.display='none';}
+}
+function delShowInvoicePreview(cu,apps,inv,delDate){
+  var wrap=document.getElementById('del-invoice-preview');
+  if(!wrap){wrap=document.createElement('div');wrap.id='del-invoice-preview';wrap.style.cssText='margin-top:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;font-size:11px;';var dz=document.getElementById('del-invoice-dz');dz.parentNode.insertBefore(wrap,dz.nextSibling);}
+  var h='<div style="font-weight:700;color:#16a34a;margin-bottom:6px;font-size:10px;letter-spacing:0.05em;">EXTRACTED FROM INVOICE</div>';
+  if(cu.name)h+='<div><strong>Customer:</strong> '+cu.name+'</div>';
+  if(cu.phone)h+='<div><strong>Phone:</strong> '+cu.phone+'</div>';
+  if(cu.address)h+='<div><strong>Address:</strong> '+cu.address+(cu.city?', '+cu.city:'')+'</div>';
+  if(inv)h+='<div><strong>Invoice #:</strong> '+inv+'</div>';
+  if(delDate)h+='<div><strong>Delivery Date:</strong> '+delDate+'</div>';
+  if(apps.length)h+='<div><strong>Appliances:</strong> '+apps.map(function(a){return a.a+(a.m?' ('+a.m+')':'');}).join(', ')+'</div>';
+  h+='<div style="margin-top:6px;color:#6b7280;font-size:10px;">Review and correct any fields before saving.</div>';
+  wrap.innerHTML=h;wrap.style.display='block';
 }
 function delRenderPendingFiles(){
   var wrap=document.getElementById('del-file-attach-wrap'),list=document.getElementById('del-file-attach-list');list.innerHTML='';
@@ -1538,6 +1578,15 @@ function delOpenLinkedOrder(orderId){
     if(searchEl){searchEl.value=orderId;searchEl.dispatchEvent(new Event('input'));}
   },200);
 }
+function navToDeliveryStop(deliveryId){
+  if(!deliveryId)return;
+  // Navigate to delivery tab and open the delivery detail
+  var delTab=document.querySelector('.tb-tab[onclick*="delivery"]');
+  if(typeof nav==='function')nav('delivery',delTab);
+  setTimeout(function(){
+    if(typeof delOpenDetail==='function')delOpenDetail(deliveryId);
+  },400);
+}
 function delOpenDetail(id){
   var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;
   document.getElementById('del-det-name').textContent=d.name;var sm=delTimeToMins(d.time),dur=parseInt(d.duration)||60;
@@ -1577,7 +1626,19 @@ function delOpenNoteDetail(id){
   document.getElementById('del-det-actions').innerHTML='<button class="del-abtn gray" onclick="delOpenEditNote(\''+id+'\')">Edit</button><button class="del-abtn red" onclick="delDeleteNote(\''+id+'\')">Delete</button>';
   openModal('del-detail-modal');
 }
-async function delSetStatus(id,status){var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Status: '+status,'success');}
+async function delSetStatus(id,status){var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Status: '+status,'success');
+  // Two-way link: update linked order status
+  var orderId=d.invoice||d.linkedOrderId;
+  if(orderId&&typeof orders!=='undefined'){
+    var order=orders.find(function(o){return o.id===orderId;});
+    if(order){
+      order.deliveryStatus=status;
+      if(status==='Delivered'){order.status='Delivered';}
+      console.log('[Delivery Sync] Updated order '+orderId+' deliveryStatus to '+status);
+      saveOrders();if(typeof renderOrders==='function')renderOrders();
+    }
+  }
+}
 async function delDeleteDelivery(id){if(!confirm('Delete this stop?'))return;delDeliveries=delDeliveries.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Delivery deleted','info');}
 async function delDeleteNote(id){if(!confirm('Delete this note?'))return;delNotes=delNotes.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Note deleted','info');}
 // Delivery photos

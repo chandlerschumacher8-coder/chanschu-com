@@ -93,6 +93,8 @@ export default async function handler(req, res) {
             notes: o.notes || null, address: o.address || null,
             delivery_date: o.deliveryDate || null, delivery_time: o.deliveryTime || null,
             payments: o.payments || [],
+            linked_delivery_id: o.deliveryId || null,
+            delivery_status: o.deliveryStatus || null,
           }).select('id').single();
           if (error) { console.error('Order insert error:', error.message); continue; }
           if (o.items && o.items.length) {

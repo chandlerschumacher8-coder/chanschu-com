@@ -85,6 +85,8 @@ export default async function handler(req, res) {
           soldTo: o.sold_to, shipTo: o.ship_to, clerk: o.clerk, po: o.po,
           job: o.job, notes: o.notes, address: o.address,
           deliveryDate: o.delivery_date, deliveryTime: o.delivery_time,
+          deliveryId: o.linked_delivery_id || null,
+          deliveryStatus: o.delivery_status || null,
           payments: o.payments || [],
           items: itemMap[o.id] || [],
           _dbId: o.id,

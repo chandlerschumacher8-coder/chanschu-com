@@ -1483,6 +1483,7 @@ function openAddDelivery(date,time){
   if(time){var s=document.getElementById('f-time');for(var i=0;i<s.options.length;i++){if(s.options[i].value===time){s.selectedIndex=i;break;}}}
   else{document.getElementById('f-time').selectedIndex=2;}
   pendingFiles=[];document.getElementById('file-attach-list').innerHTML='';document.getElementById('file-attach-wrap').style.display='none';
+  var preview=document.getElementById('invoice-preview');if(preview)preview.style.display='none';
   clearShipToForm();
   initAppRows([{a:'',m:''}]);
   document.getElementById('delivery-modal').classList.add('open');
@@ -1582,14 +1583,33 @@ async function saveDelivery(){
   var invoiceFiles=pendingFiles.filter(function(f){return f&&f.url;});
   var invoiceFile=invoiceFiles.length?invoiceFiles[0]:null;
   var appStr=apps.map(function(x){return x.a;}).join(', ');
+  var deliveryId;
   if(editId){
     var d=deliveries.find(function(x){return x.id===editId;}); if(!d)return;
     Object.assign(d,{name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo});
+    deliveryId=editId;
   } else {
-    deliveries.unshift({id:'DEL-'+String(nextDelId).padStart(4,'0'),name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
+    deliveryId='DEL-'+String(nextDelId).padStart(4,'0');
+    deliveries.unshift({id:deliveryId,name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
     nextDelId++;
   }
-  await saveData();closeModal('delivery-modal');renderEvents();
+  await saveData();
+  // Two-way link: if invoice matches an order, link them
+  if(invoice){
+    try{
+      var r=await apiFetch('/api/admin-get?key=orders');var data=await r.json();
+      if(data&&data.data){
+        var allOrders=data.data.orders||[];
+        var order=allOrders.find(function(o){return o.id===invoice;});
+        if(order){
+          order.deliveryId=deliveryId;order.deliveryStatus='Scheduled';
+          await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:allOrders,nextOrderId:data.data.nextOrderId,nextQuoteId:data.data.nextQuoteId}})});
+          console.log('[Delivery] Linked delivery '+deliveryId+' to order '+invoice);
+        }
+      }
+    }catch(e){console.error('[Delivery Link] Error:',e);}
+  }
+  closeModal('delivery-modal');renderEvents();
 }
 
 // ═══ ADD NOTE ═══
@@ -1922,8 +1942,26 @@ async function setStatus(id,status){
   }
   d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;
   await saveData();
+  // Sync delivery status to linked order
+  await syncDeliveryStatusToOrder(d);
   if(status==='Delivered')await syncSerialsToOrder(d);
   closeModal('detail-modal');renderEvents();
+}
+async function syncDeliveryStatusToOrder(d){
+  var inv=d.invoice||d.linkedOrderId||'';
+  if(!inv)return;
+  try{
+    var r=await apiFetch('/api/admin-get?key=orders');var data=await r.json();
+    if(!data||!data.data)return;
+    var allOrders=data.data.orders||[];
+    var order=allOrders.find(function(o){return o.id===inv;});
+    if(!order)return;
+    order.deliveryId=d.id;
+    order.deliveryStatus=d.status;
+    if(d.status==='Delivered'&&order.status!=='Delivered'){order.status='Delivered';}
+    await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'orders',data:{orders:allOrders,nextOrderId:data.data.nextOrderId,nextQuoteId:data.data.nextQuoteId}})});
+    console.log('[Delivery Sync] Order '+inv+' deliveryStatus → '+d.status);
+  }catch(e){console.error('[Delivery Status Sync] Error:',e);}
 }
 
 function showSerialPrompt(id,missing){
@@ -1958,6 +1996,7 @@ async function confirmSerialsAndDeliver(id){
   });
   d.status='Delivered';d.deliveredAt=new Date().toISOString();
   await saveData();
+  await syncDeliveryStatusToOrder(d);
   await syncSerialsToOrder(d);
   closeModal('detail-modal');renderEvents();
 }
@@ -1965,7 +2004,10 @@ async function confirmSerialsAndDeliver(id){
 async function markDeliveredAnyway(id){
   var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
   d.status='Delivered';d.deliveredAt=new Date().toISOString();
-  await saveData();closeModal('detail-modal');renderEvents();
+  await saveData();
+  await syncDeliveryStatusToOrder(d);
+  await syncSerialsToOrder(d);
+  closeModal('detail-modal');renderEvents();
 }
 
 function cancelSerialPrompt(id){openDeliveryDetail(id);}
@@ -2251,28 +2293,55 @@ function addAppRow(av,mv){
 function removeAppRow(btn){btn.closest('.app-row').remove();document.querySelectorAll('.app-row-title').forEach(function(t,i){t.textContent='Appliance '+(i+1);});}
 
 // ═══ INVOICE ═══
-function handleInvoiceDrop(e){e.preventDefault();document.getElementById('invoice-dz').classList.remove('drag-over');var files=e.dataTransfer.files;for(var i=0;i<files.length;i++)handleInvoiceFile(files[i]);}
+function handleInvoiceDrop(e){e.preventDefault();document.getElementById('invoice-dz').classList.remove('drag-over');var files=e.dataTransfer.files;console.log('[Invoice Drop] Files dropped:',files.length);for(var i=0;i<files.length;i++){console.log('[Invoice Drop] File dropped:',files[i].name,files[i].type,files[i].size+'bytes');handleInvoiceFile(files[i]);}}
 async function handleInvoiceFile(file){
   if(!file)return;
+  console.log('[Invoice] Processing file:',file.name,file.type);
   document.getElementById('idz-loading').style.display='block';
   try{
     var b64=await toB64(file);
-    var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"a":"Refrigerator","m":"Model123","invoice":"INV-001"}]}'}]}];
+    console.log('[Invoice] Base64 encoded, size:',b64.length,'chars');
+    var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"invoiceNumber":"","deliveryDate":"","appliances":[{"a":"Refrigerator","m":"Model123"}]}'}]}];
+    console.log('[Invoice] Calling Claude API...');
     var data=await claudeApiCall({messages:msgs,max_tokens:800});
+    console.log('[Invoice] Claude API response received');
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
+    console.log('[Invoice] Extracted data:',JSON.stringify(parsed));
     var cu=parsed.customer||{};
+    // Auto-fill form fields
     if(cu.name)document.getElementById('f-name').value=cu.name;
     if(cu.phone)document.getElementById('f-phone').value=cu.phone;
     if(cu.email)document.getElementById('f-email').value=cu.email;
     if(cu.address)document.getElementById('f-address').value=cu.address;
     if(cu.city)document.getElementById('f-city').value=cu.city;
+    if(parsed.invoiceNumber)document.getElementById('f-invoice').value=parsed.invoiceNumber;
+    if(parsed.deliveryDate)document.getElementById('f-date').value=parsed.deliveryDate;
     var apps=parsed.appliances||[];
-    if(apps.length>0){if(apps[0].invoice)document.getElementById('f-invoice').value=apps[0].invoice;initAppRows(apps);}
+    if(apps.length>0){
+      if(!parsed.invoiceNumber&&apps[0].invoice)document.getElementById('f-invoice').value=apps[0].invoice;
+      initAppRows(apps);
+    }
+    // Show extracted data preview
+    showInvoicePreview(cu,apps,parsed.invoiceNumber||((apps.length&&apps[0].invoice)?apps[0].invoice:''),parsed.deliveryDate);
+    // Upload file
     var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
     var upD=await upR.json();
     if(upD.ok){pendingFiles.push({url:upD.url,filename:file.name});renderPendingFiles();}
-  }catch(e){alert('Could not read invoice: '+e.message);}
+  }catch(e){console.error('[Invoice] Error:',e);alert('Could not read invoice: '+e.message);}
   finally{document.getElementById('idz-loading').style.display='none';}
+}
+function showInvoicePreview(cu,apps,inv,delDate){
+  var wrap=document.getElementById('invoice-preview');
+  if(!wrap){wrap=document.createElement('div');wrap.id='invoice-preview';wrap.style.cssText='margin-top:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;font-size:11px;';var dz=document.getElementById('invoice-dz');dz.parentNode.insertBefore(wrap,dz.nextSibling);}
+  var h='<div style="font-weight:700;color:#16a34a;margin-bottom:6px;font-size:10px;letter-spacing:0.05em;">EXTRACTED FROM INVOICE</div>';
+  if(cu.name)h+='<div><strong>Customer:</strong> '+cu.name+'</div>';
+  if(cu.phone)h+='<div><strong>Phone:</strong> '+cu.phone+'</div>';
+  if(cu.address)h+='<div><strong>Address:</strong> '+cu.address+(cu.city?', '+cu.city:'')+'</div>';
+  if(inv)h+='<div><strong>Invoice #:</strong> '+inv+'</div>';
+  if(delDate)h+='<div><strong>Delivery Date:</strong> '+delDate+'</div>';
+  if(apps.length)h+='<div><strong>Appliances:</strong> '+apps.map(function(a){return a.a+(a.m?' ('+a.m+')':'');}).join(', ')+'</div>';
+  h+='<div style="margin-top:6px;color:#6b7280;font-size:10px;">Review and correct any fields before saving.</div>';
+  wrap.innerHTML=h;wrap.style.display='block';
 }
 function renderPendingFiles(){
   var wrap=document.getElementById('file-attach-wrap'),list=document.getElementById('file-attach-list');
@@ -2947,6 +3016,10 @@ async function syncSerialsToOrder(d){
     }
 
     if(order){
+      // Two-way link: store delivery ID on order
+      if(!order.deliveryId){order.deliveryId=d.id;changed=true;}
+      order.deliveryStatus=d.status;changed=true;
+
       serialsToSync.forEach(function(a){
         // Match by model number
         var item=order.items.find(function(i){
@@ -3042,7 +3115,8 @@ async function bsheetConfirmDelivery(){
 
   await saveData();
 
-  // Sync serials to order and customer records
+  // Sync delivery status and serials to order and customer records
+  await syncDeliveryStatusToOrder(d);
   await syncSerialsToOrder(d);
 
   closeBSheet();
