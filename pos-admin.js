@@ -3058,6 +3058,7 @@ function empSwitchUser(){
   localStorage.removeItem(POS_EMP_KEY);
   window._authToken=null;
   stopTokenRotation();
+  stopInactivityTracking();
   currentEmployee=null;
   document.getElementById('pos-login').style.display='flex';
   document.getElementById('tb-user-badge').style.display='none';
@@ -3085,17 +3086,71 @@ function applyPermissions(){
   });
 }
 // Inactivity timeout — returns to PIN login
+// Uses localStorage lastActivity timestamp so timeout persists across tab close/reopen
+var _lastActivityInterval=null;
+
+function updateLastActivity(){
+  try{localStorage.setItem('pos-lastActivity',String(Date.now()));}catch(e){}
+}
+
+function checkInactivityTimeout(){
+  if(adminInactivityMinutes<=0)return false; // "Never" = no timeout
+  var lastActivity=localStorage.getItem('pos-lastActivity');
+  if(!lastActivity)return false;
+  var elapsed=Date.now()-parseInt(lastActivity);
+  var limit=adminInactivityMinutes*60*1000;
+  if(elapsed>limit){
+    console.log('Inactivity timeout — logged out after '+Math.round(elapsed/1000)+'s idle (limit: '+adminInactivityMinutes+'min)');
+    if(currentEmployee){empSwitchUser();}
+    return true;
+  }
+  return false;
+}
+
 function resetInactivity(){
   if(_inactivityTimer)clearTimeout(_inactivityTimer);
+  if(_lastActivityInterval){clearInterval(_lastActivityInterval);_lastActivityInterval=null;}
   if(adminInactivityMinutes<=0)return; // "Never" = no timeout
   PIN_TIMEOUT_MS=adminInactivityMinutes*60*1000;
+  updateLastActivity();
+  var logoutTime=new Date(Date.now()+PIN_TIMEOUT_MS);
+  console.log('Inactivity timer started — will logout at '+logoutTime.toLocaleTimeString());
   _inactivityTimer=setTimeout(function(){
     if(currentEmployee){empSwitchUser();}
   },PIN_TIMEOUT_MS);
+  // Update lastActivity every 30 seconds while page is active
+  _lastActivityInterval=setInterval(function(){
+    if(document.visibilityState==='visible'){updateLastActivity();}
+  },30000);
 }
-document.addEventListener('click',resetInactivity);
-document.addEventListener('keydown',resetInactivity);
-document.addEventListener('mousemove',resetInactivity);
+
+function stopInactivityTracking(){
+  if(_inactivityTimer){clearTimeout(_inactivityTimer);_inactivityTimer=null;}
+  if(_lastActivityInterval){clearInterval(_lastActivityInterval);_lastActivityInterval=null;}
+  try{localStorage.removeItem('pos-lastActivity');}catch(e){}
+}
+
+// Reset timer on user interaction
+document.addEventListener('click',function(){if(currentEmployee){updateLastActivity();resetInactivity();}});
+document.addEventListener('keydown',function(){if(currentEmployee){updateLastActivity();resetInactivity();}});
+document.addEventListener('mousemove',(function(){
+  var _lastMove=0;
+  return function(){
+    var now=Date.now();
+    if(now-_lastMove<5000)return; // throttle mousemove to every 5s
+    _lastMove=now;
+    if(currentEmployee){updateLastActivity();resetInactivity();}
+  };
+})());
+
+// Page Visibility API — check timeout when tab becomes visible again
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'&&currentEmployee){
+    if(!checkInactivityTimeout()){
+      resetInactivity(); // still active, restart timer
+    }
+  }
+});
 
 // ── TIME CLOCK ON LOGIN SCREEN ──
 var _posTcMode=false;

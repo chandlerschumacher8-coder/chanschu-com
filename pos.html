@@ -6505,6 +6505,21 @@ async function initAppData(){
   var savedToken=localStorage.getItem(POS_TOKEN_KEY);
   var savedEmp=localStorage.getItem(POS_EMP_KEY);
   if(savedToken&&savedEmp){
+    // Check inactivity FIRST before restoring session
+    var lastActivity=localStorage.getItem('pos-lastActivity');
+    if(lastActivity&&adminInactivityMinutes>0){
+      var elapsed=Date.now()-parseInt(lastActivity);
+      var limit=adminInactivityMinutes*60*1000;
+      if(elapsed>limit){
+        console.log('Session expired — inactive for '+Math.round(elapsed/1000)+'s (limit: '+adminInactivityMinutes+'min). Showing login.');
+        localStorage.removeItem(POS_TOKEN_KEY);
+        localStorage.removeItem(POS_EMP_KEY);
+        localStorage.removeItem('pos-lastActivity');
+        window._authToken=null;
+        // Login screen is already visible by default
+        return;
+      }
+    }
     try{
       var emp=JSON.parse(savedEmp);
       window._authToken=savedToken;
@@ -6521,6 +6536,7 @@ async function initAppData(){
     }catch(e){
       localStorage.removeItem(POS_TOKEN_KEY);
       localStorage.removeItem(POS_EMP_KEY);
+      localStorage.removeItem('pos-lastActivity');
       window._authToken=null;
     }
   }
