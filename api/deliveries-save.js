@@ -3,7 +3,8 @@
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
 import { getSupabase, useSupabase } from './_supabase.js';
-const redis = Redis.fromEnv();
+let _redis;
+function getRedis() { if (!_redis) _redis = Redis.fromEnv(); return _redis; }
 
 function mapDeliveryToRow(d, store_id) {
   return {
@@ -155,7 +156,7 @@ export default async function handler(req, res) {
     // Redis fallback (legacy bulk only)
     const { deliveries, nextId, notes, nextNoteId } = body;
     if (!Array.isArray(deliveries)) return res.status(400).json({ ok: false, error: 'Invalid data' });
-    await redis.set('dc-deliveries', JSON.stringify({
+    await getRedis().set('dc-deliveries', JSON.stringify({
       deliveries,
       nextId: nextId || deliveries.length + 1,
       notes: notes || [],

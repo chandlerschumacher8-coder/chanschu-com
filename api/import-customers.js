@@ -3,7 +3,8 @@ import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
 import { getSupabase, useSupabase } from './_supabase.js';
 import * as XLSX from 'xlsx';
-const redis = Redis.fromEnv();
+let _redis;
+function getRedis() { if (!_redis) _redis = Redis.fromEnv(); return _redis; }
 
 export const config = { maxDuration: 60, api: { bodyParser: { sizeLimit: '10mb' } } };
 
@@ -63,7 +64,7 @@ export default async function handler(req, res) {
           }
         }
       } else {
-        await redis.set('pos:customers', JSON.stringify(merged));
+        await getRedis().set('pos:customers', JSON.stringify(merged));
       }
 
       return res.status(200).json({ ok: true, count: merged.length, preview: merged.slice(0, 10) });

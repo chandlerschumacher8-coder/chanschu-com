@@ -2,7 +2,8 @@
 import { Redis } from '@upstash/redis';
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { getSupabase, useSupabase } from './_supabase.js';
-const redis = Redis.fromEnv();
+let _redis;
+function getRedis() { if (!_redis) _redis = Redis.fromEnv(); return _redis; }
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
@@ -66,11 +67,11 @@ export default async function handler(req, res) {
     }
 
     // Redis fallback
-    const companiesRaw = await redis.get('companies');
+    const companiesRaw = await getRedis().get('companies');
     const companies = companiesRaw ? (typeof companiesRaw === 'string' ? JSON.parse(companiesRaw) : companiesRaw) : [];
 
     for (const company of companies) {
-      const usersRaw = await redis.get('users:' + company.id);
+      const usersRaw = await getRedis().get('users:' + company.id);
       const users = usersRaw ? (typeof usersRaw === 'string' ? JSON.parse(usersRaw) : usersRaw) : [];
       const user = users.find(u => u.password === password && u.active !== false);
       if (user) {
@@ -84,7 +85,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const techsRaw = await redis.get('service:techs');
+    const techsRaw = await getRedis().get('service:techs');
     const techs = techsRaw ? (typeof techsRaw === 'string' ? JSON.parse(techsRaw) : techsRaw) : [];
     const tech = techs.find(t => t.password === password && t.active !== false);
     if (tech) {

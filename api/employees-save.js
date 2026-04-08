@@ -2,7 +2,8 @@
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
 import { getSupabase, useSupabase } from './_supabase.js';
-const redis = Redis.fromEnv();
+let _redis;
+function getRedis() { if (!_redis) _redis = Redis.fromEnv(); return _redis; }
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
         if (!existing || !existing.length) return res.status(403).json({ ok: false, error: 'Unauthorized' });
       } else {
         const cid = companyId || 'dc-appliance';
-        const existingRaw = await redis.get('users:' + cid);
+        const existingRaw = await getRedis().get('users:' + cid);
         const existing = existingRaw ? (typeof existingRaw === 'string' ? JSON.parse(existingRaw) : existingRaw) : [];
         const requester = existing.find(u => u.password === requesterPassword && u.role === 'admin');
         if (!requester) return res.status(403).json({ ok: false, error: 'Unauthorized' });
@@ -73,7 +74,7 @@ export default async function handler(req, res) {
 
     // Redis fallback
     const cid = companyId || 'dc-appliance';
-    await redis.set('users:' + cid, JSON.stringify(users));
+    await getRedis().set('users:' + cid, JSON.stringify(users));
     return res.status(200).json({ ok: true });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });

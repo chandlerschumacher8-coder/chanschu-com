@@ -2,7 +2,8 @@
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { Redis } from '@upstash/redis';
 import { getSupabase, useSupabase } from './_supabase.js';
-const redis = Redis.fromEnv();
+let _redis;
+function getRedis() { if (!_redis) _redis = Redis.fromEnv(); return _redis; }
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
@@ -41,7 +42,7 @@ export default async function handler(req, res) {
     // Redis fallback
     const { companyId } = req.query;
     if (!companyId) return res.status(400).json({ ok: false, error: 'Missing companyId' });
-    const raw = await redis.get('users:' + companyId);
+    const raw = await getRedis().get('users:' + companyId);
     const users = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : [];
     return res.status(200).json({ ok: true, users });
   } catch (err) {

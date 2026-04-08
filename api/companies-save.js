@@ -2,7 +2,8 @@
 import { Redis } from '@upstash/redis';
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { getSupabase, useSupabase } from './_supabase.js';
-const redis = Redis.fromEnv();
+let _redis;
+function getRedis() { if (!_redis) _redis = Redis.fromEnv(); return _redis; }
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
@@ -31,11 +32,11 @@ export default async function handler(req, res) {
     }
 
     // Redis fallback
-    const raw = await redis.get('companies');
+    const raw = await getRedis().get('companies');
     let companies = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : [];
     const idx = companies.findIndex(c => c.id === company.id);
     if (idx >= 0) { companies[idx] = company; } else { companies.push(company); }
-    await redis.set('companies', JSON.stringify(companies));
+    await getRedis().set('companies', JSON.stringify(companies));
     return res.status(200).json({ ok: true });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err.message });

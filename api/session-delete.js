@@ -1,8 +1,7 @@
 // api/session-delete.js — Deletes a session token (logout)
-import { Redis } from '@upstash/redis';
+// Sessions stored in Supabase (not Redis).
 import { setCorsHeaders } from './_auth.js';
-
-const redis = Redis.fromEnv();
+import { getSupabase, useSupabase } from './_supabase.js';
 
 export default async function handler(req, res) {
   setCorsHeaders(res);
@@ -13,8 +12,8 @@ export default async function handler(req, res) {
     const authHeader = req.headers.authorization || req.headers.Authorization || '';
     const token = authHeader.replace(/^Bearer\s+/i, '').trim();
 
-    if (token) {
-      await redis.del('session:' + token);
+    if (token && useSupabase()) {
+      await getSupabase().from('sessions').delete().eq('token', token);
     }
 
     return res.status(200).json({ ok: true });
