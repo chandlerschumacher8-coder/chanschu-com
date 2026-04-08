@@ -5,6 +5,8 @@ export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
 
 const BUCKET = 'service-files';
 
+export const config = { maxDuration: 60 };
+
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
   const session = await validateSession(req);

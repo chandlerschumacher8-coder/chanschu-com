@@ -232,7 +232,7 @@ async function rptAiGenerate(){
   ];
 
   try{
-    var data=await claudeApiCall({system:sys,messages:msgs,max_tokens:4000});
+    var data=await claudeApiCall({system:sys,messages:msgs,max_tokens:4000},'ai_assistant');
     var text=(data.content&&data.content[0]&&data.content[0].text)||'';
     // Extract JSON from response
     var jsonMatch=text.match(/\{[\s\S]*\}/);

@@ -2,7 +2,7 @@
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
 import { getSupabase, useSupabase } from './_supabase.js';
 
-export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
+export const config = { maxDuration: 60, api: { bodyParser: { sizeLimit: '10mb' } } };
 
 const BUCKET = 'service-files';
 

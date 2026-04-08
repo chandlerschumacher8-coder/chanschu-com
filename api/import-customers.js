@@ -5,7 +5,7 @@ import { getSupabase, useSupabase } from './_supabase.js';
 import * as XLSX from 'xlsx';
 const redis = Redis.fromEnv();
 
-export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
+export const config = { maxDuration: 60, api: { bodyParser: { sizeLimit: '10mb' } } };
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;

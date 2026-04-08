@@ -1603,6 +1603,18 @@ Extended Warranty
 <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.44.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
 POS Settings
 </div>
+<div class="admin-menu-item" onclick="selectAdminSection('aiusage')">
+<svg viewBox="0 0 24 24"><path d="M21 10.12h-6.78l2.74-2.82-2.2-2.2L9 11 14.76 16.76l2.2-2.2L14.18 12H21V10.12zM7 6v12h2V6H7z"/></svg>
+AI Usage
+</div>
+<div class="admin-menu-item" onclick="selectAdminSection('systemstatus')">
+<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+System Status
+</div>
+<div class="admin-menu-item" onclick="selectAdminSection('errorlog')">
+<svg viewBox="0 0 24 24"><path d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/></svg>
+Error Log
+</div>
 </div>
 <div class="admin-content" id="admin-content">
 <div class="admin-panel active" id="admin-panel-categories">
@@ -1896,6 +1908,18 @@ POS Settings
 <div class="admin-content-title">Extended Warranty Tiers</div>
 <div class="admin-toolbar"><button class="admin-add-btn" onclick="wtyAddTier()">+ Add Tier</button></div>
 <div id="wty-tiers-list"></div>
+</div>
+<div class="admin-panel" id="admin-panel-aiusage">
+<div class="admin-content-title">AI Usage &amp; Cost Tracking</div>
+<div id="ai-usage-content"></div>
+</div>
+<div class="admin-panel" id="admin-panel-systemstatus">
+<div class="admin-content-title">System Status</div>
+<div id="system-status-content"></div>
+</div>
+<div class="admin-panel" id="admin-panel-errorlog">
+<div class="admin-content-title">Error Log</div>
+<div id="error-log-content"></div>
 </div>
 <div class="admin-panel" id="admin-panel-possettings">
 <div class="admin-content-title">POS Settings</div>
@@ -2386,6 +2410,14 @@ POS Settings
 </div>
 
 <script>
+// ═══ GLOBAL ERROR LOGGING ═══
+window.onerror=function(message,source,lineno,colno,error){
+  try{fetch('/api/log-error',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({store_id:typeof currentStoreId!=='undefined'?currentStoreId:1,employee_name:typeof currentEmployee!=='undefined'&&currentEmployee?currentEmployee.name:null,page:window.location.pathname,error_message:String(message),stack_trace:error?error.stack:source+':'+lineno+':'+colno,user_agent:navigator.userAgent})});}catch(e){}
+};
+window.onunhandledrejection=function(event){
+  try{fetch('/api/log-error',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({store_id:typeof currentStoreId!=='undefined'?currentStoreId:1,employee_name:typeof currentEmployee!=='undefined'&&currentEmployee?currentEmployee.name:null,page:window.location.pathname,error_message:event.reason?event.reason.message||String(event.reason):'Unhandled rejection',stack_trace:event.reason?event.reason.stack:null,user_agent:navigator.userAgent})});}catch(e){}
+};
+
 // ══════════════════════════════════════════════
 // SESSION TOKEN & AUTHENTICATED FETCH
 // ══════════════════════════════════════════════
@@ -2514,9 +2546,14 @@ const DC_APPLIANCE_LOGO = "/images/logos/dc-appliance-logo-transparent.png";
 // ══════════════════════════════════════════════
 // CLAUDE API HELPER — retry + timeout + friendly errors
 // ══════════════════════════════════════════════
-async function claudeApiCall(body){
-  var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
-  var lastError=null;
+var CLAUDE_COSTS={
+  'claude-haiku-4-5-20251001':{input:0.00000025,output:0.00000125},
+  'claude-sonnet-4-6':{input:0.000003,output:0.000015},
+  'claude-opus-4-6':{input:0.000015,output:0.000075}
+};
+async function claudeApiCall(body,featureName){
+  var TIMEOUT=15000,MAX_RETRIES=2,RETRY_DELAY=2000;
+  var lastError=null,startTime=Date.now();
   for(var attempt=0;attempt<MAX_RETRIES;attempt++){
     try{
       var ctrl=new AbortController();
@@ -2526,6 +2563,8 @@ async function claudeApiCall(body){
       if(!res.ok)throw new Error('HTTP '+res.status);
       var data=await res.json();
       if(!data.ok)throw new Error(data.error||'API error');
+      // Track AI usage
+      logAiUsage(featureName||'unknown',data,Date.now()-startTime,true);
       return data;
     }catch(e){
       lastError=e;
@@ -2534,8 +2573,27 @@ async function claudeApiCall(body){
       if(attempt<MAX_RETRIES-1)await new Promise(function(r){setTimeout(r,RETRY_DELAY);});
     }
   }
-  var err=new Error('Connection issue — please try again');
+  logAiUsage(featureName||'unknown',null,Date.now()-startTime,false,lastError);
+  var err=new Error('AI unavailable — please try again');
   err.ok=false;err.original=lastError;throw err;
+}
+function logAiUsage(feature,data,durationMs,success,error){
+  try{
+    var model=data&&data.model?data.model:'claude-sonnet-4-6';
+    var usage=data&&data.usage?data.usage:{};
+    var inTok=usage.input_tokens||0,outTok=usage.output_tokens||0;
+    var costs=CLAUDE_COSTS[model]||CLAUDE_COSTS['claude-sonnet-4-6'];
+    var cost=inTok*costs.input+outTok*costs.output;
+    apiFetch('/api/log-ai-usage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      feature:feature,model:model,input_tokens:inTok,output_tokens:outTok,total_tokens:inTok+outTok,
+      estimated_cost:Math.round(cost*1000000)/1000000,duration_ms:durationMs,success:success,
+      error_message:error?error.message:null,employee_name:currentEmployee?currentEmployee.name:'Unknown'
+    })});
+  }catch(e){console.warn('[AI Usage] Log failed:',e);}
+}
+async function callClaudeWithFallback(body,featureName,fallbackFn){
+  try{return await claudeApiCall(body,featureName);}
+  catch(e){console.error('[AI Fallback] '+featureName+' — using fallback:',e.message);if(fallbackFn)return fallbackFn();throw e;}
 }
 
 // ══════════════════════════════════════════════

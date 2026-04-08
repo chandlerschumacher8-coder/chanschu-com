@@ -792,9 +792,10 @@ function startTokenRotation(){
 function stopTokenRotation(){if(_tokenRotationTimer){clearInterval(_tokenRotationTimer);_tokenRotationTimer=null;}}
 
 // ═══ CLAUDE API HELPER ═══
-async function claudeApiCall(body){
-  var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
-  var lastError=null;
+var CLAUDE_COSTS={'claude-haiku-4-5-20251001':{input:0.00000025,output:0.00000125},'claude-sonnet-4-6':{input:0.000003,output:0.000015},'claude-opus-4-6':{input:0.000015,output:0.000075}};
+async function claudeApiCall(body,featureName){
+  var TIMEOUT=15000,MAX_RETRIES=2,RETRY_DELAY=2000;
+  var lastError=null,startTime=Date.now();
   for(var attempt=0;attempt<MAX_RETRIES;attempt++){
     try{
       var ctrl=new AbortController();
@@ -804,6 +805,7 @@ async function claudeApiCall(body){
       if(!res.ok)throw new Error('HTTP '+res.status);
       var data=await res.json();
       if(!data.ok)throw new Error(data.error||'API error');
+      logAiUsage(featureName||'unknown',data,Date.now()-startTime,true);
       return data;
     }catch(e){
       lastError=e;
@@ -812,7 +814,18 @@ async function claudeApiCall(body){
       if(attempt<MAX_RETRIES-1)await new Promise(function(r){setTimeout(r,RETRY_DELAY);});
     }
   }
-  var err=new Error('Connection issue — please try again');err.ok=false;err.original=lastError;throw err;
+  logAiUsage(featureName||'unknown',null,Date.now()-startTime,false,lastError);
+  var err=new Error('AI unavailable — please try again');err.ok=false;err.original=lastError;throw err;
+}
+function logAiUsage(feature,data,durationMs,success,error){
+  try{
+    var model=data&&data.model?data.model:'claude-sonnet-4-6';
+    var usage=data&&data.usage?data.usage:{};
+    var inTok=usage.input_tokens||0,outTok=usage.output_tokens||0;
+    var costs=CLAUDE_COSTS[model]||CLAUDE_COSTS['claude-sonnet-4-6'];
+    var cost=inTok*costs.input+outTok*costs.output;
+    apiFetch('/api/log-ai-usage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feature:feature,model:model,input_tokens:inTok,output_tokens:outTok,total_tokens:inTok+outTok,estimated_cost:Math.round(cost*1000000)/1000000,duration_ms:durationMs,success:success,error_message:error?error.message:null,employee_name:'Delivery User'})});
+  }catch(e){}
 }
 
 // ═══ COMPANY LOGO ═══
@@ -2329,7 +2342,7 @@ async function handleInvoiceFile(file){
     console.log('[Invoice] Base64 encoded, size:',b64.length,'chars');
     var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"invoiceNumber":"","deliveryDate":"","appliances":[{"a":"Refrigerator","m":"Model123"}]}'}]}];
     console.log('[Invoice] Calling Claude API...');
-    var data=await claudeApiCall({messages:msgs,max_tokens:800});
+    var data=await claudeApiCall({messages:msgs,max_tokens:800},'invoice_scan');
     console.log('[Invoice] Claude API response received');
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
     console.log('[Invoice] Extracted data:',JSON.stringify(parsed));
@@ -2353,7 +2366,7 @@ async function handleInvoiceFile(file){
     var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
     var upD=await upR.json();
     if(upD.ok){pendingFiles.push({url:upD.url,filename:file.name});renderPendingFiles();}
-  }catch(e){console.error('[Invoice] Error:',e);alert('Could not read invoice: '+e.message);}
+  }catch(e){console.error('[Invoice] Error:',e);alert('AI unavailable \u2014 please enter manually');}
   finally{document.getElementById('idz-loading').style.display='none';}
 }
 function showInvoicePreview(cu,apps,inv,delDate){
@@ -2816,7 +2829,7 @@ async function msProcessSerialPhoto(file,appIdx){
         ]
       }],
       max_tokens:200
-    });
+    },'serial_scan');
     var txt=data.content[0].text;
     var match=txt.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('No JSON');
@@ -2896,7 +2909,7 @@ async function bsProcessSerialPhoto(file,idx){
         ]
       }],
       max_tokens:200
-    });
+    },'serial_scan');
     var txt=data.content[0].text;
     var match=txt.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('No JSON');

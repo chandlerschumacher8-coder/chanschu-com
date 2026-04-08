@@ -17,7 +17,7 @@ async function aiSend(){
   inp.value='';btn.disabled=true;aiAddMsg('user',text);aiHistory.push({role:'user',content:text});
   var typing=aiAddMsg('ai','<span class="dots"><span>.</span><span>.</span><span>.</span></span>');
   var sys='You are an AI assistant for DC Appliance, an appliance retail store. Current tab: '+currentTab+'. You help with pricing, quotes, inventory management, service scheduling, delivery logistics, and general business questions. Be concise and helpful. Today is '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'.';
-  try{var data=await claudeApiCall({system:sys,messages:aiHistory,max_tokens:600});var reply=data.content[0].text||'Sorry, try again.';aiHistory.push({role:'assistant',content:reply});typing.remove();aiAddMsg('ai',reply);}
+  try{var data=await claudeApiCall({system:sys,messages:aiHistory,max_tokens:600},'ai_assistant');var reply=data.content[0].text||'Sorry, try again.';aiHistory.push({role:'assistant',content:reply});typing.remove();aiAddMsg('ai',reply);}
   catch(e){typing.remove();aiAddMsg('ai',e.message||'Connection issue — please try again');}btn.disabled=false;inp.focus();
 }
 
@@ -254,6 +254,9 @@ function renderAdminSection(){
   else if(adminSection==='eomreports') renderEomReports();
   else if(adminSection==='warranties') renderWarrantyTiers();
   else if(adminSection==='possettings') renderPosSettings();
+  else if(adminSection==='aiusage') renderAiUsage();
+  else if(adminSection==='systemstatus') renderSystemStatus();
+  else if(adminSection==='errorlog') renderErrorLog();
 }
 
 // --- Categories ---
@@ -1108,7 +1111,7 @@ async function recvHandleFile(file){
     var contentType=file.type==='application/pdf'?'document':'image';
     if(file.name.match(/\.(csv|xlsx|xls)$/i))contentType='document';
     var msgs=[{role:'user',content:[{type:contentType,source:{type:'base64',media_type:file.type||'application/octet-stream',data:b64}},{type:'text',text:'Extract all items from this vendor invoice/packing list. Return JSON only: {"vendor":"Vendor Name","items":[{"model":"MODEL#","description":"Product Name","qty":1,"cost":0,"serials":["SN1","SN2"]}]}. Include ALL serial numbers found. JSON only, no explanation.'}]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:2000});
+    var data=await claudeApiCall({messages:msgs,max_tokens:2000},'serial_import');
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
     recvShowPreview(parsed);
   }catch(e){toast('Could not read invoice: '+e.message,'error');console.error(e);}
@@ -1825,7 +1828,7 @@ async function diHandleSalesFile(file){
       +'"subtotal":0,"salesTax":0,"total":0}]}. '
       +'For walk-ins the customer will be "Cash", "Check", or "Charge". JSON only, no explanation.';
     var msgs=[{role:'user',content:[{type:contentType,source:{type:'base64',media_type:file.type||'application/pdf',data:b64}},{type:'text',text:prompt}]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:8000});
+    var data=await claudeApiCall({messages:msgs,max_tokens:8000},'sales_journal_import');
     var match=data.content[0].text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('Could not parse AI response');
     var parsed=JSON.parse(match[0]);
@@ -2254,7 +2257,7 @@ async function diHandleSerialFile(file){
           var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
           var prompt='Extract ALL serial numbers from this SmartTouch POS Serial Number Report by Brand. Return JSON only: {"brand":"Brand Name","models":[{"model":"MODEL#","plu":"","serials":[{"serial":"SN123","invoice":"INV/PO#","date":"YYYY-MM-DD","cost":0}]}]}. Keep any prefixes like "dented", "used", "damaged", "open box" in the serial field exactly as shown. JSON only, no explanation.';
           var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},{type:'text',text:prompt}]}];
-          var data=await claudeApiCall({messages:msgs,max_tokens:8000});
+          var data=await claudeApiCall({messages:msgs,max_tokens:8000},'serial_import');
           var m=data.content[0].text.match(/\{[\s\S]*\}/);
           if(m)parsed=JSON.parse(m[0]);
         }catch(apiErr){console.error('AI fallback failed:',apiErr);}
@@ -3078,7 +3081,7 @@ async function puHandleFile(file){
   try{
     var b64=await toB64(file);var isPdf=file.type==='application/pdf';
     var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:file.type||'text/csv',data:b64}},{type:'text',text:'This is a pricing spreadsheet from an appliance buying group. Extract model numbers and new sell prices. Return JSON array only: [{"model":"MODEL#","description":"Item Name","newPrice":999.99}]. Include ALL rows. JSON only, no explanation.'}]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:4000});
+    var data=await claudeApiCall({messages:msgs,max_tokens:4000},'price_update');
     var text=data.content[0].text;var match=text.match(/\[[\s\S]*\]/);if(!match)throw new Error('Could not parse pricing data');
     var parsed=JSON.parse(match[0]);
     puPendingChanges=[];var up=0,down=0,same=0;
@@ -3636,6 +3639,201 @@ function exportWarrantyPDF(ym){
   var win=window.open('','_blank');
   win.document.write('<!DOCTYPE html><html><head><title>Warranty Report '+ym+'</title><style>body{font-family:sans-serif;padding:20px;}</style></head><body><h2>Warranty Report — '+ym+'</h2>'+html+'<script>setTimeout(function(){window.print();},300);<\/script></body></html>');
   win.document.close();
+}
+
+// ═══ AI USAGE DASHBOARD ═══
+async function renderAiUsage(){
+  var wrap=document.getElementById('ai-usage-content');if(!wrap)return;
+  wrap.innerHTML='<div style="color:var(--gray-3);padding:20px;">Loading AI usage data...</div>';
+  try{
+    var res=await apiFetch('/api/admin-get?key=_raw_ai_usage');
+    // Direct Supabase query via a helper — use store_config fallback
+    var today=new Date().toISOString().slice(0,10);
+    var monthStart=today.slice(0,7)+'-01';
+    // Query Supabase directly through the health endpoint trick won't work — build from admin-get
+    // For now, load from store_config where we'll cache summaries
+    // Actually, let's query the ai_usage table via a custom call
+    var qRes=await apiFetch('/api/health');var qData=await qRes.json();
+    // Simple approach: fetch recent usage via admin-get with special key
+  }catch(e){}
+  // Build static dashboard that loads on render
+  var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">';
+  h+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-3);">Today\'s Calls</div><div id="ai-today-calls" style="font-size:24px;font-weight:700;color:var(--gold);">—</div><div id="ai-today-cost" style="font-size:11px;color:var(--gray-2);">$0.00</div></div>';
+  h+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-3);">This Month</div><div id="ai-month-calls" style="font-size:24px;font-weight:700;color:var(--blue);">—</div><div id="ai-month-cost" style="font-size:11px;color:var(--gray-2);">$0.00</div></div>';
+  h+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-3);">Projected Monthly</div><div id="ai-projected" style="font-size:24px;font-weight:700;color:var(--orange);">—</div><div style="font-size:11px;color:var(--gray-2);">Based on current pace</div></div>';
+  h+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--gray-3);">Most Used Feature</div><div id="ai-top-feature" style="font-size:16px;font-weight:700;color:var(--green);">—</div><div id="ai-top-count" style="font-size:11px;color:var(--gray-2);">—</div></div>';
+  h+='</div>';
+  h+='<div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">';
+  h+='<button class="primary-btn" onclick="loadAiUsageData()">Refresh Data</button>';
+  h+='<button class="ghost-btn" onclick="exportAiUsageCsv()">Export CSV</button>';
+  h+='</div>';
+  h+='<div id="ai-usage-table" style="font-size:11px;"></div>';
+  h+='<div id="ai-feature-breakdown" style="margin-top:16px;"></div>';
+  wrap.innerHTML=h;
+  loadAiUsageData();
+}
+
+var _aiUsageData=[];
+async function loadAiUsageData(){
+  try{
+    var res=await apiFetch('/api/admin-get?key=ai-usage-recent');
+    var data=await res.json();
+    _aiUsageData=Array.isArray(data.data)?data.data:[];
+  }catch(e){_aiUsageData=[];}
+  renderAiUsageCards();renderAiUsageTable();renderAiFeatureBreakdown();
+}
+
+function renderAiUsageCards(){
+  var today=new Date().toISOString().slice(0,10);
+  var monthStart=today.slice(0,7)+'-01';
+  var todayCalls=_aiUsageData.filter(function(r){return r.date&&r.date.slice(0,10)===today;});
+  var monthCalls=_aiUsageData.filter(function(r){return r.date&&r.date.slice(0,10)>=monthStart;});
+  var todayCost=todayCalls.reduce(function(s,r){return s+(r.cost||0);},0);
+  var monthCost=monthCalls.reduce(function(s,r){return s+(r.cost||0);},0);
+  var dayOfMonth=new Date().getDate();var daysInMonth=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+  var projected=dayOfMonth>0?(monthCost/dayOfMonth)*daysInMonth:0;
+  // Top feature
+  var featureCounts={};monthCalls.forEach(function(r){featureCounts[r.feature]=(featureCounts[r.feature]||0)+1;});
+  var topFeature='—',topCount=0;
+  Object.keys(featureCounts).forEach(function(f){if(featureCounts[f]>topCount){topCount=featureCounts[f];topFeature=f;}});
+
+  var el;
+  el=document.getElementById('ai-today-calls');if(el)el.textContent=todayCalls.length;
+  el=document.getElementById('ai-today-cost');if(el)el.textContent='$'+todayCost.toFixed(4);
+  el=document.getElementById('ai-month-calls');if(el)el.textContent=monthCalls.length;
+  el=document.getElementById('ai-month-cost');if(el)el.textContent='$'+monthCost.toFixed(4);
+  el=document.getElementById('ai-projected');if(el)el.textContent='$'+projected.toFixed(2);
+  el=document.getElementById('ai-top-feature');if(el)el.textContent=topFeature.replace(/_/g,' ');
+  el=document.getElementById('ai-top-count');if(el)el.textContent=topCount+' calls this month';
+}
+
+function renderAiUsageTable(){
+  var el=document.getElementById('ai-usage-table');if(!el)return;
+  if(!_aiUsageData.length){el.innerHTML='<div style="color:var(--gray-3);padding:8px;">No AI usage data yet.</div>';return;}
+  var h='<div style="max-height:350px;overflow:auto;border:1px solid var(--border);border-radius:6px;"><table class="admin-table" style="margin:0;"><thead><tr><th>Date</th><th>Feature</th><th>Employee</th><th>Tokens</th><th style="text-align:right;">Cost</th><th>Duration</th><th>Status</th></tr></thead><tbody>';
+  _aiUsageData.slice(0,100).forEach(function(r){
+    var dt=r.date?new Date(r.date).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+    var status=r.success!==false?'<span style="color:var(--green);">OK</span>':'<span style="color:var(--red);">FAIL</span>';
+    h+='<tr><td>'+dt+'</td><td>'+((r.feature||'').replace(/_/g,' '))+'</td><td>'+(r.employee||'—')+'</td><td>'+(r.tokens||0)+'</td><td style="text-align:right;">$'+((r.cost||0).toFixed(4))+'</td><td>'+(r.duration_ms?Math.round(r.duration_ms/1000)+'s':'—')+'</td><td>'+status+'</td></tr>';
+  });
+  h+='</tbody></table></div>';el.innerHTML=h;
+}
+
+function renderAiFeatureBreakdown(){
+  var el=document.getElementById('ai-feature-breakdown');if(!el)return;
+  var monthStart=new Date().toISOString().slice(0,7)+'-01';
+  var monthCalls=_aiUsageData.filter(function(r){return r.date&&r.date.slice(0,10)>=monthStart;});
+  var byFeature={};monthCalls.forEach(function(r){var f=r.feature||'unknown';if(!byFeature[f])byFeature[f]={calls:0,cost:0,tokens:0};byFeature[f].calls++;byFeature[f].cost+=(r.cost||0);byFeature[f].tokens+=(r.tokens||0);});
+  var features=Object.keys(byFeature).sort(function(a,b){return byFeature[b].cost-byFeature[a].cost;});
+  if(!features.length){el.innerHTML='';return;}
+  var h='<div style="font-size:12px;font-weight:700;margin-bottom:8px;">Cost by Feature (This Month)</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;">';
+  features.forEach(function(f){
+    var d=byFeature[f];
+    h+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px;"><div style="font-size:11px;font-weight:700;text-transform:capitalize;">'+f.replace(/_/g,' ')+'</div><div style="font-size:18px;font-weight:700;color:var(--gold);">$'+d.cost.toFixed(4)+'</div><div style="font-size:10px;color:var(--gray-2);">'+d.calls+' calls &middot; '+d.tokens+' tokens</div></div>';
+  });
+  h+='</div>';el.innerHTML=h;
+}
+
+function exportAiUsageCsv(){
+  if(!_aiUsageData.length){toast('No data to export','error');return;}
+  var csv='Date,Feature,Employee,Tokens,Cost,Duration(ms),Status\n';
+  _aiUsageData.forEach(function(r){csv+='"'+(r.date||'')+'",'+(r.feature||'')+','+(r.employee||'')+','+(r.tokens||0)+','+(r.cost||0)+','+(r.duration_ms||0)+','+(r.success!==false?'OK':'FAIL')+'\n';});
+  var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='ai-usage-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
+}
+
+// ═══ SYSTEM STATUS ═══
+var _healthTimer=null;
+async function renderSystemStatus(){
+  var wrap=document.getElementById('system-status-content');if(!wrap)return;
+  wrap.innerHTML='<div style="color:var(--gray-3);padding:20px;">Checking system status...</div>';
+  await loadSystemStatus();
+  if(_healthTimer)clearInterval(_healthTimer);
+  _healthTimer=setInterval(loadSystemStatus,60000);
+}
+
+async function loadSystemStatus(){
+  var wrap=document.getElementById('system-status-content');if(!wrap)return;
+  try{
+    var res=await fetch('/api/health');var data=await res.json();
+    var h='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">';
+    h+=buildStatusCard('Supabase',data.supabase,data.supabase_ms);
+    h+=buildStatusCard('Redis',data.redis,data.redis_ms);
+    h+=buildStatusCard('Anthropic AI',data.ai,data.ai_ms);
+    h+='</div>';
+
+    // Last backup
+    h+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">';
+    h+='<div style="font-size:12px;font-weight:700;margin-bottom:8px;">Last Backup</div>';
+    h+='<div id="ss-last-backup" style="font-size:12px;color:var(--gray-2);">Checking...</div>';
+    h+='</div>';
+
+    h+='<div style="font-size:10px;color:var(--gray-3);">Auto-refreshes every 60 seconds &middot; Last checked: '+new Date().toLocaleTimeString()+'</div>';
+    wrap.innerHTML=h;
+
+    // Load backup info
+    loadBackupStatus();
+
+    // Show banners if services are down
+    updateServiceBanners(data);
+  }catch(e){wrap.innerHTML='<div style="color:var(--red);padding:20px;">Failed to check system status: '+e.message+'</div>';}
+}
+
+function buildStatusCard(name,status,ms){
+  var color=status==='ok'?'#16a34a':status==='degraded'?'#a16207':'#dc2626';
+  var icon=status==='ok'?'&#x1F7E2;':status==='degraded'?'&#x1F7E1;':'&#x1F534;';
+  var label=status==='ok'?'Online':status==='degraded'?'Degraded':status==='disabled'?'Disabled':'Offline';
+  return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;"><div style="font-size:28px;">'+icon+'</div><div style="font-size:14px;font-weight:700;margin:6px 0;">'+name+'</div><div style="font-size:12px;font-weight:600;color:'+color+';">'+label+'</div>'+(ms?'<div style="font-size:10px;color:var(--gray-3);margin-top:4px;">'+ms+'ms</div>':'')+'</div>';
+}
+
+async function loadBackupStatus(){
+  var el=document.getElementById('ss-last-backup');if(!el)return;
+  try{
+    var res=await apiFetch('/api/admin-get?key=backup-history');var data=await res.json();
+    var history=(data&&Array.isArray(data.data))?data.data:[];
+    if(!history.length){el.innerHTML='<span style="color:#dc2626;font-weight:700;">No backups found</span>';return;}
+    var last=history[0];var dt=new Date(last.created_at);
+    var ageHrs=(Date.now()-dt.getTime())/(1000*60*60);
+    var color=ageHrs<24?'#16a34a':ageHrs<48?'#a16207':'#dc2626';
+    var label=ageHrs<24?'OK':ageHrs<48?'Aging':'OVERDUE';
+    el.innerHTML='<span style="color:'+color+';font-weight:700;">'+label+'</span> &mdash; '+dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' at '+dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})+' ('+last.total_records+' records, '+last.size_kb+' KB)';
+  }catch(e){el.textContent='Error loading backup status';}
+}
+
+function updateServiceBanners(data){
+  // Remove existing banners
+  document.querySelectorAll('.sys-banner').forEach(function(b){b.remove();});
+  var banners=[];
+  if(data.supabase!=='ok'&&data.supabase!=='disabled')banners.push({msg:'Supabase is unavailable — some features may not work',color:'#dc2626'});
+  if(data.redis!=='ok')banners.push({msg:'Redis is unavailable — some features may not work',color:'#dc2626'});
+  if(data.ai!=='ok'&&data.ai!=='no_key')banners.push({msg:'AI features temporarily unavailable — manual entry required',color:'#a16207'});
+  banners.forEach(function(b){
+    var div=document.createElement('div');div.className='sys-banner';
+    div.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;padding:8px 16px;font-size:12px;font-weight:700;text-align:center;color:#fff;background:'+b.color+';';
+    div.textContent='\\u26A0\\uFE0F '+b.msg;
+    document.body.appendChild(div);
+  });
+}
+
+// ═══ ERROR LOG ═══
+async function renderErrorLog(){
+  var wrap=document.getElementById('error-log-content');if(!wrap)return;
+  wrap.innerHTML='<div style="color:var(--gray-3);padding:20px;">Loading error log...</div>';
+  try{
+    var res=await apiFetch('/api/admin-get?key=error-log-recent');
+    var data=await res.json();
+    var errors=Array.isArray(data.data)?data.data:[];
+    if(!errors.length){wrap.innerHTML='<div style="color:var(--green);padding:20px;font-weight:600;">No errors logged. System is running clean.</div>';return;}
+    var h='<div style="font-size:12px;color:var(--gray-2);margin-bottom:10px;">Showing last '+Math.min(errors.length,50)+' errors (auto-cleaned after 30 days)</div>';
+    h+='<div style="max-height:500px;overflow:auto;border:1px solid var(--border);border-radius:6px;"><table class="admin-table" style="margin:0;font-size:11px;"><thead><tr><th>Time</th><th>Page</th><th>Employee</th><th>Error</th></tr></thead><tbody>';
+    errors.slice(0,50).forEach(function(e){
+      var dt=e.created_at?new Date(e.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+      var msg=(e.error_message||'').slice(0,100);
+      h+='<tr><td style="white-space:nowrap;">'+dt+'</td><td>'+(e.page||'—')+'</td><td>'+(e.employee_name||'—')+'</td><td style="color:var(--red);max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+(e.error_message||'').replace(/"/g,'&quot;')+'">'+msg+'</td></tr>';
+    });
+    h+='</tbody></table></div>';
+    wrap.innerHTML=h;
+  }catch(e){wrap.innerHTML='<div style="color:var(--red);padding:20px;">Failed to load error log: '+e.message+'</div>';}
 }
 
 // Init — preload users for fast PIN lookup

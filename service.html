@@ -822,7 +822,7 @@ function startTokenRotation(){
 function stopTokenRotation(){if(_tokenRotationTimer){clearInterval(_tokenRotationTimer);_tokenRotationTimer=null;}}
 
 // ─── CLAUDE API HELPER ───
-async function claudeApiCall(body){
+async function claudeApiCall(body,featureName){
   var TIMEOUT=30000,MAX_RETRIES=3,RETRY_DELAY=2000;
   var lastError=null;
   for(var attempt=0;attempt<MAX_RETRIES;attempt++){
@@ -1617,7 +1617,7 @@ async function handleInvoiceFile(file){
   try{
     var b64=await toB64(file);var isPdf=file.type==='application/pdf';
     var messages=[{role:'user',content:[{type:isPdf?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'This is a sales invoice. Extract ALL appliances listed and customer info. Respond ONLY in JSON: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"appliance":"Washer","brand":"Samsung","model":"WF45R6100AW","serial":"ABC123","invoice":"INV-001"}]}'}]}];
-    var data=await claudeApiCall({messages:messages,max_tokens:1000});
+    var data=await claudeApiCall({messages:messages,max_tokens:1000},'job_assistant');
     var text=data.content[0].text;var match=text.match(/\{[\s\S]*\}/);if(!match)throw new Error('No data found');
     var parsed=JSON.parse(match[0]);
     var cust=parsed.customer||{};
@@ -1663,7 +1663,7 @@ async function sendChat(){
   var techs=techList.filter(function(t){return t!=='Unassigned';}).join(', ')||'Unassigned';
   var sys='You are a service scheduling assistant. Today is '+new Date().toLocaleDateString('en-US',{weekday:"long",month:"long",day:"numeric",year:"numeric"})+'. Today='+today+', Tomorrow='+tomorrow+'. Available techs: '+techs+'. When you have enough info respond with ONLY this JSON: {"action":"create_job","name":"","phone":"","email":"","address":"","city":"","appliance":"","brand":"","model":"","serial":"","issue":"","date":"'+today+'","time":"Morning (8am-12pm)","tech":"Unassigned","priority":"Medium","notes":""}. Valid times: "Morning (8am-12pm)","Afternoon (12pm-5pm)","All Day","Call Ahead". Ask if info is missing.';
   try{
-    var data=await claudeApiCall({system:sys,messages:chatHistory,max_tokens:600});
+    var data=await claudeApiCall({system:sys,messages:chatHistory,max_tokens:600},'job_assistant');
     var reply=data.content[0].text||'Sorry, I had trouble. Try again.';
     chatHistory.push({role:'assistant',content:reply});typing.remove();
     var jm=reply.match(/\{[\s\S]*"action"\s*:\s*"create_job"[\s\S]*\}/);

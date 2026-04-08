@@ -391,7 +391,7 @@ async function lookupModel(){
     var prompt='Look up appliance model number "'+sku+'" from manufacturer sources (Whirlpool, Maytag, KitchenAid, Amana, LG, Samsung, GE Appliances, Frigidaire/Electrolux). '
       +'Return JSON only: {"brand":"Brand Name","description":"Full product description with key features","category":"Category","specs":{"dimensions":"","capacity":"","features":""},"specSheetUrl":"","found":true}. '
       +'If you cannot find reliable info, return {"found":false}. JSON only, no explanation.';
-    var data=await claudeApiCall({messages:[{role:'user',content:prompt}],max_tokens:600});
+    var data=await claudeApiCall({messages:[{role:'user',content:prompt}],max_tokens:600},'product_specs');
     var match=data.content[0].text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('No JSON found');
     var parsed=JSON.parse(match[0]);
@@ -1537,7 +1537,7 @@ async function delHandleInvoiceFile(file){
   console.log('[POS Invoice] Base64 encoded, size:',b64.length,'chars');
   var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"invoiceNumber":"","deliveryDate":"","appliances":[{"a":"Refrigerator","m":"Model123"}]}'}]}];
   console.log('[POS Invoice] Calling Claude API...');
-  var data=await claudeApiCall({messages:msgs,max_tokens:800});
+  var data=await claudeApiCall({messages:msgs,max_tokens:800},'invoice_scan');
   console.log('[POS Invoice] Claude API response received');
   var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
   console.log('[POS Invoice] Extracted data:',JSON.stringify(parsed));
@@ -1549,7 +1549,7 @@ async function delHandleInvoiceFile(file){
   // Show extracted data preview
   delShowInvoicePreview(cu,apps,parsed.invoiceNumber||((apps.length&&apps[0].invoice)?apps[0].invoice:''),parsed.deliveryDate);
   var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});var upD=await upR.json();
-  if(upD.ok){delPendingFiles.push({url:upD.url,filename:file.name});delRenderPendingFiles();}}catch(e){console.error('[POS Invoice] Error:',e);toast('Could not read invoice: '+e.message,'error');}finally{document.getElementById('del-idz-loading').style.display='none';}
+  if(upD.ok){delPendingFiles.push({url:upD.url,filename:file.name});delRenderPendingFiles();}}catch(e){console.error('[POS Invoice] Error:',e);toast('AI unavailable \u2014 please enter manually','error');}finally{document.getElementById('del-idz-loading').style.display='none';}
 }
 function delShowInvoicePreview(cu,apps,inv,delDate){
   var wrap=document.getElementById('del-invoice-preview');
@@ -2018,7 +2018,7 @@ async function svcHandleInvoiceFile(file){
   if(!file)return;svcPendingInvoiceFile=file;var loading=document.getElementById('svc-idz-loading');if(loading)loading.style.display='block';
   try{var b64=await toB64(file);var isPdf=file.type==='application/pdf';
   var msgs=[{role:'user',content:[{type:isPdf?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract customer info and appliance from this invoice. JSON: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"appliances":[{"appliance":"Washer","brand":"Samsung","model":"WF45R6100AW","serial":"ABC123","invoice":"INV-001"}]}'}]}];
-  var data=await claudeApiCall({messages:msgs,max_tokens:1000});
+  var data=await claudeApiCall({messages:msgs,max_tokens:1000},'invoice_scan');
   var text=data.content[0].text;var match=text.match(/\{[\s\S]*\}/);if(!match)throw new Error('No data');var parsed=JSON.parse(match[0]);var cust=parsed.customer||{};
   if(cust.name)document.getElementById('svc-f-name').value=cust.name;if(cust.phone)document.getElementById('svc-f-phone').value=cust.phone;if(cust.email)document.getElementById('svc-f-email').value=cust.email;if(cust.address)document.getElementById('svc-f-address').value=cust.address;if(cust.city)document.getElementById('svc-f-city').value=cust.city;
   var apps=parsed.appliances||[];if(apps.length>0){var a=apps[0];if(a.appliance){var sel=document.getElementById('svc-f-appliance');for(var i=0;i<sel.options.length;i++){if(sel.options[i].value&&a.appliance.toLowerCase().includes(sel.options[i].value.toLowerCase().split('/')[0].trim())){sel.selectedIndex=i;break;}}}if(a.brand)document.getElementById('svc-f-brand').value=a.brand;if(a.model)document.getElementById('svc-f-model').value=a.model;if(a.serial)document.getElementById('svc-f-serial').value=a.serial;if(a.invoice)document.getElementById('svc-f-invoice').value=a.invoice;}
@@ -2629,7 +2629,7 @@ async function recvHandleSlip(file){
     var b64=await toB64(file);
     var itemList=selectedPO.items.map(function(it){return (it.model||'')+': '+it.name+' (ordered: '+it.qtyOrdered+')';}).join(', ');
     var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract received quantities from this packing slip/invoice. Match to these PO items: '+itemList+'. Return JSON only: {"received":[{"model":"MODEL#","qty":NUMBER}]}'}]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:600});
+    var data=await claudeApiCall({messages:msgs,max_tokens:600},'packing_slip_scan');
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
     if(parsed.received){
       parsed.received.forEach(function(r){
@@ -2663,7 +2663,7 @@ async function recvAiHandleFile(file){
       {type:contentType,source:{type:'base64',media_type:file.type||'application/octet-stream',data:b64}},
       {type:'text',text:'Extract all items from this vendor invoice/packing list. Return JSON only: {"vendor":"Vendor Name","poNumber":"PO#IfReferenced","invoiceDate":"YYYY-MM-DD","items":[{"model":"MODEL#","description":"Product Name","qty":1,"unitCost":0,"serials":["SN1","SN2"]}]}. Include ALL serial numbers found. If a field is missing use empty string. JSON only, no explanation.'}
     ]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:2000});
+    var data=await claudeApiCall({messages:msgs,max_tokens:2000},'invoice_receive');
     var match=data.content[0].text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('Could not parse AI response');
     var parsed=JSON.parse(match[0]);
