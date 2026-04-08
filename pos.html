@@ -1206,7 +1206,7 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <div class="cart-hdr">
 <span>Current Sale</span>
 <div class="cart-hdr-actions">
-<input class="sale-search" id="sale-search" placeholder="Search products or scan UPC..." oninput="saleSearch()" style="width:200px;margin-right:auto;padding:5px 10px;font-size:11px;"/>
+<input class="sale-search" id="sale-search" placeholder="Search products or scan UPC..." oninput="saleSearch()" style="flex:1;min-width:0;min-height:42px;padding:10px 14px;font-size:14px;margin-right:8px;border-radius:8px;"/>
 <input class="sale-search" id="invoice-lookup" placeholder="Invoice #" style="max-width:100px;padding:5px 8px;font-size:11px;" onkeydown="if(event.key==='Enter')lookupInvoice()"/>
 <button class="cart-action-btn" onclick="lookupInvoice()" style="border-color:#86efac;color:#16a34a;">Pull Up</button>
 <button class="cart-action-btn" onclick="openQuoteLoader()" style="border-color:#bfdbfe;color:#2563eb;">Quote</button>
@@ -1221,6 +1221,8 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 </div>
 </div>
 </div>
+<!-- Hot buttons row -->
+<div id="sale-hotbar-inline" style="flex-shrink:0;border-top:1px solid #e5e7eb;padding:6px 14px;background:#f9fafb;overflow-x:auto;white-space:nowrap;display:flex;gap:6px;"></div>
 <!-- Row 3: Notes -->
 <div class="sale-center-bot">
 <div class="sale-notes-row">
@@ -5174,7 +5176,6 @@ function catItemCount(cat){
 }
 function renderSaleDepartments(){
   saleViewMode='departments';saleActiveDept='';saleActiveCat='';
-  document.getElementById('sale-toolbar').innerHTML='<input class="sale-search" id="sale-search" placeholder="Search all products..." oninput="saleSearch()"/>';
   var h='<div class="cat-grid">';
   DEPARTMENTS.forEach(function(d){
     var count=deptItemCount(d.name);
@@ -5186,8 +5187,8 @@ function renderSaleDepartments(){
 function saleOpenDept(deptName){
   saleViewMode='categories';saleActiveDept=deptName;saleActiveCat='';
   var dept=DEPARTMENTS.find(function(d){return d.name===deptName;});if(!dept)return;
-  document.getElementById('sale-toolbar').innerHTML='<button class="sale-back-btn" onclick="renderSaleDepartments()">&#8592; Back</button><span class="sale-cat-title">'+deptName+'</span><input class="sale-search" id="sale-search" placeholder="Search in '+deptName+'..." oninput="saleSearch()" style="margin-left:auto;"/>';
-  var h='<div class="cat-grid">';
+  var h='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><button class="sale-back-btn" onclick="renderSaleDepartments()">&#8592; Back</button><span class="sale-cat-title">'+deptName+'</span></div>';
+  h+='<div class="cat-grid">';
   dept.cats.forEach(function(cat){
     var count=catItemCount(cat);
     h+='<div class="cat-tile" onclick="saleOpenCat(\''+cat.replace(/'/g,"\\'")+'\')"><div class="cat-tile-name">'+cat+'</div><div class="cat-tile-count">'+count+' in stock</div></div>';
@@ -5201,19 +5202,15 @@ function saleOpenCat(cat){
 }
 function renderSaleProductList(cat,searchQ){
   var q=(searchQ||'').toLowerCase();
-  var tb=document.getElementById('sale-toolbar');
-  if(cat){
-    var backTarget=saleActiveDept?'saleOpenDept(\''+saleActiveDept.replace(/'/g,"\\'")+'\')':'renderSaleDepartments()';
-    tb.innerHTML='<button class="sale-back-btn" onclick="'+backTarget+'">&#8592; Back</button><span class="sale-cat-title">'+cat+'</span><input class="sale-search" id="sale-search" placeholder="Search in '+cat+'..." oninput="saleSearch()" style="margin-left:auto;"/>';
-  } else {
-    tb.innerHTML='<button class="sale-back-btn" onclick="document.getElementById(\'sale-search\').value=\'\';'+(saleActiveDept?'saleOpenDept(\''+saleActiveDept.replace(/'/g,"\\'")+'\')':'renderSaleDepartments()')+';">&#8592; Back</button><span class="sale-cat-title">Search Results</span><input class="sale-search" id="sale-search" placeholder="Search products..." oninput="saleSearch()" value="'+q.replace(/"/g,'&quot;')+'"/>';
-  }
+  var backTarget=cat&&saleActiveDept?'saleOpenDept(\''+saleActiveDept.replace(/'/g,"\\'")+'\')':cat?'renderSaleDepartments()':'renderSaleDepartments()';
+  var browseEl=document.getElementById('sale-browse');
+  var header='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><button class="sale-back-btn" onclick="document.getElementById(\'sale-search\').value=\'\';'+backTarget+';">&#8592; Back</button><span class="sale-cat-title">'+(cat||'Search Results')+'</span></div>';
   var filtered=PRODUCTS.filter(function(p){
     if(p.active===false)return false;
     if(cat) return saleCatMatch(p,cat);
     return !q||p.name.toLowerCase().includes(q)||p.brand.toLowerCase().includes(q)||(p.model||'').toLowerCase().includes(q)||(p.upc||'').toLowerCase().includes(q);
   });
-  var h='<div class="prod-list"><div class="prod-list-hdr"><span>Model #</span><span>Description</span><span>Brand</span><span>Sell Price</span><span>On Hand</span></div>';
+  var h=header+'<div class="prod-list"><div class="prod-list-hdr"><span>Model #</span><span>Description</span><span>Brand</span><span>Sell Price</span><span>On Hand</span></div>';
   if(!filtered.length) h+='<div style="text-align:center;color:var(--gray-2);padding:30px;font-size:12px;">No products found</div>';
   filtered.forEach(function(p){
     var ams=Math.max(0,p.stock-(p.sold||0));
@@ -5221,7 +5218,7 @@ function renderSaleProductList(cat,searchQ){
     h+='<div class="prod-list-row" onclick="addToCart('+p.id+')"><span>'+(p.model||'')+'</span><span>'+p.name+'</span><span>'+p.brand+'</span><span class="pl-price">'+fmt(p.price)+'</span><span class="pl-qty '+qc+'">'+ams+'</span></div>';
   });
   h+='</div>';
-  document.getElementById('sale-browse').innerHTML=h;
+  browseEl.innerHTML=h;
 }
 function refreshSaleView(){if(saleViewMode==='departments')renderSaleDepartments();else if(saleViewMode==='categories'&&saleActiveDept)saleOpenDept(saleActiveDept);else if(saleViewMode==='products'&&saleActiveCat)renderSaleProductList(saleActiveCat,'');else if(saleViewMode==='search'){var q=(document.getElementById('sale-search')||{}).value||'';renderSaleProductList(null,q);}}
 function addToCart(pid){
@@ -5236,20 +5233,23 @@ function addInstallItem(name,price){
   renderCart();toast(name+' added','success');
 }
 function renderHotBar(){
-  var bar=document.getElementById('sale-hotbar');if(!bar)return;
+  var bar=document.getElementById('sale-hotbar-inline');if(!bar)return;
   var h='';
-  hotButtons.slice(0,13).forEach(function(b,i){
+  hotButtons.forEach(function(b,i){
     if(!b.active||!b.label)return;
+    var isInstall=/install|hook|connect/i.test(b.label);
+    var btnStyle=isInstall?'background:#fff7ed;color:#c2410c;border-color:#fdba74;':'background:#eff6ff;color:#2563eb;border-color:#bfdbfe;';
     if(b.type==='item'&&b.itemModel){
-      h+='<button class="ci-add-btn" onclick="hbQuickAddItem(\''+b.itemModel.replace(/'/g,"\\'")+'\')">+ '+b.label+'</button>';
+      h+='<button class="ci-add-btn" style="'+btnStyle+'white-space:nowrap;flex-shrink:0;" onclick="hbQuickAddItem(\''+b.itemModel.replace(/'/g,"\\'")+'\')">+ '+b.label+'</button>';
     } else if(b.type==='category'&&b.category){
-      h+='<button class="ci-add-btn" style="border-color:#bfdbfe;color:#2563eb;background:#eff6ff;" onclick="hbCatShortcut(\''+b.category.replace(/'/g,"\\'")+'\')">'+b.label+'</button>';
+      h+='<button class="ci-add-btn" style="'+btnStyle+'white-space:nowrap;flex-shrink:0;" onclick="hbCatShortcut(\''+b.category.replace(/'/g,"\\'")+'\')">'+b.label+'</button>';
     } else {
-      h+='<button class="ci-add-btn" onclick="addInstallItem(\''+((b.chargeName||b.label).replace(/'/g,"\\'"))+'\','+b.amount+')">+ '+b.label+'</button>';
+      h+='<button class="ci-add-btn" style="'+btnStyle+'white-space:nowrap;flex-shrink:0;" onclick="addInstallItem(\''+((b.chargeName||b.label).replace(/'/g,"\\'"))+'\','+b.amount+')">+ '+b.label+'</button>';
     }
   });
-  // Separator + fixed special buttons
   bar.innerHTML=h;
+  // Also render old hidden bar for backward compat
+  var oldBar=document.getElementById('sale-hotbar');if(oldBar)oldBar.innerHTML='';
 }
 function hbQuickAddItem(model){
   var p=PRODUCTS.find(function(x){return x.model===model;});

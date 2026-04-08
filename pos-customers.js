@@ -5,7 +5,7 @@
 // ── CUSTOMERS ──
 var customers=[];
 async function loadCustomers(){
-  try{var r=await apiFetch('/api/admin-get?key=customers');var d=await r.json();if(d&&d.data&&Array.isArray(d.data))customers=d.data;}catch(e){}
+  try{var r=await apiFetch('/api/admin-get?key=customers');var d=await r.json();if(d&&d.data&&Array.isArray(d.data)){customers=d.data;console.log('[Customers] Loaded '+customers.length+' customers from API');}else{console.log('[Customers] API returned:',d?Object.keys(d):null);}}catch(e){console.error('[Customers] Load error:',e);}
   custUpdateBadge();
 }
 async function saveCustomers(){
@@ -522,7 +522,8 @@ function cartCustSearch(){
   var q=(document.getElementById('cart-sold-name')||{}).value.trim().toLowerCase();
   var dd=document.getElementById('cart-cust-dd');
   if(q.length<2){dd.classList.remove('open');return;}
-  var matches=customers.filter(function(c){return c.name.toLowerCase().includes(q)||(c.phone||'').includes(q);}).slice(0,8);
+  console.log('[Customer Search] query:"'+q+'" searching '+customers.length+' customers');
+  var matches=customers.filter(function(c){return c.name.toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.city||'').toLowerCase().includes(q);}).slice(0,8);
   if(!matches.length){dd.innerHTML='<div class="cart-cust-dd-opt" style="color:#9ca3af;">No matching customers</div>';dd.classList.add('open');return;}
   dd.innerHTML=matches.map(function(c,i){
     return '<div class="cart-cust-dd-opt" onmousedown="cartCustSelect('+customers.indexOf(c)+')"><div class="cco-name">'+c.name+'</div><div class="cco-meta">'+(c.phone||'')+(c.city?' &middot; '+c.city:'')+'</div></div>';
