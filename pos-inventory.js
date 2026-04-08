@@ -1288,17 +1288,20 @@ function delAutoCreateLunchBlocks(){
 
 // Mark Full buttons
 function delRenderMarkFullButtons(){
-  var days=[];for(var i=0;i<7;i++){var d=new Date(delWeekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
-  days.forEach(function(dateStr){
-    var col=document.getElementById('del-col-'+dateStr);if(!col)return;
+  var days=[];for(var i=0;i<7;i++){var d=new Date(delWeekStart);d.setDate(d.getDate()+i);days.push({str:ds(d),dow:d.getDay()});}
+  days.forEach(function(day){
+    var col=document.getElementById('del-col-'+day.str);if(!col)return;
     col.querySelectorAll('.mark-full-btn,.full-day-banner').forEach(function(e){e.remove();});
-    var isFull=delNotes.some(function(n){return n.date===dateStr&&n.isFull;});
-    var btn=document.createElement('button');
-    btn.className='mark-full-btn'+(isFull?' is-full':'');
-    btn.textContent=isFull?'Unmark Full':'Mark Full';
-    btn.onclick=function(e){e.stopPropagation();delToggleFullDay(dateStr);};
-    col.appendChild(btn);
-    if(isFull){var banner=document.createElement('div');banner.className='full-day-banner';banner.textContent='FULL — DO NOT ADD';col.appendChild(banner);}
+    if(day.dow===0||day.dow===6)return;
+    var isFull=delNotes.some(function(n){return n.date===day.str&&n.isFull;});
+    if(isFull){
+      var banner=document.createElement('div');banner.className='full-day-banner';
+      banner.innerHTML='\u{1F6AB} FULL \u2014 DO NOT ADD<button class="unmark-btn" onclick="event.stopPropagation();delToggleFullDay(\''+day.str+'\')">Unmark Full</button>';
+      col.appendChild(banner);
+    }else{
+      var btn=document.createElement('button');btn.className='mark-full-btn';btn.textContent='Mark Full';
+      btn.onclick=function(e){e.stopPropagation();delToggleFullDay(day.str);};col.appendChild(btn);
+    }
   });
 }
 async function delToggleFullDay(dateStr){
