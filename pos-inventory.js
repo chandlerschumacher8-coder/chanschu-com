@@ -1296,7 +1296,7 @@ function delAutoCreateLunchBlocks(){
       delNextNoteId++;changed=true;
     }
   });
-  if(changed){delSaveData();delRenderEvents();}
+  if(changed){/* AUTO-SAVE DISABLED: delSaveData(); */ delRenderEvents();}
 }
 
 // Mark Full buttons

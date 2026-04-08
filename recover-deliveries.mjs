@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ============================================================
-// RECOVERY SCRIPT: Restore deliveries from Redis → Supabase
+// RECOVERY SCRIPT: Restore deliveries from Redis → Supabase (UPSERT)
 // Run: node recover-deliveries.mjs
 // ============================================================
 
@@ -8,14 +8,14 @@ import { readFileSync } from 'fs';
 import { Redis } from '@upstash/redis';
 import { createClient } from '@supabase/supabase-js';
 
-// Load .env.local manually (no dotenv dependency)
+// Load .env.local manually
 try {
   const envFile = readFileSync('.env.local', 'utf8');
   envFile.split('\n').forEach(line => {
     const m = line.match(/^([^#=]+)=["']?(.*?)["']?\s*$/);
     if (m && !process.env[m[1].trim()]) process.env[m[1].trim()] = m[2];
   });
-} catch (e) { /* ignore if missing */ }
+} catch (e) { /* ignore */ }
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -33,63 +33,33 @@ function parse(raw) {
 }
 
 async function run() {
-  console.log('=== DELIVERY RECOVERY SCRIPT ===\n');
+  console.log('=== DELIVERY RECOVERY (UPSERT) ===\n');
 
   // Step 1: Read from Redis
-  console.log('1. Reading from Redis key: dc-deliveries ...');
+  console.log('1. Reading Redis key: dc-deliveries ...');
   const raw = await redis.get('dc-deliveries');
   const data = parse(raw);
-  if (!data) {
-    console.error('ERROR: No data found in Redis key dc-deliveries');
-    process.exit(1);
-  }
+  if (!data) { console.error('ERROR: No data in Redis'); process.exit(1); }
 
   const allDeliveries = data.deliveries || [];
-  const allNotes = data.notes || [];
   const nextId = data.nextId || 1;
-  const nextNoteId = data.nextNoteId || 1;
+  console.log(`   Redis: ${allDeliveries.length} deliveries, nextId=${nextId}`);
 
-  console.log(`   Redis has ${allDeliveries.length} deliveries, ${allNotes.length} notes`);
-  console.log(`   nextId: ${nextId}, nextNoteId: ${nextNoteId}`);
+  if (allDeliveries.length === 0) { console.error('ERROR: Redis has 0 deliveries'); process.exit(1); }
 
-  // Show date breakdown
+  // Date breakdown
   const dateCounts = {};
   allDeliveries.forEach(d => { dateCounts[d.date] = (dateCounts[d.date] || 0) + 1; });
-  console.log('   Deliveries by date:', JSON.stringify(dateCounts));
+  console.log('   By date:', JSON.stringify(dateCounts));
 
-  if (allDeliveries.length === 0) {
-    console.error('ERROR: Redis also has 0 deliveries — nothing to recover');
-    process.exit(1);
-  }
+  // Step 2: Check Supabase before
+  console.log('\n2. Supabase before recovery ...');
+  const { data: before } = await supabase.from('deliveries').select('delivery_id').eq('store_id', STORE_ID);
+  console.log(`   Supabase has ${(before || []).length} deliveries`);
 
-  // Step 2: Check current Supabase state
-  console.log('\n2. Checking current Supabase state ...');
-  const { data: existingDels, error: delErr } = await supabase
-    .from('deliveries')
-    .select('id, delivery_id, date')
-    .eq('store_id', STORE_ID);
-  if (delErr) { console.error('Supabase read error:', delErr.message); process.exit(1); }
-  console.log(`   Supabase currently has ${existingDels.length} deliveries`);
-
-  const { data: existingNotes, error: noteErr } = await supabase
-    .from('delivery_notes')
-    .select('id, note_id, date')
-    .eq('store_id', STORE_ID);
-  if (noteErr) { console.error('Supabase read error:', noteErr.message); process.exit(1); }
-  console.log(`   Supabase currently has ${existingNotes.length} notes`);
-
-  // Step 3: Delete existing deliveries (they're empty/stale)
-  console.log('\n3. Clearing existing Supabase deliveries ...');
-  const { error: clearErr } = await supabase
-    .from('deliveries')
-    .delete()
-    .eq('store_id', STORE_ID);
-  if (clearErr) { console.error('Delete error:', clearErr.message); process.exit(1); }
-  console.log('   Cleared.');
-
-  // Step 4: Insert deliveries from Redis in batches of 50
-  console.log(`\n4. Inserting ${allDeliveries.length} deliveries into Supabase ...`);
-  let inserted = 0;
+  // Step 3: Upsert deliveries in batches
+  console.log(`\n3. Upserting ${allDeliveries.length} deliveries ...`);
+  let upserted = 0;
   for (let i = 0; i < allDeliveries.length; i += 50) {
     const batch = allDeliveries.slice(i, i + 50).map(d => ({
       store_id: STORE_ID,
@@ -128,47 +98,41 @@ async function run() {
       created_at: d.createdAt || new Date().toISOString(),
       delivered_at: d.deliveredAt || null,
     }));
-    const { error } = await supabase.from('deliveries').insert(batch);
-    if (error) {
-      console.error(`   Batch ${i}-${i + batch.length} FAILED:`, error.message);
-      process.exit(1);
-    }
-    inserted += batch.length;
-    console.log(`   Inserted batch ${Math.floor(i / 50) + 1}: ${batch.length} rows (${inserted}/${allDeliveries.length})`);
+    const { error } = await supabase.from('deliveries').upsert(batch, { onConflict: 'store_id,delivery_id' });
+    if (error) { console.error(`   Batch FAILED:`, error.message); process.exit(1); }
+    upserted += batch.length;
+    console.log(`   Batch ${Math.floor(i / 50) + 1}: ${batch.length} rows (${upserted}/${allDeliveries.length})`);
   }
 
-  // Step 5: Update counter
-  console.log('\n5. Updating next_delivery_id counter ...');
+  // Step 4: Update counter
+  console.log('\n4. Updating counter ...');
   await supabase.from('counters').upsert(
     { store_id: STORE_ID, key: 'next_delivery_id', value: nextId },
     { onConflict: 'store_id,key' }
   );
-  console.log(`   Set next_delivery_id = ${nextId}`);
+  console.log(`   next_delivery_id = ${nextId}`);
 
-  // Step 6: Verify
-  console.log('\n6. Verifying ...');
-  const { data: verifyDels, error: vErr } = await supabase
+  // Step 5: Verify
+  console.log('\n5. Verifying ...');
+  const { data: after, error: vErr } = await supabase
     .from('deliveries')
     .select('delivery_id, date, name, status')
     .eq('store_id', STORE_ID);
   if (vErr) { console.error('Verify error:', vErr.message); process.exit(1); }
-  console.log(`   Supabase now has ${verifyDels.length} deliveries`);
+  console.log(`   Supabase now has ${after.length} deliveries`);
 
-  const vDateCounts = {};
-  verifyDels.forEach(d => { vDateCounts[d.date] = (vDateCounts[d.date] || 0) + 1; });
-  console.log('   Deliveries by date:', JSON.stringify(vDateCounts));
+  const vDates = {};
+  after.forEach(d => { vDates[d.date] = (vDates[d.date] || 0) + 1; });
+  console.log('   By date:', JSON.stringify(vDates));
 
-  if (verifyDels.length === allDeliveries.length) {
-    console.log(`\n✅ SUCCESS: Recovered ${verifyDels.length} deliveries (matches Redis count of ${allDeliveries.length})`);
+  if (after.length >= allDeliveries.length) {
+    console.log(`\n=== SUCCESS: ${after.length} deliveries in Supabase (Redis had ${allDeliveries.length}) ===`);
   } else {
-    console.error(`\n⚠ COUNT MISMATCH: Redis had ${allDeliveries.length}, Supabase now has ${verifyDels.length}`);
+    console.error(`\n=== WARNING: Supabase has ${after.length}, Redis had ${allDeliveries.length} ===`);
   }
 
-  // Show a few sample records
-  console.log('\nSample deliveries:');
-  verifyDels.slice(0, 5).forEach(d => {
-    console.log(`   ${d.delivery_id} | ${d.date} | ${d.name} | ${d.status}`);
-  });
+  console.log('\nSamples:');
+  after.slice(0, 5).forEach(d => console.log(`   ${d.delivery_id} | ${d.date} | ${d.name} | ${d.status}`));
 }
 
 run().catch(err => { console.error('FATAL:', err); process.exit(1); });
