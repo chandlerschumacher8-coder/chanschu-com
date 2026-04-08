@@ -1050,17 +1050,22 @@ window.addEventListener('DOMContentLoaded',function(){
 });
 
 // ═══ DATA ═══
+var _delDataLoaded=false;
 async function loadData(){
   try{
     var r=await apiFetch('/api/deliveries-get');var d=await r.json();
     deliveries=d.deliveries||[];nextDelId=d.nextId||1;
     notes=Array.isArray(d.notes)?d.notes:[];
     nextNoteId=d.nextNoteId||1;
-  }catch(e){deliveries=[];notes=[];nextDelId=1;nextNoteId=1;}
+    _delDataLoaded=true;
+    console.log('[Delivery] Loaded '+deliveries.length+' deliveries, '+notes.length+' notes');
+  }catch(e){console.error('[Delivery] Load error:',e);deliveries=[];notes=[];nextDelId=1;nextNoteId=1;}
   _lastDelHash=JSON.stringify({d:deliveries,n:notes});
   renderCalendar();
 }
 async function saveData(){
+  if(!_delDataLoaded){console.warn('[Delivery] Save blocked — data not loaded yet');return;}
+  console.log('[Delivery] Saving '+deliveries.length+' deliveries, '+notes.length+' notes');
   try{
     var payload={deliveries:deliveries,nextId:nextDelId,notes:notes,nextNoteId:nextNoteId};
     var res=await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -1221,6 +1226,8 @@ async function toggleFullDay(dateStr){
 function renderEvents(){
   document.querySelectorAll('.cal-event').forEach(function(e){e.remove();});
   var days=[];for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
+  console.log('[Delivery] renderEvents — '+deliveries.length+' total deliveries, '+notes.length+' total notes | week:',days.join(', '));
+  if(deliveries.length===0)console.warn('[Delivery] WARNING: deliveries array is empty — no delivery stops to render');
 
   // Deliveries — group by day, then calculate columns for overlapping events
   days.forEach(function(dayStr){

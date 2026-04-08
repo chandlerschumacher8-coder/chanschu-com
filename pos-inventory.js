@@ -1223,8 +1223,10 @@ function truckMapShowDeliveryStops(){
 // DELIVERY TAB - FULL IMPLEMENTATION
 // ══════════════════════════════════════════════
 function delInit(){delWeekStart=getWeekStart(new Date());delLoadData();}
+var _delDataLoaded=false;
 async function delLoadData(){
   try{var r=await apiFetch('/api/deliveries-get');var d=await r.json();delDeliveries=d.deliveries||[];delNextId=d.nextId||1;delNotes=Array.isArray(d.notes)?d.notes:[];delNextNoteId=d.nextNoteId||1;
+  _delDataLoaded=true;
   // Diagnostic logging
   var allDates={};delDeliveries.forEach(function(x){allDates[x.date]=(allDates[x.date]||0)+1;});
   console.log('[POS Delivery] Loaded '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
@@ -1237,6 +1239,8 @@ async function delLoadData(){
   if(_truckMap)truckMapShowDeliveryStops();
 }
 async function delSaveData(){
+  if(!_delDataLoaded){console.warn('[POS Delivery] Save blocked — data not loaded yet');return;}
+  console.log('[POS Delivery] Saving '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
   try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({deliveries:delDeliveries,nextId:delNextId,notes:delNotes,nextNoteId:delNextNoteId})});}catch(e){console.error('Save failed:',e);}
 }
 function delStartPolling(){if(_delPollTimer)clearInterval(_delPollTimer);_delPollTimer=setInterval(delPoll,15000);}
@@ -1328,10 +1332,11 @@ function delRenderEvents(){
   if(!delWeekStart)delWeekStart=getWeekStart(new Date());
   var days=[];for(var i=0;i<7;i++){var d=new Date(delWeekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
   var maxH=(DEL_HOURS_END-DEL_HOURS_START)*60;
-  // Log delivery dates for diagnosis
+  // Diagnostic logging
   var dateCounts={};delDeliveries.forEach(function(d){dateCounts[d.date]=(dateCounts[d.date]||0)+1;});
   var noteCounts={};delNotes.forEach(function(n){noteCounts[n.date]=(noteCounts[n.date]||0)+1;});
-  console.log('[POS Delivery] renderEvents — week columns:',days.join(', '),'| delivery dates in data:',JSON.stringify(dateCounts),'| note dates:',JSON.stringify(noteCounts));
+  console.log('[POS Delivery] renderEvents — '+delDeliveries.length+' total deliveries, '+delNotes.length+' total notes | week:',days.join(', '),'| deliveries by date:',JSON.stringify(dateCounts),'| notes by date:',JSON.stringify(noteCounts));
+  if(delDeliveries.length===0)console.warn('[POS Delivery] WARNING: delDeliveries is empty — no delivery stops to render');
   // Deliveries
   days.forEach(function(dayStr){
     var col=document.getElementById('del-col-'+dayStr);if(!col){console.warn('[POS Delivery] Missing column for',dayStr);return;}
