@@ -1533,23 +1533,32 @@ async function delHandleInvoiceFile(file){
   if(!file)return;
   console.log('[POS Invoice] Processing file:',file.name,file.type);
   document.getElementById('del-idz-loading').style.display='block';
-  try{var b64=await toB64(file);
-  console.log('[POS Invoice] Base64 encoded, size:',b64.length,'chars');
-  var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"invoiceNumber":"","deliveryDate":"","appliances":[{"a":"Refrigerator","m":"Model123"}]}'}]}];
-  console.log('[POS Invoice] Calling Claude API...');
-  var data=await claudeApiCall({messages:msgs,max_tokens:800},'invoice_scan');
-  console.log('[POS Invoice] Claude API response received');
-  var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
-  console.log('[POS Invoice] Extracted data:',JSON.stringify(parsed));
-  var cu=parsed.customer||{};
-  if(cu.name)document.getElementById('del-f-name').value=cu.name;if(cu.phone)document.getElementById('del-f-phone').value=cu.phone;if(cu.email)document.getElementById('del-f-email').value=cu.email;if(cu.address)document.getElementById('del-f-address').value=cu.address;if(cu.city)document.getElementById('del-f-city').value=cu.city;
-  if(parsed.invoiceNumber)document.getElementById('del-f-invoice').value=parsed.invoiceNumber;
-  if(parsed.deliveryDate)document.getElementById('del-f-date').value=parsed.deliveryDate;
-  var apps=parsed.appliances||[];if(apps.length>0){if(!parsed.invoiceNumber&&apps[0].invoice)document.getElementById('del-f-invoice').value=apps[0].invoice;delInitAppRows(apps);}
-  // Show extracted data preview
-  delShowInvoicePreview(cu,apps,parsed.invoiceNumber||((apps.length&&apps[0].invoice)?apps[0].invoice:''),parsed.deliveryDate);
-  var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});var upD=await upR.json();
-  if(upD.ok){delPendingFiles.push({url:upD.url,filename:file.name});delRenderPendingFiles();}}catch(e){console.error('[POS Invoice] Error:',e);toast('AI unavailable \u2014 please enter manually','error');}finally{document.getElementById('del-idz-loading').style.display='none';}
+  var b64=null;
+  try{b64=await toB64(file);}catch(e){document.getElementById('del-idz-loading').style.display='none';return;}
+  // Step 1: AI extraction
+  var aiSuccess=false;
+  try{
+    var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"invoiceNumber":"","deliveryDate":"","appliances":[{"a":"Refrigerator","m":"Model123"}]}'}]}];
+    var data=await claudeApiCall({messages:msgs,max_tokens:800},'invoice_scan');
+    var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
+    console.log('[POS Invoice] Extracted data:',JSON.stringify(parsed));
+    var cu=parsed.customer||{};
+    if(cu.name)document.getElementById('del-f-name').value=cu.name;if(cu.phone)document.getElementById('del-f-phone').value=cu.phone;if(cu.email)document.getElementById('del-f-email').value=cu.email;if(cu.address)document.getElementById('del-f-address').value=cu.address;if(cu.city)document.getElementById('del-f-city').value=cu.city;
+    if(parsed.invoiceNumber)document.getElementById('del-f-invoice').value=parsed.invoiceNumber;
+    if(parsed.deliveryDate)document.getElementById('del-f-date').value=parsed.deliveryDate;
+    var apps=parsed.appliances||[];if(apps.length>0){if(!parsed.invoiceNumber&&apps[0].invoice)document.getElementById('del-f-invoice').value=apps[0].invoice;delInitAppRows(apps);}
+    if(cu.name||parsed.invoiceNumber||apps.length){
+      aiSuccess=true;
+      delShowInvoicePreview(cu,apps,parsed.invoiceNumber||((apps.length&&apps[0].invoice)?apps[0].invoice:''),parsed.deliveryDate);
+    }
+  }catch(e){console.error('[POS Invoice] AI error:',e);}
+  if(!aiSuccess){toast('AI unavailable \u2014 please enter manually','error');}
+  // Step 2: Upload file (independent of AI)
+  try{
+    var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});var upD=await upR.json();
+    if(upD.ok){delPendingFiles.push({url:upD.url,filename:file.name});delRenderPendingFiles();}
+  }catch(e){console.error('[POS Invoice] Upload error:',e);}
+  document.getElementById('del-idz-loading').style.display='none';
 }
 function delShowInvoicePreview(cu,apps,inv,delDate){
   var wrap=document.getElementById('del-invoice-preview');

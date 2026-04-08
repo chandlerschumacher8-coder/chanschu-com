@@ -2337,17 +2337,17 @@ async function handleInvoiceFile(file){
   if(!file)return;
   console.log('[Invoice] Processing file:',file.name,file.type);
   document.getElementById('idz-loading').style.display='block';
+  var b64=null;
+  try{b64=await toB64(file);}catch(e){document.getElementById('idz-loading').style.display='none';return;}
+  // Step 1: AI extraction (separate try/catch so upload failures don't trigger fallback)
+  var aiSuccess=false;
   try{
-    var b64=await toB64(file);
-    console.log('[Invoice] Base64 encoded, size:',b64.length,'chars');
     var msgs=[{role:'user',content:[{type:file.type==='application/pdf'?'document':'image',source:{type:'base64',media_type:file.type,data:b64}},{type:'text',text:'Extract ALL appliances and customer info from this sales invoice. JSON only: {"customer":{"name":"","phone":"","email":"","address":"","city":""},"invoiceNumber":"","deliveryDate":"","appliances":[{"a":"Refrigerator","m":"Model123"}]}'}]}];
     console.log('[Invoice] Calling Claude API...');
     var data=await claudeApiCall({messages:msgs,max_tokens:800},'invoice_scan');
-    console.log('[Invoice] Claude API response received');
     var parsed=JSON.parse(data.content[0].text.match(/\{[\s\S]*\}/)[0]);
     console.log('[Invoice] Extracted data:',JSON.stringify(parsed));
     var cu=parsed.customer||{};
-    // Auto-fill form fields
     if(cu.name)document.getElementById('f-name').value=cu.name;
     if(cu.phone)document.getElementById('f-phone').value=cu.phone;
     if(cu.email)document.getElementById('f-email').value=cu.email;
@@ -2356,18 +2356,22 @@ async function handleInvoiceFile(file){
     if(parsed.invoiceNumber)document.getElementById('f-invoice').value=parsed.invoiceNumber;
     if(parsed.deliveryDate)document.getElementById('f-date').value=parsed.deliveryDate;
     var apps=parsed.appliances||[];
-    if(apps.length>0){
-      if(!parsed.invoiceNumber&&apps[0].invoice)document.getElementById('f-invoice').value=apps[0].invoice;
-      initAppRows(apps);
+    if(apps.length>0){if(!parsed.invoiceNumber&&apps[0].invoice)document.getElementById('f-invoice').value=apps[0].invoice;initAppRows(apps);}
+    // Only count as success if we got usable data
+    if(cu.name||parsed.invoiceNumber||apps.length){
+      aiSuccess=true;
+      showInvoicePreview(cu,apps,parsed.invoiceNumber||((apps.length&&apps[0].invoice)?apps[0].invoice:''),parsed.deliveryDate);
     }
-    // Show extracted data preview
-    showInvoicePreview(cu,apps,parsed.invoiceNumber||((apps.length&&apps[0].invoice)?apps[0].invoice:''),parsed.deliveryDate);
-    // Upload file
+  }catch(e){console.error('[Invoice] AI extraction error:',e);}
+  // Show fallback only if AI truly failed to extract anything useful
+  if(!aiSuccess){alert('AI unavailable \u2014 please enter manually');}
+  // Step 2: Upload file (independent of AI success/failure)
+  try{
     var upR=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:file.name,contentType:file.type,data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
     var upD=await upR.json();
     if(upD.ok){pendingFiles.push({url:upD.url,filename:file.name});renderPendingFiles();}
-  }catch(e){console.error('[Invoice] Error:',e);alert('AI unavailable \u2014 please enter manually');}
-  finally{document.getElementById('idz-loading').style.display='none';}
+  }catch(e){console.error('[Invoice] Upload error:',e);}
+  document.getElementById('idz-loading').style.display='none';
 }
 function showInvoicePreview(cu,apps,inv,delDate){
   var wrap=document.getElementById('invoice-preview');
