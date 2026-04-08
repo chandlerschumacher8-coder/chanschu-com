@@ -27,9 +27,14 @@ export default async function handler(req, res) {
           for (let i = 0; i < customers.length; i += 500) {
             const batch = customers.slice(i, i + 500).map(c => ({
               store_id, customer_num: c.customerNum || null, name: c.name || 'Unknown',
-              phone: c.phone || null, email: c.email || null, address: c.address || null,
+              phone: c.phone || null, cell: c.cell || null, fax: c.fax || null,
+              email: c.email || null, address: c.address || null,
               city: c.city || null, state: c.state || null, zip: c.zip || null,
               notes: c.notes || null, email_opt_out: c.emailOptOut || false,
+              ar_num: c.arNum || null, cid: c.cid || null,
+              customer_class: c.class || null, customer_level: c.level || null,
+              customer_type: c.type || null, flags: c.flags || null,
+              contacts: c.contacts || [], demographics: c.demographics || null,
               appliance_history: c.applianceHistory || [],
               payments: c.payments || [], adjustments: c.adjustments || [],
               refunds: c.refunds || [], ledger_notes: c.ledgerNotes || [],
@@ -99,6 +104,7 @@ export default async function handler(req, res) {
             notes: o.notes || null, address: o.address || null,
             delivery_date: o.deliveryDate || null, delivery_time: o.deliveryTime || null,
             payments: o.payments || [],
+            email_log: o.emailLog || [],
             linked_delivery_id: o.deliveryId || null,
             delivery_status: o.deliveryStatus || null,
             deleted: false,
@@ -106,7 +112,8 @@ export default async function handler(req, res) {
           if (error) { console.error('Order insert error:', error.message); continue; }
           if (o.items && o.items.length) {
             const itemRows = o.items.map(it => ({
-              store_id, order_id: inserted.id, name: it.name || 'Item',
+              store_id, order_id: inserted.id, product_id: it.id || null,
+              name: it.name || 'Item',
               model: it.model || null, price: it.price || 0, qty: it.qty || 1,
               serial: it.serial || null, discount: it.discount || 0,
               discount_pct: it.discountPct || 0, orig_price: it.origPrice || null,
@@ -115,6 +122,7 @@ export default async function handler(req, res) {
               commission_rate: it.commissionRate || null, commission_earned: it.commissionEarned || null,
               delivered: it.delivered || false, delivered_at: it.deliveredAt || null,
               delivered_by: it.deliveredBy || null,
+              warranty_status: it.warrantyStatus || null,
               deleted: false,
             }));
             await sb.from('order_items').insert(itemRows);

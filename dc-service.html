@@ -454,7 +454,7 @@ window.ANTHROPIC_KEY = ''; // Set your Anthropic API key here
 
 async function loadUsers() {
   try {
-    var res = await fetch('/api/dc-users-get');
+    var res = await apiFetch('/api/dc-users-get');
     var data = await res.json();
     USERS = {};
     (data.users || []).forEach(function(u) { USERS[u.username] = u; });
@@ -472,25 +472,42 @@ var jobs = [];
 var nextId = 1;
 
 // ── AUTH ──
+var _authToken=null;
+var SVC_TOKEN_KEY='dc-service-token';
+// Authenticated fetch wrapper — sends session token with all API calls
+async function apiFetch(url,options){
+  options=options||{};if(!options.headers)options.headers={};
+  var token=_authToken||localStorage.getItem(SVC_TOKEN_KEY);
+  if(token){options.headers['Authorization']='Bearer '+token;_authToken=token;}
+  return fetch(url,options);
+}
 async function doLogin() {
   await loadUsers();
   var pw = document.getElementById('login-pw').value;
   var user = USERS[pw];
   if (user) {
+    // Create a session token via the API so all subsequent calls are authenticated
+    try{
+      var sessRes=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,techName:user.name,authType:'contractor'})});
+      var sessData=await sessRes.json();
+      if(sessData.ok&&sessData.token){_authToken=sessData.token;localStorage.setItem(SVC_TOKEN_KEY,sessData.token);}
+      else{
+        // Fallback: try PIN-based auth for admin users
+        var pinRes=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:pw.replace(/\D/g,'').slice(-4)||'0000',authType:'timeclock'})});
+        var pinData=await pinRes.json();
+        if(pinData.ok&&pinData.token){_authToken=pinData.token;localStorage.setItem(SVC_TOKEN_KEY,pinData.token);}
+      }
+    }catch(e){console.warn('Session create failed:',e);}
     currentUser = user;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    // Show user name in header
     document.getElementById('h-user').textContent = user.name;
     if (user.role === 'admin') document.getElementById('manage-users-btn').style.display = 'inline-block';
-    // Hide form, AI chat, assign controls for techs
     if (user.role === 'tech') {
       var newJobPanel = document.querySelector('.two-col > .panel:first-child');
       if (newJobPanel) newJobPanel.style.display = 'none';
       document.querySelector('.chat-toggle').style.display = 'none';
-      // Make two-col single col
       document.querySelector('.two-col').style.gridTemplateColumns = '1fr';
-      // Hide filter tabs for other techs
       document.querySelectorAll('.ftab[data-filter="Jeff"], .ftab[data-filter="Justin"]').forEach(function(b){ b.style.display='none'; });
     }
     loadJobs();
@@ -523,7 +540,7 @@ function updateDate() {
 // ── STORAGE ──
 async function saveJobs() {
   try {
-    await fetch('/api/dc-jobs-save', {
+    await apiFetch('/api/dc-jobs-save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jobs: jobs, nextId: nextId })
@@ -533,7 +550,7 @@ async function saveJobs() {
 
 async function loadJobs() {
   try {
-    var res = await fetch('/api/dc-jobs-get');
+    var res = await apiFetch('/api/dc-jobs-get');
     var data = await res.json();
     if (data.ok) {
       jobs = data.jobs || [];
@@ -819,7 +836,7 @@ async function handleUpload(jobId, files) {
     var file = files[i];
     try {
       var base64 = await fileToBase64(file);
-      var res = await fetch('/api/dc-upload', {
+      var res = await apiFetch('/api/dc-upload', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
@@ -928,7 +945,7 @@ async function saveUsers() {
   }
 
   try {
-    var res = await fetch('/api/dc-users-save', {
+    var res = await apiFetch('/api/dc-users-save', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ users: editUsers, adminKey: currentUser.username })

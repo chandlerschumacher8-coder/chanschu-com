@@ -2488,7 +2488,8 @@ function arRecordPayment(custName){
   if(!amount)return;amount=parseFloat(amount);if(isNaN(amount)||amount<=0)return;
   var method=prompt('Payment method (Cash, Check, Card, Financing):','Check')||'Check';
   if(!c.payments)c.payments=[];
-  c.payments.push({date:new Date().toISOString(),amount:amount,method:method.trim(),recordedBy:currentEmployee?currentEmployee.name:'Admin'});
+  var invoice=prompt('Invoice # this payment is for (or leave blank):','');
+  c.payments.push({date:new Date().toISOString(),amount:amount,method:method.trim(),invoice:invoice||'',recordedBy:currentEmployee?currentEmployee.name:'Admin'});
   // Check if paid in full
   var bal=getCustomerBalance(custName);
   if(bal.balance<=0){

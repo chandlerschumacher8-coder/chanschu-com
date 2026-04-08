@@ -567,14 +567,32 @@ function custCheckAndSave(order){
         if(f.city)existing.city=f.city;
         if(f.state)existing.state=f.state;
         if(f.zip)existing.zip=f.zip;
-        saveCustomers();toast('Customer record updated','success');
       }
     }
+    // Auto-record payment for Cash/Card/Check so AR stays accurate
+    custAutoRecordPayment(existing,order);
+    saveCustomers();
   } else {
     // New customer — auto-save
-    customers.push({name:name,phone:f.phone||'',email:'',address:f.addr||'',city:f.city||'',state:f.state||'',zip:f.zip||'',customerNum:'NEW-'+Date.now(),notes:''});
+    var newCust={name:name,phone:f.phone||'',email:'',address:f.addr||'',city:f.city||'',state:f.state||'',zip:f.zip||'',customerNum:'NEW-'+Date.now(),notes:'',payments:[],adjustments:[],refunds:[],ledgerNotes:[]};
+    // Auto-record payment for Cash/Card/Check so AR stays accurate
+    custAutoRecordPayment(newCust,order);
+    customers.push(newCust);
     saveCustomers();custUpdateBadge();
   }
+}
+// Auto-push payment entry for paid-at-checkout orders so AR balance is correct
+function custAutoRecordPayment(cust,order){
+  if(!order||!order.total)return;
+  var m=(order.payment||'').toLowerCase();
+  var isPaid=m.indexOf('cash')>=0||m.indexOf('card')>=0||m.indexOf('check')>=0||m.indexOf('credit')>=0||m.indexOf('debit')>=0;
+  if(!isPaid)return;
+  if(!cust.payments)cust.payments=[];
+  // Don't double-record if already exists for this invoice
+  var alreadyRecorded=cust.payments.some(function(p){return p.invoice===order.id;});
+  if(alreadyRecorded)return;
+  cust.payments.push({date:new Date().toISOString(),amount:order.total,method:order.payment,invoice:order.id,by:order.clerk||'POS',note:'Auto-recorded at checkout'});
+  console.log('[Customer] Auto-recorded '+order.payment+' payment of $'+order.total.toFixed(2)+' for '+order.id+' on '+cust.name);
 }
 
 // ── CUSTOMER CSV UPLOAD ──

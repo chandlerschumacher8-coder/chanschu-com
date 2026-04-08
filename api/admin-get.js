@@ -23,9 +23,15 @@ export default async function handler(req, res) {
         const { data, error } = await sb.from('customers').select('*').eq('store_id', store_id).eq('deleted', false).order('name');
         if (error) throw new Error(error.message);
         return res.status(200).json({ ok: true, data: (data || []).map(c => ({
-          name: c.name, phone: c.phone, email: c.email, address: c.address,
+          name: c.name, phone: c.phone, cell: c.cell, fax: c.fax,
+          email: c.email, address: c.address,
           city: c.city, state: c.state, zip: c.zip, customerNum: c.customer_num,
-          notes: c.notes, emailOptOut: c.email_opt_out, applianceHistory: c.appliance_history || [],
+          notes: c.notes, emailOptOut: c.email_opt_out,
+          arNum: c.ar_num, cid: c.cid,
+          class: c.customer_class, level: c.customer_level,
+          type: c.customer_type, flags: c.flags,
+          contacts: c.contacts || [], demographics: c.demographics,
+          applianceHistory: c.appliance_history || [],
           payments: c.payments || [], adjustments: c.adjustments || [],
           refunds: c.refunds || [], ledgerNotes: c.ledger_notes || [],
           _dbId: c.id,
@@ -88,6 +94,7 @@ export default async function handler(req, res) {
           deliveryId: o.linked_delivery_id || null,
           deliveryStatus: o.delivery_status || null,
           payments: o.payments || [],
+          emailLog: o.email_log || [],
           items: itemMap[o.id] || [],
           _dbId: o.id,
         }));

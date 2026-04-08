@@ -5938,15 +5938,25 @@ function coUpdateBtn(){
   var chkOk=true; // checklist confirmed before checkout screen opens
   btn.disabled=!(hasPay&&chkOk);
 }
+var _coUsedCheckoutScreen=false;
+var _coPaymentDetails=null;
 function coCompleteSale(){
   var methods=_coPayments.map(function(p){return p.method;}).join(' + ');
-  closeCheckoutScreen();
+  // Capture payment details before closing
+  _coPaymentDetails=_coPayments.map(function(p){
+    var detail={method:p.method,amount:p.amount||0};
+    if(p.method==='Card'){var l4=document.getElementById('co-card-last4');if(l4)detail.cardLast4=l4.value.trim();}
+    if(p.method==='Check'){var cn=document.getElementById('co-check-num');if(cn)detail.checkNum=cn.value.trim();}
+    if(p.method==='Financing'){var fc=document.getElementById('co-fin-company');var fa=document.getElementById('co-fin-account');if(fc)detail.finCompany=fc.value.trim();if(fa)detail.finAccount=fa.value.trim();}
+    return detail;
+  });
+  _coUsedCheckoutScreen=true;
   _checklistConfirmed=true;
   checkout(methods);
 }
 function coSaveAsOrder(){
   // Save as open order (checkout with no payment = awaiting delivery)
-  closeCheckoutScreen();
+  _coUsedCheckoutScreen=true;
   _checklistConfirmed=true;
   checkout('Charge Customer');
 }
@@ -6049,7 +6059,8 @@ function checkout(method){
           var ov=adminCommissions.overrides?adminCommissions.overrides.find(function(x){return x.person===(f.clerk||'')&&x.cat===cat;}):null;
           commRate=ov?parseFloat(ov.pct):((adminCommissions.defaults&&adminCommissions.defaults[cat])?parseFloat(adminCommissions.defaults[cat]):0);
         }
-        item.commissionRate=commRate;item.commissionEarned=(item.price*item.qty)*(commRate/100);
+        var discountedPrice=item.price*item.qty*(1-(item.discountPct||0)/100);
+        item.commissionRate=commRate;item.commissionEarned=discountedPrice*(commRate/100);
       }
     }
     return item;
@@ -6057,9 +6068,21 @@ function checkout(method){
   var apptVal=f.appt||'';
   var delDate='',delTime='';
   if(apptVal){var ap=new Date(apptVal);delDate=ds(ap);var h=ap.getHours(),m=ap.getMinutes();delTime=(h>12?h-12:(h||12))+':'+(m<10?'0':'')+m+(h>=12?' PM':' AM');}
-  var order={id:'ORD-'+nextOrderId,customer:cust,items:orderItems,subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,status:isQuickSale?'Delivered':'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:delDate,deliveryTime:delTime};
-  nextOrderId++;orders.unshift(order);
+  var order={id:'ORD-'+nextOrderId,customer:cust,items:orderItems,subtotal:sub,tax:tax,total:sub+tax,taxZone:zoneName,payment:method,paymentDetails:_coPaymentDetails||null,status:isQuickSale?'Delivered':'Awaiting Delivery',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:f.soldTo.addr,deliveryDate:delDate,deliveryTime:delTime};
+  _coPaymentDetails=null;
+  nextOrderId++;
+  // If editing an existing order, remove the old version now that the new one is ready
+  if(typeof _editingOrderId!=='undefined'&&_editingOrderId){
+    orders=orders.filter(function(x){return x.id!==_editingOrderId;});
+    // Also remove linked delivery for old order
+    if(typeof removeDeliveryForOrder==='function')removeDeliveryForOrder(_editingOrderId);
+    console.log('[Edit Order] Replaced '+_editingOrderId+' with '+order.id);
+    _editingOrderId=null;
+  }
+  orders.unshift(order);
   cart.forEach(function(c){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p&&!c.isService){if(!p.sold)p.sold=0;p.sold+=c.qty;}});
+  // Update serial status to Sold
+  cart.forEach(function(c){if(c.serial){var p=PRODUCTS.find(function(x){return x.id===c.id;});if(p&&p.serialPool){var sp=p.serialPool.find(function(s){return s.sn===c.serial;});if(sp)sp.status='Sold';}}});
   saveProducts();saveOrders();
   lastCompletedSale={orderId:order.id,customer:cust,items:order.items,date:new Date(),soldTo:f.soldTo,shipTo:f.shipTo,invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,clerk:f.clerk,deliveryDate:delDate,deliveryTime:delTime};
   setTimeout(function(){custCheckAndSave(order);},300);
@@ -6072,8 +6095,10 @@ function checkout(method){
   renderCart();refreshSaleView();
   toast('Order '+_orderId+' placed via '+_orderMethod+(isQuickSale?' (Quick Sale — Delivered)':''),'success');
   // Show "Sale Complete" screen if checkout overlay was used, otherwise show bar
-  if(document.getElementById('co-overlay').classList.contains('open')||_checklistConfirmed){
+  if(_coUsedCheckoutScreen){
+    closeCheckoutScreen();
     coShowDone(_orderId,_orderTotal,_orderMethod);
+    _coUsedCheckoutScreen=false;
   }else{
     showCheckoutBar(_orderId);
   }
@@ -6193,9 +6218,9 @@ function saveQuote(){
   if(cart.length===0){toast('Cart is empty','error');return;}
   var f=getSaleFields();
   var cust=f.soldTo.name.trim()||'Walk-In Customer';
-  var sub=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
+  var sub=cart.reduce(function(s,c){var d=c.discountPct||0;return s+c.price*c.qty*(1-d/100);},0);
   var tax=sub*cartTaxRate;
-  var quote={id:'QT-'+String(nextQuoteId).padStart(4,'0'),customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||''};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:cartTaxName,taxRate:cartTaxRate,payment:'Quote',status:'Quote',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:'',deliveryDate:''};
+  var quote={id:'QT-'+String(nextQuoteId).padStart(4,'0'),customer:cust,items:cart.map(function(c){return{id:c.id,name:c.name,model:c.model||'',price:c.price,qty:c.qty,serial:c.serial||'',discountPct:c.discountPct||0,origPrice:c.origPrice||c.price};}),subtotal:sub,tax:tax,total:sub+tax,taxZone:cartTaxName,taxRate:cartTaxRate,payment:'Quote',status:'Quote',date:new Date().toISOString(),invoiceNotes:f.invoiceNotes,shipperNotes:f.shipperNotes,soldTo:f.soldTo,shipTo:f.shipTo,clerk:f.clerk,po:f.po,job:f.job,notes:'',address:'',deliveryDate:''};
   nextQuoteId++;orders.unshift(quote);
   saveOrders();
   cart=[];clearSaleForm();
@@ -6364,10 +6389,13 @@ function convertQuoteToSale(quoteId){
     var ci=cart.find(function(x){return x.id===i.id;});
     if(ci){ci.qty+=i.qty;}else{cart.push({id:i.id,name:i.name,model:i.model||'',price:i.price,qty:i.qty,serial:i.serial||''});}
   });
-  if(q.soldTo&&q.soldTo.name)document.getElementById('cart-sold-name').value=q.soldTo.name;
-  if(q.soldTo&&q.soldTo.phone)document.getElementById('cart-sold-phone').value=q.soldTo.phone;
-  if(q.invoiceNotes)document.getElementById('cart-invoice-notes').value=q.invoiceNotes;
-  if(q.shipperNotes)document.getElementById('cart-shipper-notes').value=q.shipperNotes;
+  var st=q.soldTo||{};var sh=q.shipTo||{};
+  var qfill=function(fid,v){var el=document.getElementById(fid);if(el&&v)el.value=v;};
+  qfill('cart-sold-name',st.name);qfill('cart-sold-phone',st.phone);qfill('cart-sold-addr',st.addr);qfill('cart-sold-city',st.city);qfill('cart-sold-state',st.state);qfill('cart-sold-zip',st.zip);
+  qfill('cart-ship-name',sh.name);qfill('cart-ship-addr',sh.addr);qfill('cart-ship-city',sh.city);qfill('cart-ship-state',sh.state);qfill('cart-ship-zip',sh.zip);
+  qfill('cart-po',q.po);qfill('cart-job',q.job);
+  qfill('cart-invoice-notes',q.invoiceNotes);qfill('cart-shipper-notes',q.shipperNotes);
+  if(q.clerk)qfill('cart-clerk',q.clerk);
   orders=orders.filter(function(o){return o.id!==quoteId;});
   saveOrders();
   selectedOrder=null;
@@ -6562,8 +6590,8 @@ async function initAppData(){
     var ordTab=document.querySelector('.tb-tab[onclick*="orders"]');
     if(ordTab)nav('orders',ordTab);
     setTimeout(function(){
-      if(typeof openOrderDetail==='function')openOrderDetail(openInv);
-      else if(typeof viewOrder==='function')viewOrder(openInv);
+      // Find and select the order by ID
+      if(typeof selectOrder==='function')selectOrder(openInv);
     },300);
     // Clean URL
     window.history.replaceState({},'',window.location.pathname);

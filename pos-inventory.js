@@ -616,10 +616,11 @@ function renderOrderDetail(){
   var el=document.getElementById('oo-detail');
   if(!selectedOrder){el.innerHTML='<div class="oo-detail-empty">Select an order to view details</div>';return;}
   var o=selectedOrder;
+  var isQuote=o.status==='Quote';
   var allDelivered=true;
   var itemsHtml=o.items.map(function(i,idx){
     var p=PRODUCTS.find(function(x){return x.id===i.id;});
-    var inStock=p?p.stock>=i.qty:false;
+    var inStock=p?(p.stock-(p.sold||0))>=i.qty:false;
     var tracked=p?isSerialTracked(p):(i.serialTracked||false);
     var delivered=!!i.delivered;
     if(!delivered)allDelivered=false;
@@ -635,7 +636,6 @@ function renderOrderDetail(){
     }
     return '<div class="ood-item" style="flex-wrap:wrap;"><div class="ood-item-info"><div class="ood-item-name">'+i.name+'</div><div class="ood-item-meta">'+(i.model?'<a class="pc-link" onclick="openProductCardByModel(\''+i.model.replace(/'/g,"\\'")+'\')">'+i.model+'</a>':'')+' x '+i.qty+(inStock?' <span style="color:var(--green);">In Stock</span>':' <span style="color:var(--red);">Low/Out</span>')+'</div></div><div class="ood-item-price">'+fmt(i.price*i.qty)+'</div><div style="width:100%;">'+deliveryHtml+'</div></div>';
   }).join('');
-  var isQuote=o.status==='Quote';
   var notesHtml='';
   if(o.invoiceNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Invoice Notes</div><div class="ood-notes">'+linkifyPhones(o.invoiceNotes)+'</div></div>';
   if(o.shipperNotes)notesHtml+='<div class="ood-section"><div class="ood-section-title">Shipper Notes <span style="font-size:9px;color:var(--gray-3);font-weight:400;">(internal)</span></div><div class="ood-notes" style="border-left:3px solid var(--orange);">'+linkifyPhones(o.shipperNotes)+'</div></div>';
@@ -720,27 +720,26 @@ function confirmItemDelivery(id){
   saveOrders();selectedOrder=o;renderOrderDetail();renderOrders();
   toast('Delivery confirmed','success');
 }
+var _editingOrderId=null;
 function editOrder(id){
   var o=orders.find(function(x){return x.id===id;});if(!o)return;
   if(o.status==='Delivered'||o.status==='Paid in Full'){
     if(!confirm('This order is already '+o.status+'. Edit anyway?'))return;
   }
-  // Load into cart for editing
   if(cart.length&&!confirm('Current cart will be replaced. Continue?'))return;
-  cart=(o.items||[]).map(function(i){return{id:i.id,name:i.name,model:i.model||'',price:i.price,qty:i.qty,serial:i.serial||'',isService:false};});
-  // Fill customer fields
+  // Load items preserving all fields (discounts, warranties, serials)
+  cart=(o.items||[]).map(function(i){return{id:i.id,name:i.name,model:i.model||'',price:i.origPrice||i.price,qty:i.qty,serial:i.serial||'',isService:i.isService||false,discountPct:i.discountPct||0,origPrice:i.origPrice||i.price,warrantyStatus:i.warrantyStatus||null};});
   var st=o.soldTo||{};var sh=o.shipTo||{};
-  var fill=function(id,v){var el=document.getElementById(id);if(el)el.value=v||'';};
+  var fill=function(fid,v){var el=document.getElementById(fid);if(el)el.value=v||'';};
   fill('cart-sold-name',st.name);fill('cart-sold-addr',st.addr);fill('cart-sold-city',st.city);fill('cart-sold-state',st.state);fill('cart-sold-zip',st.zip);fill('cart-sold-phone',st.phone);
   fill('cart-ship-name',sh.name);fill('cart-ship-addr',sh.addr);fill('cart-ship-city',sh.city);fill('cart-ship-state',sh.state);fill('cart-ship-zip',sh.zip);
   fill('cart-po',o.po);fill('cart-job',o.job);fill('cart-invoice-notes',o.invoiceNotes);fill('cart-shipper-notes',o.shipperNotes);
   if(o.clerk){var cl=document.getElementById('cart-clerk');if(cl)cl.value=o.clerk;}
-  // Remove the original order so saving creates a fresh record
-  orders=orders.filter(function(x){return x.id!==id;});selectedOrder=null;saveOrders();
-  // Navigate to New Sale tab
+  // Store editing ID — original is removed ONLY after new sale completes successfully
+  _editingOrderId=id;selectedOrder=null;
   var saleTab;document.querySelectorAll('.tb-tab').forEach(function(t){if(t.textContent.trim()==='New Sale')saleTab=t;});
   nav('sale',saleTab);renderCart();refreshSaleView();
-  toast('Loaded '+id+' for editing — complete the sale to save changes','info');
+  toast('Editing '+id+' — complete the sale to save changes','info');
 }
 
 async function orderRecordPayment(id){
@@ -770,7 +769,17 @@ async function orderRecordPayment(id){
 }
 
 function setOrderStatus(id,status){var o=orders.find(function(x){return x.id===id;});if(o){o.status=status;saveOrders();renderOrders();toast('Status updated','success');}}
-function deleteOrder(id){if(!confirm('Delete this order?'))return;orders=orders.filter(function(o){return o.id!==id;});selectedOrder=null;saveOrders();renderOrders();renderOrderDetail();toast('Order deleted','info');}
+function deleteOrder(id){if(!confirm('Delete this order?'))return;
+  var o=orders.find(function(x){return x.id===id;});
+  if(o){
+    // Reverse sold counts
+    (o.items||[]).forEach(function(i){var p=PRODUCTS.find(function(x){return x.id===i.id;});if(p&&p.sold){p.sold=Math.max(0,p.sold-i.qty);}});
+    saveProducts();
+    // Remove linked delivery
+    if(typeof removeDeliveryForOrder==='function')removeDeliveryForOrder(id);
+  }
+  orders=orders.filter(function(x){return x.id!==id;});selectedOrder=null;saveOrders();renderOrders();renderOrderDetail();toast('Order deleted','info');
+}
 function printAddrBlock(label,addr){
   if(!addr||!addr.name)return '';
   return '<div style="margin-bottom:8px;"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:2px;">'+label+'</div><div style="font-weight:700;">'+addr.name+'</div>'+(addr.addr?'<div>'+addr.addr+'</div>':'')+(addr.city?'<div>'+addr.city+(addr.state?', '+addr.state:'')+' '+(addr.zip||'')+'</div>':'')+(addr.phone?'<div>'+addr.phone+'</div>':'')+'</div>';
@@ -1568,14 +1577,11 @@ async function delSaveNote(){
 // Detail modals
 function delOpenLinkedOrder(orderId){
   if(!orderId)return;
-  // Close delivery detail modal
   try{closeModal('del-detail-modal');}catch(e){}
-  // Navigate to Open Orders and highlight the order
   var ordTab=document.querySelector('.tb-tab[onclick*="orders"]');
   if(typeof nav==='function')nav('orders',ordTab);
   setTimeout(function(){
-    var searchEl=document.getElementById('order-search');
-    if(searchEl){searchEl.value=orderId;searchEl.dispatchEvent(new Event('input'));}
+    if(typeof selectOrder==='function')selectOrder(orderId);
   },200);
 }
 function navToDeliveryStop(deliveryId){
@@ -1626,20 +1632,95 @@ function delOpenNoteDetail(id){
   document.getElementById('del-det-actions').innerHTML='<button class="del-abtn gray" onclick="delOpenEditNote(\''+id+'\')">Edit</button><button class="del-abtn red" onclick="delDeleteNote(\''+id+'\')">Delete</button>';
   openModal('del-detail-modal');
 }
-async function delSetStatus(id,status){var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Status: '+status,'success');
-  // Two-way link: update linked order status
+async function delSetStatus(id,status){
+  var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;
+  // If marking Delivered, check for missing serials on tracked appliances
+  if(status==='Delivered'){
+    var apps=d.appliances&&d.appliances.length?d.appliances:[];
+    var missing=apps.filter(function(a){return delIsSerialTracked(a)&&!a.serial;});
+    if(missing.length){delShowSerialPrompt(id,missing);return;}
+  }
+  d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;
+  await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Status: '+status,'success');
+  // Two-way link: update linked order status and mark items delivered
   var orderId=d.invoice||d.linkedOrderId;
   if(orderId&&typeof orders!=='undefined'){
     var order=orders.find(function(o){return o.id===orderId;});
     if(order){
       order.deliveryStatus=status;
-      if(status==='Delivered'){order.status='Delivered';}
+      if(status==='Delivered'){
+        order.status='Delivered';
+        // Mark all order items as delivered
+        (order.items||[]).forEach(function(item){
+          if(!item.delivered){item.delivered=true;item.deliveredAt=d.deliveredAt||new Date().toISOString();item.deliveredBy='Delivery';}
+        });
+        // Sync serials from delivery appliances to order items
+        (d.appliances||[]).forEach(function(a){
+          if(!a.serial)return;
+          var item=(order.items||[]).find(function(i){return i.model&&a.m&&i.model.toLowerCase()===a.m.toLowerCase();});
+          if(!item)item=(order.items||[]).find(function(i){return i.name&&a.a&&i.name.toLowerCase().indexOf(a.a.toLowerCase())>=0&&!i.serial;});
+          if(item){item.serial=a.serial;console.log('[Delivery Sync] Serial '+a.serial+' → order item '+item.name);}
+        });
+      }
       console.log('[Delivery Sync] Updated order '+orderId+' deliveryStatus to '+status);
       saveOrders();if(typeof renderOrders==='function')renderOrders();
     }
   }
 }
-async function delDeleteDelivery(id){if(!confirm('Delete this stop?'))return;delDeliveries=delDeliveries.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Delivery deleted','info');}
+// Serial tracking helper for delivery appliances
+function delIsSerialTracked(a){
+  var tracked=['Refrigerator','Washer','Dryer','Dishwasher','Oven / Range','Wall Oven','Microwave','Freezer','Ice Maker','TV'];
+  return tracked.indexOf(a.a)>=0;
+}
+// Serial prompt for POS delivery tab
+function delShowSerialPrompt(id,missing){
+  var body=document.getElementById('del-det-body');if(!body)return;
+  var html='<div style="background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:14px;margin-top:10px;">';
+  html+='<div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;">Missing Serial Numbers</div>';
+  missing.forEach(function(a,idx){
+    html+='<div style="margin-bottom:8px;"><label style="font-size:11px;font-weight:600;color:#713f12;display:block;margin-bottom:3px;">'+a.a+(a.m?' — '+a.m:'')+'</label>';
+    html+='<input class="inp del-serial-input" data-appliance="'+encodeURIComponent(a.a)+'" placeholder="Enter serial number" style="width:100%;font-size:12px;padding:6px 10px;"/></div>';
+  });
+  html+='<div style="display:flex;gap:8px;margin-top:10px;">';
+  html+='<button class="del-abtn green" onclick="delConfirmSerialsAndDeliver(\''+id+'\')" style="flex:1;">Save Serials &amp; Mark Delivered</button>';
+  html+='<button class="del-abtn orange" onclick="delMarkDeliveredAnyway(\''+id+'\')" style="flex:1;">Deliver Without Serials</button>';
+  html+='</div></div>';
+  body.insertAdjacentHTML('beforeend',html);
+}
+async function delConfirmSerialsAndDeliver(id){
+  var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;
+  var apps=d.appliances||[];
+  document.querySelectorAll('.del-serial-input').forEach(function(inp){
+    var name=decodeURIComponent(inp.dataset.appliance);var val=inp.value.trim();
+    if(val){var match=apps.find(function(a){return a.a===name&&!a.serial;});if(match)match.serial=val;}
+  });
+  d.status='Delivered';d.deliveredAt=new Date().toISOString();
+  await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Delivered with serials','success');
+  // Sync to order
+  delSyncDeliveredToOrder(d);
+}
+async function delMarkDeliveredAnyway(id){
+  var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;
+  d.status='Delivered';d.deliveredAt=new Date().toISOString();
+  await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Marked Delivered','success');
+  delSyncDeliveredToOrder(d);
+}
+function delSyncDeliveredToOrder(d){
+  var orderId=d.invoice||d.linkedOrderId;
+  if(!orderId||typeof orders==='undefined')return;
+  var order=orders.find(function(o){return o.id===orderId;});
+  if(!order)return;
+  order.deliveryStatus='Delivered';order.status='Delivered';
+  (order.items||[]).forEach(function(item){if(!item.delivered){item.delivered=true;item.deliveredAt=d.deliveredAt||new Date().toISOString();item.deliveredBy='Delivery';}});
+  (d.appliances||[]).forEach(function(a){if(!a.serial)return;var item=(order.items||[]).find(function(i){return i.model&&a.m&&i.model.toLowerCase()===a.m.toLowerCase();});if(!item)item=(order.items||[]).find(function(i){return i.name&&a.a&&i.name.toLowerCase().indexOf(a.a.toLowerCase())>=0&&!i.serial;});if(item)item.serial=a.serial;});
+  saveOrders();if(typeof renderOrders==='function')renderOrders();
+}
+async function delDeleteDelivery(id){if(!confirm('Delete this stop?'))return;
+  var d=delDeliveries.find(function(x){return x.id===id;});
+  // Clean up linked order
+  if(d){var orderId=d.invoice||d.linkedOrderId;if(orderId&&typeof orders!=='undefined'){var order=orders.find(function(o){return o.id===orderId;});if(order){order.deliveryId=null;order.deliveryStatus=null;saveOrders();}}}
+  delDeliveries=delDeliveries.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Delivery deleted','info');
+}
 async function delDeleteNote(id){if(!confirm('Delete this note?'))return;delNotes=delNotes.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Note deleted','info');}
 // Delivery photos
 async function delDetUploadPhotos(files,deliveryId){
@@ -1784,16 +1865,16 @@ function svcInit(){
   svcRenderStats();svcRenderFilters();svcLoadJobs();
 }
 async function svcLoadJobs(){
-  try{var res=await apiFetch('/api/jobs-get?companyId='+SVC_COMPANY_ID);var data=await res.json();svcJobs=data.jobs||[];svcNextId=data.nextId||1;}catch(e){svcJobs=[];svcNextId=1;}
+  try{var res=await apiFetch('/api/dc-jobs-get');var data=await res.json();svcJobs=data.jobs||[];svcNextId=data.nextId||1;}catch(e){svcJobs=[];svcNextId=1;}
   _lastSvcHash=JSON.stringify(svcJobs);svcRenderJobs();svcRenderStats();svcStartPolling();
 }
 async function svcSaveJobs(){
-  try{await apiFetch('/api/jobs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({companyId:SVC_COMPANY_ID,jobs:svcJobs,nextId:svcNextId})});}catch(e){console.error('Save failed:',e);}
+  try{await apiFetch('/api/dc-jobs-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jobs:svcJobs,nextId:svcNextId})});}catch(e){console.error('Save failed:',e);}
 }
 function svcStartPolling(){if(_svcPollTimer)clearInterval(_svcPollTimer);_svcPollTimer=setInterval(svcPoll,15000);}
 function svcStopPolling(){if(_svcPollTimer){clearInterval(_svcPollTimer);_svcPollTimer=null;}}
 async function svcPoll(){
-  try{var res=await apiFetch('/api/jobs-get?companyId='+SVC_COMPANY_ID+'&t='+Date.now());var data=await res.json();var hash=JSON.stringify(data.jobs);if(hash===_lastSvcHash)return;_lastSvcHash=hash;svcJobs=data.jobs||[];svcNextId=data.nextId||1;svcRenderJobs();svcRenderStats();}catch(e){}
+  try{var res=await apiFetch('/api/dc-jobs-get?t='+Date.now());var data=await res.json();var hash=JSON.stringify(data.jobs);if(hash===_lastSvcHash)return;_lastSvcHash=hash;svcJobs=data.jobs||[];svcNextId=data.nextId||1;svcRenderJobs();svcRenderStats();}catch(e){}
 }
 function svcRenderStats(){
   var stats=[
