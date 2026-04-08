@@ -789,11 +789,21 @@ function linkifyPhones(text){
 var SVC_TOKEN_KEY='svc-session-token';
 window._authToken=localStorage.getItem(SVC_TOKEN_KEY)||null;
 
-function apiFetch(url,options){
+var _loginTimestamp=0;
+async function apiFetch(url,options){
   options=options||{};
   if(!options.headers)options.headers={};
-  if(window._authToken){options.headers['Authorization']='Bearer '+window._authToken;}
-  return fetch(url,options);
+  var token=window._authToken||localStorage.getItem(SVC_TOKEN_KEY);
+  if(token){options.headers['Authorization']='Bearer '+token;window._authToken=token;}
+  var res=await fetch(url,options);
+  if(res.status===401&&(Date.now()-_loginTimestamp)<10000){
+    console.warn('[apiFetch] 401 within login window — retrying: '+url);
+    await new Promise(function(r){setTimeout(r,500);});
+    token=window._authToken||localStorage.getItem(SVC_TOKEN_KEY);
+    if(token){options.headers['Authorization']='Bearer '+token;}
+    res=await fetch(url,options);
+  }
+  return res;
 }
 
 // Token rotation — every 4 hours
@@ -902,6 +912,7 @@ async function pinSubmit(){
     if(data.ok&&data.token&&data.employee){
       window._authToken=data.token;
       localStorage.setItem(SVC_TOKEN_KEY,data.token);
+      _loginTimestamp=Date.now();
       var u=data.employee;
       u._authType='employee';
       saveSession(u);
@@ -955,6 +966,7 @@ async function pwSubmit(){
     if(data.ok&&data.token&&data.employee){
       window._authToken=data.token;
       localStorage.setItem(SVC_TOKEN_KEY,data.token);
+      _loginTimestamp=Date.now();
       var entry=data.employee;
       entry._authType='contractor';
       saveSession(entry);
@@ -1891,7 +1903,7 @@ function _flashPinKey(val){
 // On page load — check session or show login
 window.addEventListener('DOMContentLoaded',function(){
   var savedToken=localStorage.getItem(SVC_TOKEN_KEY);
-  if(savedToken)window._authToken=savedToken;
+  if(savedToken){window._authToken=savedToken;_loginTimestamp=Date.now();}
   if(savedToken&&checkSession()){enterApp();}
   else{
     localStorage.removeItem(SVC_TOKEN_KEY);window._authToken=null;

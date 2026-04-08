@@ -3035,8 +3035,11 @@ async function _doPinLookup(){
     var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:_posPinValue,companyId:'dc-appliance'})});
     var data=await res.json();
     if(data.ok&&data.token&&data.employee){
+      // Step 1: store token FIRST before any API calls
       window._authToken=data.token;
       localStorage.setItem(POS_TOKEN_KEY,data.token);
+      _loginTimestamp=Date.now();
+      // Step 2: THEN proceed with login
       empLoginAs(data.employee);
     }else{
       document.getElementById('pos-login-err').style.display='block';

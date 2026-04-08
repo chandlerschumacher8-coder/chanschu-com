@@ -759,11 +759,21 @@
 var DEL_TOKEN_KEY='del-session-token';
 window._authToken=localStorage.getItem(DEL_TOKEN_KEY)||null;
 
-function apiFetch(url,options){
+var _loginTimestamp=0;
+async function apiFetch(url,options){
   options=options||{};
   if(!options.headers)options.headers={};
-  if(window._authToken){options.headers['Authorization']='Bearer '+window._authToken;}
-  return fetch(url,options);
+  var token=window._authToken||localStorage.getItem(DEL_TOKEN_KEY);
+  if(token){options.headers['Authorization']='Bearer '+token;window._authToken=token;}
+  var res=await fetch(url,options);
+  if(res.status===401&&(Date.now()-_loginTimestamp)<10000){
+    console.warn('[apiFetch] 401 within login window — retrying: '+url);
+    await new Promise(function(r){setTimeout(r,500);});
+    token=window._authToken||localStorage.getItem(DEL_TOKEN_KEY);
+    if(token){options.headers['Authorization']='Bearer '+token;}
+    res=await fetch(url,options);
+  }
+  return res;
 }
 
 // Token rotation — every 4 hours
@@ -968,6 +978,7 @@ async function pinSubmit(){
     if(data.ok&&data.token&&data.employee){
       window._authToken=data.token;
       localStorage.setItem(DEL_TOKEN_KEY,data.token);
+      _loginTimestamp=Date.now();
       saveSession(data.employee);enterApp();
     }else{
       document.getElementById('login-err').style.display='block';
@@ -1041,7 +1052,7 @@ function _flashPinKey(val){
 window.addEventListener('DOMContentLoaded',function(){
   // Restore token from localStorage
   var savedToken=localStorage.getItem(DEL_TOKEN_KEY);
-  if(savedToken)window._authToken=savedToken;
+  if(savedToken){window._authToken=savedToken;_loginTimestamp=Date.now();}
   if(savedToken&&checkSession()){enterApp();}
   else{
     // No valid session — show login (no need to pre-fetch employees, PIN validated server-side now)
