@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     const store_id = 1; // DC Appliance is store #1
 
     if (authType === 'contractor') {
-      if (!password || !techName) return res.status(400).json({ ok: false, error: 'Missing password or tech name' });
+      if (!password) return res.status(400).json({ ok: false, error: 'Missing password' });
 
       if (useSupabase()) {
         const { data } = await getSupabase()
@@ -48,8 +48,11 @@ export default async function handler(req, res) {
           .eq('store_id', store_id)
           .eq('active', true)
           .eq('password', password);
-        const tech = (data || []).find(t => (t.tech || t.name) === techName);
-        if (!tech) return res.status(401).json({ ok: false, error: 'Incorrect password' });
+        // If techName provided, match by name; otherwise take first password match
+        const tech = techName
+          ? (data || []).find(t => (t.tech || t.name) === techName)
+          : (data || [])[0];
+        if (!tech) return res.status(401).json({ ok: false, error: 'Incorrect password — please try again' });
         employee = {
           id: tech.tech_id || String(tech.id), name: tech.tech || tech.name,
           tech: tech.tech || tech.name, posRole: 'Contractor Tech',
@@ -58,8 +61,10 @@ export default async function handler(req, res) {
       } else {
         const techsRaw = await redis.get('service:techs');
         const techs = techsRaw ? (typeof techsRaw === 'string' ? JSON.parse(techsRaw) : techsRaw) : [];
-        const tech = techs.find(t => t.active !== false && (t.tech || t.name) === techName && t.password === password);
-        if (!tech) return res.status(401).json({ ok: false, error: 'Incorrect password' });
+        const tech = techName
+          ? techs.find(t => t.active !== false && (t.tech || t.name) === techName && t.password === password)
+          : techs.find(t => t.active !== false && t.password === password);
+        if (!tech) return res.status(401).json({ ok: false, error: 'Incorrect password — please try again' });
         employee = {
           id: tech.id || tech.name, name: tech.tech || tech.name,
           tech: tech.tech || tech.name, posRole: 'Contractor Tech',

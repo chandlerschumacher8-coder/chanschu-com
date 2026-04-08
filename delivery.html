@@ -1334,7 +1334,9 @@ function renderEvents(){
         ev.className='cal-event'+(n.isLunch?' lunch-block':'');
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;background:'+color.bg+';border-left:3px solid '+color.bd+';color:'+color.txt+';';
         ev.innerHTML='<div class="ev-name">'+n.title+'</div>'+(height>28&&n.details?'<div class="ev-sub">'+n.details+'</div>':'');
-        ev.onclick=function(e){e.stopPropagation();openNoteDetail(n.id);};
+        ev.style.cursor='grab';
+        ev.onclick=function(e){if(_dragMoved)return;e.stopPropagation();openNoteDetail(n.id);};
+        ev.addEventListener('mousedown',(function(nId,evRef,nObj){return function(e){if(e.button!==0)return;startNoteDrag(e,nId,evRef,nObj);};})(n.id,ev,n));
         col.appendChild(ev);
       });
     });
@@ -2289,11 +2291,26 @@ function ctxAddNote(){closeCtxMenu();openAddNote(ctxDate,ctxTime);}
 
 // ═══ DRAG & DROP ═══
 // ── POINTER-BASED DRAG ──
-var _dragId=null,_dragEl=null,_dragGhost=null,_dragOffsetY=0;
+var _dragId=null,_dragEl=null,_dragGhost=null,_dragOffsetY=0,_dragType='delivery';
 var _resizeId=null,_resizeEl=null,_resizeStartY=0,_resizeStartDur=0,_resizeStartTop=0;
 
+function startNoteDrag(e,id,el,nObj){
+  e.preventDefault();
+  _dragId=id;_dragEl=el;_dragging=true;_dragMoved=false;_dragType='note';
+  _dragOffsetY=e.clientY-el.getBoundingClientRect().top;
+  _dragGhost=document.createElement('div');_dragGhost.className='drag-ghost';
+  _dragGhost.style.background=el.style.background||'#dcfce7';
+  _dragGhost.style.borderLeft=el.style.borderLeft||'3px solid #15803d';
+  _dragGhost.style.color=el.style.color||'#14532d';
+  _dragGhost.textContent=nObj.title+(nObj.time?' · '+nObj.time:'');
+  _dragGhost.style.left=e.clientX+'px';_dragGhost.style.top=e.clientY+'px';
+  document.body.appendChild(_dragGhost);el.classList.add('dragging');
+  document.addEventListener('mousemove',onDragMove);
+  document.addEventListener('mouseup',onDragEnd);
+}
 function startDrag(e,id,el,dObj){
   e.preventDefault();
+  _dragType='delivery';
   _dragId=id; _dragEl=el; _dragging=true; _dragMoved=false;
   _dragOffsetY=e.clientY-el.getBoundingClientRect().top;
 
@@ -2355,11 +2372,16 @@ async function onDragEnd(e){
       var snapped=Math.round((HOURS_START*60+Math.max(0,relY))/30)*30;
       if(snapped<HOURS_START*60)snapped=HOURS_START*60;
       if(snapped>(HOURS_END-1)*60)snapped=(HOURS_END-1)*60;
-      var d=deliveries.find(function(x){return x.id===_dragId;});
-      if(d){d.date=col.dataset.date;d.time=minsToTime(snapped);await saveData();renderEvents();}
+      if(_dragType==='note'){
+        var n=notes.find(function(x){return x.id===_dragId;});
+        if(n){n.date=col.dataset.date;n.time=minsToTime(snapped);n.allDay=false;await saveData();renderEvents();renderMarkFullButtons();}
+      }else{
+        var d=deliveries.find(function(x){return x.id===_dragId;});
+        if(d){d.date=col.dataset.date;d.time=minsToTime(snapped);await saveData();renderEvents();}
+      }
     }
   }
-  setTimeout(function(){_dragging=false;_dragMoved=false;_dragId=null;_dragEl=null;},50);
+  setTimeout(function(){_dragging=false;_dragMoved=false;_dragId=null;_dragEl=null;_dragType='delivery';},50);
 }
 
 

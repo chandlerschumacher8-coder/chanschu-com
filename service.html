@@ -481,7 +481,6 @@
     <!-- Contractor password login -->
     <div id="login-pw-section" class="pw-section">
       <div style="color:var(--white);font-size:13px;font-weight:600;margin-bottom:12px;">Contractor Login</div>
-      <select class="contractor-sel" id="contractor-sel"></select>
       <div class="pw-wrap">
         <input type="password" class="pw-inp" id="login-pw-inp" placeholder="Enter password" autocomplete="off" onkeydown="if(event.key==='Enter')pwSubmit();"/>
         <button class="pw-toggle" id="pw-toggle-btn" onclick="togglePwVis()" type="button">Show</button>
@@ -948,12 +947,10 @@ function togglePwVis(){
 }
 
 async function pwSubmit(){
-  var sel=document.getElementById('contractor-sel');
-  var name=sel?sel.value:'';
   var pw=document.getElementById('login-pw-inp').value;
-  if(!name||!pw){document.getElementById('login-err').style.display='block';document.getElementById('login-err').textContent='Select a name and enter password';return;}
+  if(!pw){document.getElementById('login-err').style.display='block';document.getElementById('login-err').textContent='Enter your password';return;}
   try{
-    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,techName:name,companyId:'dc-appliance',authType:'contractor'})});
+    var res=await fetch('/api/session-create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw,companyId:'dc-appliance',authType:'contractor'})});
     var data=await res.json();
     if(data.ok&&data.token&&data.employee){
       window._authToken=data.token;
