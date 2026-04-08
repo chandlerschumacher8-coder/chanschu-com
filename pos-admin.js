@@ -1217,6 +1217,20 @@ function renderDataImport(){
     +'<div id="di-serial-loading" style="display:none;margin-top:10px;font-size:12px;color:#2563eb;font-weight:600;"><span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Reading serial report...</div>'
     +'</div>'
     +'<div id="di-serial-preview" style="display:none;margin-top:12px;"></div></div>'
+    // Backup section
+    +'<div style="border:2px solid #86efac;background:#f0fdf4;border-radius:8px;padding:16px;margin-bottom:16px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+    +'<div><div style="font-size:14px;font-weight:700;color:#16a34a;">&#x1F4BE; Database Backups</div>'
+    +'<div style="font-size:11px;color:var(--gray-2);margin-top:2px;">Auto-backup runs nightly at midnight. Stored in Vercel Blob.</div></div>'
+    +'<div id="backup-status-badge" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:10px;margin-bottom:12px;">'
+    +'<button class="ghost-btn" style="border-color:#86efac;color:#16a34a;font-weight:700;padding:10px 16px;" onclick="backupNow()">Create Backup Now</button>'
+    +'<div id="backup-last" style="font-size:12px;color:var(--gray-2);display:flex;align-items:center;"></div>'
+    +'</div>'
+    +'<div id="backup-progress" style="display:none;margin-bottom:10px;font-size:12px;color:#2563eb;font-weight:600;"><span style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></span>Creating backup...</div>'
+    +'<div id="backup-list" style="font-size:11px;"></div>'
+    +'</div>'
     // Clear Data section
     +'<div style="border:2px solid #fca5a5;background:#fff1f1;border-radius:8px;padding:16px;">'
     +'<div style="font-size:14px;font-weight:700;margin-bottom:4px;color:#991b1b;">&#x26A0; Clear Data — Danger Zone</div>'
@@ -1227,6 +1241,101 @@ function renderDataImport(){
     +'<button class="ghost-btn" style="border-color:#fca5a5;color:#991b1b;padding:12px 8px;font-size:11px;font-weight:700;text-align:left;" onclick="clearDataStart(\'customers\')">Clear Customers<br/><span style="font-weight:400;font-size:10px;opacity:0.8;">All customer records</span></button>'
     +'<button class="ghost-btn" style="border-color:#dc2626;color:#fff;background:#dc2626;padding:12px 8px;font-size:11px;font-weight:700;text-align:left;" onclick="clearDataStart(\'all\')">CLEAR ALL<br/><span style="font-weight:400;font-size:10px;opacity:0.9;">Inventory + Sales + Customers</span></button>'
     +'</div></div>';
+  // Load backup history
+  loadBackupHistory();
+}
+
+// ═══ BACKUP FUNCTIONS ═══
+async function loadBackupHistory(){
+  try{
+    var res=await apiFetch('/api/admin-get?key=backup-history');
+    var data=await res.json();
+    var history=(data&&Array.isArray(data.data))?data.data:[];
+    renderBackupList(history);
+    renderBackupStatus(history);
+  }catch(e){console.error('[Backup] Load history failed:',e);}
+}
+
+function renderBackupStatus(history){
+  var badge=document.getElementById('backup-status-badge');
+  var lastEl=document.getElementById('backup-last');
+  if(!badge||!lastEl)return;
+  if(!history.length){
+    badge.style.background='#fef2f2';badge.style.color='#dc2626';badge.style.border='1px solid #fca5a5';
+    badge.textContent='No backups';
+    lastEl.textContent='No backups found';
+    return;
+  }
+  var last=history[0];
+  var dt=new Date(last.created_at);
+  var ageHrs=(Date.now()-dt.getTime())/(1000*60*60);
+  if(ageHrs<24){
+    badge.style.background='#dcfce7';badge.style.color='#16a34a';badge.style.border='1px solid #86efac';
+    badge.textContent='Backup OK';
+  }else if(ageHrs<48){
+    badge.style.background='#fef9c3';badge.style.color='#a16207';badge.style.border='1px solid #fcd34d';
+    badge.textContent='Backup aging';
+  }else{
+    badge.style.background='#fef2f2';badge.style.color='#dc2626';badge.style.border='1px solid #fca5a5';
+    badge.textContent='Backup overdue';
+  }
+  var dateStr=dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  var timeStr=dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  lastEl.innerHTML='Last backup: <strong style="margin-left:4px;">'+dateStr+' at '+timeStr+'</strong> <span style="color:var(--gray-3);margin-left:6px;">('+last.total_records+' records, '+last.size_kb+' KB)</span>';
+}
+
+function renderBackupList(history){
+  var el=document.getElementById('backup-list');if(!el)return;
+  if(!history.length){el.innerHTML='<div style="color:var(--gray-3);padding:8px 0;">No backups yet. Click "Create Backup Now" to start.</div>';return;}
+  var h='<div style="font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--gray-3);margin-bottom:6px;">Recent Backups ('+history.length+')</div>';
+  h+='<div style="max-height:240px;overflow-y:auto;">';
+  history.slice(0,10).forEach(function(b,i){
+    var dt=new Date(b.created_at);
+    var dateStr=dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var timeStr=dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    var triggerBadge=b.trigger==='cron'?'<span style="background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;margin-left:6px;">AUTO</span>':'<span style="background:#f3e8ff;color:#7c3aed;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:700;margin-left:6px;">MANUAL</span>';
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:4px;'+(i%2===0?'background:var(--bg3);':'')+'">';
+    h+='<div style="flex:1;"><strong>'+dateStr+'</strong> '+timeStr+triggerBadge+'</div>';
+    h+='<div style="color:var(--gray-3);">'+b.total_records+' records</div>';
+    h+='<div style="color:var(--gray-3);">'+b.size_kb+' KB</div>';
+    h+='<a href="'+b.url+'" target="_blank" style="color:#2563eb;text-decoration:none;font-weight:600;">Download</a>';
+    h+='<button class="ghost-btn" style="padding:3px 8px;font-size:10px;border-color:#fcd34d;color:#a16207;" onclick="backupRestore(\''+b.url.replace(/'/g,"\\'")+'\',\''+dateStr+' '+timeStr+'\')">Restore</button>';
+    h+='</div>';
+  });
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+async function backupNow(){
+  var prog=document.getElementById('backup-progress');
+  if(prog)prog.style.display='block';
+  try{
+    var res=await apiFetch('/api/backup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error||'Backup failed');
+    toast('Backup created: '+data.total_records+' records ('+data.size_kb+' KB)','success');
+    loadBackupHistory();
+  }catch(e){
+    toast('Backup failed: '+e.message,'error');
+    console.error('[Backup] Error:',e);
+  }finally{if(prog)prog.style.display='none';}
+}
+
+async function backupRestore(url,label){
+  if(!confirm('Restore from backup: '+label+'?\n\nThis will REPLACE all current active data with the backup. Soft-deleted records are preserved.\n\nContinue?'))return;
+  if(!confirm('FINAL CONFIRMATION: Are you absolutely sure? This cannot be undone.'))return;
+  toast('Restoring from backup...','info');
+  try{
+    var res=await apiFetch('/api/backup-restore',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url})});
+    var data=await res.json();
+    if(!data.ok)throw new Error(data.error||'Restore failed');
+    toast('Restored '+data.total_restored+' records from '+data.backup_date,'success');
+    // Reload all data
+    setTimeout(function(){window.location.reload();},1500);
+  }catch(e){
+    toast('Restore failed: '+e.message,'error');
+    console.error('[Restore] Error:',e);
+  }
 }
 
 var _diInvRows=[];
