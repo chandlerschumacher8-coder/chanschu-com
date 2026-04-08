@@ -424,7 +424,7 @@
     .full-day-banner{position:absolute;top:0;left:0;right:0;background:#dc2626;color:#fff;font-size:11px;font-weight:800;text-align:center;padding:6px 4px 4px;z-index:30;letter-spacing:0.06em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:2px;}
     .full-day-banner .unmark-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:inherit;margin-top:2px;}
     .full-day-banner .unmark-btn:hover{background:rgba(255,255,255,0.35);}
-    .mark-full-btn{position:absolute;top:2px;left:50%;transform:translateX(-50%);z-index:35;background:var(--bg2);border:1px solid var(--border2);font-size:9px;font-weight:700;color:var(--text3);cursor:pointer;padding:2px 8px;font-family:inherit;border-radius:3px;white-space:nowrap;opacity:0;transition:opacity 0.15s;}
+    .mark-full-btn{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);z-index:35;background:var(--bg2);border:1px solid var(--border2);font-size:9px;font-weight:700;color:var(--text3);cursor:pointer;padding:2px 8px;font-family:inherit;border-radius:3px;white-space:nowrap;opacity:0;transition:opacity 0.15s;}
     .day-col:hover .mark-full-btn{opacity:1;}
     @media(max-width:767px){
       .lunch-block,.mark-full-btn,.full-day-banner{display:none!important;}
@@ -1144,7 +1144,7 @@ function renderCalendar(){
   renderEvents();
   autoCreateLunchBlocks();
   renderMarkFullButtons();
-  setTimeout(function(){var db2=document.getElementById('days-body');if(db2)db2.scrollTop=(8-HOURS_START)*60;},50);
+  setTimeout(function(){var db2=document.getElementById('days-body');if(db2)db2.scrollTop=0;},50);
 }
 
 // ═══ AUTO LUNCH BLOCKS (Mon-Fri, 12-1pm) ═══
@@ -1184,8 +1184,14 @@ function renderMarkFullButtons(){
     if(isFull){
       var banner=document.createElement('div');
       banner.className='full-day-banner';
-      banner.innerHTML='&#x1F6AB; FULL — DO NOT ADD<button class="unmark-btn" onclick="event.stopPropagation();toggleFullDay(\''+day.str+'\')">Unmark Full</button>';
+      banner.innerHTML='&#x1F6AB; FULL — DO NOT ADD';
       col.appendChild(banner);
+      var btn=document.createElement('button');
+      btn.className='mark-full-btn';
+      btn.textContent='Unmark Full';
+      btn.style.opacity='1';
+      btn.onclick=function(e){e.stopPropagation();toggleFullDay(day.str);};
+      col.appendChild(btn);
     }else{
       var btn=document.createElement('button');
       btn.className='mark-full-btn';

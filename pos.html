@@ -429,6 +429,12 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 .del-drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:0.85;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.25);}
 .del-day-col.drag-over{background:rgba(37,99,176,0.05)!important;}
 .del-drop-ind{position:absolute;left:0;right:0;height:2px;background:#2563b0;border-radius:2px;pointer-events:none;z-index:50;display:none;}
+/* Mark Full banner + button */
+.full-day-banner{position:absolute;top:0;left:0;right:0;background:#dc2626;color:#fff;font-size:11px;font-weight:800;text-align:center;padding:6px 4px 4px;z-index:30;letter-spacing:0.06em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.full-day-banner .unmark-btn{background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:3px;cursor:pointer;font-family:inherit;margin-top:2px;}
+.full-day-banner .unmark-btn:hover{background:rgba(255,255,255,0.35);}
+.mark-full-btn{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);z-index:35;background:#ffffff;border:1px solid #e2ddd8;font-size:9px;font-weight:700;color:#9e9894;cursor:pointer;padding:2px 8px;font-family:inherit;border-radius:3px;white-space:nowrap;opacity:0;transition:opacity 0.15s;}
+.del-day-col:hover .mark-full-btn{opacity:1;}
 /* Context Menu */
 .del-ctx{position:fixed;background:#ffffff;border:1px solid #e2ddd8;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:300;min-width:180px;overflow:hidden;display:none;}
 .del-ctx.open{display:block;}

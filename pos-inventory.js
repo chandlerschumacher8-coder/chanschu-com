@@ -1267,7 +1267,7 @@ function delRenderCalendar(){
   delRenderEvents();
   delAutoCreateLunchBlocks();
   delRenderMarkFullButtons();
-  setTimeout(function(){var db2=document.getElementById('del-days-body');if(db2)db2.scrollTop=(8-DEL_HOURS_START)*60;},50);
+  setTimeout(function(){var db2=document.getElementById('del-days-body');if(db2)db2.scrollTop=0;},50);
 }
 
 // Auto lunch blocks (Mon-Fri 12-1pm)
@@ -1296,8 +1296,11 @@ function delRenderMarkFullButtons(){
     var isFull=delNotes.some(function(n){return n.date===day.str&&n.isFull;});
     if(isFull){
       var banner=document.createElement('div');banner.className='full-day-banner';
-      banner.innerHTML='\u{1F6AB} FULL \u2014 DO NOT ADD<button class="unmark-btn" onclick="event.stopPropagation();delToggleFullDay(\''+day.str+'\')">Unmark Full</button>';
+      banner.innerHTML='\u{1F6AB} FULL \u2014 DO NOT ADD';
       col.appendChild(banner);
+      var btn=document.createElement('button');btn.className='mark-full-btn';btn.textContent='Unmark Full';
+      btn.style.opacity='1';
+      btn.onclick=function(e){e.stopPropagation();delToggleFullDay(day.str);};col.appendChild(btn);
     }else{
       var btn=document.createElement('button');btn.className='mark-full-btn';btn.textContent='Mark Full';
       btn.onclick=function(e){e.stopPropagation();delToggleFullDay(day.str);};col.appendChild(btn);
