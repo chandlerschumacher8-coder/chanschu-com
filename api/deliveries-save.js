@@ -77,6 +77,8 @@ export default async function handler(req, res) {
           duration: n.duration || null,
           details: n.details || null,
           color: n.color || 'blue',
+          is_lunch: n.isLunch || false,
+          is_full: n.isFull || false,
           created_at: n.createdAt || new Date().toISOString(),
         }));
         const { error } = await sb.from('delivery_notes').insert(noteRows);

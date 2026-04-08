@@ -1265,7 +1265,47 @@ function delRenderCalendar(){
     return '<div class="del-day-col'+(isTod?' today-bg':'')+'" id="del-col-'+dStr+'" data-date="'+dStr+'" style="height:'+totalH+'px;position:relative;">'+cells+'<div class="del-drop-ind" id="del-di-'+dStr+'"></div></div>';
   }).join('');
   delRenderEvents();
+  delAutoCreateLunchBlocks();
+  delRenderMarkFullButtons();
   setTimeout(function(){var db2=document.getElementById('del-days-body');if(db2)db2.scrollTop=(8-DEL_HOURS_START)*60;},50);
+}
+
+// Auto lunch blocks (Mon-Fri 12-1pm)
+function delAutoCreateLunchBlocks(){
+  var days=[];for(var i=0;i<7;i++){var d=new Date(delWeekStart);d.setDate(d.getDate()+i);days.push(d);}
+  var changed=false;
+  days.forEach(function(d){
+    var dow=d.getDay();if(dow===0||dow===6)return;
+    var dateStr=ds(d);
+    var hasLunch=delNotes.some(function(n){return n.date===dateStr&&n.isLunch;});
+    if(!hasLunch){
+      delNotes.push({id:'NOTE-'+String(delNextNoteId).padStart(3,'0'),title:'Lunch',date:dateStr,allDay:false,time:'12:00 PM',duration:'60',details:'',color:'green',isLunch:true,createdAt:new Date().toISOString()});
+      delNextNoteId++;changed=true;
+    }
+  });
+  if(changed){delSaveData();delRenderEvents();}
+}
+
+// Mark Full buttons
+function delRenderMarkFullButtons(){
+  var days=[];for(var i=0;i<7;i++){var d=new Date(delWeekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
+  days.forEach(function(dateStr){
+    var col=document.getElementById('del-col-'+dateStr);if(!col)return;
+    col.querySelectorAll('.mark-full-btn,.full-day-banner').forEach(function(e){e.remove();});
+    var isFull=delNotes.some(function(n){return n.date===dateStr&&n.isFull;});
+    var btn=document.createElement('button');
+    btn.className='mark-full-btn'+(isFull?' is-full':'');
+    btn.textContent=isFull?'Unmark Full':'Mark Full';
+    btn.onclick=function(e){e.stopPropagation();delToggleFullDay(dateStr);};
+    col.appendChild(btn);
+    if(isFull){var banner=document.createElement('div');banner.className='full-day-banner';banner.textContent='FULL — DO NOT ADD';col.appendChild(banner);}
+  });
+}
+async function delToggleFullDay(dateStr){
+  var idx=delNotes.findIndex(function(n){return n.date===dateStr&&n.isFull;});
+  if(idx>=0){delNotes.splice(idx,1);}
+  else{delNotes.push({id:'NOTE-'+String(delNextNoteId).padStart(3,'0'),title:'FULL',date:dateStr,allDay:true,time:null,duration:null,details:'DO NOT ADD',color:'red',isFull:true,createdAt:new Date().toISOString()});delNextNoteId++;}
+  await delSaveData();delRenderEvents();delRenderMarkFullButtons();
 }
 
 function delRenderEvents(){
@@ -1319,7 +1359,7 @@ function delRenderEvents(){
   // Notes
   days.forEach(function(dayStr){
     var col=document.getElementById('del-col-'+dayStr);if(!col)return;
-    var dayNotes=delNotes.filter(function(n){return n.date===dayStr;});if(!dayNotes.length)return;
+    var dayNotes=delNotes.filter(function(n){return n.date===dayStr&&!n.isFull;});if(!dayNotes.length)return;
     var noteSlots=[];
     dayNotes.forEach(function(n){
       var top,height;if(n.allDay){top=0;height=24;}else{var sm=delTimeToMins(n.time),dur=parseInt(n.duration)||60;top=Math.max(0,sm-DEL_HOURS_START*60);height=Math.max(dur,22);}
@@ -1332,7 +1372,7 @@ function delRenderEvents(){
       slot.forEach(function(item){
         var n=item.n,color=DEL_NOTE_COLORS.find(function(c){return c.key===n.color;})||DEL_NOTE_COLORS[0];
         var top=item.top,height=item.bottom-item.top,colW=100/totalNoteCols,leftPct=colIdx*colW;
-        var ev=document.createElement('div');ev.className='del-event';
+        var ev=document.createElement('div');ev.className='del-event'+(n.isLunch?' lunch-block':'');
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;background:'+color.bg+';border-left:3px solid '+color.bd+';color:'+color.txt+';';
         ev.innerHTML='<div class="del-ev-name">'+n.title+'</div>'+(height>28&&n.details?'<div class="del-ev-sub">'+n.details+'</div>':'');
         ev.onclick=function(e){e.stopPropagation();delOpenNoteDetail(n.id);};

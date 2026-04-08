@@ -87,6 +87,8 @@ export default async function handler(req, res) {
         duration: n.duration,
         details: n.details,
         color: n.color,
+        isLunch: n.is_lunch || false,
+        isFull: n.is_full || false,
         createdAt: n.created_at,
         _dbId: n.id,
       }));

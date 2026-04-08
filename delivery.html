@@ -420,7 +420,13 @@
     .bs-success-text{font-size:20px;font-weight:700;color:#16a34a;margin-top:16px;animation:fadeIn 0.3s 0.2s both;}
     @keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
+    /* Mark Full banner */
+    .full-day-banner{position:absolute;top:0;left:0;right:0;background:#dc2626;color:#fff;font-size:9px;font-weight:800;text-align:center;padding:2px 4px;z-index:30;letter-spacing:0.06em;text-transform:uppercase;}
+    .mark-full-btn{position:absolute;top:0;right:0;z-index:35;background:transparent;border:none;font-size:9px;font-weight:700;color:var(--text3);cursor:pointer;padding:2px 5px;font-family:inherit;opacity:0;transition:opacity 0.15s;}
+    .day-col:hover .mark-full-btn{opacity:1;}
+    .mark-full-btn.is-full{opacity:1;color:#dc2626;}
     @media(max-width:767px){
+      .lunch-block,.mark-full-btn,.full-day-banner{display:none!important;}
       html,body{overflow:auto;height:auto;}
       .app{height:auto;min-height:100vh;}
       header{flex-wrap:wrap;gap:6px;padding:8px 12px;}
@@ -1135,7 +1141,75 @@ function renderCalendar(){
     return colEl.outerHTML;
   }).join('');
   renderEvents();
+  autoCreateLunchBlocks();
+  renderMarkFullButtons();
   setTimeout(function(){var db2=document.getElementById('days-body');if(db2)db2.scrollTop=(8-HOURS_START)*60;},50);
+}
+
+// ═══ AUTO LUNCH BLOCKS (Mon-Fri, 12-1pm) ═══
+function autoCreateLunchBlocks(){
+  if(window.matchMedia('(max-width:767px)').matches)return;
+  var days=[];for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(d);}
+  var changed=false;
+  days.forEach(function(d){
+    var dow=d.getDay();
+    if(dow===0||dow===6)return; // Skip weekends
+    var dateStr=ds(d);
+    // Check if lunch already exists for this day
+    var hasLunch=notes.some(function(n){return n.date===dateStr&&n.isLunch;});
+    if(!hasLunch){
+      notes.push({
+        id:'NOTE-'+String(nextNoteId).padStart(3,'0'),
+        title:'Lunch',date:dateStr,allDay:false,
+        time:'12:00 PM',duration:'60',details:'',
+        color:'green',isLunch:true,
+        createdAt:new Date().toISOString()
+      });
+      nextNoteId++;changed=true;
+    }
+  });
+  if(changed){saveData();renderEvents();}
+}
+
+// ═══ MARK FULL — DO NOT ADD ═══
+function renderMarkFullButtons(){
+  if(window.matchMedia('(max-width:767px)').matches)return;
+  var days=[];for(var i=0;i<7;i++){var d=new Date(weekStart);d.setDate(d.getDate()+i);days.push(ds(d));}
+  days.forEach(function(dateStr){
+    var col=document.getElementById('col-'+dateStr);if(!col)return;
+    // Remove existing buttons/banners
+    col.querySelectorAll('.mark-full-btn,.full-day-banner').forEach(function(e){e.remove();});
+    var isFull=notes.some(function(n){return n.date===dateStr&&n.isFull;});
+    // Add button
+    var btn=document.createElement('button');
+    btn.className='mark-full-btn'+(isFull?' is-full':'');
+    btn.textContent=isFull?'Unmark Full':'Mark Full';
+    btn.onclick=function(e){e.stopPropagation();toggleFullDay(dateStr);};
+    col.appendChild(btn);
+    // Add banner if full
+    if(isFull){
+      var banner=document.createElement('div');
+      banner.className='full-day-banner';
+      banner.textContent='FULL — DO NOT ADD';
+      col.appendChild(banner);
+    }
+  });
+}
+async function toggleFullDay(dateStr){
+  var idx=notes.findIndex(function(n){return n.date===dateStr&&n.isFull;});
+  if(idx>=0){
+    notes.splice(idx,1);
+  }else{
+    notes.push({
+      id:'NOTE-'+String(nextNoteId).padStart(3,'0'),
+      title:'FULL',date:dateStr,allDay:true,
+      time:null,duration:null,details:'DO NOT ADD',
+      color:'red',isFull:true,
+      createdAt:new Date().toISOString()
+    });
+    nextNoteId++;
+  }
+  await saveData();renderEvents();renderMarkFullButtons();
 }
 
 function renderEvents(){
@@ -1229,7 +1303,7 @@ function renderEvents(){
   // Notes — side by side for overlaps
   days.forEach(function(dayStr){
     var col=document.getElementById('col-'+dayStr); if(!col)return;
-    var dayNotes=notes.filter(function(n){return n.date===dayStr;});
+    var dayNotes=notes.filter(function(n){return n.date===dayStr&&!n.isFull;});
     if(dayNotes.length===0)return;
     var maxH=(HOURS_END-HOURS_START)*60;
     var noteSlots=[];
@@ -1257,7 +1331,7 @@ function renderEvents(){
         var colW=100/totalNoteCols;
         var leftPct=colIdx*colW;
         var ev=document.createElement('div');
-        ev.className='cal-event';
+        ev.className='cal-event'+(n.isLunch?' lunch-block':'');
         ev.style.cssText='top:'+top+'px;height:'+height+'px;left:calc('+leftPct+'% + 2px);width:calc('+colW+'% - 4px);right:auto;background:'+color.bg+';border-left:3px solid '+color.bd+';color:'+color.txt+';';
         ev.innerHTML='<div class="ev-name">'+n.title+'</div>'+(height>28&&n.details?'<div class="ev-sub">'+n.details+'</div>':'');
         ev.onclick=function(e){e.stopPropagation();openNoteDetail(n.id);};
@@ -1286,7 +1360,7 @@ function renderMobileDay(){
   if(TEAM_FILTER==='attention')stops=stops.filter(function(d){return hasFlag(d);});
   if(TEAM_FILTER==='pickup')stops=stops.filter(function(d){return d.deliveryType==='Customer Pick Up';});
   stops.sort(function(a,b){return (a.stopOrder||99)-(b.stopOrder||99)||(timeToMins(a.time)-timeToMins(b.time));});
-  var dayNotes=notes.filter(function(n){return n.date===dayStr;});
+  var dayNotes=notes.filter(function(n){return n.date===dayStr&&!n.isLunch&&!n.isFull;});
 
   var wrap=document.getElementById('mobile-day-list');
   if(!stops.length&&!dayNotes.length){
