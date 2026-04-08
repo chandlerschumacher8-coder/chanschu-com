@@ -2489,14 +2489,24 @@ function arRecordPayment(custName){
   var method=prompt('Payment method (Cash, Check, Card, Financing):','Check')||'Check';
   if(!c.payments)c.payments=[];
   var invoice=prompt('Invoice # this payment is for (or leave blank):','');
-  c.payments.push({date:new Date().toISOString(),amount:amount,method:method.trim(),invoice:invoice||'',recordedBy:currentEmployee?currentEmployee.name:'Admin'});
-  // Check if paid in full
+  c.payments.push({date:new Date().toISOString(),amount:amount,method:method.trim(),orderId:invoice||'',invoice:invoice||'',invoiceNum:invoice||'',memo:'AR Payment',recordedBy:currentEmployee?currentEmployee.name:'Admin'});
+  // Also add to order's payments array if invoice was specified
+  if(invoice){
+    var order=orders.find(function(o){return o.id===invoice;});
+    if(order){
+      if(!order.payments)order.payments=[];
+      var orderPaid=(order.payments||[]).reduce(function(s,p){return s+(p.amount||0);},0);
+      var orderBal=order.total-(orderPaid+amount);
+      order.payments.push({date:new Date().toISOString(),amount:amount,method:method.trim(),orderId:invoice,invoiceNum:invoice,memo:'AR Payment',balance:Math.max(0,orderBal),recordedBy:currentEmployee?currentEmployee.name:'Admin'});
+      if(orderBal<=0.01)order.status='Paid in Full';
+    }
+  }
+  // Check if customer fully paid
   var bal=getCustomerBalance(custName);
   if(bal.balance<=0){
-    // Mark all unpaid orders as Paid
-    orders.forEach(function(o){if(o.customer===custName&&o.status!=='Quote'&&o.status!=='Paid in Full')o.status='Paid in Full';});
-    saveOrders();
+    orders.forEach(function(o){if(o.customer===custName&&o.status!=='Quote'&&o.status!=='Paid in Full'&&o.status!=='Delivered')o.status='Paid in Full';});
   }
+  saveOrders();
   saveCustomers();renderARReport();toast('Payment of '+fmt(amount)+' recorded','success');
 }
 

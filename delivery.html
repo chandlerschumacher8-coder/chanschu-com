@@ -1074,6 +1074,23 @@ async function loadData(){
   _lastDelHash=JSON.stringify({d:deliveries,n:notes});
   renderCalendar();
 }
+// Individual save operations — no more full-array overwrite
+async function saveOneDelivery(delivery){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'upsert',delivery:delivery})});}catch(e){console.error('[Delivery] Save one failed:',e);}
+}
+async function deleteOneDelivery(deliveryId){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id:deliveryId})});}catch(e){console.error('[Delivery] Delete one failed:',e);}
+}
+async function saveOneNote(note){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'upsert-note',note:note})});}catch(e){console.error('[Delivery] Save note failed:',e);}
+}
+async function deleteOneNote(noteId){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete-note',id:noteId})});}catch(e){console.error('[Delivery] Delete note failed:',e);}
+}
+async function saveDelCounter(){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update-counter',nextId:nextDelId,nextNoteId:nextNoteId})});}catch(e){console.error('[Delivery] Save counter failed:',e);}
+}
+// Legacy full-array save — only used for batch operations
 async function saveData(){
   if(!_delDataLoaded){console.warn('[Delivery] Save blocked — data not loaded yet');return;}
   console.log('[Delivery] Saving '+deliveries.length+' deliveries, '+notes.length+' notes');
@@ -1220,18 +1237,22 @@ function renderMarkFullButtons(){
 async function toggleFullDay(dateStr){
   var idx=notes.findIndex(function(n){return n.date===dateStr&&n.isFull;});
   if(idx>=0){
+    var removedNote=notes[idx];
     notes.splice(idx,1);
+    await deleteOneNote(removedNote.id);
   }else{
-    notes.push({
+    var newNote={
       id:'NOTE-'+String(nextNoteId).padStart(3,'0'),
       title:'FULL',date:dateStr,allDay:true,
       time:null,duration:null,details:'DO NOT ADD',
       color:'red',isFull:true,
       createdAt:new Date().toISOString()
-    });
+    };
+    notes.push(newNote);
     nextNoteId++;
+    await saveOneNote(newNote);await saveDelCounter();
   }
-  await saveData();renderEvents();renderMarkFullButtons();
+  renderEvents();renderMarkFullButtons();
 }
 
 function renderEvents(){
@@ -1588,12 +1609,14 @@ async function saveDelivery(){
     var d=deliveries.find(function(x){return x.id===editId;}); if(!d)return;
     Object.assign(d,{name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo});
     deliveryId=editId;
+    await saveOneDelivery(d);
   } else {
     deliveryId='DEL-'+String(nextDelId).padStart(4,'0');
-    deliveries.unshift({id:deliveryId,name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null});
+    var newDel={id:deliveryId,name,phone,email,address,city,invoice,notes:delivNotes,date,time,duration,team,stopOrder,deliveryType,appliances:apps,appliance:appStr,invoiceFile,invoiceFiles,soldTo:soldTo,shipTo:shipTo,status:'Scheduled',createdAt:new Date().toISOString(),deliveredAt:null};
+    deliveries.unshift(newDel);
     nextDelId++;
+    await saveOneDelivery(newDel);await saveDelCounter();
   }
-  await saveData();
   // Two-way link: if invoice matches an order, link them
   if(invoice){
     try{
@@ -1666,11 +1689,14 @@ async function saveNote(){
   if(editId){
     var n=notes.find(function(x){return x.id===editId;}); if(!n)return;
     Object.assign(n,{title,date,allDay,time,duration,details,color:selectedColor});
+    await saveOneNote(n);
   } else {
-    notes.push({id:'NOTE-'+String(nextNoteId).padStart(3,'0'),title,date,allDay,time,duration,details,color:selectedColor,createdAt:new Date().toISOString()});
+    var newNote={id:'NOTE-'+String(nextNoteId).padStart(3,'0'),title,date,allDay,time,duration,details,color:selectedColor,createdAt:new Date().toISOString()};
+    notes.push(newNote);
     nextNoteId++;
+    await saveOneNote(newNote);await saveDelCounter();
   }
-  await saveData();closeModal('note-modal');renderEvents();
+  closeModal('note-modal');renderEvents();
 }
 
 // ═══ DELIVERY LOG ═══
@@ -1800,7 +1826,7 @@ async function addLogEntry(deliveryId,mode){
   var entry={ts:new Date().toISOString(),author:'Dispatcher',text:text};
   if(_logPendingPhoto){entry.photo=_logPendingPhoto.url||_logPendingPhoto;entry.photoPath=_logPendingPhoto.path||null;_logPendingPhoto=null;}
   d.log.push(entry);
-  await saveData();
+  await saveOneDelivery(d);
   // Re-render the appropriate view
   if(mode==='mobile'&&document.getElementById('bsheet-overlay').classList.contains('open')){
     openBSheet(deliveryId);
@@ -1941,7 +1967,7 @@ async function setStatus(id,status){
     }
   }
   d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;
-  await saveData();
+  await saveOneDelivery(d);
   // Sync delivery status to linked order
   await syncDeliveryStatusToOrder(d);
   if(status==='Delivered')await syncSerialsToOrder(d);
@@ -1995,7 +2021,7 @@ async function confirmSerialsAndDeliver(id){
     }
   });
   d.status='Delivered';d.deliveredAt=new Date().toISOString();
-  await saveData();
+  await saveOneDelivery(d);
   await syncDeliveryStatusToOrder(d);
   await syncSerialsToOrder(d);
   closeModal('detail-modal');renderEvents();
@@ -2004,7 +2030,7 @@ async function confirmSerialsAndDeliver(id){
 async function markDeliveredAnyway(id){
   var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
   d.status='Delivered';d.deliveredAt=new Date().toISOString();
-  await saveData();
+  await saveOneDelivery(d);
   await syncDeliveryStatusToOrder(d);
   await syncSerialsToOrder(d);
   closeModal('detail-modal');renderEvents();
@@ -2061,7 +2087,7 @@ async function saveDesktopSerials(id){
   if(!anyChanged){openDeliveryDetail(id);return;}
   var btn=document.querySelector('.serial-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
-  await saveData();
+  await saveOneDelivery(d);
   await syncSerialsToOrder(d);
   openDeliveryDetail(id);
 }
@@ -2079,7 +2105,7 @@ async function sendDeliveryConfirmEmail(id){
   if(res.ok){
     if(!d.emailLog)d.emailLog=[];
     d.emailLog.push({ts:new Date().toISOString(),to:d.email,type:'delivery_confirmation',by:'Dispatcher'});
-    await saveData();
+    await saveOneDelivery(d);
     openDeliveryDetail(id);
     alert('Confirmation email sent to '+d.email);
   }else{alert('Failed to send email: '+(res.error||'Unknown error'));}
@@ -2087,12 +2113,12 @@ async function sendDeliveryConfirmEmail(id){
 async function deleteDelivery(id){
   if(!confirm('Delete this stop?'))return;
   deliveries=deliveries.filter(function(x){return x.id!==id;});
-  await saveData();closeModal('detail-modal');renderEvents();
+  await deleteOneDelivery(id);closeModal('detail-modal');renderEvents();
 }
 async function deleteNote(id){
   if(!confirm('Delete this note?'))return;
   notes=notes.filter(function(x){return x.id!==id;});
-  await saveData();closeModal('detail-modal');renderEvents();
+  await deleteOneNote(id);closeModal('detail-modal');renderEvents();
 }
 
 // ═══ DELIVERY PHOTOS ═══
@@ -2156,7 +2182,7 @@ async function detUploadPhotos(files,deliveryId){
     if(statusEl)statusEl.innerHTML='<div class="photo-upload-status photo-status-success">&#x2713; '+(files.length===1?'Photo':'All '+files.length+' photos')+' saved</div>';
     setTimeout(function(){if(statusEl)statusEl.innerHTML='';},3000);
   }
-  await saveData();
+  await saveOneDelivery(d);
 }
 function detRetryUpload(){
   if(window._detRetryFiles&&window._detRetryId){
@@ -2172,7 +2198,7 @@ async function detRemovePhoto(deliveryId,photoIdx){
     try{await apiFetch('/api/delivery-photo-delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:photo.path})});}catch(e){console.error(e);}
   }
   d.photos.splice(photoIdx,1);
-  await saveData();openDeliveryDetail(deliveryId);
+  await saveOneDelivery(d);openDeliveryDetail(deliveryId);
 }
 function detViewPhoto(url){
   var ov=document.getElementById('det-photo-overlay');
@@ -2467,10 +2493,10 @@ async function onDragEnd(e){
       if(snapped>(HOURS_END-1)*60)snapped=(HOURS_END-1)*60;
       if(_dragType==='note'){
         var n=notes.find(function(x){return x.id===_dragId;});
-        if(n){n.date=col.dataset.date;n.time=minsToTime(snapped);n.allDay=false;await saveData();renderEvents();renderMarkFullButtons();}
+        if(n){n.date=col.dataset.date;n.time=minsToTime(snapped);n.allDay=false;await saveOneNote(n);renderEvents();renderMarkFullButtons();}
       }else{
         var d=deliveries.find(function(x){return x.id===_dragId;});
-        if(d){d.date=col.dataset.date;d.time=minsToTime(snapped);await saveData();renderEvents();}
+        if(d){d.date=col.dataset.date;d.time=minsToTime(snapped);await saveOneDelivery(d);renderEvents();}
       }
     }
   }
@@ -2527,7 +2553,7 @@ async function onResizeEnd(e){
     var d=deliveries.find(function(x){return x.id===_resizeId;});
     if(d){
       d.duration=String(newDur);
-      await saveData();
+      await saveOneDelivery(d);
       renderEvents();
     }
   }
@@ -2834,7 +2860,7 @@ async function saveMobileSerials(){
   if(!anyChanged){closeBSheet();_serialSheetId=null;renderEvents();return;}
   var btn=document.getElementById('bsheet-confirm-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving...';}
-  await saveData();
+  await saveOneDelivery(d);
   await syncSerialsToOrder(d);
   closeBSheet();
   _serialSheetId=null;
@@ -3113,7 +3139,7 @@ async function bsheetConfirmDelivery(){
   var btn=document.getElementById('bsheet-confirm-btn');
   btn.disabled=true;btn.textContent='Saving...';
 
-  await saveData();
+  await saveOneDelivery(d);
 
   // Sync delivery status and serials to order and customer records
   await syncDeliveryStatusToOrder(d);
@@ -3134,7 +3160,7 @@ async function mobileSetOut(id,evt){
   evt.stopPropagation();
   var d=deliveries.find(function(x){return x.id===id;});if(!d)return;
   d.status='Out for Delivery';
-  await saveData();renderEvents();
+  await saveOneDelivery(d);renderEvents();
 }
 function mobileMarkDelivered(id,evt){
   evt.stopPropagation();

@@ -6179,7 +6179,9 @@ function _doSyncDelivery(order){
   order.deliveryId=deliveryId;
   order.deliveryStatus='Scheduled';
   saveOrders();
-  delSaveData();
+  var savedDel=existing||delDeliveries.find(function(x){return x.id===deliveryId;});
+  if(savedDel)delSaveOne(savedDel);
+  if(!existing)delSaveCounter();
   // Show confirmation
   var dateStr=order.deliveryDate?new Date(order.deliveryDate+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
   toast('\u2713 Delivery scheduled for '+dateStr+(order.deliveryTime?' at '+order.deliveryTime:''),'success');
@@ -6208,7 +6210,7 @@ function removeDeliveryForOrder(orderId){
   var idx=delDeliveries.findIndex(function(d){return d.invoice===orderId;});
   if(idx>=0){
     if(!confirm('Remove the delivery stop linked to '+orderId+'?'))return false;
-    delDeliveries.splice(idx,1);delSaveData();
+    var removedId=delDeliveries[idx].id;delDeliveries.splice(idx,1);delDeleteOne(removedId);
     console.log('[Delivery Sync] Removed delivery for voided order '+orderId);
   }
   return true;

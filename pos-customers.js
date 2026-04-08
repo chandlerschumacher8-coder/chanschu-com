@@ -91,7 +91,7 @@ function custSelect(idx){
   // Build ledger entries (sales + payments chronologically)
   var ledgerEntries=[];
   custOrders.forEach(function(o){ledgerEntries.push({type:'sale',date:o.date,ref:o.id,desc:(o.items||[]).map(function(i){return i.name;}).join(', '),amount:o.total,balance:0});});
-  payments.forEach(function(p){ledgerEntries.push({type:'payment',date:p.date,ref:'Payment',desc:p.method+(p.recordedBy?' ('+p.recordedBy+')':''),amount:-p.amount,balance:0});});
+  payments.forEach(function(p){ledgerEntries.push({type:'payment',date:p.date,ref:p.orderId||p.invoice||p.invoiceNum||'Payment',desc:p.method+(p.recordedBy?' ('+p.recordedBy+')':''),amount:-p.amount,balance:0});});
   ledgerEntries.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
   var runBal=0;ledgerEntries.forEach(function(e){runBal+=e.amount;e.balance=runBal;});
 
@@ -591,7 +591,7 @@ function custAutoRecordPayment(cust,order){
   // Don't double-record if already exists for this invoice
   var alreadyRecorded=cust.payments.some(function(p){return p.invoice===order.id;});
   if(alreadyRecorded)return;
-  cust.payments.push({date:new Date().toISOString(),amount:order.total,method:order.payment,invoice:order.id,by:order.clerk||'POS',note:'Auto-recorded at checkout'});
+  cust.payments.push({date:new Date().toISOString(),amount:order.total,method:order.payment,orderId:order.id,invoice:order.id,invoiceNum:order.id,memo:'Paid at checkout',balance:0,recordedBy:order.clerk||'POS'});
   console.log('[Customer] Auto-recorded '+order.payment+' payment of $'+order.total.toFixed(2)+' for '+order.id+' on '+cust.name);
 }
 

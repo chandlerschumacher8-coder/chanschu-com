@@ -752,12 +752,13 @@ async function orderRecordPayment(id){
   if(!amt)return;amt=parseFloat(amt);if(isNaN(amt)||amt<=0){toast('Invalid amount','error');return;}
   var method=prompt('Payment method (Cash, Check, Card, Financing):','Check')||'Check';
   if(!o.payments)o.payments=[];
-  var paymentEntry={date:new Date().toISOString(),amount:amt,method:method.trim(),recordedBy:currentEmployee?currentEmployee.name:'Admin'};
+  var newBal=o.total-(paid+amt);
+  var paymentEntry={date:new Date().toISOString(),amount:amt,method:method.trim(),orderId:o.id,invoiceNum:o.id,memo:'Payment',balance:Math.max(0,newBal),recordedBy:currentEmployee?currentEmployee.name:'Admin'};
   o.payments.push(paymentEntry);
   console.log('[Payment] Recording:', {invoiceId:o.id,amount:amt,method:method.trim(),totalPayments:o.payments.length});
   // Also add to customer record for ledger
   var c=customers.find(function(x){return x.name===o.customer;});
-  if(c){if(!c.payments)c.payments=[];c.payments.push({date:new Date().toISOString(),amount:amt,method:method.trim(),invoice:o.id,recordedBy:currentEmployee?currentEmployee.name:'Admin'});saveCustomers();}
+  if(c){if(!c.payments)c.payments=[];c.payments.push({date:new Date().toISOString(),amount:amt,method:method.trim(),orderId:o.id,invoice:o.id,invoiceNum:o.id,memo:'Payment',balance:Math.max(0,newBal),recordedBy:currentEmployee?currentEmployee.name:'Admin'});saveCustomers();}
   // Check if paid in full
   var newPaid=paid+amt;
   if(newPaid>=o.total-0.01)o.status='Paid in Full';
@@ -914,11 +915,13 @@ function buildCustomerInvoiceDoc(o){
   for(var i=0;i<blank;i++)itemRows+='<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
 
   var bal=getOrderBalance(o);
-  var payments=getCustomerPayments(o.customer);
-  // Build ledger rows
+  var allPayments=getCustomerPayments(o.customer);
+  // Filter to payments for THIS invoice only (by orderId or invoice field)
+  var invoicePayments=allPayments.filter(function(p){return p.orderId===o.id||p.invoice===o.id||p.invoiceNum===o.id;});
+  // Build ledger rows — per-invoice only
   var ledgerRows='<tr><td>'+new Date(o.date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+'</td><td>Invoice '+o.id+'</td><td class="col-r">'+fmt(o.total)+'</td><td class="col-r">'+fmt(o.total)+'</td></tr>';
   var running=o.total;
-  payments.forEach(function(p){running-=p.amount;ledgerRows+='<tr><td>'+new Date(p.date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+'</td><td>Payment ('+p.method+')</td><td class="col-r">-'+fmt(p.amount)+'</td><td class="col-r">'+fmt(running)+'</td></tr>';});
+  invoicePayments.forEach(function(p){running-=p.amount;ledgerRows+='<tr><td>'+new Date(p.date).toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'2-digit'})+'</td><td>Payment ('+p.method+')</td><td class="col-r">-'+fmt(p.amount)+'</td><td class="col-r">'+fmt(running)+'</td></tr>';});
 
   var h='<div class="doc-page">';
   h+=buildInvoiceHeader(o,'INVOICE');
@@ -1255,6 +1258,23 @@ async function delLoadData(){
   delRenderCalendar();delStartPolling();
   if(_truckMap)truckMapShowDeliveryStops();
 }
+// Individual save operations — no more full-array overwrite
+async function delSaveOne(delivery){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'upsert',delivery:delivery})});}catch(e){console.error('[Delivery] Save one failed:',e);}
+}
+async function delDeleteOne(deliveryId){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id:deliveryId})});}catch(e){console.error('[Delivery] Delete one failed:',e);}
+}
+async function delSaveNote(note){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'upsert-note',note:note})});}catch(e){console.error('[Delivery] Save note failed:',e);}
+}
+async function delDeleteOneNote(noteId){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete-note',id:noteId})});}catch(e){console.error('[Delivery] Delete note failed:',e);}
+}
+async function delSaveCounter(){
+  try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update-counter',nextId:delNextId,nextNoteId:delNextNoteId})});}catch(e){console.error('[Delivery] Save counter failed:',e);}
+}
+// Legacy full-array save — only used as fallback for batch operations
 async function delSaveData(){
   if(!_delDataLoaded){console.warn('[POS Delivery] Save blocked — data not loaded yet');return;}
   console.log('[POS Delivery] Saving '+delDeliveries.length+' deliveries, '+delNotes.length+' notes');
@@ -1339,9 +1359,9 @@ function delRenderMarkFullButtons(){
 }
 async function delToggleFullDay(dateStr){
   var idx=delNotes.findIndex(function(n){return n.date===dateStr&&n.isFull;});
-  if(idx>=0){delNotes.splice(idx,1);}
-  else{delNotes.push({id:'NOTE-'+String(delNextNoteId).padStart(3,'0'),title:'FULL',date:dateStr,allDay:true,time:null,duration:null,details:'DO NOT ADD',color:'red',isFull:true,createdAt:new Date().toISOString()});delNextNoteId++;}
-  await delSaveData();delRenderEvents();delRenderMarkFullButtons();
+  if(idx>=0){var removed=delNotes.splice(idx,1)[0];await delDeleteOneNote(removed.id);}
+  else{var newNote={id:'NOTE-'+String(delNextNoteId).padStart(3,'0'),title:'FULL',date:dateStr,allDay:true,time:null,duration:null,details:'DO NOT ADD',color:'red',isFull:true,createdAt:new Date().toISOString()};delNotes.push(newNote);delNextNoteId++;await delSaveNote(newNote);await delSaveCounter();}
+  delRenderEvents();delRenderMarkFullButtons();
 }
 
 function delRenderEvents(){
@@ -1435,10 +1455,10 @@ function delStartNoteDrag(e,id,el,nObj){
 }
 function delStartDrag(e,id,el,dObj){e.preventDefault();_delDragType='delivery';_delDragId=id;_delDragEl=el;_delDragging=true;_delDragMoved=false;_delDragOffsetY=e.clientY-el.getBoundingClientRect().top;_delDragGhost=document.createElement('div');_delDragGhost.className='del-drag-ghost';_delDragGhost.style.background=el.style.background||'#dbeafe';_delDragGhost.style.borderLeft=el.style.borderLeft||'3px solid #2563b0';_delDragGhost.style.color=el.style.color||'#1e3a5f';_delDragGhost.textContent=dObj.name+(dObj.time?' '+dObj.time:'');_delDragGhost.style.left=e.clientX+'px';_delDragGhost.style.top=e.clientY+'px';document.body.appendChild(_delDragGhost);el.classList.add('dragging');document.addEventListener('mousemove',delOnDragMove);document.addEventListener('mouseup',delOnDragEnd);}
 function delOnDragMove(e){if(!_delDragId)return;_delDragMoved=true;_delDragGhost.style.left=(e.clientX+10)+'px';_delDragGhost.style.top=(e.clientY-10)+'px';document.querySelectorAll('.del-day-col').forEach(function(c){c.classList.remove('drag-over');});var el=document.elementFromPoint(e.clientX,e.clientY);var col=el?el.closest('.del-day-col'):null;if(col){col.classList.add('drag-over');var db=document.getElementById('del-days-body');var rect=col.getBoundingClientRect();var relY=e.clientY-rect.top+(db?db.scrollTop:0)-_delDragOffsetY;var snapped=Math.round((DEL_HOURS_START*60+Math.max(0,relY))/30)*30;if(snapped<DEL_HOURS_START*60)snapped=DEL_HOURS_START*60;if(snapped>(DEL_HOURS_END-1)*60)snapped=(DEL_HOURS_END-1)*60;var di=document.getElementById('del-di-'+col.dataset.date);if(di){di.style.top=(snapped-DEL_HOURS_START*60)+'px';di.style.display='block';}}}
-async function delOnDragEnd(e){document.removeEventListener('mousemove',delOnDragMove);document.removeEventListener('mouseup',delOnDragEnd);if(_delDragGhost){_delDragGhost.remove();_delDragGhost=null;}if(_delDragEl)_delDragEl.classList.remove('dragging');document.querySelectorAll('.del-day-col').forEach(function(c){c.classList.remove('drag-over');});document.querySelectorAll('.del-drop-ind').forEach(function(d){d.style.display='none';});if(_delDragMoved&&_delDragId){var el=document.elementFromPoint(e.clientX,e.clientY);var col=el?el.closest('.del-day-col'):null;if(col){var db=document.getElementById('del-days-body');var rect=col.getBoundingClientRect();var relY=e.clientY-rect.top+(db?db.scrollTop:0)-_delDragOffsetY;var snapped=Math.round((DEL_HOURS_START*60+Math.max(0,relY))/30)*30;if(snapped<DEL_HOURS_START*60)snapped=DEL_HOURS_START*60;if(snapped>(DEL_HOURS_END-1)*60)snapped=(DEL_HOURS_END-1)*60;if(_delDragType==='note'){var n=delNotes.find(function(x){return x.id===_delDragId;});if(n){n.date=col.dataset.date;n.time=delMinsToTime(snapped);n.allDay=false;await delSaveData();delRenderEvents();delRenderMarkFullButtons();}}else{var d=delDeliveries.find(function(x){return x.id===_delDragId;});if(d){d.date=col.dataset.date;d.time=delMinsToTime(snapped);await delSaveData();delRenderEvents();}}}}setTimeout(function(){_delDragging=false;_delDragMoved=false;_delDragId=null;_delDragEl=null;_delDragType='delivery';},50);}
+async function delOnDragEnd(e){document.removeEventListener('mousemove',delOnDragMove);document.removeEventListener('mouseup',delOnDragEnd);if(_delDragGhost){_delDragGhost.remove();_delDragGhost=null;}if(_delDragEl)_delDragEl.classList.remove('dragging');document.querySelectorAll('.del-day-col').forEach(function(c){c.classList.remove('drag-over');});document.querySelectorAll('.del-drop-ind').forEach(function(d){d.style.display='none';});if(_delDragMoved&&_delDragId){var el=document.elementFromPoint(e.clientX,e.clientY);var col=el?el.closest('.del-day-col'):null;if(col){var db=document.getElementById('del-days-body');var rect=col.getBoundingClientRect();var relY=e.clientY-rect.top+(db?db.scrollTop:0)-_delDragOffsetY;var snapped=Math.round((DEL_HOURS_START*60+Math.max(0,relY))/30)*30;if(snapped<DEL_HOURS_START*60)snapped=DEL_HOURS_START*60;if(snapped>(DEL_HOURS_END-1)*60)snapped=(DEL_HOURS_END-1)*60;if(_delDragType==='note'){var n=delNotes.find(function(x){return x.id===_delDragId;});if(n){n.date=col.dataset.date;n.time=delMinsToTime(snapped);n.allDay=false;await delSaveNote(n);delRenderEvents();delRenderMarkFullButtons();}}else{var d=delDeliveries.find(function(x){return x.id===_delDragId;});if(d){d.date=col.dataset.date;d.time=delMinsToTime(snapped);await delSaveOne(d);delRenderEvents();}}}}setTimeout(function(){_delDragging=false;_delDragMoved=false;_delDragId=null;_delDragEl=null;_delDragType='delivery';},50);}
 function delStartResize(e,id,el,dObj){e.preventDefault();e.stopPropagation();_delResizeId=id;_delResizeEl=el;_delResizeStartY=e.clientY;_delResizeStartDur=parseInt(dObj.duration)||60;_delDragging=true;_delDragMoved=false;el.style.cursor='ns-resize';document.body.style.userSelect='none';document.addEventListener('mousemove',delOnResizeMove);document.addEventListener('mouseup',delOnResizeEnd);}
 function delOnResizeMove(e){if(!_delResizeId||!_delResizeEl)return;_delDragMoved=true;var deltaY=e.clientY-_delResizeStartY;var deltaMins=Math.round(deltaY/30)*30;var newDur=Math.max(30,_delResizeStartDur+deltaMins);_delResizeEl.style.height=newDur+'px';}
-async function delOnResizeEnd(e){document.removeEventListener('mousemove',delOnResizeMove);document.removeEventListener('mouseup',delOnResizeEnd);document.body.style.userSelect='';if(_delResizeEl)_delResizeEl.style.cursor='';if(_delDragMoved&&_delResizeId){var deltaY=e.clientY-_delResizeStartY;var deltaMins=Math.round(deltaY/30)*30;var newDur=Math.max(30,_delResizeStartDur+deltaMins);newDur=Math.round(newDur/30)*30;var d=delDeliveries.find(function(x){return x.id===_delResizeId;});if(d){d.duration=String(newDur);await delSaveData();delRenderEvents();}}setTimeout(function(){_delDragging=false;_delDragMoved=false;_delResizeId=null;_delResizeEl=null;},50);}
+async function delOnResizeEnd(e){document.removeEventListener('mousemove',delOnResizeMove);document.removeEventListener('mouseup',delOnResizeEnd);document.body.style.userSelect='';if(_delResizeEl)_delResizeEl.style.cursor='';if(_delDragMoved&&_delResizeId){var deltaY=e.clientY-_delResizeStartY;var deltaMins=Math.round(deltaY/30)*30;var newDur=Math.max(30,_delResizeStartDur+deltaMins);newDur=Math.round(newDur/30)*30;var d=delDeliveries.find(function(x){return x.id===_delResizeId;});if(d){d.duration=String(newDur);await delSaveOne(d);delRenderEvents();}}setTimeout(function(){_delDragging=false;_delDragMoved=false;_delResizeId=null;_delResizeEl=null;},50);}
 
 // Context Menu
 function delShowCtx(e,date,time){e.stopPropagation();if(_delDragging||_delDragMoved){_delDragMoved=false;return;}delCtxDate=date;delCtxTime=time;var menu=document.getElementById('del-ctx-menu');var dt=new Date(date+'T12:00:00');var label=dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});if(time)label+=' at '+time;document.getElementById('del-ctx-hdr').textContent=label;menu.style.left=e.clientX+'px';menu.style.top=e.clientY+'px';menu.classList.add('open');setTimeout(function(){document.addEventListener('click',delCloseCtx,{once:true});},10);}
@@ -1495,7 +1515,9 @@ async function delSaveDelivery(){
     var order=orders.find(function(o){return o.id===invoice;});
     if(order){order.deliveryId=deliveryId;order.deliveryStatus='Scheduled';saveOrders();console.log('[Delivery] Linked delivery '+deliveryId+' to order '+invoice);}
   }
-  await delSaveData();closeModal('del-delivery-modal');delRenderEvents();toast('Delivery saved','success');
+  var savedDel=delDeliveries.find(function(x){return x.id===deliveryId;});
+  await delSaveOne(savedDel);if(!editId)await delSaveCounter();
+  closeModal('del-delivery-modal');delRenderEvents();toast('Delivery saved','success');
 }
 // Appliance rows
 function delInitAppRows(list){document.getElementById('del-app-list').innerHTML='';list.forEach(function(x){delAddAppRow(x.a||'',x.m||'');});}
@@ -1570,9 +1592,11 @@ async function delSaveNote(){
   var editId=document.getElementById('del-edit-note-id').value;var title=document.getElementById('del-n-title').value.trim(),date=document.getElementById('del-n-date').value;
   var allDay=document.getElementById('del-n-allday').value==='yes';var time=allDay?null:document.getElementById('del-n-time').value;var duration=allDay?null:document.getElementById('del-n-duration').value;var details=document.getElementById('del-n-details').value.trim();
   if(!title||!date){toast('Enter title and date','error');return;}
-  if(editId){var n=delNotes.find(function(x){return x.id===editId;});if(!n)return;Object.assign(n,{title:title,date:date,allDay:allDay,time:time,duration:duration,details:details,color:delSelectedColor});}
-  else{delNotes.push({id:'NOTE-'+String(delNextNoteId).padStart(3,'0'),title:title,date:date,allDay:allDay,time:time,duration:duration,details:details,color:delSelectedColor,createdAt:new Date().toISOString()});delNextNoteId++;}
-  await delSaveData();closeModal('del-note-modal');delRenderEvents();toast('Note saved','success');
+  var savedNote;
+  if(editId){var n=delNotes.find(function(x){return x.id===editId;});if(!n)return;Object.assign(n,{title:title,date:date,allDay:allDay,time:time,duration:duration,details:details,color:delSelectedColor});savedNote=n;}
+  else{savedNote={id:'NOTE-'+String(delNextNoteId).padStart(3,'0'),title:title,date:date,allDay:allDay,time:time,duration:duration,details:details,color:delSelectedColor,createdAt:new Date().toISOString()};delNotes.push(savedNote);delNextNoteId++;}
+  await delSaveNote(savedNote);if(!editId)await delSaveCounter();
+  closeModal('del-note-modal');delRenderEvents();toast('Note saved','success');
 }
 // Detail modals
 function delOpenLinkedOrder(orderId){
@@ -1641,7 +1665,7 @@ async function delSetStatus(id,status){
     if(missing.length){delShowSerialPrompt(id,missing);return;}
   }
   d.status=status;if(status==='Delivered')d.deliveredAt=new Date().toISOString();else d.deliveredAt=null;
-  await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Status: '+status,'success');
+  await delSaveOne(d);closeModal('del-detail-modal');delRenderEvents();toast('Status: '+status,'success');
   // Two-way link: update linked order status and mark items delivered
   var orderId=d.invoice||d.linkedOrderId;
   if(orderId&&typeof orders!=='undefined'){
@@ -1695,14 +1719,13 @@ async function delConfirmSerialsAndDeliver(id){
     if(val){var match=apps.find(function(a){return a.a===name&&!a.serial;});if(match)match.serial=val;}
   });
   d.status='Delivered';d.deliveredAt=new Date().toISOString();
-  await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Delivered with serials','success');
-  // Sync to order
+  await delSaveOne(d);closeModal('del-detail-modal');delRenderEvents();toast('Delivered with serials','success');
   delSyncDeliveredToOrder(d);
 }
 async function delMarkDeliveredAnyway(id){
   var d=delDeliveries.find(function(x){return x.id===id;});if(!d)return;
   d.status='Delivered';d.deliveredAt=new Date().toISOString();
-  await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Marked Delivered','success');
+  await delSaveOne(d);closeModal('del-detail-modal');delRenderEvents();toast('Marked Delivered','success');
   delSyncDeliveredToOrder(d);
 }
 function delSyncDeliveredToOrder(d){
@@ -1719,9 +1742,9 @@ async function delDeleteDelivery(id){if(!confirm('Delete this stop?'))return;
   var d=delDeliveries.find(function(x){return x.id===id;});
   // Clean up linked order
   if(d){var orderId=d.invoice||d.linkedOrderId;if(orderId&&typeof orders!=='undefined'){var order=orders.find(function(o){return o.id===orderId;});if(order){order.deliveryId=null;order.deliveryStatus=null;saveOrders();}}}
-  delDeliveries=delDeliveries.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Delivery deleted','info');
+  delDeliveries=delDeliveries.filter(function(x){return x.id!==id;});await delDeleteOne(id);closeModal('del-detail-modal');delRenderEvents();toast('Delivery deleted','info');
 }
-async function delDeleteNote(id){if(!confirm('Delete this note?'))return;delNotes=delNotes.filter(function(x){return x.id!==id;});await delSaveData();closeModal('del-detail-modal');delRenderEvents();toast('Note deleted','info');}
+async function delDeleteNote(id){if(!confirm('Delete this note?'))return;delNotes=delNotes.filter(function(x){return x.id!==id;});await delDeleteOneNote(id);closeModal('del-detail-modal');delRenderEvents();toast('Note deleted','info');}
 // Delivery photos
 async function delDetUploadPhotos(files,deliveryId){
   if(!files||!files.length)return;
@@ -1736,7 +1759,7 @@ async function delDetUploadPhotos(files,deliveryId){
       if(data.ok)d.photos.push({url:data.url,filename:data.filename,uploadedAt:new Date().toISOString()});
     }catch(e){console.error(e);}
   }
-  await delSaveData();delOpenDetail(deliveryId);toast('Photos uploaded','success');
+  await delSaveOne(d);delOpenDetail(deliveryId);toast('Photos uploaded','success');
 }
 function delDetViewPhoto(url){
   var ov=document.getElementById('del-photo-overlay');
@@ -1802,7 +1825,7 @@ async function delAddLogEntry(deliveryId){
   var entry={ts:new Date().toISOString(),author:author,text:text};
   if(_delLogPendingPhoto){entry.photo=_delLogPendingPhoto;_delLogPendingPhoto=null;}
   d.log.push(entry);
-  await delSaveData();
+  await delSaveOne(d);
   delOpenDetail(deliveryId);
   toast('Log entry added','success');
 }
@@ -1830,7 +1853,7 @@ async function delSendConfirmEmail(id){
   if(res.ok){
     if(!d.emailLog)d.emailLog=[];
     d.emailLog.push({ts:new Date().toISOString(),to:d.email,type:'delivery_confirmation',by:currentEmployee?currentEmployee.name:'Admin'});
-    await delSaveData();
+    await delSaveOne(d);
     delOpenDetail(id);
     toast('Confirmation email sent','success');
   }else{toast('Failed: '+(res.error||'Unknown error'),'error');}
