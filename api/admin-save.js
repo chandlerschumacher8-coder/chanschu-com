@@ -21,7 +21,8 @@ export default async function handler(req, res) {
 
       if (key === 'customers') {
         const customers = Array.isArray(data) ? data : [];
-        await sb.from('customers').delete().eq('store_id', store_id);
+        // Only delete active (non-soft-deleted) records — soft-deleted records are preserved
+        await sb.from('customers').delete().eq('store_id', store_id).eq('deleted', false);
         if (customers.length) {
           for (let i = 0; i < customers.length; i += 500) {
             const batch = customers.slice(i, i + 500).map(c => ({
@@ -32,6 +33,7 @@ export default async function handler(req, res) {
               appliance_history: c.applianceHistory || [],
               payments: c.payments || [], adjustments: c.adjustments || [],
               refunds: c.refunds || [], ledger_notes: c.ledgerNotes || [],
+              deleted: false,
             }));
             const { error } = await sb.from('customers').insert(batch);
             if (error) throw new Error(error.message);
@@ -42,8 +44,9 @@ export default async function handler(req, res) {
 
       if (key === 'products') {
         const products = Array.isArray(data) ? data : [];
-        await sb.from('serial_pool').delete().eq('store_id', store_id);
-        await sb.from('products').delete().eq('store_id', store_id);
+        // Only delete active (non-soft-deleted) records — soft-deleted records are preserved
+        await sb.from('serial_pool').delete().eq('store_id', store_id).eq('deleted', false);
+        await sb.from('products').delete().eq('store_id', store_id).eq('deleted', false);
         if (products.length) {
           for (let i = 0; i < products.length; i += 200) {
             const batch = products.slice(i, i + 200);
@@ -56,6 +59,7 @@ export default async function handler(req, res) {
               sales_30: p.sales30 || 0, warranty: p.warranty || null, serial: p.serial || null,
               serial_tracked: p.serialTracked || false, price_locked: p.priceLocked || false,
               needs_pricing: p.needsPricing || false, active: p.active !== false,
+              deleted: false,
             }));
             const { data: inserted, error } = await sb.from('products').insert(rows).select('id');
             if (error) throw new Error(error.message);
@@ -66,6 +70,7 @@ export default async function handler(req, res) {
                 const serialRows = p.serialPool.map(s => ({
                   store_id, product_id: dbId, sn: s.sn || '', status: s.status || 'available',
                   assigned_at: s.assignedAt || null, received_at: s.receivedAt || null, vendor: s.vendor || null,
+                  deleted: false,
                 }));
                 await sb.from('serial_pool').insert(serialRows);
               }
@@ -78,8 +83,9 @@ export default async function handler(req, res) {
       if (key === 'orders') {
         const orderData = data || {};
         const orders = orderData.orders || [];
-        await sb.from('order_items').delete().eq('store_id', store_id);
-        await sb.from('orders').delete().eq('store_id', store_id);
+        // Only delete active (non-soft-deleted) records — soft-deleted records are preserved
+        await sb.from('order_items').delete().eq('store_id', store_id).eq('deleted', false);
+        await sb.from('orders').delete().eq('store_id', store_id).eq('deleted', false);
         for (const o of orders) {
           const { data: inserted, error } = await sb.from('orders').insert({
             store_id, order_id: o.id || 'ORD-0000', customer: o.customer || null,
@@ -95,6 +101,7 @@ export default async function handler(req, res) {
             payments: o.payments || [],
             linked_delivery_id: o.deliveryId || null,
             delivery_status: o.deliveryStatus || null,
+            deleted: false,
           }).select('id').single();
           if (error) { console.error('Order insert error:', error.message); continue; }
           if (o.items && o.items.length) {
@@ -108,6 +115,7 @@ export default async function handler(req, res) {
               commission_rate: it.commissionRate || null, commission_earned: it.commissionEarned || null,
               delivered: it.delivered || false, delivered_at: it.deliveredAt || null,
               delivered_by: it.deliveredBy || null,
+              deleted: false,
             }));
             await sb.from('order_items').insert(itemRows);
           }

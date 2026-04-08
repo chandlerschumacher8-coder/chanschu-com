@@ -1595,8 +1595,8 @@ function clearDataStart(type){
     all:productCount+' products, '+orderCount+' sales, '+custCount+' customers'
   };
   var storeName=(typeof currentStore!=='undefined'&&currentStore&&currentStore.store_name)||'DC Appliance';
-  document.getElementById('cd-warning-msg').innerHTML='This will <strong>permanently delete</strong> '+titles[type]+' for <strong>'+storeName+'</strong>.';
-  document.getElementById('cd-record-counts').innerHTML='<strong>Will delete:</strong> '+counts[type];
+  document.getElementById('cd-warning-msg').innerHTML='This will <strong>soft-delete</strong> '+titles[type]+' for <strong>'+storeName+'</strong>.<br/><span style="font-size:11px;color:#6b7280;">Records are hidden but recoverable from Supabase.</span>';
+  document.getElementById('cd-record-counts').innerHTML='<strong>Will soft-delete:</strong> '+counts[type];
   document.getElementById('cd-step-1').style.display='block';
   document.getElementById('cd-step-2').style.display='none';
   document.getElementById('cd-step-3').style.display='none';
@@ -1634,37 +1634,49 @@ async function clearDataExecute(){
   var bar=document.getElementById('cd-progress-bar');
   var text=document.getElementById('cd-progress-text');
   var deletedCounts={products:0,orders:0,customers:0};
-  var tasks=[];
-  if(_clearType==='inventory'||_clearType==='all')tasks.push('inventory');
-  if(_clearType==='sales'||_clearType==='all')tasks.push('sales');
-  if(_clearType==='customers'||_clearType==='all')tasks.push('customers');
-  for(var i=0;i<tasks.length;i++){
-    var pct=Math.round(((i)/tasks.length)*100);
-    bar.style.width=pct+'%';text.textContent='Clearing '+tasks[i]+'...';
+
+  bar.style.width='30%';text.textContent='Soft-deleting records...';
+  await new Promise(function(r){setTimeout(r,100);});
+
+  try{
+    // Call soft-delete API endpoint — sets deleted=true instead of hard deleting
+    var res=await apiFetch('/api/admin-clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:_clearType})});
+    var result=await res.json();
+    if(!result.ok)throw new Error(result.error||'Clear failed');
+
+    bar.style.width='70%';text.textContent='Updating local state...';
     await new Promise(function(r){setTimeout(r,100);});
-    if(tasks[i]==='inventory'){
-      deletedCounts.products=PRODUCTS.length;
+
+    // Update local state to match (clear in-memory arrays)
+    if(result.results.inventory){
+      deletedCounts.products=result.results.inventory.products||0;
       PRODUCTS.length=0;
-      await saveProducts();
-    }else if(tasks[i]==='sales'){
-      deletedCounts.orders=(orders||[]).length;
+    }
+    if(result.results.sales){
+      deletedCounts.orders=result.results.sales.orders||0;
       orders.length=0;
       nextOrderId=1001;nextQuoteId=1;
-      await saveOrders();
-    }else if(tasks[i]==='customers'){
-      deletedCounts.customers=(customers||[]).length;
-      customers.length=0;
-      await saveCustomers();
     }
+    if(result.results.customers){
+      deletedCounts.customers=result.results.customers.count||0;
+      customers.length=0;
+    }
+  }catch(e){
+    console.error('[Clear Data] Error:',e);
+    bar.style.width='100%';bar.style.background='#dc2626';
+    text.textContent='Error: '+e.message;
+    setTimeout(function(){closeModal('clear-data-modal');clearDataReset();toast('Clear failed: '+e.message,'error');},2000);
+    return;
   }
-  bar.style.width='100%';text.textContent='Complete!';
+
+  bar.style.width='100%';text.textContent='Complete — records soft-deleted (recoverable)';
 
   // Log the clear action
   try{
     var logRes=await apiFetch('/api/admin-get?key=data-clear-log');
     var logData=await logRes.json();
     var log=(logData&&Array.isArray(logData.data))?logData.data:[];
-    log.unshift({ts:new Date().toISOString(),by:(currentEmployee&&currentEmployee.name)||'Admin',type:_clearType,storeId:(typeof currentStoreId!=='undefined'?currentStoreId:1),deleted:deletedCounts});
+    log.unshift({ts:new Date().toISOString(),by:(currentEmployee&&currentEmployee.name)||'Admin',type:_clearType,method:'soft-delete',storeId:(typeof currentStoreId!=='undefined'?currentStoreId:1),deleted:deletedCounts});
     await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'data-clear-log',data:log.slice(0,100)})});
   }catch(e){console.error('Clear log save failed:',e);}
 
@@ -1672,7 +1684,7 @@ async function clearDataExecute(){
   setTimeout(function(){
     closeModal('clear-data-modal');
     clearDataReset();
-    toast('Successfully cleared '+total+' records','success');
+    toast('Soft-deleted '+total+' records (recoverable from Supabase)','success');
     // Refresh current views
     if(typeof renderInventory==='function')renderInventory();
     if(typeof renderOrders==='function')renderOrders();

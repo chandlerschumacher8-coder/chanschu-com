@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       // ── Structured tables ──
 
       if (key === 'customers') {
-        const { data, error } = await sb.from('customers').select('*').eq('store_id', store_id).order('name');
+        const { data, error } = await sb.from('customers').select('*').eq('store_id', store_id).eq('deleted', false).order('name');
         if (error) throw new Error(error.message);
         return res.status(200).json({ ok: true, data: (data || []).map(c => ({
           name: c.name, phone: c.phone, email: c.email, address: c.address,
@@ -33,12 +33,12 @@ export default async function handler(req, res) {
       }
 
       if (key === 'products') {
-        const { data, error } = await sb.from('products').select('*').eq('store_id', store_id).order('name');
+        const { data, error } = await sb.from('products').select('*').eq('store_id', store_id).eq('deleted', false).order('name');
         if (error) throw new Error(error.message);
         const productIds = (data || []).map(p => p.id);
         let serialMap = {};
         if (productIds.length) {
-          const { data: serials } = await sb.from('serial_pool').select('*').eq('store_id', store_id).in('product_id', productIds);
+          const { data: serials } = await sb.from('serial_pool').select('*').eq('store_id', store_id).eq('deleted', false).in('product_id', productIds);
           (serials || []).forEach(s => {
             if (!serialMap[s.product_id]) serialMap[s.product_id] = [];
             serialMap[s.product_id].push({ sn: s.sn, status: s.status, assignedAt: s.assigned_at, receivedAt: s.received_at, vendor: s.vendor });
@@ -56,12 +56,12 @@ export default async function handler(req, res) {
       }
 
       if (key === 'orders') {
-        const { data: orderRows, error } = await sb.from('orders').select('*').eq('store_id', store_id).order('date', { ascending: false });
+        const { data: orderRows, error } = await sb.from('orders').select('*').eq('store_id', store_id).eq('deleted', false).order('date', { ascending: false });
         if (error) throw new Error(error.message);
         const orderDbIds = (orderRows || []).map(o => o.id);
         let itemMap = {};
         if (orderDbIds.length) {
-          const { data: items } = await sb.from('order_items').select('*').eq('store_id', store_id).in('order_id', orderDbIds);
+          const { data: items } = await sb.from('order_items').select('*').eq('store_id', store_id).eq('deleted', false).in('order_id', orderDbIds);
           (items || []).forEach(it => {
             if (!itemMap[it.order_id]) itemMap[it.order_id] = [];
             itemMap[it.order_id].push({
