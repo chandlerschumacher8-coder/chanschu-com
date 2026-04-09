@@ -1318,6 +1318,7 @@ async function delLoadData(){
 }
 // Individual save operations — no more full-array overwrite
 async function delSaveOne(delivery){
+  console.log('[POS Delivery] Saving delivery:',{id:delivery.id,customer:delivery.name,invoice:delivery.invoice,linkedOrderId:delivery.linkedOrderId});
   try{await apiFetch('/api/deliveries-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'upsert',delivery:delivery})});}catch(e){console.error('[Delivery] Save one failed:',e);}
 }
 async function delDeleteOne(deliveryId){

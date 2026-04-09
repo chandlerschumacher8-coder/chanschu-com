@@ -78,6 +78,7 @@ export default async function handler(req, res) {
       // ── INDIVIDUAL OPERATIONS (new pattern) ──
       if (body.action === 'upsert' && body.delivery) {
         const row = mapDeliveryToRow(body.delivery, store_id);
+        console.log('[deliveries-save] Upserting delivery:', { id: row.delivery_id, invoice: row.invoice, linked_order_id: row.linked_order_id, name: row.name });
         const { error } = await sb.from('deliveries').upsert(row, { onConflict: 'store_id,delivery_id' });
         if (error) throw new Error('Delivery upsert failed: ' + error.message);
         return res.status(200).json({ ok: true, id: row.delivery_id });

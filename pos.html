@@ -6305,7 +6305,8 @@ function _doSyncDelivery(order){
     orderTax:order.tax||0,
     orderTotal:order.total||0,
     orderPayment:order.payment||'',
-    linkedOrderId:order.id
+    linkedOrderId:order.id,
+    invoice:order.id
   };
   console.log('[Delivery Sync] Data being passed:', JSON.stringify({orderId:order.id,customer:syncFields.name,phone:syncFields.phone,address:syncFields.address,city:syncFields.city,invoice:order.id,appliances:apps.length,notes:syncFields.notes,shipperNotes:syncFields.shipperNotes,date:order.deliveryDate,time:order.deliveryTime}));
   var deliveryId;

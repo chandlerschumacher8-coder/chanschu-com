@@ -36,6 +36,7 @@ export default async function handler(req, res) {
         permissions: e.permissions || [],
         _dbId: e.id,
       }));
+      console.log(`[employees-get] Returning ${users.length} employees for store_id=${store_id}`);
       return res.status(200).json({ ok: true, users });
     }
 
