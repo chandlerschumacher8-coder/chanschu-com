@@ -2359,7 +2359,10 @@ Error Log
 <div class="frow3"><div class="field"><label>Stock</label><input class="inp" id="ap-stock" type="number" value="0"/></div><div class="field"><label>Reorder Pt.</label><input class="inp" id="ap-reorder" type="number" value="2"/></div><div class="field"><label>Reorder Qty</label><input class="inp" id="ap-reorderqty" type="number" value="3"/></div></div>
 <div class="frow"><div class="field"><label>UPC</label><input class="inp" id="ap-upc" placeholder="Barcode"/></div><div class="field"><label>Vendor</label><select class="sel" id="ap-vendor"><option value="">— Select —</option></select></div></div>
 <div class="frow"><div class="field"><label>Serial #</label><input class="inp" id="ap-serial"/></div><div class="field"><label>Warranty</label><input class="inp" id="ap-warranty" value="1 Year"/></div></div>
-<div class="field" style="margin-top:4px;"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="ap-serial-tracked" checked style="width:18px;height:18px;accent-color:var(--gold,#2563eb);"/> Serial Number Tracked <span style="font-weight:400;color:var(--gray-3);font-size:9px;">(require SN at delivery)</span></label></div>
+<div style="display:flex;gap:20px;margin-top:4px;">
+<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="ap-serial-tracked" checked style="width:18px;height:18px;accent-color:var(--gold,#2563eb);"/> Serial Number Tracked <span style="font-weight:400;color:var(--gray-3);font-size:9px;">(require SN at delivery)</span></label></div>
+<div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="ap-offer-warranty" checked style="width:18px;height:18px;accent-color:#16a34a;"/> Offer 5 Year Warranty <span style="font-weight:400;color:var(--gray-3);font-size:9px;">(prompt at sale)</span></label></div>
+</div>
 </div>
 <div class="modal-footer"><button class="ghost-btn" onclick="closeModal('add-product-modal')">Cancel</button><button class="primary-btn" onclick="addProduct()">Add Product</button></div>
 </div>

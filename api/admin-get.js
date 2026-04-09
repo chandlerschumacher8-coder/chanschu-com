@@ -56,7 +56,7 @@ export default async function handler(req, res) {
           brand: p.brand, cat: p.category, vendor: p.vendor, icon: p.icon,
           price: p.price, cost: p.cost, stock: p.stock, sold: p.sold,
           reorderPt: p.reorder_pt, reorderQty: p.reorder_qty, sales30: p.sales_30,
-          warranty: p.warranty, serial: p.serial, serialTracked: p.serial_tracked,
+          warranty: p.warranty, serial: p.serial, serialTracked: p.serial_tracked, offerWarranty: p.offer_warranty,
           priceLocked: p.price_locked, needsPricing: p.needs_pricing, active: p.active,
           serialPool: serialMap[p.id] || [],
         })) });

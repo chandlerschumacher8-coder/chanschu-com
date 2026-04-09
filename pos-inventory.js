@@ -150,6 +150,7 @@ function beOpenPanel(){
   // Cost
   h+='<div class="be-field"><label>Cost</label><div class="be-price-mode"><button class="active" onclick="bePriceMode(\'cost\',\'exact\',this)">Exact $</button><button onclick="bePriceMode(\'cost\',\'pct\',this)">Adjust %</button></div><input id="be-cost" type="number" step="0.01" placeholder="(no change)" data-mode="exact"/></div>';
   h+='<div class="be-field"><label>Serial Tracked</label><select id="be-serial"><option value="">(no change)</option><option value="true">Yes</option><option value="false">No</option></select></div>';
+  h+='<div class="be-field"><label>Offer 5yr Warranty</label><select id="be-warranty-offer"><option value="">(no change)</option><option value="true">Yes</option><option value="false">No</option></select></div>';
   h+='<div class="be-field"><label>Min Qty (Reorder Pt)</label><input id="be-reorderpt" type="number" min="0" placeholder="(no change)"/></div>';
   h+='</div>';
   h+='<div class="be-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;">';
@@ -186,6 +187,8 @@ function bePreview(){
   if(!isNaN(priceVal))changes.push({field:'price',label:'Retail Price',value:priceVal,mode:priceMode});
   if(!isNaN(costVal))changes.push({field:'cost',label:'Cost',value:costVal,mode:costMode});
   if(serialVal)changes.push({field:'serialTracked',label:'Serial Tracked',value:serialVal==='true'});
+  var warrantyOfferVal=(document.getElementById('be-warranty-offer')||{}).value||'';
+  if(warrantyOfferVal)changes.push({field:'offerWarranty',label:'Offer 5yr Warranty',value:warrantyOfferVal==='true'});
   if(reorderPt!=='')changes.push({field:'reorderPt',label:'Min Qty',value:parseInt(reorderPt)});
   if(reorderQty!=='')changes.push({field:'reorderQty',label:'Reorder Qty',value:parseInt(reorderQty)});
   if(!changes.length){toast('No changes entered — fill at least one field','error');return;}
@@ -208,6 +211,7 @@ function bePreview(){
       if(c.field==='price'){oldVal=fmt(p.price);newVal=c.mode==='pct'?fmt(p.price*(1+c.value/100)):fmt(c.value);}
       else if(c.field==='cost'){oldVal=fmt(p.cost||0);newVal=c.mode==='pct'?fmt((p.cost||0)*(1+c.value/100)):fmt(c.value);}
       else if(c.field==='serialTracked'){oldVal=isSerialTracked(p)?'Yes':'No';newVal=c.value?'Yes':'No';}
+      else if(c.field==='offerWarranty'){oldVal=shouldOfferWarranty(p)?'Yes':'No';newVal=c.value?'Yes':'No';}
       else if(c.field==='_dept'){oldVal=getProductDept(p);newVal=c.value;}
       else{oldVal=p[c.field]||'—';newVal=c.value;}
       var changed=String(oldVal)!==String(newVal);
@@ -366,11 +370,29 @@ var SERIAL_TRACKED_APPLIANCES=['Refrigerator','Washer','Dryer','Dishwasher','Ove
 
 function isSerialTracked(p){
   if(p.serialTracked!==undefined)return !!p.serialTracked;
-  // Check by category name
   if(SERIAL_TRACKED_CATS.indexOf(p.cat)!==-1)return true;
-  // Check by product name containing a tracked appliance type
   var nm=(p.name||'').toLowerCase();
   return SERIAL_TRACKED_APPLIANCES.some(function(a){return nm.indexOf(a.toLowerCase())>=0;});
+}
+
+var WARRANTY_OFF_CATS=['PEDESTALS','ACCESSORIES','OUTDOOR','BBQ','GRILL','PELLETS','RUBS','SAUCES','WARRANTIES'];
+function shouldOfferWarranty(p){
+  // Explicit setting takes priority
+  if(p.offerWarranty!==undefined)return !!p.offerWarranty;
+  // Price too low — no warranty
+  if(p.price<100)return false;
+  // Category-based exclusions
+  var cat=(p.cat||'').toUpperCase();
+  if(cat==='WARRANTIES')return false;
+  if(WARRANTY_OFF_CATS.some(function(c){return cat.indexOf(c)>=0;}))return false;
+  // Name-based exclusions
+  var nm=(p.name||'').toLowerCase();
+  if(/pedestal|accessory|cord|hose|bracket|kit|vent|pellet|rub|sauce|labor|install|delivery|warranty/.test(nm))return false;
+  // Serial tracked items get warranty by default
+  if(isSerialTracked(p))return true;
+  // Major appliance categories
+  if(SERIAL_TRACKED_CATS.indexOf(p.cat)!==-1)return true;
+  return false;
 }
 
 function populateVendorDropdown(selId){
@@ -438,7 +460,8 @@ function addProduct(){
   var sku=document.getElementById('ap-sku').value.trim(),name=document.getElementById('ap-name').value.trim(),brand=document.getElementById('ap-brand').value.trim();
   if(!sku||!name||!brand){toast('Fill in required fields','error');return;}
   var stEl=document.getElementById('ap-serial-tracked');
-  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,model:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true,upc:(document.getElementById('ap-upc')||{}).value||'',vendor:(document.getElementById('ap-vendor')||{}).value||'',serialPool:[],specSheetUrl:window._lookupSpecSheetUrl||''});
+  var owEl=document.getElementById('ap-offer-warranty');
+  PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,model:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,sold:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true,offerWarranty:owEl?owEl.checked:true,upc:(document.getElementById('ap-upc')||{}).value||'',vendor:(document.getElementById('ap-vendor')||{}).value||'',serialPool:[],specSheetUrl:window._lookupSpecSheetUrl||''});
   window._lookupSpecSheetUrl='';window._lookupData=null;
   saveProducts();
   closeModal('add-product-modal');renderInventory();refreshSaleView();toast('Product added','success');
@@ -3156,8 +3179,8 @@ function pcTabInfo(){
   h+='</div>';
   h+='<div class="pc-grid3">';
   h+='<div class="pc-field"><label>Serial Tracked</label><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1f2937;cursor:pointer;margin-top:4px;"><input type="checkbox" id="pc-serial-tracked"'+(p.serialTracked!==false&&isSerialTracked(p)?' checked':'')+(ro?' disabled':'')+' style="accent-color:#2563eb;"/> Yes</label></div>';
+  h+='<div class="pc-field"><label>Offer 5 Year Warranty</label><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1f2937;cursor:pointer;margin-top:4px;"><input type="checkbox" id="pc-offer-warranty"'+(shouldOfferWarranty(p)?' checked':'')+(ro?' disabled':'')+' style="accent-color:#16a34a;"/> Yes</label></div>';
   h+='<div class="pc-field"><label>Price Locked</label><label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1f2937;cursor:pointer;margin-top:4px;"><input type="checkbox" id="pc-price-locked"'+(p.priceLocked?' checked':'')+(ro?' disabled':'')+' style="accent-color:#dc2626;"/> &#x1F512; Locked</label></div>';
-  h+='<div></div>';
   h+='</div>';
   h+='<div class="pc-grid3">';
   h+='<div class="pc-field"><label>Min Qty (Reorder Pt)</label><input id="pc-reorder" type="number" value="'+(p.reorderPt||0)+'"'+rd+'/></div>';
@@ -3189,6 +3212,7 @@ function pcSaveInfo(){
   p.warranty=(document.getElementById('pc-warranty').value||'').trim();
   p.icon=(document.getElementById('pc-icon-field').value||'').trim();
   p.serialTracked=document.getElementById('pc-serial-tracked').checked;
+  p.offerWarranty=document.getElementById('pc-offer-warranty').checked;
   p.priceLocked=document.getElementById('pc-price-locked').checked;
   p.reorderPt=parseInt(document.getElementById('pc-reorder').value)||0;
   p.reorderQty=parseInt(document.getElementById('pc-reorderqty').value)||0;

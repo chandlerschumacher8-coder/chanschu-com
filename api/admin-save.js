@@ -63,7 +63,8 @@ export default async function handler(req, res) {
               cost: p.cost || 0, stock: p.stock || 0, sold: p.sold || 0,
               reorder_pt: p.reorderPt || 0, reorder_qty: p.reorderQty || 0,
               sales_30: p.sales30 || 0, warranty: p.warranty || null, serial: p.serial || null,
-              serial_tracked: p.serialTracked || false, price_locked: p.priceLocked || false,
+              serial_tracked: p.serialTracked || false, offer_warranty: p.offerWarranty,
+              price_locked: p.priceLocked || false,
               needs_pricing: p.needsPricing || false, active: p.active !== false,
               deleted: false,
             }));

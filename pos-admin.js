@@ -3525,8 +3525,8 @@ function wtyNeedsPrompt(cartItem){
   if(cartItem.price<100)return false;
   var p=PRODUCTS.find(function(x){return x.id===cartItem.id;});
   if(!p)return false;
-  // Skip non-serial-tracked items
-  if(!isSerialTracked(p))return false;
+  // Respect the offerWarranty toggle — if explicitly set, use it
+  if(typeof shouldOfferWarranty==='function'&&!shouldOfferWarranty(p))return false;
   // Skip items already in warranty categories
   var cat=(p.cat||'').toUpperCase();
   if(cat==='WARRANTIES')return false;
