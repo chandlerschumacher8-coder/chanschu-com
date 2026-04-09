@@ -2,16 +2,16 @@
 // Serves stored daily picks from Redis to the frontend
 // Also triggers a fresh generation if picks are missing or stale
 
-import { validateSession, unauthorized, handlePreflight } from './_auth.js';
+// Public endpoint — sports.html has no login
+import { setCorsHeaders } from './_auth.js';
 import { Redis } from '@upstash/redis';
 
 const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
-  if (handlePreflight(req, res)) return;
+  setCorsHeaders(res);
+  if (req.method === 'OPTIONS') return res.status(200).end();
   res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
-  const session = await validateSession(req);
-  if (!session) return unauthorized(res);
  
   try {
     const raw = await redis.get('daily-picks');

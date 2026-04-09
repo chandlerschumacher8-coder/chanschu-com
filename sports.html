@@ -552,34 +552,55 @@ function renderRoyalsGames(games) {
 
 // ── NFL Chiefs via ESPN API (free, no key) ──
 async function fetchChiefs() {
-  // ESPN public API for NFL schedule
   var year = new Date().getFullYear();
-  var url  = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/12/schedule?season=' + year;
-  var res  = await fetch(url);
-  if (!res.ok) throw new Error('ESPN API ' + res.status);
-  var data = await res.json();
+  var el = document.getElementById('chiefs-games');
+  var rec = document.getElementById('chiefs-record');
 
-  var today  = new Date();
-  var games  = [];
+  try {
+    // Try current year first, then next year
+    var url = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/12/schedule?season=' + year;
+    var res = await fetch(url);
+    var data = res.ok ? await res.json() : null;
 
-  (data.events || []).forEach(function(ev) {
-    var gameDate = new Date(ev.date);
-    if (gameDate < today) return; // skip past games
-    var comp     = ev.competitions[0];
-    var home     = comp.competitors.find(function(c){ return c.homeAway === 'home'; });
-    var away     = comp.competitors.find(function(c){ return c.homeAway === 'away'; });
-    if (!home || !away) return;
-    games.push({
-      commence_time: ev.date,
-      home_team: home.team.displayName,
-      away_team: away.team.displayName,
+    // If no events, try previous season
+    if (!data || !(data.events || []).length) {
+      var url2 = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/12/schedule?season=' + (year - 1);
+      var res2 = await fetch(url2);
+      if (res2.ok) data = await res2.json();
+    }
+
+    var events = data && data.events ? data.events : [];
+    var today = new Date();
+    var futureGames = [];
+    var pastGames = [];
+
+    events.forEach(function(ev) {
+      var gameDate = new Date(ev.date);
+      var comp = ev.competitions && ev.competitions[0];
+      if (!comp) return;
+      var home = comp.competitors.find(function(c) { return c.homeAway === 'home'; });
+      var away = comp.competitors.find(function(c) { return c.homeAway === 'away'; });
+      if (!home || !away) return;
+      var g = { commence_time: ev.date, home_team: home.team.displayName, away_team: away.team.displayName };
+      if (gameDate >= today) futureGames.push(g);
+      else pastGames.push(g);
     });
-  });
 
-  games.sort(function(a,b){ return new Date(a.commence_time) - new Date(b.commence_time); });
-
-  renderGames('chiefs-games','chiefs-record', games, 'Kansas City Chiefs',
-    'NFL', 'https://www.chiefs.com/schedule/');
+    if (futureGames.length) {
+      futureGames.sort(function(a, b) { return new Date(a.commence_time) - new Date(b.commence_time); });
+      renderGames('chiefs-games', 'chiefs-record', futureGames, 'Kansas City Chiefs', 'NFL', 'https://www.chiefs.com/schedule/');
+    } else {
+      // Season complete or no schedule yet
+      if (rec) rec.textContent = 'NFL \u00B7 ' + year + ' season';
+      if (el) el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray-2);font-size:12px;">'
+        + (pastGames.length ? (year - 1) + '-' + String(year).slice(2) + ' Season Complete' : year + ' schedule not yet available')
+        + '<br/><a href="https://www.chiefs.com/schedule/" target="_blank" style="color:var(--gold);font-size:11px;text-decoration:none;font-weight:600;">View on Chiefs.com \u2192</a></div>';
+    }
+  } catch (e) {
+    console.error('Chiefs fetch error:', e);
+    if (rec) rec.textContent = 'NFL \u00B7 Schedule unavailable';
+    if (el) el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray-2);font-size:12px;">Schedule data unavailable<br/><a href="https://www.chiefs.com/schedule/" target="_blank" style="color:var(--gold);font-size:11px;text-decoration:none;font-weight:600;">View on Chiefs.com \u2192</a></div>';
+  }
 }
 
 async function loadSports() {

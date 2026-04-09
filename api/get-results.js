@@ -1,16 +1,16 @@
 // api/get-results.js
 // Returns all stored win/loss/push results from Redis
 
-import { validateSession, unauthorized, handlePreflight } from './_auth.js';
+// Public endpoint — sports.html has no login
+import { setCorsHeaders } from './_auth.js';
 import { Redis } from '@upstash/redis';
 
 const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
-  if (handlePreflight(req, res)) return;
+  setCorsHeaders(res);
+  if (req.method === 'OPTIONS') return res.status(200).end();
   res.setHeader('Cache-Control', 'no-store');
-  const session = await validateSession(req);
-  if (!session) return unauthorized(res);
  
   try {
     const raw = await redis.get('pick-results');

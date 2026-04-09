@@ -371,29 +371,32 @@ function buildTicker() {
 
 // ── CRYPTO (CoinGecko — no API key, CORS friendly) ──
 async function fetchCrypto() {
-  var url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum&order=market_cap_desc&sparkline=false&price_change_percentage=24h&x_cg_demo_api_key=';
+  var url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true';
   var res = await fetch(url, {headers: {'Accept':'application/json'}});
   if (!res.ok) throw new Error('CoinGecko ' + res.status);
   var data = await res.json();
-  data.forEach(function(coin) {
-    var chg = coin.price_change_24h || 0;
-    var pct = coin.price_change_percentage_24h || 0;
-    if (coin.id === 'bitcoin') {
-      set('btc-price', fp(coin.current_price, 0));
-      applyChg('btc-chg-wrap','btc-chg','btc-pct', chg, pct);
-      set('btc-high', fp(coin.high_24h, 0));
-      set('btc-low',  fp(coin.low_24h, 0));
-      set('btc-mcap', fBig(coin.market_cap));
-      set('btc-vol',  fBig(coin.total_volume));
-      tickerData['btc'] = {price: fp(coin.current_price, 0), pct: pct};
-    }
-    if (coin.id === 'ethereum') {
-      set('eth-price', fp(coin.current_price, 2));
-      var el = document.getElementById('eth-chg');
-      if (el) { var s=pct>=0?'+':''; el.textContent=s+pct.toFixed(2)+'%'; el.classList.remove('up','down'); el.classList.add(pct>=0?'up':'down'); }
-      tickerData['eth'] = {price: fp(coin.current_price, 2), pct: pct};
-    }
-  });
+  // /simple/price returns: {bitcoin:{usd:...,usd_24h_change:...,usd_24h_vol:...,usd_market_cap:...}}
+  var btc = data.bitcoin;
+  if (btc) {
+    var btcPrice = btc.usd || 0;
+    var btcPct = btc.usd_24h_change || 0;
+    var btcChg = btcPrice * (btcPct / 100);
+    set('btc-price', fp(btcPrice, 0));
+    applyChg('btc-chg-wrap','btc-chg','btc-pct', btcChg, btcPct);
+    set('btc-mcap', fBig(btc.usd_market_cap || 0));
+    set('btc-vol',  fBig(btc.usd_24h_vol || 0));
+    try { set('btc-high', '--'); set('btc-low', '--'); } catch(e) {}
+    tickerData['btc'] = {price: fp(btcPrice, 0), pct: btcPct};
+  }
+  var eth = data.ethereum;
+  if (eth) {
+    var ethPrice = eth.usd || 0;
+    var ethPct = eth.usd_24h_change || 0;
+    set('eth-price', fp(ethPrice, 2));
+    var el = document.getElementById('eth-chg');
+    if (el) { var s=ethPct>=0?'+':''; el.textContent=s+ethPct.toFixed(2)+'%'; el.classList.remove('up','down'); el.classList.add(ethPct>=0?'up':'down'); }
+    tickerData['eth'] = {price: fp(ethPrice, 2), pct: ethPct};
+  }
 }
 
 // ── STOCKS & COMMODITIES via Vercel serverless function ──
