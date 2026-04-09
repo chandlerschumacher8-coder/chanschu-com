@@ -682,9 +682,28 @@ function renderOrderDetail(){
     delBadgeHtml='<span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px;'+delBadgeColor+'">'+delSt+'</span>';
     if(o.deliveryId)delBadgeHtml+='<a href="#" onclick="event.preventDefault();navToDeliveryStop(\''+o.deliveryId+'\')" style="font-size:10px;color:#2563b0;margin-left:6px;text-decoration:none;font-weight:600;">View Delivery</a>';
   }
-  el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+delBadgeHtml+'</div><div class="ood-meta"><a href="#" style="color:var(--blue);text-decoration:none;font-weight:600;" onclick="event.preventDefault();openCustomerProfile(\''+o.customer.replace(/'/g,"\\'")+'\')">'+o.customer+'</a> &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
+  // Payment status section
+  var payBal=getOrderBalance(o);
+  var payStatusBadge='';
+  var payHistHtml='';
+  if(!isQuote){
+    var ps=payBal.balance<=0.01?'Paid':payBal.paid>0?'Partial':'Unpaid';
+    var psBg=ps==='Paid'?'background:#dcfce7;color:#16a34a;border:1px solid #86efac;':ps==='Partial'?'background:#fffbeb;color:#d97706;border:1px solid #fcd34d;':'background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;';
+    payStatusBadge='<span style="display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px;'+psBg+'">'+ps+'</span>';
+    if(payBal.balance>0.01)payStatusBadge+='<span style="font-size:12px;font-weight:700;color:#dc2626;margin-left:8px;">Balance Due: '+fmt(payBal.balance)+'</span>';
+    // Payment history
+    if(o.payments&&o.payments.length){
+      payHistHtml='<div class="ood-section"><div class="ood-section-title">Payments ('+o.payments.length+')</div>';
+      o.payments.forEach(function(p){
+        payHistHtml+='<div style="display:flex;align-items:center;gap:8px;font-size:11px;padding:4px 0;border-bottom:1px solid var(--bg4);"><span style="color:var(--green);font-weight:700;">'+fmt(p.amount)+'</span><span style="color:var(--gray-2);">'+p.method+'</span>'+(p.invoiceNum||p.orderId?'<span style="color:var(--gray-3);font-size:10px;">'+( p.invoiceNum||p.orderId)+'</span>':'')+'<span style="color:var(--gray-3);margin-left:auto;font-size:10px;">'+new Date(p.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})+'</span>'+(p.recordedBy?'<span style="color:var(--gray-3);font-size:10px;">by '+p.recordedBy+'</span>':'')+'</div>';
+      });
+      payHistHtml+='</div>';
+    }
+  }
+  el.innerHTML='<div class="ood-hdr"><div class="ood-title">'+o.id+(isQuote?' <span class="oo-quote-badge">Quote</span>':'')+payStatusBadge+delBadgeHtml+'</div><div class="ood-meta"><a href="#" style="color:var(--blue);text-decoration:none;font-weight:600;" onclick="event.preventDefault();openCustomerProfile(\''+o.customer.replace(/'/g,"\\'")+'\')">'+o.customer+'</a> &middot; '+new Date(o.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'</div></div>'+
   '<div class="ood-section"><div class="ood-section-title">Items</div>'+itemsHtml+'</div>'+
   '<div class="ood-section"><div class="ood-section-title">'+( isQuote?'Quote':'Order')+' Details</div><div class="ood-grid"><div class="ood-field"><div class="ood-label">Payment</div><div class="ood-val">'+o.payment+'</div></div><div class="ood-field"><div class="ood-label">Tax Zone</div><div class="ood-val">'+(o.taxZone||'')+'</div></div><div class="ood-field"><div class="ood-label">Subtotal</div><div class="ood-val">'+fmt(o.subtotal)+'</div></div><div class="ood-field"><div class="ood-label">Tax</div><div class="ood-val">'+fmt(o.tax)+'</div></div><div class="ood-field"><div class="ood-label">Total</div><div class="ood-val" style="color:var(--gold);font-weight:700;">'+fmt(o.total)+'</div></div><div class="ood-field"><div class="ood-label">Status</div><div class="ood-val">'+o.status+'</div></div></div></div>'+
+  payHistHtml+
   notesHtml+
   (o.notes?'<div class="ood-notes">'+linkifyPhones(o.notes)+'</div>':'')+
   (o.emailLog&&o.emailLog.length?'<div class="ood-section"><div class="ood-section-title">Emails Sent</div>'+o.emailLog.map(function(e){var tl=e.type==='invoice_receipt'?'Receipt':e.type==='delivery_confirmation'?'Delivery Confirm':e.type||'Email';return '<div style="font-size:11px;color:var(--gray-2);margin-bottom:4px;display:flex;align-items:center;gap:6px;"><span style="color:var(--green);">&#x2709;</span><span>'+tl+' to <strong>'+e.to+'</strong></span><span style="color:var(--gray-3);margin-left:auto;">'+new Date(e.ts).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span></div>';}).join('')+'</div>':'')+
@@ -916,10 +935,21 @@ function getCustomerPayments(custName){
 
 function getOrderBalance(o){
   var totalPaid=0;
-  // Check if order has direct payments or if it's paid via status
-  if(o.status==='Paid in Full'||o.payment==='Cash'||o.payment==='Card'||o.payment==='Check')totalPaid=o.total;
-  else if(o.payments)totalPaid=(o.payments||[]).reduce(function(s,p){return s+(p.amount||0);},0);
-  return{paid:totalPaid,balance:o.total-totalPaid};
+  // Use actual payment records if they exist
+  if(o.payments&&o.payments.length){
+    totalPaid=o.payments.reduce(function(s,p){return s+(p.amount||0);},0);
+  }
+  // If status is explicitly "Paid in Full" trust it
+  else if(o.status==='Paid in Full'){totalPaid=o.total;}
+  // No payment records yet — check if payment method implies paid at checkout
+  // Only treat as paid if there are no split payments and no charge
+  else{
+    var m=(o.payment||'').toLowerCase();
+    var paidAtCheckout=m==='cash'||m==='card'||m==='check'||m==='credit card'||m==='debit';
+    if(paidAtCheckout)totalPaid=o.total;
+  }
+  var balance=Math.max(0,o.total-totalPaid);
+  return{paid:totalPaid,balance:balance};
 }
 
 function buildCustomerInvoiceDoc(o){
@@ -1030,6 +1060,7 @@ function buildShipperCopyDoc(o){
   h+='<div class="tot-row grand"><span>Total Sale:</span><span>'+fmt(o.total)+'</span></div>';
   h+='</div>';
   if(bal.balance<=0.01)h+='<div class="doc-paid" style="font-size:28px;">PAID</div>';
+  else h+='<div style="text-align:right;font-size:14px;font-weight:800;color:#c00;margin-top:6px;">Balance Due: '+fmt(bal.balance)+'</div>';
   h+='</div></div>';
   h+='<div class="doc-footer">SHIPPER COPY</div>';
   h+='</div>';
