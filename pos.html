@@ -6335,12 +6335,37 @@ function _doSyncDelivery(order){
   order.deliveryStatus='Scheduled';
   saveOrders();
   var savedDel=existing||delDeliveries.find(function(x){return x.id===deliveryId;});
-  if(savedDel)delSaveOne(savedDel);
+  // Auto-upload shipper copy as invoice file attachment
+  if(savedDel&&typeof buildShipperCopyDoc==='function'){
+    _uploadShipperCopy(order,savedDel).then(function(){
+      delSaveOne(savedDel);
+    }).catch(function(e){
+      console.error('[Delivery Sync] Shipper upload failed, saving without:',e);
+      delSaveOne(savedDel);
+    });
+  }else{
+    if(savedDel)delSaveOne(savedDel);
+  }
   if(!existing)delSaveCounter();
   // Show confirmation
   var dateStr=order.deliveryDate?new Date(order.deliveryDate+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'';
   toast('\u2713 Delivery scheduled for '+dateStr+(order.deliveryTime?' at '+order.deliveryTime:''),'success');
   console.log('[Delivery Sync] '+(existing?'Updated':'Created')+' delivery '+deliveryId+' for '+order.id+' on '+order.deliveryDate);
+}
+async function _uploadShipperCopy(order,delivery){
+  try{
+    var shipperHtml=buildShipperCopyDoc(order);
+    var fullHtml='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Shipper Copy '+order.id+'</title>'+invoiceDocStyles()+'</head><body>'+shipperHtml+'</body></html>';
+    var b64=btoa(unescape(encodeURIComponent(fullHtml)));
+    var filename=order.id+'_shipper.html';
+    var res=await apiFetch('/api/upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:filename,contentType:'text/html',data:b64,companyId:'dc-appliance',jobId:'del-'+Date.now()})});
+    var data=await res.json();
+    if(data.ok&&data.url){
+      if(!delivery.invoiceFiles)delivery.invoiceFiles=[];
+      delivery.invoiceFiles.push({url:data.url,filename:filename});
+      console.log('[Delivery Sync] Shipper copy uploaded:',data.url);
+    }
+  }catch(e){console.error('[Delivery Sync] Shipper upload error:',e);}
 }
 function onCartApptChange(){
   var appt=document.getElementById('cart-appt').value;
