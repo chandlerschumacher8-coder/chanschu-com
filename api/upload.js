@@ -1,11 +1,6 @@
-// api/upload.js — File upload (Supabase Storage or Vercel Blob fallback)
+// api/upload.js — File upload to Vercel Blob (permanent public URLs)
 import { validateSession, unauthorized, handlePreflight } from './_auth.js';
-import { getSupabase, useSupabase } from './_supabase.js';
-export const config = { api: { bodyParser: { sizeLimit: '10mb' } } };
-
-const BUCKET = 'service-files';
-
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 60, api: { bodyParser: { sizeLimit: '10mb' } } };
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
@@ -21,23 +16,6 @@ export default async function handler(req, res) {
     const buffer = Buffer.from(data, 'base64');
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
 
-    if (useSupabase()) {
-      const sb = getSupabase();
-      // Ensure bucket exists
-      const { data: bucketData } = await sb.storage.getBucket(BUCKET);
-      if (!bucketData) {
-        await sb.storage.createBucket(BUCKET, { public: false, fileSizeLimit: 10485760 });
-      }
-      const path = `${companyId}/${jobId}/${Date.now()}-${safeName}`;
-      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, buffer, {
-        contentType: contentType || 'application/octet-stream', upsert: false,
-      });
-      if (upErr) throw new Error(upErr.message);
-      const { data: signed } = await sb.storage.from(BUCKET).createSignedUrl(path, 60 * 60 * 24 * 7);
-      return res.status(200).json({ ok: true, url: signed.signedUrl, path, filename: safeName });
-    }
-
-    // Vercel Blob fallback
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return res.status(500).json({ ok: false, error: 'BLOB_READ_WRITE_TOKEN not configured' });
     }
@@ -46,9 +24,10 @@ export default async function handler(req, res) {
     const blob = await put(blobName, buffer, {
       access: 'public', contentType: contentType || 'application/octet-stream', addRandomSuffix: false,
     });
+    console.log('[upload] Saved to Vercel Blob:', blobName, blob.url);
     return res.status(200).json({ ok: true, url: blob.url, filename });
   } catch (err) {
-    console.error('Upload error:', err.message);
+    console.error('[upload] Error:', err.message);
     return res.status(500).json({ ok: false, error: err.message });
   }
 }
