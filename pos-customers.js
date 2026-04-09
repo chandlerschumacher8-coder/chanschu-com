@@ -519,16 +519,33 @@ function custInit(){custUpdateBadge();custFilterList();}
 // ── CART CUSTOMER SEARCH DROPDOWN ──
 var _cartCustDDOpen=false;
 function cartCustSearch(){
-  var q=(document.getElementById('cart-sold-name')||{}).value.trim().toLowerCase();
+  var rawQ=(document.getElementById('cart-sold-name')||{}).value.trim();
+  var q=rawQ.toLowerCase();
   var dd=document.getElementById('cart-cust-dd');
   if(q.length<2){dd.classList.remove('open');return;}
-  console.log('[Customer Search] query:"'+q+'" searching '+customers.length+' customers');
-  var matches=customers.filter(function(c){return c.name.toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.city||'').toLowerCase().includes(q);}).slice(0,8);
-  if(!matches.length){dd.innerHTML='<div class="cart-cust-dd-opt" style="color:#9ca3af;">No matching customers</div>';dd.classList.add('open');return;}
-  dd.innerHTML=matches.map(function(c,i){
-    return '<div class="cart-cust-dd-opt" onmousedown="cartCustSelect('+customers.indexOf(c)+')"><div class="cco-name">'+c.name+'</div><div class="cco-meta">'+(c.phone||'')+(c.city?' &middot; '+c.city:'')+'</div></div>';
-  }).join('');
-  dd.classList.add('open');
+  var matches=customers.filter(function(c){return c.name.toLowerCase().includes(q)||(c.phone||'').includes(q)||(c.city||'').toLowerCase().includes(q);}).slice(0,6);
+  var h='';
+  if(matches.length){
+    h+=matches.map(function(c){
+      return '<div class="cart-cust-dd-opt" onmousedown="cartCustSelect('+customers.indexOf(c)+')"><div class="cco-name">'+c.name+'</div><div class="cco-meta">'+(c.phone||'')+(c.city?' &middot; '+c.city:'')+'</div></div>';
+    }).join('');
+  }
+  // Check for phone match with different name (duplicate prevention)
+  var phoneEl=document.getElementById('cart-sold-phone');
+  var phone=phoneEl?phoneEl.value.trim():'';
+  if(phone.length>=7){
+    var phoneMatch=customers.find(function(c){return c.phone&&c.phone.replace(/\D/g,'').includes(phone.replace(/\D/g,''))&&c.name.toLowerCase()!==q;});
+    if(phoneMatch){
+      h+='<div class="cart-cust-dd-opt" style="background:#fffbeb;border-left:3px solid #f59e0b;" onmousedown="cartCustSelect('+customers.indexOf(phoneMatch)+')"><div class="cco-name" style="color:#92400e;">Did you mean '+phoneMatch.name+'?</div><div class="cco-meta">Phone: '+phoneMatch.phone+(phoneMatch.city?' &middot; '+phoneMatch.city:'')+'</div></div>';
+    }
+  }
+  // Always show "+ Add new customer" option if no exact name match
+  var exactMatch=customers.find(function(c){return c.name.toLowerCase()===q;});
+  if(!exactMatch&&rawQ.length>=2){
+    h+='<div class="cart-cust-dd-opt" style="background:#f0fdf4;border-top:2px solid #86efac;font-weight:600;color:#16a34a;" onmousedown="openQuickAddCustomer(\''+rawQ.replace(/'/g,"\\'")+'\')"><div class="cco-name" style="color:#16a34a;">+ Add \''+rawQ+'\' as new customer</div><div class="cco-meta" style="color:#15803d;">Create customer record and add to this sale</div></div>';
+  }
+  if(!h){h='<div class="cart-cust-dd-opt" style="color:#9ca3af;">No matching customers</div>';}
+  dd.innerHTML=h;dd.classList.add('open');
 }
 function cartCustSelect(idx){
   var c=customers[idx];if(!c)return;
@@ -546,6 +563,68 @@ document.addEventListener('click',function(e){
   var dd=document.getElementById('cart-cust-dd');
   if(dd&&!dd.contains(e.target)&&e.target.id!=='cart-sold-name')dd.classList.remove('open');
 });
+// Quick Add Customer from sale
+function openQuickAddCustomer(name){
+  document.getElementById('cart-cust-dd').classList.remove('open');
+  document.getElementById('qac-name').value=name||'';
+  document.getElementById('qac-phone').value=document.getElementById('cart-sold-phone').value||'';
+  document.getElementById('qac-addr').value='';
+  document.getElementById('qac-city').value='';
+  document.getElementById('qac-state').value='KS';
+  document.getElementById('qac-zip').value='';
+  document.getElementById('qac-email').value='';
+  document.getElementById('qac-dupe-warn').style.display='none';
+  openModal('quick-add-cust-modal');
+  setTimeout(function(){document.getElementById('qac-phone').focus();},150);
+  // Check for phone duplicates as they type
+  document.getElementById('qac-phone').oninput=function(){qacCheckDupe();};
+  document.getElementById('qac-name').oninput=function(){qacCheckDupe();};
+}
+function qacCheckDupe(){
+  var name=(document.getElementById('qac-name').value||'').trim();
+  var phone=(document.getElementById('qac-phone').value||'').trim().replace(/\D/g,'');
+  var warn=document.getElementById('qac-dupe-warn');
+  if(phone.length>=7){
+    var phoneMatch=customers.find(function(c){return c.phone&&c.phone.replace(/\D/g,'').includes(phone);});
+    if(phoneMatch&&phoneMatch.name.toLowerCase()!==name.toLowerCase()){
+      warn.innerHTML='<strong>Possible duplicate:</strong> '+phoneMatch.name+' already has phone '+phoneMatch.phone+(phoneMatch.city?' in '+phoneMatch.city:'')+'. <a href="#" onclick="event.preventDefault();cartCustSelect('+customers.indexOf(phoneMatch)+');closeModal(\'quick-add-cust-modal\');" style="color:#2563eb;font-weight:700;">Use existing record</a>';
+      warn.style.display='block';return;
+    }
+  }
+  if(name.length>=3){
+    var nameMatch=customers.find(function(c){return c.name.toLowerCase()===name.toLowerCase();});
+    if(nameMatch){
+      warn.innerHTML='<strong>Customer already exists:</strong> '+nameMatch.name+(nameMatch.phone?' ('+nameMatch.phone+')':'')+'. <a href="#" onclick="event.preventDefault();cartCustSelect('+customers.indexOf(nameMatch)+');closeModal(\'quick-add-cust-modal\');" style="color:#2563eb;font-weight:700;">Use existing record</a>';
+      warn.style.display='block';return;
+    }
+  }
+  warn.style.display='none';
+}
+function saveQuickCustomer(){
+  var name=(document.getElementById('qac-name').value||'').trim();
+  var phone=(document.getElementById('qac-phone').value||'').trim();
+  if(!name){toast('Enter customer name','error');document.getElementById('qac-name').focus();return;}
+  if(!phone){toast('Enter phone number','error');document.getElementById('qac-phone').focus();return;}
+  var addr=(document.getElementById('qac-addr').value||'').trim();
+  var city=(document.getElementById('qac-city').value||'').trim();
+  var state=(document.getElementById('qac-state').value||'').trim().toUpperCase();
+  var zip=(document.getElementById('qac-zip').value||'').trim();
+  var email=(document.getElementById('qac-email').value||'').trim();
+  // Create customer record
+  var newCust={name:name,phone:phone,email:email,address:addr,city:city,state:state,zip:zip,customerNum:'NEW-'+Date.now(),notes:'',payments:[],adjustments:[],refunds:[],ledgerNotes:[]};
+  customers.push(newCust);
+  saveCustomers();
+  // Fill sale fields
+  document.getElementById('cart-sold-name').value=name;
+  document.getElementById('cart-sold-phone').value=phone;
+  document.getElementById('cart-sold-addr').value=addr;
+  document.getElementById('cart-sold-city').value=city;
+  document.getElementById('cart-sold-state').value=state;
+  document.getElementById('cart-sold-zip').value=zip;
+  closeModal('quick-add-cust-modal');
+  toast('Customer created: '+name,'success');
+  if(typeof custUpdateBadge==='function')custUpdateBadge();
+}
 
 // ── CUSTOMER SAVE/UPDATE ON CHECKOUT ──
 function custCheckAndSave(order){

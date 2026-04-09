@@ -2007,6 +2007,31 @@ Error Log
 </div>
 </div>
 
+<!-- QUICK ADD CUSTOMER MODAL -->
+<div class="modal-bg" id="quick-add-cust-modal">
+<div class="modal" style="max-width:480px;">
+<div class="modal-hdr"><div class="modal-title">Quick Add Customer</div><button class="modal-close" onclick="closeModal('quick-add-cust-modal')">&#x2715;</button></div>
+<div class="modal-body">
+<div class="frow">
+<div class="field"><label>Name <span class="req">*</span></label><input class="inp" id="qac-name" placeholder="John Smith"/></div>
+<div class="field"><label>Phone <span class="req">*</span></label><input class="inp" id="qac-phone" type="tel" placeholder="620-555-1234"/></div>
+</div>
+<div class="field"><label>Address</label><input class="inp" id="qac-addr" placeholder="123 Main St"/></div>
+<div class="frow">
+<div class="field"><label>City</label><input class="inp" id="qac-city" placeholder="Dodge City"/></div>
+<div class="field" style="max-width:60px;"><label>State</label><input class="inp" id="qac-state" value="KS" maxlength="2" style="text-transform:uppercase;"/></div>
+<div class="field" style="max-width:80px;"><label>Zip</label><input class="inp" id="qac-zip" placeholder="67801"/></div>
+</div>
+<div class="field"><label>Email <span style="font-weight:400;color:var(--gray-3);">(optional)</span></label><input class="inp" id="qac-email" type="email" placeholder="customer@email.com"/></div>
+<div id="qac-dupe-warn" style="display:none;margin-top:8px;padding:8px 12px;background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;font-size:11px;color:#92400e;"></div>
+</div>
+<div class="modal-footer">
+<button class="ghost-btn" onclick="closeModal('quick-add-cust-modal')">Cancel</button>
+<button class="primary-btn" onclick="saveQuickCustomer()">Save &amp; Add to Sale</button>
+</div>
+</div>
+</div>
+
 <!-- QUOTE LOADER MODAL -->
 <div class="modal-bg" id="quote-loader-modal">
 <div class="modal" style="max-width:700px;">
