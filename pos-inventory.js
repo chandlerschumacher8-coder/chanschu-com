@@ -410,10 +410,11 @@ async function lookupModel(){
   resultEl.style.display='block';
   resultEl.innerHTML='<div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;"></div> Looking up '+sku+' from manufacturer sites...</div>';
   try{
-    var prompt='Look up appliance model number "'+sku+'" from manufacturer sources (Whirlpool, Maytag, KitchenAid, Amana, LG, Samsung, GE Appliances, Frigidaire/Electrolux). '
-      +'Return JSON only: {"brand":"Brand Name","description":"Full product description with key features","category":"Category","specs":{"dimensions":"","capacity":"","features":""},"specSheetUrl":"","found":true}. '
+    var prompt='Look up product model number "'+sku+'" from manufacturer sources (Whirlpool, Maytag, KitchenAid, Amana, LG, Samsung, GE Appliances, Frigidaire/Electrolux, Ashley, La-Z-Boy, Sealy, Tempur-Pedic, Napoleon, Traeger, Pit Boss). '
+      +'Return JSON only: {"brand":"Brand Name","fullName":"Official product name","description":"Full product description with key features","category":"Category","msrp":0,"imageUrl":"direct image URL if available","specs":{"dimensions":"","capacity":"","weight":"","color":"","features":"","materials":"","weightCapacity":"","colorsAvailable":""},"specSheetUrl":"","found":true}. '
+      +'For furniture include materials, colors available, and weight capacity. Omit empty spec fields. '
       +'If you cannot find reliable info, return {"found":false}. JSON only, no explanation.';
-    var data=await claudeApiCall({messages:[{role:'user',content:prompt}],max_tokens:600},'product_specs');
+    var data=await claudeApiCall({messages:[{role:'user',content:prompt}],max_tokens:1000},'product_specs');
     var match=data.content[0].text.match(/\{[\s\S]*\}/);
     if(!match)throw new Error('No JSON found');
     var parsed=JSON.parse(match[0]);
@@ -424,12 +425,13 @@ async function lookupModel(){
     // Show preview + confirm
     var h='<div style="font-weight:700;margin-bottom:6px;color:#1e40af;">Found: '+sku+'</div>';
     if(parsed.brand)h+='<div><strong>Brand:</strong> '+parsed.brand+'</div>';
+    if(parsed.fullName)h+='<div><strong>Name:</strong> '+parsed.fullName+'</div>';
     if(parsed.description)h+='<div style="margin:4px 0;"><strong>Description:</strong> '+parsed.description+'</div>';
     if(parsed.category)h+='<div><strong>Category:</strong> '+parsed.category+'</div>';
+    if(parsed.msrp)h+='<div><strong>MSRP:</strong> $'+Number(parsed.msrp).toFixed(2)+'</div>';
     if(parsed.specs){
-      if(parsed.specs.dimensions)h+='<div><strong>Dimensions:</strong> '+parsed.specs.dimensions+'</div>';
-      if(parsed.specs.capacity)h+='<div><strong>Capacity:</strong> '+parsed.specs.capacity+'</div>';
-      if(parsed.specs.features)h+='<div><strong>Features:</strong> '+parsed.specs.features+'</div>';
+      var specKeys=Object.keys(parsed.specs);
+      specKeys.forEach(function(k){if(parsed.specs[k])h+='<div><strong>'+k.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();})+':</strong> '+parsed.specs[k]+'</div>';});
     }
     if(parsed.specSheetUrl)h+='<div style="margin-top:4px;"><a href="'+parsed.specSheetUrl+'" target="_blank" style="color:#2563eb;">View Spec Sheet</a></div>';
     h+='<div style="margin-top:8px;display:flex;gap:6px;"><button class="primary-btn" onclick="applyLookup()" type="button">Use This</button><button class="ghost-btn" onclick="document.getElementById(\'ap-lookup-result\').style.display=\'none\';" type="button">Dismiss</button></div>';
@@ -462,6 +464,8 @@ function addProduct(){
   var stEl=document.getElementById('ap-serial-tracked');
   var owEl=document.getElementById('ap-offer-warranty');
   PRODUCTS.push({id:PRODUCTS.length+100,sku:sku,model:sku,name:name,brand:brand,cat:document.getElementById('ap-cat').value,price:parseFloat(document.getElementById('ap-price').value)||0,cost:parseFloat(document.getElementById('ap-cost').value)||0,stock:parseInt(document.getElementById('ap-stock').value)||0,reorderPt:parseInt(document.getElementById('ap-reorder').value)||2,reorderQty:parseInt(document.getElementById('ap-reorderqty').value)||3,sales30:0,sold:0,serial:document.getElementById('ap-serial').value,warranty:document.getElementById('ap-warranty').value,icon:'&#x1F4E6;',serialTracked:stEl?stEl.checked:true,offerWarranty:owEl?owEl.checked:true,upc:(document.getElementById('ap-upc')||{}).value||'',vendor:(document.getElementById('ap-vendor')||{}).value||'',serialPool:[],specSheetUrl:window._lookupSpecSheetUrl||''});
+  var newProd=PRODUCTS[PRODUCTS.length-1];
+  if(window._lookupData){newProd.specs=window._lookupData.specs||null;newProd.imageUrl=window._lookupData.imageUrl||'';newProd.specSheetUrl=window._lookupData.specSheetUrl||newProd.specSheetUrl;}
   window._lookupSpecSheetUrl='';window._lookupData=null;
   saveProducts();
   closeModal('add-product-modal');renderInventory();refreshSaleView();toast('Product added','success');
@@ -3137,6 +3141,7 @@ function pcRenderTab(){
   else if(_pcTab==='received')el.innerHTML=pcTabReceived();
   else if(_pcTab==='sales')el.innerHTML=pcTabSales();
   else if(_pcTab==='stock')el.innerHTML=pcTabStock();
+  else if(_pcTab==='specs')el.innerHTML=pcTabSpecs();
 }
 
 // ── TAB 1: PRODUCT INFO ──
@@ -3158,7 +3163,7 @@ function pcTabInfo(){
   h+='<div class="pc-field"><label>Model Number</label><input id="pc-model" value="'+(p.model||'')+'"'+rd+'/></div>';
   h+='<div class="pc-field"><label>PLU / SKU</label><input id="pc-sku" value="'+(p.sku||'')+'"'+rd+'/></div>';
   h+='</div>';
-  h+='<div class="pc-field"><label>Description</label><input id="pc-name" value="'+((p.name||'').replace(/"/g,'&quot;'))+'"'+rd+'/></div>';
+  h+='<div class="pc-field"><label>Description</label><div style="display:flex;gap:6px;align-items:center;"><input id="pc-name" value="'+((p.name||'').replace(/"/g,'&quot;'))+'"'+rd+' style="flex:1;"/>'+(ro?'':'<button class="ghost-btn" onclick="pullProductSpecs(_pcProduct.id)" type="button" style="white-space:nowrap;font-size:11px;padding:4px 8px;">Pull Specs</button>')+'</div></div>';
   h+='<div class="pc-grid">';
   h+='<div class="pc-field"><label>Brand</label>'+(ro?'<input value="'+(p.brand||'')+'" readonly/>':'<select id="pc-brand"><option value="">—</option>'+brandOpts+'</select>')+'</div>';
   h+='<div class="pc-field"><label>Vendor</label>'+(ro?'<input value="'+(p.vendor||'')+'" readonly/>':'<select id="pc-vendor" onchange="pcVendorChanged()"><option value="">—</option>'+vendorOpts+'</select>')+'</div>';
@@ -3219,6 +3224,133 @@ function pcSaveInfo(){
   saveProducts();renderInventory();toast('Product saved','success');
   document.getElementById('pc-subtitle').textContent=(p.model||p.sku||'')+(p.brand?' — '+p.brand:'');
   document.getElementById('pc-title').textContent=p.name||'Product';
+}
+
+// ── TAB: SPECS ──
+function pcTabSpecs(){
+  var p=_pcProduct,ro=_pcReadOnly;
+  var h='<div class="pc-section" style="padding:16px;">';
+  if(p.imageUrl){
+    h+='<div style="text-align:center;margin-bottom:14px;"><img src="'+p.imageUrl+'" alt="'+((p.name||'').replace(/"/g,'&quot;'))+'" style="max-width:220px;max-height:180px;border-radius:8px;border:1px solid #e5e7eb;object-fit:contain;"/></div>';
+  }
+  if(p.specs&&Object.keys(p.specs).length){
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:14px;">';
+    Object.keys(p.specs).forEach(function(k){
+      if(p.specs[k]){
+        var label=k.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();});
+        h+='<div style="font-size:12px;"><strong style="color:#374151;">'+label+'</strong><div style="color:#6b7280;margin-top:2px;">'+p.specs[k]+'</div></div>';
+      }
+    });
+    h+='</div>';
+    if(p.specsUpdatedAt)h+='<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;">Last updated: '+new Date(p.specsUpdatedAt).toLocaleDateString()+'</div>';
+  } else {
+    h+='<div style="text-align:center;padding:30px 0;color:#9ca3af;"><div style="font-size:24px;margin-bottom:8px;">&#x1F4CB;</div><div>No specs available &mdash; click Pull Specs to auto-populate</div></div>';
+  }
+  if(p.specSheetUrl)h+='<div style="margin-bottom:10px;"><a href="'+p.specSheetUrl+'" target="_blank" style="color:#2563eb;font-size:12px;">View Manufacturer Spec Sheet &#x2197;</a></div>';
+  h+='<div style="display:flex;gap:8px;margin-top:10px;">';
+  if(!ro)h+='<button class="primary-btn" onclick="pullProductSpecs('+p.id+')" type="button">Pull Specs</button>';
+  if(p.specs&&Object.keys(p.specs).length)h+='<button class="ghost-btn" onclick="printSpecSheet('+p.id+')" type="button">Print Spec Sheet</button>';
+  h+='</div>';
+  h+='</div>';
+  return h;
+}
+
+async function pullProductSpecs(productId){
+  var p=PRODUCTS.find(function(x){return x.id===productId;});
+  if(!p){toast('Product not found','error');return;}
+  var model=p.model||p.sku||'';
+  if(!model){toast('No model number to look up','error');return;}
+  toast('Looking up specs for '+model+'...','info');
+  try{
+    var prompt='Look up product model number "'+model+'" from manufacturer sources (Whirlpool, Maytag, KitchenAid, Amana, LG, Samsung, GE Appliances, Frigidaire/Electrolux, Ashley, La-Z-Boy, Sealy, Tempur-Pedic, Napoleon, Traeger, Pit Boss). '
+      +'Return JSON only: {"brand":"Brand Name","fullName":"Official product name","description":"Full product description with key features","category":"Category","msrp":0,"imageUrl":"direct image URL if available","specs":{"dimensions":"","capacity":"","weight":"","color":"","features":"","materials":"","weightCapacity":"","colorsAvailable":""},"specSheetUrl":"","found":true}. '
+      +'For furniture include materials, colors available, and weight capacity. Omit empty spec fields. '
+      +'If you cannot find reliable info, return {"found":false}. JSON only, no explanation.';
+    var data=await claudeApiCall({messages:[{role:'user',content:prompt}],max_tokens:1000},'product_specs');
+    var match=data.content[0].text.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('No JSON found');
+    var parsed=JSON.parse(match[0]);
+    if(!parsed.found){toast('Could not find specs for '+model,'error');return;}
+    // Build confirmation modal
+    var h='<div style="padding:16px;">';
+    h+='<div style="font-weight:700;margin-bottom:10px;color:#1e40af;font-size:15px;">Specs Found: '+model+'</div>';
+    if(parsed.imageUrl)h+='<div style="text-align:center;margin-bottom:10px;"><img src="'+parsed.imageUrl+'" style="max-width:180px;max-height:140px;border-radius:6px;border:1px solid #e5e7eb;object-fit:contain;"/></div>';
+    if(parsed.brand)h+='<div><strong>Brand:</strong> '+parsed.brand+'</div>';
+    if(parsed.fullName)h+='<div><strong>Name:</strong> '+parsed.fullName+'</div>';
+    if(parsed.description)h+='<div style="margin:4px 0;"><strong>Description:</strong> '+parsed.description+'</div>';
+    if(parsed.msrp)h+='<div><strong>MSRP:</strong> $'+Number(parsed.msrp).toFixed(2)+'</div>';
+    if(parsed.specs){
+      h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:8px;font-size:12px;">';
+      Object.keys(parsed.specs).forEach(function(k){
+        if(parsed.specs[k]){
+          var label=k.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();});
+          h+='<div><strong>'+label+':</strong> '+parsed.specs[k]+'</div>';
+        }
+      });
+      h+='</div>';
+    }
+    h+='<div style="margin-top:14px;display:flex;gap:8px;"><button class="primary-btn" id="specs-confirm-btn" type="button">Save Specs</button><button class="ghost-btn" onclick="closeModal(\'specs-confirm-modal\')" type="button">Cancel</button></div>';
+    h+='</div>';
+    // Create a temporary modal
+    var overlay=document.createElement('div');
+    overlay.id='specs-confirm-modal';
+    overlay.className='modal-overlay active';
+    overlay.style.zIndex='10001';
+    overlay.innerHTML='<div class="modal" style="max-width:480px;max-height:80vh;overflow-y:auto;">'+h+'</div>';
+    document.body.appendChild(overlay);
+    document.getElementById('specs-confirm-btn').onclick=function(){
+      p.specs=parsed.specs||null;
+      p.imageUrl=parsed.imageUrl||'';
+      p.specSheetUrl=parsed.specSheetUrl||p.specSheetUrl||'';
+      p.specsUpdatedAt=new Date().toISOString();
+      saveProducts();
+      closeModal('specs-confirm-modal');
+      if(_pcProduct&&_pcProduct.id===productId&&_pcTab==='specs')pcRenderTab();
+      toast('Specs saved for '+model,'success');
+    };
+  }catch(e){
+    toast('Spec lookup failed: '+e.message,'error');
+  }
+}
+
+function printSpecSheet(productId){
+  var p=PRODUCTS.find(function(x){return x.id===productId;});
+  if(!p){toast('Product not found','error');return;}
+  var w=window.open('','_blank','width=800,height=900');
+  var h='<!DOCTYPE html><html><head><title>Spec Sheet - '+(p.name||p.model||'Product')+'</title><style>';
+  h+='body{font-family:Arial,Helvetica,sans-serif;max-width:700px;margin:0 auto;padding:30px;color:#1f2937;}';
+  h+='.header{text-align:center;border-bottom:2px solid #2563eb;padding-bottom:16px;margin-bottom:20px;}';
+  h+='.header h1{color:#2563eb;font-size:22px;margin:0 0 4px;}';
+  h+='.header .sub{color:#6b7280;font-size:13px;}';
+  h+='.product-name{font-size:18px;font-weight:700;margin:16px 0 6px;}';
+  h+='.model{color:#6b7280;font-size:14px;margin-bottom:16px;}';
+  h+='.product-img{text-align:center;margin:16px 0;}';
+  h+='.product-img img{max-width:300px;max-height:250px;object-fit:contain;}';
+  h+='.specs-table{width:100%;border-collapse:collapse;margin:16px 0;}';
+  h+='.specs-table td{padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:13px;}';
+  h+='.specs-table td:first-child{font-weight:700;color:#374151;width:40%;background:#f9fafb;}';
+  h+='.footer{text-align:center;border-top:2px solid #2563eb;padding-top:14px;margin-top:30px;font-size:12px;color:#6b7280;}';
+  h+='@media print{body{padding:10px;}}';
+  h+='</style></head><body>';
+  h+='<div class="header"><h1>DC Appliance</h1><div class="sub">Product Specification Sheet</div></div>';
+  h+='<div class="product-name">'+(p.name||'Product')+'</div>';
+  h+='<div class="model">Model: '+(p.model||p.sku||'N/A')+(p.brand?' &nbsp;|&nbsp; Brand: '+p.brand:'')+'</div>';
+  if(p.imageUrl)h+='<div class="product-img"><img src="'+p.imageUrl+'" alt="'+((p.name||'').replace(/"/g,'&quot;'))+'"/></div>';
+  if(p.specs&&Object.keys(p.specs).length){
+    h+='<table class="specs-table">';
+    Object.keys(p.specs).forEach(function(k){
+      if(p.specs[k]){
+        var label=k.replace(/([A-Z])/g,' $1').replace(/^./,function(s){return s.toUpperCase();});
+        h+='<tr><td>'+label+'</td><td>'+p.specs[k]+'</td></tr>';
+      }
+    });
+    h+='</table>';
+  }
+  h+='<div class="footer"><strong>DC Appliance</strong><br/>2610 Central Ave, Dodge City, KS 67801 &nbsp;|&nbsp; 620-371-6417</div>';
+  h+='</body></html>';
+  w.document.write(h);
+  w.document.close();
+  setTimeout(function(){w.print();},400);
 }
 
 // ── TAB 2: PRICING & COST ──

@@ -66,6 +66,7 @@ export default async function handler(req, res) {
               serial_tracked: p.serialTracked || false, offer_warranty: p.offerWarranty,
               price_locked: p.priceLocked || false,
               needs_pricing: p.needsPricing || false, active: p.active !== false,
+              specs: p.specs || null, image_url: p.imageUrl || null, spec_sheet_url: p.specSheetUrl || null,
               deleted: false,
             }));
             const { data: inserted, error } = await sb.from('products').insert(rows).select('id');

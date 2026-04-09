@@ -58,6 +58,7 @@ export default async function handler(req, res) {
           reorderPt: p.reorder_pt, reorderQty: p.reorder_qty, sales30: p.sales_30,
           warranty: p.warranty, serial: p.serial, serialTracked: p.serial_tracked, offerWarranty: p.offer_warranty,
           priceLocked: p.price_locked, needsPricing: p.needs_pricing, active: p.active,
+          specs: p.specs, imageUrl: p.image_url, specSheetUrl: p.spec_sheet_url,
           serialPool: serialMap[p.id] || [],
         })) });
       }
