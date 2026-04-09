@@ -2,7 +2,7 @@
 // Manually trigger grading of yesterday's picks without generating new ones
 // Visit /api/grade-picks in browser to run anytime
 
-import { validateSession, unauthorized, handlePreflight } from './_auth.js';
+import { handlePreflight, setCorsHeaders } from './_auth.js';
 import { Redis } from '@upstash/redis';
 const redis = Redis.fromEnv();
  
@@ -55,9 +55,8 @@ async function fetchScores(daysAgo) {
  
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
+  setCorsHeaders(res);
   res.setHeader('Cache-Control', 'no-store');
-  const session = await validateSession(req);
-  if (!session) return unauthorized(res);
 
   try {
     // Support ?days=2 to grade 2 days ago etc

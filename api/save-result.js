@@ -2,14 +2,13 @@
 // Saves a win/loss/push result for a pick to Redis
 
 import { Redis } from '@upstash/redis';
-import { validateSession, unauthorized, handlePreflight } from './_auth.js';
+import { handlePreflight, setCorsHeaders } from './_auth.js';
 
 const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
-  const session = await validateSession(req);
-  if (!session) return unauthorized(res);
+  setCorsHeaders(res);
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
  
   try {

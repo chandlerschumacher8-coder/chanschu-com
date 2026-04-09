@@ -3,14 +3,13 @@
 // Usage: POST { password, wins, losses, pushes } to set totals directly
 // OR: POST { password, add: { wins: 2, losses: 0 } } to add to existing totals
 
-import { validateSession, unauthorized, handlePreflight } from './_auth.js';
+import { handlePreflight, setCorsHeaders } from './_auth.js';
 import { Redis } from '@upstash/redis';
 const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
   if (handlePreflight(req, res)) return;
-  const session = await validateSession(req);
-  if (!session) return unauthorized(res);
+  setCorsHeaders(res);
 
   try {
     // GET — just show current totals
