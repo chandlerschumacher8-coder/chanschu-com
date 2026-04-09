@@ -1209,10 +1209,12 @@ body{background:var(--bg);color:var(--white);font-family:'Plus Jakarta Sans',san
 <!-- Row 2: Cart -->
 <div class="sale-center-mid">
 <div class="cart">
-<div class="cart-hdr">
-<span>Current Sale</span>
+<div class="cart-hdr" style="flex-wrap:wrap;gap:6px;">
+<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:300px;position:relative;">
+<input class="sale-search" id="sale-search" placeholder="Search by model, description, brand, or scan UPC..." oninput="saleSearchLive()" onfocus="saleSearchLive()" onkeydown="saleSearchKey(event)" autocomplete="off" style="width:100%;min-height:44px;padding:11px 16px;font-size:15px;border-radius:10px;border:2px solid #d1d5db;box-shadow:0 1px 3px rgba(0,0,0,0.06);" />
+<div id="sale-search-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:999;background:#fff;border:1px solid #d1d5db;border-top:none;border-radius:0 0 10px 10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);max-height:400px;overflow-y:auto;"></div>
+</div>
 <div class="cart-hdr-actions">
-<input class="sale-search" id="sale-search" placeholder="Search products or scan UPC..." oninput="saleSearch()" style="flex:1;min-width:0;min-height:42px;padding:10px 14px;font-size:14px;margin-right:8px;border-radius:8px;"/>
 <input class="sale-search" id="invoice-lookup" placeholder="Invoice #" style="max-width:100px;padding:5px 8px;font-size:11px;" onkeydown="if(event.key==='Enter')lookupInvoice()"/>
 <button class="cart-action-btn" onclick="lookupInvoice()" style="border-color:#86efac;color:#16a34a;">Pull Up</button>
 <button class="cart-action-btn" onclick="openQuoteLoader()" style="border-color:#bfdbfe;color:#2563eb;">Quote</button>
@@ -5229,16 +5231,73 @@ function cartTaxSelect(idx){
   document.getElementById('cart-tax-dd').classList.remove('open');
   renderCart();
 }
-function saleSearch(){
+var _saleSearchIdx=-1;
+function saleSearchLive(){
   var q=(document.getElementById('sale-search')||{}).value||'';
-  if(q.trim()){
-    // Check for exact UPC match - auto-add to cart
-    var upcMatch=PRODUCTS.find(function(p){return p.active!==false&&p.upc&&p.upc===q.trim();});
-    if(upcMatch){addToCart(upcMatch.id);document.getElementById('sale-search').value='';saleViewMode='departments';renderSaleDepartments();return;}
-    saleViewMode='search';renderSaleProductList(null,q);
-  }
-  else if(saleViewMode==='search'){saleViewMode='departments';renderSaleDepartments();}
+  var dd=document.getElementById('sale-search-dropdown');
+  if(!q.trim()){dd.style.display='none';_saleSearchIdx=-1;if(saleViewMode==='search'){saleViewMode='departments';renderSaleDepartments();}return;}
+  // Check for exact UPC match — auto-add to cart
+  var upcMatch=PRODUCTS.find(function(p){return p.active!==false&&p.upc&&p.upc===q.trim();});
+  if(upcMatch){addToCart(upcMatch.id);document.getElementById('sale-search').value='';dd.style.display='none';saleViewMode='departments';renderSaleDepartments();return;}
+  // Live search — show dropdown with top 10 matches
+  var ql=q.toLowerCase();
+  var scored=PRODUCTS.filter(function(p){return p.active!==false;}).map(function(p){
+    var s=0,model=(p.model||'').toLowerCase(),name=(p.name||'').toLowerCase(),brand=(p.brand||'').toLowerCase(),upc=(p.upc||'').toLowerCase();
+    if(model===ql)s+=100;else if(model.indexOf(ql)===0)s+=80;else if(model.indexOf(ql)>=0)s+=50;
+    if(name.indexOf(ql)>=0)s+=30;
+    if(brand.indexOf(ql)===0)s+=25;else if(brand.indexOf(ql)>=0)s+=15;
+    if(upc.indexOf(ql)>=0)s+=20;
+    return{p:p,score:s};
+  }).filter(function(x){return x.score>0;}).sort(function(a,b){return b.score-a.score;}).slice(0,10);
+  if(!scored.length){dd.innerHTML='<div style="padding:14px 16px;color:#9ca3af;font-size:12px;">No products match "'+q+'"</div>';dd.style.display='block';_saleSearchIdx=-1;return;}
+  var h='';
+  scored.forEach(function(x,i){
+    var p=x.p;var avail=Math.max(0,p.stock-(p.sold||0));
+    var qc=avail<=0?'color:#dc2626;':avail<=(p.reorderPt||2)?'color:#d97706;':'color:#16a34a;';
+    var qBg=avail<=0?'background:#fef2f2;border:1px solid #fca5a5;':avail<=(p.reorderPt||2)?'background:#fffbeb;border:1px solid #fcd34d;':'background:#f0fdf4;border:1px solid #86efac;';
+    h+='<div class="ss-row" data-idx="'+i+'" onclick="saleSearchPick('+p.id+')" onmouseenter="_saleSearchIdx='+i+';saleSearchHighlight();" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;border-bottom:1px solid #f3f4f6;'+(i===_saleSearchIdx?'background:#eff6ff;':'')+'">';
+    h+='<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;color:#1f2937;">'+(p.model||'—')+'</div><div style="font-size:11px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+p.name+'</div></div>';
+    h+='<div style="font-size:11px;color:#6b7280;min-width:60px;">'+(p.brand||'—')+'</div>';
+    h+='<div style="font-size:13px;font-weight:700;color:#1f2937;min-width:70px;text-align:right;">'+fmt(p.price)+'</div>';
+    h+='<div style="min-width:40px;text-align:center;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;'+qBg+qc+'">'+avail+'</div>';
+    if(avail<=0)h+='<div style="font-size:9px;color:#dc2626;font-weight:700;">OUT</div>';
+    else if(avail<=(p.reorderPt||2))h+='<div style="font-size:9px;color:#d97706;font-weight:700;">LOW</div>';
+    h+='</div>';
+  });
+  dd.innerHTML=h;dd.style.display='block';_saleSearchIdx=-1;
+  // Also update the main browse area
+  saleViewMode='search';renderSaleProductList(null,q);
 }
+function saleSearchKey(e){
+  var dd=document.getElementById('sale-search-dropdown');
+  var rows=dd.querySelectorAll('.ss-row');
+  if(!rows.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();_saleSearchIdx=Math.min(_saleSearchIdx+1,rows.length-1);saleSearchHighlight();}
+  else if(e.key==='ArrowUp'){e.preventDefault();_saleSearchIdx=Math.max(_saleSearchIdx-1,0);saleSearchHighlight();}
+  else if(e.key==='Enter'&&_saleSearchIdx>=0){e.preventDefault();rows[_saleSearchIdx].click();}
+  else if(e.key==='Escape'){dd.style.display='none';_saleSearchIdx=-1;}
+}
+function saleSearchHighlight(){
+  var dd=document.getElementById('sale-search-dropdown');
+  dd.querySelectorAll('.ss-row').forEach(function(r,i){r.style.background=i===_saleSearchIdx?'#eff6ff':'';});
+  var active=dd.querySelector('.ss-row[data-idx="'+_saleSearchIdx+'"]');
+  if(active)active.scrollIntoView({block:'nearest'});
+}
+function saleSearchPick(pid){
+  addToCart(pid);
+  document.getElementById('sale-search').value='';
+  document.getElementById('sale-search-dropdown').style.display='none';
+  _saleSearchIdx=-1;
+  saleViewMode='departments';renderSaleDepartments();
+}
+// Close dropdown when clicking outside
+document.addEventListener('click',function(e){
+  var dd=document.getElementById('sale-search-dropdown');
+  var sb=document.getElementById('sale-search');
+  if(dd&&sb&&!dd.contains(e.target)&&e.target!==sb)dd.style.display='none';
+});
+// Legacy alias
+function saleSearch(){saleSearchLive();}
 function saleCatMatch(p,cat){
   var c=p.cat||'';
   if(cat==='Washers') return c==='Washers & Dryers'&&p.name.toLowerCase().indexOf('washer')!==-1;
@@ -5295,12 +5354,14 @@ function renderSaleProductList(cat,searchQ){
     if(cat) return saleCatMatch(p,cat);
     return !q||p.name.toLowerCase().includes(q)||p.brand.toLowerCase().includes(q)||(p.model||'').toLowerCase().includes(q)||(p.upc||'').toLowerCase().includes(q);
   });
-  var h=header+'<div class="prod-list"><div class="prod-list-hdr"><span>Model #</span><span>Description</span><span>Brand</span><span>Sell Price</span><span>On Hand</span></div>';
+  var h=header+'<div class="prod-list"><div class="prod-list-hdr"><span>Model #</span><span>Description</span><span>Brand</span><span>Sell Price</span><span>Available</span></div>';
   if(!filtered.length) h+='<div style="text-align:center;color:var(--gray-2);padding:30px;font-size:12px;">No products found</div>';
   filtered.forEach(function(p){
     var ams=Math.max(0,p.stock-(p.sold||0));
-    var qc=ams<=0?'out':ams<=p.reorderPt?'low':'in';
-    h+='<div class="prod-list-row" onclick="addToCart('+p.id+')"><span>'+(p.model||'')+'</span><span>'+p.name+'</span><span>'+p.brand+'</span><span class="pl-price">'+fmt(p.price)+'</span><span class="pl-qty '+qc+'">'+ams+'</span></div>';
+    var qc=ams<=0?'out':ams<=(p.reorderPt||2)?'low':'in';
+    var brandDisplay=p.brand||'\u2014';
+    var qtyBadge='<span class="pl-qty '+qc+'" style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;'+(qc==='out'?'background:#fef2f2;border:1px solid #fca5a5;':qc==='low'?'background:#fffbeb;border:1px solid #fcd34d;':'background:#f0fdf4;border:1px solid #86efac;')+'">'+ams+'</span>';
+    h+='<div class="prod-list-row" onclick="addToCart('+p.id+')"><span style="font-weight:700;">'+(p.model||'\u2014')+'</span><span>'+p.name+'</span><span>'+brandDisplay+'</span><span class="pl-price">'+fmt(p.price)+'</span><span>'+qtyBadge+'</span></div>';
   });
   h+='</div>';
   browseEl.innerHTML=h;
