@@ -1808,6 +1808,11 @@ async function clearDataExecute(){
 var _diSalesParsed=null;
 var _diSalesImportHistory=[];
 
+// Known column headers for cleaned SmartTouch CSV exports.
+// When ALL of these are present in the CSV header row, we skip AI parsing entirely
+// and read the file directly row-by-row.
+var DI_SALES_CSV_REQUIRED=['store_id','smarttouch_line_id','invoice_number','customer_name','model_number','qty','unit_price','ext_price','invoice_total','date'];
+
 async function diLoadImportHistory(){
   try{var r=await apiFetch('/api/admin-get?key=sales-import-history');var d=await r.json();if(d&&Array.isArray(d.data))_diSalesImportHistory=d.data;}catch(e){}
 }
@@ -1815,25 +1820,127 @@ async function diSaveImportHistory(){
   try{await apiFetch('/api/admin-save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:'sales-import-history',data:_diSalesImportHistory})});}catch(e){}
 }
 
+// Minimal CSV parser that handles quoted fields, escaped quotes, and \r\n.
+function diParseCsv(text){
+  var rows=[],row=[],cell='',inQ=false,i=0,len=text.length;
+  // Strip UTF-8 BOM
+  if(len&&text.charCodeAt(0)===0xFEFF){i=1;}
+  while(i<len){
+    var ch=text[i];
+    if(inQ){
+      if(ch==='"'){
+        if(text[i+1]==='"'){cell+='"';i+=2;continue;}
+        inQ=false;i++;continue;
+      }
+      cell+=ch;i++;continue;
+    }
+    if(ch==='"'){inQ=true;i++;continue;}
+    if(ch===','){row.push(cell);cell='';i++;continue;}
+    if(ch==='\r'){i++;continue;}
+    if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell='';i++;continue;}
+    cell+=ch;i++;
+  }
+  // Flush trailing cell/row
+  if(cell.length>0||row.length>0){row.push(cell);rows.push(row);}
+  return rows;
+}
+
+function diCsvToObjects(text){
+  var rows=diParseCsv(text);
+  if(!rows.length)return{headers:[],objects:[]};
+  var headers=rows[0].map(function(h){return(h||'').trim().toLowerCase();});
+  var objects=[];
+  for(var r=1;r<rows.length;r++){
+    var row=rows[r];
+    // Skip fully empty lines
+    var allEmpty=true;for(var k=0;k<row.length;k++){if((row[k]||'').length){allEmpty=false;break;}}
+    if(allEmpty)continue;
+    var obj={};
+    for(var c=0;c<headers.length;c++){obj[headers[c]]=(row[c]!=null?row[c]:'').trim();}
+    objects.push(obj);
+  }
+  return{headers:headers,objects:objects};
+}
+
+// Group CSV rows into invoice-shaped objects for the existing preview UI.
+function diCsvRowsToInvoices(csvRows){
+  var byInv={};
+  csvRows.forEach(function(r){
+    var key=r.invoice_number||r.smarttouch_line_id||'';
+    if(!byInv[key]){
+      byInv[key]={
+        invoiceNumber:r.invoice_number||'',
+        date:r.date||'',
+        customer:r.customer_name||'',
+        clerkInitials:r.sales_rep||'',
+        taxCounty:'',
+        status:(String(r.returned||'').toLowerCase()==='true'||String(r.returned||'')==='1')?'Return':(r.status||'Sold'),
+        items:[],
+        subtotal:0,
+        salesTax:parseFloat(r.tax)||0,
+        total:parseFloat(r.invoice_total)||0
+      };
+    }
+    var inv=byInv[key];
+    inv.items.push({
+      plu:r.sku||'',
+      dept:r.department||'',
+      model:r.model_number||'',
+      description:r.description||'',
+      serial:r.serial_number||'',
+      so:'',
+      qty:parseFloat(r.qty)||1,
+      unitPrice:parseFloat(r.unit_price)||0,
+      discount:parseFloat(r.discount)||0,
+      extPrice:parseFloat(r.ext_price)||0
+    });
+    inv.subtotal+=parseFloat(r.ext_price)||0;
+  });
+  return Object.keys(byInv).map(function(k){return byInv[k];});
+}
+
 async function diHandleSalesFile(file){
   if(!file)return;
   document.getElementById('di-sales-loading').style.display='block';
   document.getElementById('di-sales-preview').style.display='none';
   try{
-    var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
-    var contentType=file.name.match(/\.pdf$/i)?'document':'document';
-    var prompt='Extract ALL sales invoices from this SmartTouch POS Sales Journal. Return JSON only: '
-      +'{"invoices":[{"invoiceNumber":"","date":"YYYY-MM-DD","customer":"","clerkInitials":"","taxCounty":"","status":"Sold",'
-      +'"items":[{"plu":"","dept":"","model":"","description":"","serial":"","so":"","qty":1,"unitPrice":0,"discount":0,"extPrice":0}],'
-      +'"subtotal":0,"salesTax":0,"total":0}]}. '
-      +'For walk-ins the customer will be "Cash", "Check", or "Charge". JSON only, no explanation.';
-    var msgs=[{role:'user',content:[{type:contentType,source:{type:'base64',media_type:file.type||'application/pdf',data:b64}},{type:'text',text:prompt}]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:8000},'sales_journal_import');
-    var match=data.content[0].text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('Could not parse AI response');
-    var parsed=JSON.parse(match[0]);
-    _diSalesParsed={file:file.name,data:parsed};
-    diShowSalesPreview();
+    var isCsv=/\.csv$/i.test(file.name)||file.type==='text/csv';
+    if(isCsv){
+      // Direct CSV path — no AI needed.
+      var text=await file.text();
+      var parsedCsv=diCsvToObjects(text);
+      var headerSet={};parsedCsv.headers.forEach(function(h){headerSet[h]=true;});
+      var missing=DI_SALES_CSV_REQUIRED.filter(function(h){return !headerSet[h];});
+      if(missing.length){
+        throw new Error('CSV is missing required columns: '+missing.join(', '));
+      }
+      if(!parsedCsv.objects.length){
+        throw new Error('CSV has headers but no data rows');
+      }
+      var invoices=diCsvRowsToInvoices(parsedCsv.objects);
+      _diSalesParsed={
+        file:file.name,
+        source:'csv-direct',
+        csvRows:parsedCsv.objects,
+        data:{invoices:invoices}
+      };
+      diShowSalesPreview();
+    }else{
+      // PDF path — still uses AI.
+      var b64=await new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=rej;r.readAsDataURL(file);});
+      var prompt='Extract ALL sales invoices from this SmartTouch POS Sales Journal. Return JSON only: '
+        +'{"invoices":[{"invoiceNumber":"","date":"YYYY-MM-DD","customer":"","clerkInitials":"","taxCounty":"","status":"Sold",'
+        +'"items":[{"plu":"","dept":"","model":"","description":"","serial":"","so":"","qty":1,"unitPrice":0,"discount":0,"extPrice":0}],'
+        +'"subtotal":0,"salesTax":0,"total":0}]}. '
+        +'For walk-ins the customer will be "Cash", "Check", or "Charge". JSON only, no explanation.';
+      var msgs=[{role:'user',content:[{type:'document',source:{type:'base64',media_type:file.type||'application/pdf',data:b64}},{type:'text',text:prompt}]}];
+      var data=await claudeApiCall({messages:msgs,max_tokens:8000},'sales_journal_import');
+      var match=data.content[0].text.match(/\{[\s\S]*\}/);
+      if(!match)throw new Error('Could not parse AI response');
+      var parsed=JSON.parse(match[0]);
+      _diSalesParsed={file:file.name,source:'pdf-ai',data:parsed};
+      diShowSalesPreview();
+    }
   }catch(e){
     document.getElementById('di-sales-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;">Import failed: '+e.message+'</div>';
     document.getElementById('di-sales-preview').style.display='block';
@@ -1907,6 +2014,9 @@ function diCancelSalesImport(){_diSalesParsed=null;document.getElementById('di-s
 
 async function diImportSales(){
   if(!_diSalesParsed)return;
+  // Direct CSV path: upsert rows by smarttouch_line_id via dedicated endpoint.
+  // Never touches the orders array or saveOrders() (which bulk-deletes).
+  if(_diSalesParsed.source==='csv-direct'){return diImportSalesCsvDirect();}
   var invoices=_diSalesParsed.data.invoices||[];
   var skipDup=document.getElementById('di-skip-dup').checked;
   var skipWalkIn=document.getElementById('di-skip-walkin').checked;
@@ -1999,6 +2109,70 @@ async function diImportSales(){
   text.textContent='Complete!';
   toast(stats.imported+' invoices imported, '+stats.custCreated+' customers created, '+stats.serialsRecorded+' serials recorded'+(stats.skipped?', '+stats.skipped+' skipped':''),'success');
   setTimeout(function(){diCancelSalesImport();renderOrders();},1500);
+}
+
+// Direct CSV upsert path — sends cleaned rows to /api/sales-history-import.
+// Upserts by (store_id, smarttouch_line_id). Never deletes. store_id forced to 1 server-side.
+async function diImportSalesCsvDirect(){
+  if(!_diSalesParsed||!_diSalesParsed.csvRows)return;
+  var rows=_diSalesParsed.csvRows;
+  document.getElementById('di-sales-progress').style.display='block';
+  var bar=document.getElementById('di-sales-bar');
+  var text=document.getElementById('di-sales-progress-text');
+
+  var BATCH=500;
+  var totalUpserted=0,totalSkipped=0,totalErrors=0;
+  var errorMsgs=[];
+
+  for(var i=0;i<rows.length;i+=BATCH){
+    var slice=rows.slice(i,i+BATCH);
+    text.textContent='Upserting rows '+(i+1)+'–'+Math.min(i+BATCH,rows.length)+' of '+rows.length+'...';
+    try{
+      var res=await apiFetch('/api/sales-history-import',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({rows:slice})
+      });
+      var json=await res.json();
+      if(!res.ok||!json.ok){
+        totalErrors+=slice.length;
+        errorMsgs.push(json.error||('HTTP '+res.status));
+      }else{
+        totalUpserted+=(json.upserted||0);
+        totalSkipped+=(json.skipped||0);
+      }
+    }catch(e){
+      totalErrors+=slice.length;
+      errorMsgs.push(e.message||'Network error');
+    }
+    var pct=Math.round(Math.min(i+BATCH,rows.length)/rows.length*100);
+    bar.style.width=pct+'%';
+    await new Promise(function(r){setTimeout(r,0);});
+  }
+
+  // Log import history (non-fatal on failure)
+  try{
+    await diLoadImportHistory();
+    var dates=rows.map(function(r){return r.date;}).filter(Boolean).sort();
+    _diSalesImportHistory.unshift({
+      date:new Date().toISOString(),
+      file:_diSalesParsed.file,
+      dateRange:dates.length?(dates[0]+' to '+dates[dates.length-1]):'—',
+      count:totalUpserted,
+      by:currentEmployee?currentEmployee.name:'Admin',
+      stats:{imported:totalUpserted,skipped:totalSkipped,errors:totalErrors,source:'csv-direct'}
+    });
+    await diSaveImportHistory();
+  }catch(e){console.warn('Import history log failed:',e);}
+
+  if(totalErrors){
+    text.textContent='Complete with errors';
+    toast(totalUpserted+' rows upserted, '+totalErrors+' failed'+(errorMsgs.length?(' — '+errorMsgs[0]):''),'error');
+  }else{
+    text.textContent='Complete!';
+    toast(totalUpserted+' rows upserted'+(totalSkipped?', '+totalSkipped+' skipped':''),'success');
+  }
+  setTimeout(function(){diCancelSalesImport();},1500);
 }
 
 async function diShowImportHistory(){

@@ -2710,6 +2710,12 @@ async function recvHandleSlip(file){
   finally{var rl=document.getElementById('recv-loading');if(rl)rl.style.display='none';}
 }
 // ═══ AI AUTO-RECEIVE (drag-drop invoice reader) ═══
+// Shape of _recvAiParsed after parsing:
+//   { file: 'whirlpool-batch.pdf',
+//     invoices: [{ data: {vendor, poNumber, invoiceNumber, invoiceDate, items:[...]},
+//                  matchedPO: <po or null> }, ...] }
+// Always an array, even for single-invoice PDFs / images, so the preview + confirm
+// paths stay uniform.
 var _recvAiParsed=null;
 
 function recvAiHandleDrop(e){
@@ -2719,145 +2725,325 @@ function recvAiHandleDrop(e){
   if(e.dataTransfer.files.length)recvAiHandleFile(e.dataTransfer.files[0]);
 }
 
+// ── PDF text extraction (per-page) via pdfjsLib ──
+async function recvExtractPdfPages(file){
+  if(!window.pdfjsLib)throw new Error('PDF library not loaded');
+  var arrayBuffer=await file.arrayBuffer();
+  var pdf=await window.pdfjsLib.getDocument({data:arrayBuffer}).promise;
+  var loadingEl=document.getElementById('recv-ai-loading');
+  var pages=[];
+  for(var i=1;i<=pdf.numPages;i++){
+    if(loadingEl)loadingEl.innerHTML='<div style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></div>Reading page '+i+' of '+pdf.numPages+'...';
+    var page=await pdf.getPage(i);
+    var content=await page.getTextContent();
+    // Group items by y-coordinate → logical lines → sort left-to-right
+    var lineMap={};
+    content.items.forEach(function(item){
+      var y=Math.round(item.transform[5]);
+      if(!lineMap[y])lineMap[y]=[];
+      lineMap[y].push({x:item.transform[4],text:item.str});
+    });
+    var ys=Object.keys(lineMap).map(Number).sort(function(a,b){return b-a;});
+    var lines=ys.map(function(y){
+      return lineMap[y].sort(function(a,b){return a.x-b.x;}).map(function(it){return it.str;}).join(' ').replace(/\s+/g,' ').trim();
+    }).filter(Boolean);
+    pages.push({index:i,text:lines.join('\n'),lines:lines});
+  }
+  return pages;
+}
+
+// ── Detect INVOICE NO on a page, or the CONTINUED / Page X of Y markers ──
+function recvFindInvoiceNumber(pageText){
+  // "INVOICE NO", "INVOICE NO.", "INVOICE NO:", "INVOICE NUMBER"
+  var m=pageText.match(/INVOICE\s*(?:NO|NUMBER|#)[.:\s]*([A-Z0-9\-]+)/i);
+  return m?m[1].trim():'';
+}
+function recvPageIsContinuation(pageText){
+  return /CONTINUED/i.test(pageText)||/Page\s+\d+\s+of\s+\d+/i.test(pageText);
+}
+
+// ── Group pages into invoice chunks ──
+// Rule: if a page has an INVOICE NO matching the previous group, append to it.
+// Otherwise start a new group. If a page has no invoice number but the prior
+// page said "CONTINUED", fold it into the prior group.
+function recvGroupPagesByInvoice(pages){
+  var groups=[];
+  var prevSaidContinued=false;
+  pages.forEach(function(pg){
+    var invNo=recvFindInvoiceNumber(pg.text);
+    var lastGroup=groups[groups.length-1];
+    var thisContinued=recvPageIsContinuation(pg.text);
+    if(lastGroup&&invNo&&lastGroup.invoiceNumber===invNo){
+      lastGroup.pages.push(pg);
+    }else if(lastGroup&&!invNo&&prevSaidContinued){
+      lastGroup.pages.push(pg);
+    }else{
+      groups.push({invoiceNumber:invNo||('UNKNOWN-'+(groups.length+1)),pages:[pg]});
+    }
+    prevSaidContinued=thisContinued;
+  });
+  return groups;
+}
+
+// ── Ask Claude to parse ONE invoice's already-extracted text ──
+// Sends text (not the PDF binary) so each call is small and focused.
+async function recvParseInvoiceTextWithAi(invoiceText,hintedInvoiceNumber){
+  var prompt=
+    'You will be given the plain text of a SINGLE vendor invoice (possibly spanning '+
+    'multiple pages already merged together — e.g. Whirlpool "Page 1 of 2" + CONTINUED). '+
+    'Extract its line items and serial numbers.\n\n'+
+    'Invoice format notes:\n'+
+    '- Header fields: INVOICE NO, INVOICE DATE, DUE DATE, TERMS, CUSTOMER P.O. NO, ORDER NO, SHIP DATE.\n'+
+    '- Line item columns: LINE NO, MODEL/PART NUMBER, DESCRIPTION, QUANTITY SHIPPED, UNIT PRICE, EXTENDED AMOUNT, NET PRICE.\n'+
+    '- Serial numbers appear on secondary rows DIRECTLY BELOW the model number line, space-separated '+
+    '(e.g. "CE4601693 CE4601774 CE4601775"). Associate each serial with the line item immediately above it.\n'+
+    '- SPA OFF-INVOICE lines are discounts (negative amounts), NOT line items — ignore them.\n'+
+    '- Continuation pages may contain ONLY additional serial numbers; attach those to the last model '+
+    'from the first page if no new line items are shown.\n\n'+
+    'Return JSON ONLY, no explanation:\n'+
+    '{"vendor":"Vendor Name","poNumber":"CUSTOMER P.O. NO","invoiceNumber":"'+(hintedInvoiceNumber||'')+'",'+
+    '"invoiceDate":"YYYY-MM-DD","items":[{"model":"MODEL#","description":"Product Name","qty":1,"unitCost":0,"serials":["SN1","SN2"]}]}\n\n'+
+    '=== INVOICE TEXT ===\n'+invoiceText;
+  var msgs=[{role:'user',content:[{type:'text',text:prompt}]}];
+  var data=await claudeApiCall({messages:msgs,max_tokens:3000},'invoice_receive');
+  var match=data.content[0].text.match(/\{[\s\S]*\}/);
+  if(!match)throw new Error('Could not parse AI response for invoice '+(hintedInvoiceNumber||''));
+  return JSON.parse(match[0]);
+}
+
+function recvFindMatchedPO(parsed){
+  var matchedPO=null;
+  if(parsed.poNumber){
+    matchedPO=purchaseOrders.find(function(po){return po.id.toLowerCase().indexOf(parsed.poNumber.toLowerCase())>=0||parsed.poNumber.toLowerCase().indexOf(po.id.toLowerCase())>=0;});
+  }
+  if(!matchedPO&&parsed.vendor){
+    var openPOs=purchaseOrders.filter(function(po){return (po.status==='Pending'||po.status==='Partially Received')&&po.vendor&&po.vendor.toLowerCase()===parsed.vendor.toLowerCase();});
+    if(openPOs.length===1)matchedPO=openPOs[0];
+  }
+  return matchedPO;
+}
+
 async function recvAiHandleFile(file){
   if(!file)return;
-  document.getElementById('recv-ai-loading').style.display='block';
+  var loadingEl=document.getElementById('recv-ai-loading');
+  loadingEl.style.display='block';
   document.getElementById('recv-ai-preview').style.display='none';
   try{
-    var b64=await toB64(file);
-    var contentType=file.type==='application/pdf'?'document':'image';
-    if(file.name.match(/\.(csv|xlsx|xls)$/i))contentType='document';
-    var msgs=[{role:'user',content:[
-      {type:contentType,source:{type:'base64',media_type:file.type||'application/octet-stream',data:b64}},
-      {type:'text',text:'Extract all items from this vendor invoice/packing list. Return JSON only: {"vendor":"Vendor Name","poNumber":"PO#IfReferenced","invoiceDate":"YYYY-MM-DD","items":[{"model":"MODEL#","description":"Product Name","qty":1,"unitCost":0,"serials":["SN1","SN2"]}]}. Include ALL serial numbers found. If a field is missing use empty string. JSON only, no explanation.'}
-    ]}];
-    var data=await claudeApiCall({messages:msgs,max_tokens:2000},'invoice_receive');
-    var match=data.content[0].text.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('Could not parse AI response');
-    var parsed=JSON.parse(match[0]);
-    // Try to match PO
-    var matchedPO=null;
-    if(parsed.poNumber){
-      matchedPO=purchaseOrders.find(function(po){return po.id.toLowerCase().indexOf(parsed.poNumber.toLowerCase())>=0||parsed.poNumber.toLowerCase().indexOf(po.id.toLowerCase())>=0;});
+    var isPdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name);
+    var invoices=[];
+
+    if(isPdf&&window.pdfjsLib){
+      // ── Multi-invoice PDF path ──
+      loadingEl.innerHTML='<div style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></div>Reading PDF...';
+      var pages=await recvExtractPdfPages(file);
+      var groups=recvGroupPagesByInvoice(pages);
+      for(var gi=0;gi<groups.length;gi++){
+        var g=groups[gi];
+        loadingEl.innerHTML='<div style="display:inline-block;width:14px;height:14px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:6px;"></div>Parsing invoice '+(gi+1)+' of '+groups.length+'...';
+        var mergedText=g.pages.map(function(p){return p.text;}).join('\n\n--- PAGE BREAK ---\n\n');
+        try{
+          var parsed=await recvParseInvoiceTextWithAi(mergedText,g.invoiceNumber);
+          // Make sure invoiceNumber is populated (AI may leave blank)
+          if(!parsed.invoiceNumber&&g.invoiceNumber&&g.invoiceNumber.indexOf('UNKNOWN')!==0){parsed.invoiceNumber=g.invoiceNumber;}
+          invoices.push({data:parsed,matchedPO:recvFindMatchedPO(parsed)});
+        }catch(invErr){
+          console.error('[recv] invoice '+(gi+1)+' parse failed:',invErr);
+          invoices.push({data:{vendor:'',poNumber:'',invoiceNumber:g.invoiceNumber,invoiceDate:'',items:[],_error:invErr.message},matchedPO:null});
+        }
+      }
+    }else{
+      // ── Single-file path (image, csv, xlsx) — legacy behavior ──
+      var b64=await toB64(file);
+      var contentType=file.type==='application/pdf'?'document':'image';
+      if(file.name.match(/\.(csv|xlsx|xls)$/i))contentType='document';
+      var msgs=[{role:'user',content:[
+        {type:contentType,source:{type:'base64',media_type:file.type||'application/octet-stream',data:b64}},
+        {type:'text',text:'Extract all items from this vendor invoice/packing list. Return JSON only: {"vendor":"Vendor Name","poNumber":"PO#IfReferenced","invoiceNumber":"","invoiceDate":"YYYY-MM-DD","items":[{"model":"MODEL#","description":"Product Name","qty":1,"unitCost":0,"serials":["SN1","SN2"]}]}. Include ALL serial numbers found. If a field is missing use empty string. JSON only, no explanation.'}
+      ]}];
+      var data=await claudeApiCall({messages:msgs,max_tokens:2000},'invoice_receive');
+      var match=data.content[0].text.match(/\{[\s\S]*\}/);
+      if(!match)throw new Error('Could not parse AI response');
+      var parsedSingle=JSON.parse(match[0]);
+      invoices.push({data:parsedSingle,matchedPO:recvFindMatchedPO(parsedSingle)});
     }
-    if(!matchedPO&&parsed.vendor){
-      var openPOs=purchaseOrders.filter(function(po){return (po.status==='Pending'||po.status==='Partially Received')&&po.vendor&&po.vendor.toLowerCase()===parsed.vendor.toLowerCase();});
-      if(openPOs.length===1)matchedPO=openPOs[0];
-    }
-    _recvAiParsed={data:parsed,matchedPO:matchedPO};
+
+    if(!invoices.length)throw new Error('No invoices detected in file');
+    _recvAiParsed={file:file.name,invoices:invoices};
     recvAiShowPreview();
   }catch(e){
+    console.error('[recv] handle file error:',e);
     document.getElementById('recv-ai-preview').innerHTML='<div style="padding:12px 16px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#991b1b;font-size:12px;">Could not read invoice: '+e.message+'</div>';
     document.getElementById('recv-ai-preview').style.display='block';
   }
-  document.getElementById('recv-ai-loading').style.display='none';
+  loadingEl.style.display='none';
 }
 
 function recvAiShowPreview(){
-  var p=_recvAiParsed.data;var linkedPO=_recvAiParsed.matchedPO;
-  var vendorOpts=(typeof adminVendors!=='undefined'?adminVendors:[]).sort(function(a,b){return a.name.localeCompare(b.name);}).map(function(v){return '<option value="'+v.name+'"'+(v.name.toLowerCase()===(p.vendor||'').toLowerCase()?' selected':'')+'>'+v.name+'</option>';}).join('');
-  var poOpts=purchaseOrders.filter(function(po){return po.status==='Pending'||po.status==='Partially Received';}).map(function(po){return '<option value="'+po.id+'"'+(linkedPO&&linkedPO.id===po.id?' selected':'')+'>'+po.id+' — '+po.vendor+'</option>';}).join('');
+  if(!_recvAiParsed||!_recvAiParsed.invoices||!_recvAiParsed.invoices.length){
+    document.getElementById('recv-ai-preview').style.display='none';return;
+  }
+  var invoices=_recvAiParsed.invoices;
+  var vendorOptsFn=function(selected){
+    return (typeof adminVendors!=='undefined'?adminVendors:[]).slice().sort(function(a,b){return a.name.localeCompare(b.name);}).map(function(v){return '<option value="'+v.name+'"'+(v.name.toLowerCase()===(selected||'').toLowerCase()?' selected':'')+'>'+v.name+'</option>';}).join('');
+  };
+  var poOptsFn=function(selected){
+    return purchaseOrders.filter(function(po){return po.status==='Pending'||po.status==='Partially Received';}).map(function(po){return '<option value="'+po.id+'"'+(selected&&selected.id===po.id?' selected':'')+'>'+po.id+' — '+po.vendor+'</option>';}).join('');
+  };
+
+  // Top summary bar
+  var totalItems=0,totalSerials=0,totalValue=0;
+  invoices.forEach(function(inv){
+    (inv.data.items||[]).forEach(function(it){
+      totalItems++;
+      totalSerials+=(it.serials||[]).length;
+      totalValue+=(parseFloat(it.qty)||0)*(parseFloat(it.unitCost)||0);
+    });
+  });
 
   var h='<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">';
-  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">';
-  h+='<div style="font-size:13px;font-weight:700;color:#1f2937;">Review Extracted Invoice</div>';
-  if(linkedPO)h+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:#dcfce7;color:#16a34a;">&#x2713; Matched to '+linkedPO.id+'</span>';
+  h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">';
+  h+='<div style="font-size:13px;font-weight:700;color:#1f2937;">Review Extracted Invoice'+(invoices.length>1?'s':'')+'</div>';
+  h+='<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;background:#dbeafe;color:#1d4ed8;">'+invoices.length+' invoice'+(invoices.length===1?'':'s')+' &middot; '+totalItems+' line item'+(totalItems===1?'':'s')+' &middot; '+totalSerials+' serial'+(totalSerials===1?'':'s')+'</span>';
   h+='<button class="ghost-btn" style="margin-left:auto;font-size:10px;padding:4px 10px;" onclick="recvAiCancel()">Cancel</button>';
   h+='</div>';
-  h+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px;">';
-  h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Vendor</label><select id="recv-ai-vendor" class="sel" style="font-size:11px;"><option value="">Select...</option>'+vendorOpts+'</select></div>';
-  h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Link to PO</label><select id="recv-ai-po" class="sel" style="font-size:11px;"><option value="">None</option>'+poOpts+'</select></div>';
-  h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Invoice Date</label><input id="recv-ai-date" class="inp" type="date" value="'+(p.invoiceDate||'')+'" style="font-size:11px;"/></div>';
-  h+='</div>';
-  // Items table
-  h+='<div style="max-height:400px;overflow:auto;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:10px;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model #</th><th>Description</th><th style="width:60px;">Qty</th><th style="width:80px;">Unit Cost</th><th>Serials</th><th style="width:80px;">Match</th></tr></thead><tbody>';
-  (p.items||[]).forEach(function(it,i){
-    var prod=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===(it.model||'').toLowerCase()||(x.sku||'').toLowerCase()===(it.model||'').toLowerCase();});
-    var statusBadge=prod?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#dcfce7;color:#16a34a;">Matched</span>':'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#fee2e2;color:#dc2626;">Not Found</span>';
-    var serialStr=(it.serials||[]).join(', ');
-    h+='<tr'+(!prod?' style="background:#fef2f2;"':'')+'>';
-    h+='<td><input class="inp recv-ai-model" data-idx="'+i+'" value="'+(it.model||'')+'" style="font-size:10px;padding:4px 6px;width:100%;" oninput="recvAiRematch('+i+')"/></td>';
-    h+='<td><input class="inp recv-ai-desc" data-idx="'+i+'" value="'+(it.description||'').replace(/"/g,'&quot;')+'" style="font-size:10px;padding:4px 6px;width:100%;"/></td>';
-    h+='<td><input class="inp recv-ai-qty" data-idx="'+i+'" type="number" min="0" value="'+(it.qty||0)+'" style="font-size:10px;padding:4px 6px;width:50px;text-align:center;"/></td>';
-    h+='<td><input class="inp recv-ai-cost" data-idx="'+i+'" type="number" step="0.01" value="'+(it.unitCost||0)+'" style="font-size:10px;padding:4px 6px;width:70px;text-align:right;"/></td>';
-    h+='<td><input class="inp recv-ai-serials" data-idx="'+i+'" value="'+serialStr+'" placeholder="SN1, SN2..." style="font-size:10px;padding:4px 6px;width:100%;"/></td>';
-    h+='<td id="recv-ai-match-'+i+'">'+statusBadge+'</td>';
-    h+='</tr>';
+
+  invoices.forEach(function(invWrap,invIdx){
+    var p=invWrap.data;
+    var linkedPO=invWrap.matchedPO;
+    h+='<div class="recv-ai-inv-card" data-inv-idx="'+invIdx+'" style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:12px;background:#fafafa;">';
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">';
+    h+='<div style="font-size:12px;font-weight:700;color:#374151;">Invoice '+(invIdx+1)+' of '+invoices.length+(p.invoiceNumber?' &middot; #'+p.invoiceNumber:'')+'</div>';
+    if(linkedPO)h+='<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:#dcfce7;color:#16a34a;">&#x2713; Matched to '+linkedPO.id+'</span>';
+    if(p._error)h+='<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;background:#fee2e2;color:#dc2626;">Parse error: '+p._error+'</span>';
+    h+='</div>';
+    h+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:10px;">';
+    h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Vendor</label><select class="sel recv-ai-vendor" data-inv-idx="'+invIdx+'" style="font-size:11px;"><option value="">Select...</option>'+vendorOptsFn(p.vendor)+'</select></div>';
+    h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Link to PO</label><select class="sel recv-ai-po" data-inv-idx="'+invIdx+'" style="font-size:11px;"><option value="">None</option>'+poOptsFn(linkedPO)+'</select></div>';
+    h+='<div><label style="font-size:9px;font-weight:700;text-transform:uppercase;color:#6b7280;">Invoice Date</label><input class="inp recv-ai-date" data-inv-idx="'+invIdx+'" type="date" value="'+(p.invoiceDate||'')+'" style="font-size:11px;"/></div>';
+    h+='</div>';
+    // Items table (per-invoice)
+    h+='<div style="max-height:320px;overflow:auto;border:1px solid #e5e7eb;border-radius:6px;background:#fff;"><table class="admin-table" style="font-size:10px;margin:0;"><thead><tr><th>Model #</th><th>Description</th><th style="width:60px;">Qty</th><th style="width:80px;">Unit Cost</th><th>Serials</th><th style="width:80px;">Match</th></tr></thead><tbody>';
+    (p.items||[]).forEach(function(it,i){
+      var prod=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===(it.model||'').toLowerCase()||(x.sku||'').toLowerCase()===(it.model||'').toLowerCase();});
+      var statusBadge=prod?'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#dcfce7;color:#16a34a;">Matched</span>':'<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#fee2e2;color:#dc2626;">Not Found</span>';
+      var serialStr=(it.serials||[]).join(', ');
+      var uid=invIdx+'-'+i;
+      h+='<tr'+(!prod?' style="background:#fef2f2;"':'')+'>';
+      h+='<td><input class="inp recv-ai-model" data-inv-idx="'+invIdx+'" data-idx="'+i+'" value="'+(it.model||'').replace(/"/g,'&quot;')+'" style="font-size:10px;padding:4px 6px;width:100%;" oninput="recvAiRematch(\''+uid+'\')"/></td>';
+      h+='<td><input class="inp recv-ai-desc" data-inv-idx="'+invIdx+'" data-idx="'+i+'" value="'+(it.description||'').replace(/"/g,'&quot;')+'" style="font-size:10px;padding:4px 6px;width:100%;"/></td>';
+      h+='<td><input class="inp recv-ai-qty" data-inv-idx="'+invIdx+'" data-idx="'+i+'" type="number" min="0" value="'+(it.qty||0)+'" style="font-size:10px;padding:4px 6px;width:50px;text-align:center;"/></td>';
+      h+='<td><input class="inp recv-ai-cost" data-inv-idx="'+invIdx+'" data-idx="'+i+'" type="number" step="0.01" value="'+(it.unitCost||0)+'" style="font-size:10px;padding:4px 6px;width:70px;text-align:right;"/></td>';
+      h+='<td><input class="inp recv-ai-serials" data-inv-idx="'+invIdx+'" data-idx="'+i+'" value="'+serialStr.replace(/"/g,'&quot;')+'" placeholder="SN1, SN2..." style="font-size:10px;padding:4px 6px;width:100%;"/></td>';
+      h+='<td id="recv-ai-match-'+uid+'">'+statusBadge+'</td>';
+      h+='</tr>';
+    });
+    if(!(p.items||[]).length){
+      h+='<tr><td colspan="6" style="text-align:center;padding:14px;color:#9ca3af;font-size:11px;">No line items extracted</td></tr>';
+    }
+    h+='</tbody></table></div>';
+    var invTotal=(p.items||[]).reduce(function(s,it){return s+(parseFloat(it.qty)||0)*(parseFloat(it.unitCost)||0);},0);
+    h+='<div style="margin-top:6px;font-size:11px;font-weight:700;text-align:right;color:#374151;">Invoice Total: '+fmt(invTotal)+'</div>';
+    h+='</div>';
   });
-  h+='</tbody></table></div>';
-  var total=(p.items||[]).reduce(function(s,it){return s+(it.qty||0)*(it.unitCost||0);},0);
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">';
-  h+='<div style="font-size:14px;font-weight:700;">Total: '+fmt(total)+'</div>';
-  h+='<div style="display:flex;gap:6px;"><button class="ghost-btn" onclick="recvAiCancel()">Cancel</button><button class="primary-btn" onclick="recvAiConfirm()">Confirm &amp; Receive</button></div>';
+
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #e5e7eb;padding-top:10px;">';
+  h+='<div style="font-size:14px;font-weight:700;">Grand Total: '+fmt(totalValue)+'</div>';
+  h+='<div style="display:flex;gap:6px;"><button class="ghost-btn" onclick="recvAiCancel()">Cancel</button><button class="primary-btn" onclick="recvAiConfirm()">Confirm &amp; Receive '+invoices.length+' Invoice'+(invoices.length===1?'':'s')+'</button></div>';
   h+='</div>';
   h+='</div>';
   document.getElementById('recv-ai-preview').innerHTML=h;
   document.getElementById('recv-ai-preview').style.display='block';
 }
 
-function recvAiRematch(i){
-  var model=document.querySelector('.recv-ai-model[data-idx="'+i+'"]').value;
+function recvAiRematch(uid){
+  var parts=uid.split('-');var invIdx=parts[0];var i=parts[1];
+  var el=document.querySelector('.recv-ai-model[data-inv-idx="'+invIdx+'"][data-idx="'+i+'"]');
+  if(!el)return;
+  var model=el.value;
   var prod=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===model.toLowerCase()||(x.sku||'').toLowerCase()===model.toLowerCase();});
-  var el=document.getElementById('recv-ai-match-'+i);
-  if(prod)el.innerHTML='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#dcfce7;color:#16a34a;">Matched</span>';
-  else el.innerHTML='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#fee2e2;color:#dc2626;">Not Found</span>';
+  var mEl=document.getElementById('recv-ai-match-'+uid);
+  if(!mEl)return;
+  if(prod)mEl.innerHTML='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#dcfce7;color:#16a34a;">Matched</span>';
+  else mEl.innerHTML='<span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;background:#fee2e2;color:#dc2626;">Not Found</span>';
 }
 
 function recvAiCancel(){_recvAiParsed=null;document.getElementById('recv-ai-preview').style.display='none';document.getElementById('recv-ai-preview').innerHTML='';}
 
 async function recvAiConfirm(){
-  if(!_recvAiParsed)return;
-  var poId=(document.getElementById('recv-ai-po')||{}).value||'';
-  var vendorName=(document.getElementById('recv-ai-vendor')||{}).value||'';
-  var linkedPO=poId?purchaseOrders.find(function(po){return po.id===poId;}):null;
-  var updated=0,notFound=0,serialsAdded=0;
-  // Read current form values
-  var items=[];
-  document.querySelectorAll('.recv-ai-model').forEach(function(el){
-    var i=parseInt(el.dataset.idx);
-    var model=el.value.trim();
-    var desc=(document.querySelector('.recv-ai-desc[data-idx="'+i+'"]')||{}).value||'';
-    var qty=parseInt((document.querySelector('.recv-ai-qty[data-idx="'+i+'"]')||{}).value)||0;
-    var cost=parseFloat((document.querySelector('.recv-ai-cost[data-idx="'+i+'"]')||{}).value)||0;
-    var snStr=(document.querySelector('.recv-ai-serials[data-idx="'+i+'"]')||{}).value||'';
-    var serials=snStr.split(',').map(function(s){return s.trim();}).filter(Boolean);
-    items.push({model:model,desc:desc,qty:qty,cost:cost,serials:serials});
-  });
-  // Apply to inventory
-  items.forEach(function(it){
-    if(!it.qty)return;
-    var p=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===it.model.toLowerCase()||(x.sku||'').toLowerCase()===it.model.toLowerCase();});
-    if(p){
-      p.stock=(p.stock||0)+it.qty;
-      if(it.cost)p.cost=it.cost;
-      if(!p.serialPool)p.serialPool=[];
-      it.serials.forEach(function(sn){p.serialPool.push({sn:sn,status:'Available',receivedAt:new Date().toISOString(),vendor:vendorName});serialsAdded++;});
-      updated++;
-    }else{
-      // Auto-create new product
-      PRODUCTS.push({id:PRODUCTS.length+300+notFound,model:it.model,sku:it.model,name:it.desc||it.model,brand:'',cat:'',price:0,cost:it.cost,stock:it.qty,sold:0,reorderPt:2,reorderQty:3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:true,vendor:vendorName,serialPool:it.serials.map(function(sn){return{sn:sn,status:'Available',receivedAt:new Date().toISOString(),vendor:vendorName};})});
-      notFound++;serialsAdded+=it.serials.length;
-    }
-  });
-  // Update linked PO status
-  if(linkedPO){
-    var allFull=true;
-    linkedPO.items.forEach(function(poItem){
-      var received=items.find(function(it){return it.model.toLowerCase()===(poItem.model||'').toLowerCase();});
-      if(received){var newRecv=(poItem.qtyReceived||0)+received.qty;poItem.qtyReceived=newRecv;if(newRecv<poItem.qtyOrdered)allFull=false;}
-      else if((poItem.qtyReceived||0)<poItem.qtyOrdered)allFull=false;
+  if(!_recvAiParsed||!_recvAiParsed.invoices)return;
+  var invoices=_recvAiParsed.invoices;
+
+  // Totals for the summary toast
+  var totalInvoices=0,totalItemsReceived=0,totalSerialsAdded=0,totalMatched=0,totalNew=0;
+
+  // Process each invoice independently — same save logic as before, just in a loop.
+  // We do NOT change save logic or Supabase structure (per task spec).
+  for(var invIdx=0;invIdx<invoices.length;invIdx++){
+    var invWrap=invoices[invIdx];
+    var poSelEl=document.querySelector('.recv-ai-po[data-inv-idx="'+invIdx+'"]');
+    var vendorSelEl=document.querySelector('.recv-ai-vendor[data-inv-idx="'+invIdx+'"]');
+    var poId=poSelEl?poSelEl.value:'';
+    var vendorName=vendorSelEl?vendorSelEl.value:'';
+    var linkedPO=poId?purchaseOrders.find(function(po){return po.id===poId;}):null;
+
+    // Read current form values for THIS invoice's items
+    var items=[];
+    document.querySelectorAll('.recv-ai-model[data-inv-idx="'+invIdx+'"]').forEach(function(el){
+      var i=parseInt(el.dataset.idx);
+      var model=el.value.trim();
+      var desc=(document.querySelector('.recv-ai-desc[data-inv-idx="'+invIdx+'"][data-idx="'+i+'"]')||{}).value||'';
+      var qty=parseInt((document.querySelector('.recv-ai-qty[data-inv-idx="'+invIdx+'"][data-idx="'+i+'"]')||{}).value)||0;
+      var cost=parseFloat((document.querySelector('.recv-ai-cost[data-inv-idx="'+invIdx+'"][data-idx="'+i+'"]')||{}).value)||0;
+      var snStr=(document.querySelector('.recv-ai-serials[data-inv-idx="'+invIdx+'"][data-idx="'+i+'"]')||{}).value||'';
+      var serials=snStr.split(/[,\s]+/).map(function(s){return s.trim();}).filter(Boolean);
+      items.push({model:model,desc:desc,qty:qty,cost:cost,serials:serials});
     });
-    linkedPO.status=allFull?'Received':'Partially Received';
-    if(allFull)linkedPO.receivedDate=new Date().toISOString();
-    linkedPO.receivedBy=currentEmployee?currentEmployee.name:'Admin';
-    if(!linkedPO.receiveLog)linkedPO.receiveLog=[];
-    linkedPO.receiveLog.push({ts:new Date().toISOString(),by:linkedPO.receivedBy,source:'AI auto-receive'});
-    await savePOs();
+
+    var anyReceived=false;
+    // Apply to inventory — unchanged logic
+    items.forEach(function(it){
+      if(!it.qty&&!it.serials.length)return;
+      anyReceived=true;
+      var p=PRODUCTS.find(function(x){return (x.model||'').toLowerCase()===it.model.toLowerCase()||(x.sku||'').toLowerCase()===it.model.toLowerCase();});
+      if(p){
+        p.stock=(p.stock||0)+it.qty;
+        if(it.cost)p.cost=it.cost;
+        if(!p.serialPool)p.serialPool=[];
+        it.serials.forEach(function(sn){p.serialPool.push({sn:sn,status:'Available',receivedAt:new Date().toISOString(),vendor:vendorName});totalSerialsAdded++;});
+        totalMatched++;
+        totalItemsReceived+=it.qty;
+      }else{
+        PRODUCTS.push({id:PRODUCTS.length+300+totalNew,model:it.model,sku:it.model,name:it.desc||it.model,brand:'',cat:'',price:0,cost:it.cost,stock:it.qty,sold:0,reorderPt:2,reorderQty:3,sales30:0,serial:'',warranty:'1 Year',icon:'&#x1F4E6;',serialTracked:true,vendor:vendorName,serialPool:it.serials.map(function(sn){return{sn:sn,status:'Available',receivedAt:new Date().toISOString(),vendor:vendorName};})});
+        totalNew++;
+        totalSerialsAdded+=it.serials.length;
+        totalItemsReceived+=it.qty;
+      }
+    });
+
+    if(anyReceived)totalInvoices++;
+
+    // Update linked PO status for THIS invoice only — unchanged logic
+    if(linkedPO){
+      var allFull=true;
+      linkedPO.items.forEach(function(poItem){
+        var received=items.find(function(it){return it.model.toLowerCase()===(poItem.model||'').toLowerCase();});
+        if(received){var newRecv=(poItem.qtyReceived||0)+received.qty;poItem.qtyReceived=newRecv;if(newRecv<poItem.qtyOrdered)allFull=false;}
+        else if((poItem.qtyReceived||0)<poItem.qtyOrdered)allFull=false;
+      });
+      linkedPO.status=allFull?'Received':'Partially Received';
+      if(allFull)linkedPO.receivedDate=new Date().toISOString();
+      linkedPO.receivedBy=currentEmployee?currentEmployee.name:'Admin';
+      if(!linkedPO.receiveLog)linkedPO.receiveLog=[];
+      linkedPO.receiveLog.push({ts:new Date().toISOString(),by:linkedPO.receivedBy,source:'AI auto-receive',invoiceNumber:invWrap.data.invoiceNumber||''});
+    }
   }
+
+  // Save once at the end (same save calls as before, just not per-invoice)
+  await savePOs();
   await saveProducts();
   recvAiCancel();
   renderReceiving();renderInventory();refreshSaleView();
-  toast('Received '+updated+' matched'+(notFound?' + '+notFound+' new':'')+' items, '+serialsAdded+' serials added','success');
+  toast(totalInvoices+' invoice'+(totalInvoices===1?'':'s')+' processed &middot; '+totalItemsReceived+' units &middot; '+totalSerialsAdded+' serials'+(totalNew?' &middot; '+totalNew+' new products':''),'success');
 }
 
 async function recvComplete(){
